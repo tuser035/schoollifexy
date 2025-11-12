@@ -355,6 +355,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_demerit_details: {
+        Args: { admin_id_input: string; student_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          image_url: string
+          reason: string
+          score: number
+          teacher_name: string
+        }[]
+      }
+      admin_get_demerits: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+          search_text?: string
+        }
+        Returns: {
+          category: string
+          created_at: string
+          reason: string
+          score: number
+          student_class: number
+          student_grade: number
+          student_name: string
+          teacher_name: string
+        }[]
+      }
       admin_get_homeroom: {
         Args: {
           admin_id_input: string
@@ -366,6 +395,74 @@ export type Database = {
           grade: number
           teacher_name: string
           year: number
+        }[]
+      }
+      admin_get_merit_details: {
+        Args: { admin_id_input: string; student_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          image_url: string
+          reason: string
+          score: number
+          teacher_name: string
+        }[]
+      }
+      admin_get_merits: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+          search_text?: string
+        }
+        Returns: {
+          category: string
+          created_at: string
+          reason: string
+          score: number
+          student_class: number
+          student_grade: number
+          student_name: string
+          teacher_name: string
+        }[]
+      }
+      admin_get_monthly: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+          search_text?: string
+        }
+        Returns: {
+          category: string
+          month: number
+          reason: string
+          student_class: number
+          student_grade: number
+          student_name: string
+          teacher_name: string
+          year: number
+        }[]
+      }
+      admin_get_monthly_details: {
+        Args: { admin_id_input: string; student_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          image_url: string
+          reason: string
+          teacher_name: string
+        }[]
+      }
+      admin_get_student_points_by_class: {
+        Args: { admin_id_input: string; p_class: number; p_grade: number }
+        Returns: {
+          demerits: number
+          merits: number
+          monthly: number
+          name: string
+          student_id: string
+          total: number
         }[]
       }
       admin_get_students: {

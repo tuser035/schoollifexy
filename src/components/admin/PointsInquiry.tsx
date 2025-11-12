@@ -46,48 +46,36 @@ const PointsInquiry = () => {
     setIsLoading(true);
     
     try {
-      const { data: studentsData, error: studentsError } = await supabase
-        .from("students")
-        .select("student_id, name")
-        .eq("grade", parseInt(grade))
-        .eq("class", parseInt(classNum))
-        .order("number");
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        setIsLoading(false);
+        return;
+      }
+      
+      const parsedUser = JSON.parse(authUser);
+      if (parsedUser.type !== "admin" || !parsedUser.id) {
+        toast.error("관리자 권한이 필요합니다");
+        setIsLoading(false);
+        return;
+      }
 
-      if (studentsError) throw studentsError;
+      const { data, error } = await supabase.rpc("admin_get_student_points_by_class", {
+        admin_id_input: parsedUser.id,
+        p_grade: parseInt(grade),
+        p_class: parseInt(classNum)
+      });
 
-      const studentPoints: StudentPoint[] = await Promise.all(
-        (studentsData || []).map(async (student) => {
-          const [meritsData, demeritsData, monthlyData] = await Promise.all([
-            supabase
-              .from("merits")
-              .select("score")
-              .eq("student_id", student.student_id),
-            supabase
-              .from("demerits")
-              .select("score")
-              .eq("student_id", student.student_id),
-            supabase
-              .from("monthly")
-              .select("id")
-              .eq("student_id", student.student_id),
-          ]);
+      if (error) throw error;
 
-          const merits = meritsData.data?.reduce((sum, m) => sum + (m.score || 0), 0) || 0;
-          const demerits = demeritsData.data?.reduce((sum, d) => sum + (d.score || 0), 0) || 0;
-          const monthly = monthlyData.data?.length || 0;
-
-          return {
-            student_id: student.student_id,
-            name: student.name,
-            merits,
-            demerits,
-            monthly,
-            total: merits - demerits,
-          };
-        })
-      );
-
-      setStudents(studentPoints);
+      setStudents((data || []).map((row: any) => ({
+        student_id: row.student_id,
+        name: row.name,
+        merits: row.merits,
+        demerits: row.demerits,
+        monthly: row.monthly,
+        total: row.total
+      })));
     } catch (error: any) {
       toast.error(error.message || "조회에 실패했습니다");
     } finally {
@@ -100,35 +88,42 @@ const PointsInquiry = () => {
     setDetailType(type);
 
     try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+      
+      const parsedUser = JSON.parse(authUser);
+      if (parsedUser.type !== "admin" || !parsedUser.id) {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
       if (type === "merits") {
-        // Fetch both merits and demerits together
         const [meritsResult, demeritsResult] = await Promise.all([
-          supabase
-            .from("merits")
-            .select("*, teachers(name)")
-            .eq("student_id", student.student_id)
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("demerits")
-            .select("*, teachers(name)")
-            .eq("student_id", student.student_id)
-            .order("created_at", { ascending: false }),
+          supabase.rpc("admin_get_merit_details", {
+            admin_id_input: parsedUser.id,
+            student_id_input: student.student_id
+          }),
+          supabase.rpc("admin_get_demerit_details", {
+            admin_id_input: parsedUser.id,
+            student_id_input: student.student_id
+          })
         ]);
 
         if (meritsResult.error) throw meritsResult.error;
         if (demeritsResult.error) throw demeritsResult.error;
 
-        // Store both in details - we'll separate them in the UI
         setDetails({
           merits: meritsResult.data || [],
           demerits: demeritsResult.data || [],
         });
       } else {
-        const result = await supabase
-          .from("monthly")
-          .select("*, teachers(name)")
-          .eq("student_id", student.student_id)
-          .order("created_at", { ascending: false });
+        const result = await supabase.rpc("admin_get_monthly_details", {
+          admin_id_input: parsedUser.id,
+          student_id_input: student.student_id
+        });
 
         if (result.error) throw result.error;
         setDetails(result.data || []);
@@ -267,9 +262,9 @@ const PointsInquiry = () => {
                           !Array.isArray(details) && details?.merits?.map((detail: any, idx: number) => (
                             <TableRow key={idx}>
                               <TableCell>{new Date(detail.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{detail.teachers?.name || "-"}</TableCell>
+                              <TableCell>{detail.teacher_name}</TableCell>
                               <TableCell>{detail.category || "-"}</TableCell>
-                              <TableCell>{detail.reason || "-"}</TableCell>
+                              <TableCell>{detail.reason}</TableCell>
                               <TableCell className="text-merit-blue font-medium">{detail.score}</TableCell>
                               <TableCell>
                                 {detail.image_url ? (
@@ -317,9 +312,9 @@ const PointsInquiry = () => {
                           !Array.isArray(details) && details?.demerits?.map((detail: any, idx: number) => (
                             <TableRow key={idx}>
                               <TableCell>{new Date(detail.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{detail.teachers?.name || "-"}</TableCell>
+                              <TableCell>{detail.teacher_name}</TableCell>
                               <TableCell>{detail.category || "-"}</TableCell>
-                              <TableCell>{detail.reason || "-"}</TableCell>
+                              <TableCell>{detail.reason}</TableCell>
                               <TableCell className="text-demerit-orange font-medium">{detail.score}</TableCell>
                               <TableCell>
                                 {detail.image_url ? (
@@ -366,9 +361,9 @@ const PointsInquiry = () => {
                       Array.isArray(details) && details?.map((detail: any, idx: number) => (
                         <TableRow key={idx}>
                           <TableCell>{new Date(detail.created_at).toLocaleDateString()}</TableCell>
-                          <TableCell>{detail.teachers?.name || "-"}</TableCell>
-                          <TableCell>{detail.category || "-"}</TableCell>
-                          <TableCell>{detail.reason || "-"}</TableCell>
+                          <TableCell>{detail.teacher_name}</TableCell>
+                          <TableCell>{detail.category}</TableCell>
+                          <TableCell>{detail.reason}</TableCell>
                           <TableCell>
                             {detail.image_url ? (
                               <Button
