@@ -30,19 +30,19 @@ const tables: TableConfig[] = [
   {
     name: "담임반",
     table: "homeroom",
-    columns: "teacher_id, grade, class, year",
+    columns: "teacher_email, grade, class, year",
     color: "border-admin-green",
   },
   {
     name: "상점",
     table: "merits",
-    columns: "student_id, teacher_id, category, reason, score",
+    columns: "student_id, teacher_email, category, reason, score",
     color: "border-merit-blue",
   },
   {
     name: "벌점",
     table: "demerits",
-    columns: "student_id, teacher_id, category, reason, score",
+    columns: "student_id, teacher_email, category, reason, score",
     color: "border-demerit-orange",
   },
   {
@@ -76,61 +76,91 @@ const BulkUpload = () => {
         throw new Error("CSV 파일이 비어있거나 형식이 잘못되었습니다");
       }
 
+      // Pre-fetch all teachers for email → UUID conversion
+      const { data: teachers } = await supabase
+        .from('teachers')
+        .select('id, email');
+      
+      const teacherMap = new Map(
+        teachers?.map(t => [t.email, t.id]) || []
+      );
+
       // Skip header and parse data
       const dataLines = lines.slice(1);
       const records: any[] = [];
 
-      for (const line of dataLines) {
-        const values = line.split(",").map(v => v.trim());
+      for (let i = 0; i < dataLines.length; i++) {
+        const line = dataLines[i];
+        const lineNumber = i + 2; // Header is line 1, so data starts at line 2
         
-        let record: any = {};
-        
-        if (table === "students") {
-          record = {
-            student_id: values[0],
-            dept_code: values[1] || null,
-            grade: parseInt(values[2]),
-            class: parseInt(values[3]),
-            number: parseInt(values[4]),
-            name: values[5],
-            gmail: values[6] || null,
-            student_call: values[7] || null,
-            parents_call1: values[8] || null,
-            parents_call2: values[9] || null,
-          };
-        } else if (table === "teachers") {
-          record = {
-            email: values[0],
-            name: values[1],
-            grade: values[2] ? parseInt(values[2]) : null,
-            class: values[3] ? parseInt(values[3]) : null,
-            dept_code: values[4] || null,
-            call_t: values[5],
-            is_homeroom: values[6] === "true" || values[6] === "1",
-          };
-        } else if (table === "homeroom") {
-          record = {
-            teacher_id: values[0],
-            grade: parseInt(values[1]),
-            class: parseInt(values[2]),
-            year: values[3] ? parseInt(values[3]) : new Date().getFullYear(),
-          };
-        } else if (table === "merits" || table === "demerits") {
-          record = {
-            student_id: values[0],
-            teacher_id: values[1],
-            category: values[2],
-            reason: values[3] || null,
-            score: values[4] ? parseInt(values[4]) : 1,
-          };
-        } else if (table === "departments") {
-          record = {
-            code: values[0],
-            name: values[1],
-          };
+        try {
+          const values = line.split(",").map(v => v.trim());
+          
+          let record: any = {};
+          
+          if (table === "students") {
+            record = {
+              student_id: values[0],
+              dept_code: values[1] || null,
+              grade: parseInt(values[2]),
+              class: parseInt(values[3]),
+              number: parseInt(values[4]),
+              name: values[5],
+              gmail: values[6] || null,
+              student_call: values[7] || null,
+              parents_call1: values[8] || null,
+              parents_call2: values[9] || null,
+            };
+          } else if (table === "teachers") {
+            record = {
+              email: values[0],
+              name: values[1],
+              grade: values[2] ? parseInt(values[2]) : null,
+              class: values[3] ? parseInt(values[3]) : null,
+              dept_code: values[4] || null,
+              call_t: values[5],
+              is_homeroom: values[6] === "true" || values[6] === "1",
+            };
+          } else if (table === "homeroom") {
+            const teacherEmail = values[0];
+            const teacherId = teacherMap.get(teacherEmail);
+            
+            if (!teacherId) {
+              throw new Error(`교사 이메일 '${teacherEmail}'을 찾을 수 없습니다`);
+            }
+            
+            record = {
+              teacher_id: teacherId,
+              grade: parseInt(values[1]),
+              class: parseInt(values[2]),
+              year: values[3] ? parseInt(values[3]) : new Date().getFullYear(),
+            };
+          } else if (table === "merits" || table === "demerits") {
+            const teacherEmail = values[1];
+            const teacherId = teacherMap.get(teacherEmail);
+            
+            if (!teacherId) {
+              throw new Error(`교사 이메일 '${teacherEmail}'을 찾을 수 없습니다`);
+            }
+            
+            record = {
+              student_id: values[0],
+              teacher_id: teacherId,
+              category: values[2],
+              reason: values[3] || null,
+              score: values[4] ? parseInt(values[4]) : 1,
+            };
+          } else if (table === "departments") {
+            record = {
+              code: values[0],
+              name: values[1],
+            };
+          }
+          
+          records.push(record);
+        } catch (error: any) {
+          throw new Error(`행 ${lineNumber}: ${error.message}`);
         }
-        
-        records.push(record);
       }
 
       // Use upsert to handle duplicate keys
