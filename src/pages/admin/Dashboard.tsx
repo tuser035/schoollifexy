@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -10,6 +10,7 @@ import DataInquiry from "@/components/admin/DataInquiry";
 import PointsInquiry from "@/components/admin/PointsInquiry";
 import CounselingInquiry from "@/components/admin/CounselingInquiry";
 import StatisticsChart from "@/components/admin/StatisticsChart";
+import StorageManager from "@/components/admin/StorageManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -56,30 +57,34 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="password" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="password">
               <Key className="w-4 h-4 mr-2" />
-              비밀번호 재설정
+              비밀번호
             </TabsTrigger>
             <TabsTrigger value="upload">
               <Upload className="w-4 h-4 mr-2" />
-              대량 업로드
+              업로드
             </TabsTrigger>
             <TabsTrigger value="data">
               <Database className="w-4 h-4 mr-2" />
-              데이터 조회
+              데이터
             </TabsTrigger>
             <TabsTrigger value="points">
               <BarChart className="w-4 h-4 mr-2" />
-              상점 조회
+              상점
             </TabsTrigger>
             <TabsTrigger value="counseling">
               <ClipboardCheck className="w-4 h-4 mr-2" />
-              진로상담
+              상담
             </TabsTrigger>
             <TabsTrigger value="statistics">
               <TrendingUp className="w-4 h-4 mr-2" />
               통계
+            </TabsTrigger>
+            <TabsTrigger value="storage">
+              <FolderOpen className="w-4 h-4 mr-2" />
+              파일
             </TabsTrigger>
           </TabsList>
 
@@ -105,6 +110,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="statistics">
             <StatisticsChart />
+          </TabsContent>
+
+          <TabsContent value="storage">
+            <StorageManager />
           </TabsContent>
         </Tabs>
       </main>
