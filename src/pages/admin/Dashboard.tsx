@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Key, Upload, Database, BarChart, LogOut } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
 import DataInquiry from "@/components/admin/DataInquiry";
 import PointsInquiry from "@/components/admin/PointsInquiry";
+import CounselingInquiry from "@/components/admin/CounselingInquiry";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="password" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="password">
               <Key className="w-4 h-4 mr-2" />
               비밀번호 재설정
@@ -70,6 +71,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="points">
               <BarChart className="w-4 h-4 mr-2" />
               상점 조회
+            </TabsTrigger>
+            <TabsTrigger value="counseling">
+              <ClipboardCheck className="w-4 h-4 mr-2" />
+              진로상담
             </TabsTrigger>
           </TabsList>
 
@@ -87,6 +92,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="points">
             <PointsInquiry />
+          </TabsContent>
+
+          <TabsContent value="counseling">
+            <CounselingInquiry />
           </TabsContent>
         </Tabs>
       </main>
