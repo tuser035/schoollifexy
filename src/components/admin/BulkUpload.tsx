@@ -182,6 +182,11 @@ const BulkUpload = () => {
           } else if (table === "merits" || table === "demerits") {
             const pIdx = idx.points;
             const studentId = pIdx.student_id !== -1 ? values[pIdx.student_id] : values[0];
+            
+            if (!studentId || !studentId.trim()) {
+              throw new Error(`student_id 컬럼이 비어있습니다`);
+            }
+            
             const teacherEmailRaw = pIdx.teacher_email !== -1 ? values[pIdx.teacher_email] : values[1];
             const teacherEmail = teacherEmailRaw?.trim().toLowerCase();
             
@@ -195,7 +200,7 @@ const BulkUpload = () => {
               }
             } else {
               // If teacher_email is empty, find teacher by student's grade and class
-              const student = students?.find(s => s.student_id === studentId);
+              const student = students?.find(s => s.student_id === studentId.trim());
               if (student) {
                 const matchingTeacher = teachers?.find(t => t.grade === student.grade && t.class === student.class);
                 if (matchingTeacher) {
@@ -210,7 +215,7 @@ const BulkUpload = () => {
             }
             
             record = {
-              student_id: studentId,
+              student_id: studentId.trim(),
               teacher_id: teacherId,
               category: pIdx.category !== -1 ? values[pIdx.category] : values[2],
               reason: (pIdx.reason !== -1 ? values[pIdx.reason] : values[3]) || null,
