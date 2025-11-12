@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Search } from "lucide-react";
+import { Search, Camera, Upload, X } from "lucide-react";
 
 interface MeritCategory {
   category: string;
@@ -94,6 +95,10 @@ const MeritForm = () => {
   const [selectedReason, setSelectedReason] = useState("");
   const [selectedScore, setSelectedScore] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchStudents();
@@ -143,6 +148,25 @@ const MeritForm = () => {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -162,6 +186,27 @@ const MeritForm = () => {
       const user = JSON.parse(authUser);
       await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
 
+      let imageUrl = null;
+
+      // Upload image if exists
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('evidence-photos')
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('evidence-photos')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+      }
+
       const { error } = await supabase
         .from("merits")
         .insert({
@@ -170,6 +215,7 @@ const MeritForm = () => {
           category: selectedCategory,
           reason: selectedReason,
           score: selectedScore,
+          image_url: imageUrl,
         });
 
       if (error) throw error;
@@ -182,6 +228,7 @@ const MeritForm = () => {
       setSelectedCategory("");
       setSelectedReason("");
       setSelectedScore(0);
+      handleRemoveImage();
     } catch (error: any) {
       toast.error(error.message || "상점 부여에 실패했습니다");
     } finally {
@@ -271,20 +318,98 @@ const MeritForm = () => {
 
       {/* Reason Selection */}
       {selectedCategory && (
+        <>
+          <div className="space-y-2">
+            <Label>상점 사유 (기본)</Label>
+            <Select value={selectedReason} onValueChange={handleReasonChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="상점 사유 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableReasons.map((reason, index) => (
+                  <SelectItem key={index} value={index.toString()}>
+                    {reason.reason} ({reason.score}점)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedReason && (
+            <div className="space-y-2">
+              <Label>구체적인 사유 (선택사항)</Label>
+              <Textarea
+                placeholder="구체적인 사유를 입력하세요..."
+                value={selectedReason}
+                onChange={(e) => setSelectedReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Image Upload */}
+      {selectedCategory && (
         <div className="space-y-2">
-          <Label>상점 사유</Label>
-          <Select value={selectedReason} onValueChange={handleReasonChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="상점 사유 선택" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableReasons.map((reason, index) => (
-                <SelectItem key={index} value={index.toString()}>
-                  {reason.reason} ({reason.score}점)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label>증빙 사진 (선택사항)</Label>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => cameraInputRef.current?.click()}
+              className="flex-1"
+            >
+              <Camera className="mr-2 h-4 w-4" />
+              카메라로 촬영
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              파일 선택
+            </Button>
+          </div>
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          {imagePreview && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="relative">
+                  <img
+                    src={imagePreview}
+                    alt="증빙 사진"
+                    className="w-full h-48 object-cover rounded"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={handleRemoveImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 

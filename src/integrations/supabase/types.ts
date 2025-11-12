@@ -43,6 +43,7 @@ export type Database = {
           category: string
           created_at: string | null
           id: string
+          image_url: string | null
           reason: string | null
           score: number
           student_id: string | null
@@ -52,6 +53,7 @@ export type Database = {
           category: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           reason?: string | null
           score?: number
           student_id?: string | null
@@ -61,6 +63,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           reason?: string | null
           score?: number
           student_id?: string | null
@@ -144,6 +147,7 @@ export type Database = {
           category: string
           created_at: string | null
           id: string
+          image_url: string | null
           reason: string | null
           score: number
           student_id: string | null
@@ -153,6 +157,7 @@ export type Database = {
           category: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           reason?: string | null
           score?: number
           student_id?: string | null
@@ -162,6 +167,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           reason?: string | null
           score?: number
           student_id?: string | null
@@ -189,6 +195,7 @@ export type Database = {
           category: string | null
           created_at: string | null
           id: string
+          image_url: string | null
           month: number
           reason: string | null
           student_id: string | null
@@ -199,6 +206,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           id?: string
+          image_url?: string | null
           month: number
           reason?: string | null
           student_id?: string | null
@@ -209,6 +217,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           id?: string
+          image_url?: string | null
           month?: number
           reason?: string | null
           student_id?: string | null
