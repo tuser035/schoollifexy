@@ -482,6 +482,7 @@ export type Database = {
           reason: string
           student_class: number
           student_grade: number
+          student_id: string
           student_name: string
           teacher_name: string
           year: number
