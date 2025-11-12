@@ -418,7 +418,7 @@ const DataInquiry = () => {
         result = Object.values(groupedData || {})
           .sort((a: any, b: any) => b.count - a.count)
           .map((group: any) => ({
-            "학생": `${group.student_name} (${group.student_grade}-${group.student_class})`,
+            "학생": `${group.student_name}(${group.student_id})`,
             "추천횟수": group.count,
             "연도": Array.from(group.years).sort().join(", "),
             "월": Array.from(group.months).sort((a: number, b: number) => a - b).join(", "),

@@ -213,7 +213,7 @@ const CounselingInquiry = () => {
         <CardContent className="space-y-4">
           <div className="flex gap-4">
             <Input
-              placeholder="학번을 입력하세요"
+              placeholder="학번 (예: 386)"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
