@@ -79,7 +79,7 @@ const BulkUpload = () => {
       // Pre-fetch all teachers for email → UUID conversion
       const { data: teachers } = await supabase
         .from('teachers')
-        .select('id, teacher_email');
+        .select('id, teacher_email, grade, class');
       
       // Create map with normalized (trimmed and lowercase) emails as keys
       const teacherMap = new Map(
@@ -142,21 +142,37 @@ const BulkUpload = () => {
             };
           } else if (table === "homeroom") {
             const tIdx = idx.homeroom;
+            const gradeVal = parseInt(tIdx.grade !== -1 ? values[tIdx.grade] : values[1]);
+            const classVal = parseInt(tIdx.class !== -1 ? values[tIdx.class] : values[2]);
+            const yearVal = (tIdx.year !== -1 ? values[tIdx.year] : values[3]) ? parseInt(tIdx.year !== -1 ? values[tIdx.year] : values[3]) : new Date().getFullYear();
+            
             const teacherEmailRaw = tIdx.teacher_email !== -1 ? values[tIdx.teacher_email] : values[0];
             const teacherEmail = teacherEmailRaw?.trim().toLowerCase();
-            console.log(`Looking for teacher email: "${teacherEmail}"`);
-            if (!teacherEmail) {
-              throw new Error(`teacher_email 컬럼이 비어있습니다`);
+            
+            let teacherId: string | undefined;
+            
+            if (teacherEmail) {
+              // If teacher_email is provided, use it
+              teacherId = teacherMap.get(teacherEmail);
+              if (!teacherId) {
+                throw new Error(`교사 이메일 '${teacherEmailRaw}'을 찾을 수 없습니다`);
+              }
+            } else {
+              // If teacher_email is empty, find teacher by grade and class
+              const matchingTeacher = teachers?.find(t => t.grade === gradeVal && t.class === classVal);
+              if (matchingTeacher) {
+                teacherId = matchingTeacher.id;
+                console.log(`Found teacher for grade ${gradeVal} class ${classVal}: ${matchingTeacher.teacher_email}`);
+              } else {
+                console.log(`No teacher found for grade ${gradeVal} class ${classVal}, creating homeroom without teacher_id`);
+              }
             }
-            const teacherId = teacherMap.get(teacherEmail);
-            if (!teacherId) {
-              throw new Error(`교사 이메일 '${teacherEmailRaw}'을 찾을 수 없습니다`);
-            }
+            
             record = {
-              teacher_id: teacherId,
-              grade: parseInt(tIdx.grade !== -1 ? values[tIdx.grade] : values[1]),
-              class: parseInt(tIdx.class !== -1 ? values[tIdx.class] : values[2]),
-              year: (tIdx.year !== -1 ? values[tIdx.year] : values[3]) ? parseInt(tIdx.year !== -1 ? values[tIdx.year] : values[3]) : new Date().getFullYear(),
+              teacher_id: teacherId || null,
+              grade: gradeVal,
+              class: classVal,
+              year: yearVal,
             };
           } else if (table === "merits" || table === "demerits") {
             const pIdx = idx.points;
