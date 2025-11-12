@@ -48,10 +48,16 @@ export const loginStudent = async (studentId: string, password: string) => {
 // Teacher login
 export const loginTeacher = async (phone: string, password: string) => {
   try {
+    // Normalize phone number (remove all non-digits, then format as XXX-XXXX-XXXX)
+    const digitsOnly = phone.replace(/\D/g, '');
+    const normalizedPhone = digitsOnly.length === 11 
+      ? `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7)}`
+      : phone;
+    
     const { data, error } = await supabase
       .from("teachers")
       .select("*")
-      .eq("call_t", phone)
+      .eq("call_t", normalizedPhone)
       .maybeSingle();
 
     if (error) throw error;
@@ -59,7 +65,7 @@ export const loginTeacher = async (phone: string, password: string) => {
 
     // Verify password using pgcrypto
     const { data: authData, error: authError } = await supabase.rpc("verify_teacher_password", {
-      phone_input: phone,
+      phone_input: normalizedPhone,
       password_input: password,
     });
 
