@@ -39,7 +39,13 @@ const DataInquiry = () => {
           .limit(50);
 
         if (trimmedSearch) {
-          query = query.or(`name.ilike.%${trimmedSearch}%,grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+          // 숫자인 경우 학년이나 반으로 검색
+          if (!isNaN(Number(trimmedSearch))) {
+            query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+          } else {
+            // 문자인 경우 이름으로만 검색
+            query = query.ilike("name", `%${trimmedSearch}%`);
+          }
         }
 
         const { data, error: queryError } = await query;
@@ -71,7 +77,13 @@ const DataInquiry = () => {
           .limit(50);
 
         if (trimmedSearch) {
-          query = query.or(`name.ilike.%${trimmedSearch}%,grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+          // 숫자인 경우 학년이나 반으로 검색
+          if (!isNaN(Number(trimmedSearch))) {
+            query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+          } else {
+            // 문자인 경우 이름으로만 검색
+            query = query.ilike("name", `%${trimmedSearch}%`);
+          }
         }
 
         const { data, error: queryError } = await query;
@@ -99,18 +111,27 @@ const DataInquiry = () => {
           .limit(50);
 
         if (trimmedSearch) {
-          query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+          // 숫자로만 검색 (학년, 반)
+          if (!isNaN(Number(trimmedSearch))) {
+            query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+          } else {
+            // 문자는 담임반 테이블에서 검색 불가 (teacher JOIN이 불안정하므로)
+            toast.info("담임반은 학년이나 반 번호로 검색해주세요");
+            result = [];
+          }
         }
 
-        const { data, error: queryError } = await query;
-        if (queryError) throw queryError;
+        if (result === undefined) {
+          const { data, error: queryError } = await query;
+          if (queryError) throw queryError;
 
-        result = data?.map(row => ({
-          "연도": row.year,
-          "학년": row.grade,
-          "반": row.class,
-          "담임교사": row.teachers?.name || "-"
-        }));
+          result = data?.map(row => ({
+            "연도": row.year,
+            "학년": row.grade,
+            "반": row.class,
+            "담임교사": row.teachers?.name || "-"
+          }));
+        }
 
       } else if (selectedTable === "merits") {
         // 상점 데이터 조회
