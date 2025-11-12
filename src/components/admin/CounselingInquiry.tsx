@@ -432,11 +432,13 @@ const CounselingInquiry = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteRecord}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              삭제
+            <AlertDialogAction asChild>
+              <Button
+                onClick={handleDeleteRecord}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                삭제
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
