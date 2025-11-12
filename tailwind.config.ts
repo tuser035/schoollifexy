@@ -47,6 +47,24 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        merit: {
+          blue: "hsl(var(--merit-blue))",
+          "blue-hover": "hsl(var(--merit-blue-hover))",
+          "blue-light": "hsl(var(--merit-blue-light))",
+        },
+        demerit: {
+          orange: "hsl(var(--demerit-orange))",
+          "orange-hover": "hsl(var(--demerit-orange-hover))",
+          "orange-light": "hsl(var(--demerit-orange-light))",
+        },
+        monthly: {
+          green: "hsl(var(--monthly-green))",
+          "green-hover": "hsl(var(--monthly-green-hover))",
+          "green-light": "hsl(var(--monthly-green-light))",
+        },
+        teacher: "hsl(var(--teacher-blue))",
+        student: "hsl(var(--student-orange))",
+        admin: "hsl(var(--admin-green))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
