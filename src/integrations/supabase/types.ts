@@ -478,6 +478,8 @@ export type Database = {
         }
         Returns: {
           category: string
+          created_at: string
+          image_url: string
           month: number
           reason: string
           student_class: number
