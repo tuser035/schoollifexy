@@ -24,7 +24,7 @@ const tables: TableConfig[] = [
   {
     name: "교사",
     table: "teachers",
-    columns: "email, name, grade, class, dept_code, call_t, is_homeroom",
+    columns: "teacher_email, name, grade, class, dept_code, call_t, is_homeroom",
     color: "border-teacher-blue",
   },
   {
@@ -79,10 +79,10 @@ const BulkUpload = () => {
       // Pre-fetch all teachers for email → UUID conversion
       const { data: teachers } = await supabase
         .from('teachers')
-        .select('id, email');
+        .select('id, teacher_email');
       
       const teacherMap = new Map(
-        teachers?.map(t => [t.email, t.id]) || []
+        teachers?.map(t => [t.teacher_email, t.id]) || []
       );
 
       // Skip header and parse data
@@ -113,7 +113,7 @@ const BulkUpload = () => {
             };
           } else if (table === "teachers") {
             record = {
-              email: values[0],
+              teacher_email: values[0],
               name: values[1],
               grade: values[2] ? parseInt(values[2]) : null,
               class: values[3] ? parseInt(values[3]) : null,
@@ -168,7 +168,7 @@ const BulkUpload = () => {
       if (table === "students") {
         result = await supabase.from(table).upsert(records, { onConflict: 'student_id' });
       } else if (table === "teachers") {
-        result = await supabase.from(table).upsert(records, { onConflict: 'email' });
+        result = await supabase.from(table).upsert(records, { onConflict: 'teacher_email' });
       } else if (table === "departments") {
         result = await supabase.from(table).upsert(records, { onConflict: 'code' });
       } else if (table === "homeroom") {

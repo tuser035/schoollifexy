@@ -294,12 +294,12 @@ export type Database = {
           class: number | null
           created_at: string | null
           dept_code: string | null
-          email: string
           grade: number | null
           id: string
           is_homeroom: boolean | null
           name: string
           password_hash: string
+          teacher_email: string
           updated_at: string | null
         }
         Insert: {
@@ -307,12 +307,12 @@ export type Database = {
           class?: number | null
           created_at?: string | null
           dept_code?: string | null
-          email: string
           grade?: number | null
           id?: string
           is_homeroom?: boolean | null
           name: string
           password_hash?: string
+          teacher_email: string
           updated_at?: string | null
         }
         Update: {
@@ -320,12 +320,12 @@ export type Database = {
           class?: number | null
           created_at?: string | null
           dept_code?: string | null
-          email?: string
           grade?: number | null
           id?: string
           is_homeroom?: boolean | null
           name?: string
           password_hash?: string
+          teacher_email?: string
           updated_at?: string | null
         }
         Relationships: [

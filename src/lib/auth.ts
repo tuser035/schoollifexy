@@ -73,7 +73,7 @@ export const loginTeacher = async (phone: string, password: string) => {
       id: data.id,
       type: "teacher" as UserType,
       name: data.name,
-      email: data.email,
+      email: data.teacher_email,
     };
   } catch (error: any) {
     throw new Error(error.message || "로그인에 실패했습니다");
