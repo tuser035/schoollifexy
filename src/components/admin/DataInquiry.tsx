@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Download } from "lucide-react";
 
 type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "monthly" | "departments";
 
@@ -15,6 +16,54 @@ const DataInquiry = () => {
   const [columns, setColumns] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const exportToCSV = () => {
+    if (data.length === 0) {
+      toast.error("내보낼 데이터가 없습니다");
+      return;
+    }
+
+    // CSV 헤더
+    const csvHeader = columns.join(",");
+    
+    // CSV 데이터 행
+    const csvRows = data.map(row => 
+      columns.map(col => {
+        const value = row[col]?.toString() || "";
+        // 쉼표나 줄바꿈이 포함된 경우 따옴표로 감싸기
+        return value.includes(",") || value.includes("\n") ? `"${value}"` : value;
+      }).join(",")
+    );
+    
+    // BOM 추가 (한글 깨짐 방지)
+    const BOM = "\uFEFF";
+    const csvContent = BOM + csvHeader + "\n" + csvRows.join("\n");
+    
+    // Blob 생성 및 다운로드
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const tableNames: Record<TableType, string> = {
+      students: "학생",
+      teachers: "교사",
+      homeroom: "담임반",
+      merits: "상점",
+      demerits: "벌점",
+      monthly: "이달의학생",
+      departments: "학과"
+    };
+    link.download = `${tableNames[selectedTable]}_${timestamp}.csv`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success("CSV 파일이 다운로드되었습니다");
+  };
 
   const handleQuery = async () => {
     setIsLoading(true);
@@ -340,6 +389,12 @@ const DataInquiry = () => {
             {searchTerm && (
               <Button variant="outline" onClick={() => { setSearchTerm(""); handleQuery(); }}>
                 초기화
+              </Button>
+            )}
+            {data.length > 0 && (
+              <Button variant="outline" onClick={exportToCSV}>
+                <Download className="h-4 w-4 mr-2" />
+                CSV 내보내기
               </Button>
             )}
           </div>

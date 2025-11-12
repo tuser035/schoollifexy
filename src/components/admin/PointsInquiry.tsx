@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, Download } from "lucide-react";
 
 interface StudentPoint {
   student_id: string;
@@ -41,6 +41,41 @@ const PointsInquiry = () => {
     };
     setAdminSession();
   }, []);
+
+  const exportToCSV = () => {
+    if (students.length === 0) {
+      toast.error("내보낼 데이터가 없습니다");
+      return;
+    }
+
+    // CSV 헤더
+    const csvHeader = "학생ID,이름,상점,벌점,이달의학생,합계";
+    
+    // CSV 데이터 행
+    const csvRows = students.map(student => 
+      `${student.student_id},${student.name},${student.merits},${student.demerits},${student.monthly},${student.total}`
+    );
+    
+    // BOM 추가 (한글 깨짐 방지)
+    const BOM = "\uFEFF";
+    const csvContent = BOM + csvHeader + "\n" + csvRows.join("\n");
+    
+    // Blob 생성 및 다운로드
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    const timestamp = new Date().toISOString().slice(0, 10);
+    link.download = `${grade}학년_${classNum}반_상점벌점_${timestamp}.csv`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success("CSV 파일이 다운로드되었습니다");
+  };
 
   const handleQuery = async () => {
     setIsLoading(true);
@@ -169,6 +204,12 @@ const PointsInquiry = () => {
             <Button onClick={handleQuery} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
+            {students.length > 0 && (
+              <Button variant="outline" onClick={exportToCSV}>
+                <Download className="h-4 w-4 mr-2" />
+                CSV 내보내기
+              </Button>
+            )}
           </div>
 
           {students.length > 0 && (
