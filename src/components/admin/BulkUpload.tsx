@@ -60,6 +60,15 @@ const BulkUpload = () => {
     setUploading(table);
     
     try {
+      // Get admin user from localStorage and set session
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        throw new Error("로그인이 필요합니다");
+      }
+      
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      
       const text = await file.text();
       const lines = text.split("\n").filter(line => line.trim());
       
