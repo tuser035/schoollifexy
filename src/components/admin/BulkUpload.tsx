@@ -148,27 +148,32 @@ const BulkUpload = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(config.table, file);
-                  }}
-                  disabled={uploading !== null}
-                />
-                <Button
-                  type="button"
-                  className="w-full"
-                  disabled={uploading !== null}
-                  onClick={() => {}}
-                >
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                id={`upload-${config.table}`}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleFileUpload(config.table, file);
+                    e.target.value = '';
+                  }
+                }}
+                disabled={uploading !== null}
+              />
+              <Button
+                type="button"
+                className="w-full"
+                disabled={uploading !== null}
+                onClick={() => document.getElementById(`upload-${config.table}`)?.click()}
+                asChild={false}
+              >
+                <span className="flex items-center justify-center">
                   <Upload className="w-4 h-4 mr-2" />
                   {uploading === config.table ? "업로드 중..." : "CSV 선택"}
-                </Button>
-              </label>
+                </span>
+              </Button>
             </CardContent>
           </Card>
         ))}
