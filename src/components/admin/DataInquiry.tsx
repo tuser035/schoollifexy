@@ -311,13 +311,30 @@ const DataInquiry = () => {
 
         if (queryError) throw queryError;
 
-        result = data?.map((row: any) => ({
-          "연도": row.year,
-          "월": row.month,
-          "학생": `${row.student_name} (${row.student_grade}-${row.student_class})`,
-          "추천교사": row.teacher_name || "-",
-          "카테고리": row.category,
-          "사유": row.reason
+        // 학생별로 그룹화하여 추천 횟수 누적
+        const groupedData = data?.reduce((acc: any, row: any) => {
+          const studentKey = row.student_name;
+          if (!acc[studentKey]) {
+            acc[studentKey] = {
+              student_name: row.student_name,
+              student_grade: row.student_grade,
+              student_class: row.student_class,
+              count: 0,
+              years: new Set(),
+              months: new Set()
+            };
+          }
+          acc[studentKey].count += 1;
+          acc[studentKey].years.add(row.year);
+          acc[studentKey].months.add(row.month);
+          return acc;
+        }, {});
+
+        result = Object.values(groupedData || {}).map((group: any) => ({
+          "학생": `${group.student_name} (${group.student_grade}-${group.student_class})`,
+          "추천횟수": group.count,
+          "연도": Array.from(group.years).sort().join(", "),
+          "월": Array.from(group.months).sort((a: number, b: number) => a - b).join(", ")
         }));
 
       } else {
