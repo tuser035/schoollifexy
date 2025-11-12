@@ -130,17 +130,15 @@ const MonthlyForm = () => {
       }
 
       const now = new Date();
-      const { error } = await supabase
-        .from("monthly")
-        .insert({
-          student_id: selectedStudent.student_id,
-          teacher_id: user.id,
-          category: selectedCategory,
-          reason: reason.trim(),
-          image_url: imageUrl,
-          year: now.getFullYear(),
-          month: now.getMonth() + 1,
-        });
+      const { data, error } = await supabase.rpc('insert_monthly_recommendation', {
+        student_id_input: selectedStudent.student_id,
+        teacher_id_input: user.id,
+        category_input: selectedCategory,
+        reason_input: reason.trim(),
+        image_url_input: imageUrl,
+        year_input: now.getFullYear(),
+        month_input: now.getMonth() + 1,
+      });
 
       if (error) throw error;
 

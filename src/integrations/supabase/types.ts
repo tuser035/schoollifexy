@@ -355,6 +355,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      insert_monthly_recommendation: {
+        Args: {
+          category_input: string
+          image_url_input: string
+          month_input: number
+          reason_input: string
+          student_id_input: string
+          teacher_id_input: string
+          year_input: number
+        }
+        Returns: string
+      }
       set_admin_session: {
         Args: { admin_id_input: string }
         Returns: undefined
