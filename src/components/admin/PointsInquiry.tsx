@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +25,7 @@ const PointsInquiry = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentPoint | null>(null);
   const [detailType, setDetailType] = useState<"merits" | "demerits" | "monthly">("merits");
-  const [details, setDetails] = useState<any[]>([]);
+  const [details, setDetails] = useState<any[] | { merits: any[], demerits: any[] }>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
@@ -99,29 +100,39 @@ const PointsInquiry = () => {
     setDetailType(type);
 
     try {
-      let result;
       if (type === "merits") {
-        result = await supabase
-          .from("merits")
-          .select("*, teachers(name)")
-          .eq("student_id", student.student_id)
-          .order("created_at", { ascending: false });
-      } else if (type === "demerits") {
-        result = await supabase
-          .from("demerits")
-          .select("*, teachers(name)")
-          .eq("student_id", student.student_id)
-          .order("created_at", { ascending: false });
+        // Fetch both merits and demerits together
+        const [meritsResult, demeritsResult] = await Promise.all([
+          supabase
+            .from("merits")
+            .select("*, teachers(name)")
+            .eq("student_id", student.student_id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("demerits")
+            .select("*, teachers(name)")
+            .eq("student_id", student.student_id)
+            .order("created_at", { ascending: false }),
+        ]);
+
+        if (meritsResult.error) throw meritsResult.error;
+        if (demeritsResult.error) throw demeritsResult.error;
+
+        // Store both in details - we'll separate them in the UI
+        setDetails({
+          merits: meritsResult.data || [],
+          demerits: demeritsResult.data || [],
+        });
       } else {
-        result = await supabase
+        const result = await supabase
           .from("monthly")
           .select("*, teachers(name)")
           .eq("student_id", student.student_id)
           .order("created_at", { ascending: false });
-      }
 
-      if (result.error) throw result.error;
-      setDetails(result.data || []);
+        if (result.error) throw result.error;
+        setDetails(result.data || []);
+      }
     } catch (error: any) {
       toast.error(error.message || "상세 조회에 실패했습니다");
     }
@@ -196,15 +207,7 @@ const PointsInquiry = () => {
                             className="text-xs"
                             onClick={() => handleShowDetail(student, "merits")}
                           >
-                            상점
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs"
-                            onClick={() => handleShowDetail(student, "demerits")}
-                          >
-                            벌점
+                            상점/벌점
                           </Button>
                           <Button
                             size="sm"
@@ -226,54 +229,167 @@ const PointsInquiry = () => {
       </Card>
 
       <Dialog open={selectedStudent !== null} onOpenChange={() => setSelectedStudent(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>
-              {selectedStudent?.name} - {detailType === "merits" ? "상점" : detailType === "demerits" ? "벌점" : "이달의학생"} 내역
+              {selectedStudent?.name} - {detailType === "merits" ? "상점/벌점" : "이달의학생"} 내역
             </DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto max-h-[400px]">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>날짜</TableHead>
-                  <TableHead>교사</TableHead>
-                  {detailType === "monthly" ? (
-                    <TableHead>구분</TableHead>
-                  ) : (
-                    <TableHead>카테고리</TableHead>
-                  )}
-                  <TableHead>사유</TableHead>
-                  {detailType !== "monthly" && <TableHead>점수</TableHead>}
-                  <TableHead>증빙 사진</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {details.map((detail, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell>{new Date(detail.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>{detail.teachers?.name || "-"}</TableCell>
-                    <TableCell>{detail.category || "-"}</TableCell>
-                    <TableCell>{detail.reason || "-"}</TableCell>
-                    {detailType !== "monthly" && <TableCell>{detail.score}</TableCell>}
-                    <TableCell>
-                      {detail.image_url ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleImageClick(detail.image_url)}
-                        >
-                          <ImageIcon className="h-4 w-4 mr-1" />
-                          보기
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">없음</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="overflow-auto">
+            {detailType === "merits" ? (
+              <Tabs defaultValue="merits" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="merits">상점</TabsTrigger>
+                  <TabsTrigger value="demerits">벌점</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="merits">
+                  <div className="border rounded-lg overflow-auto max-h-[400px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>날짜</TableHead>
+                          <TableHead>교사</TableHead>
+                          <TableHead>카테고리</TableHead>
+                          <TableHead>사유</TableHead>
+                          <TableHead>점수</TableHead>
+                          <TableHead>증빙 사진</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {!Array.isArray(details) && details?.merits?.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center text-muted-foreground">
+                              상점 내역이 없습니다
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          !Array.isArray(details) && details?.merits?.map((detail: any, idx: number) => (
+                            <TableRow key={idx}>
+                              <TableCell>{new Date(detail.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell>{detail.teachers?.name || "-"}</TableCell>
+                              <TableCell>{detail.category || "-"}</TableCell>
+                              <TableCell>{detail.reason || "-"}</TableCell>
+                              <TableCell className="text-merit-blue font-medium">{detail.score}</TableCell>
+                              <TableCell>
+                                {detail.image_url ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleImageClick(detail.image_url)}
+                                  >
+                                    <ImageIcon className="h-4 w-4 mr-1" />
+                                    보기
+                                  </Button>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">없음</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="demerits">
+                  <div className="border rounded-lg overflow-auto max-h-[400px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>날짜</TableHead>
+                          <TableHead>교사</TableHead>
+                          <TableHead>카테고리</TableHead>
+                          <TableHead>사유</TableHead>
+                          <TableHead>점수</TableHead>
+                          <TableHead>증빙 사진</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {!Array.isArray(details) && details?.demerits?.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center text-muted-foreground">
+                              벌점 내역이 없습니다
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          !Array.isArray(details) && details?.demerits?.map((detail: any, idx: number) => (
+                            <TableRow key={idx}>
+                              <TableCell>{new Date(detail.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell>{detail.teachers?.name || "-"}</TableCell>
+                              <TableCell>{detail.category || "-"}</TableCell>
+                              <TableCell>{detail.reason || "-"}</TableCell>
+                              <TableCell className="text-demerit-orange font-medium">{detail.score}</TableCell>
+                              <TableCell>
+                                {detail.image_url ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleImageClick(detail.image_url)}
+                                  >
+                                    <ImageIcon className="h-4 w-4 mr-1" />
+                                    보기
+                                  </Button>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">없음</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <div className="border rounded-lg overflow-auto max-h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>날짜</TableHead>
+                      <TableHead>교사</TableHead>
+                      <TableHead>구분</TableHead>
+                      <TableHead>사유</TableHead>
+                      <TableHead>증빙 사진</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.isArray(details) && details?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          이달의 학생 추천 내역이 없습니다
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      Array.isArray(details) && details?.map((detail: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>{new Date(detail.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell>{detail.teachers?.name || "-"}</TableCell>
+                          <TableCell>{detail.category || "-"}</TableCell>
+                          <TableCell>{detail.reason || "-"}</TableCell>
+                          <TableCell>
+                            {detail.image_url ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleImageClick(detail.image_url)}
+                              >
+                                <ImageIcon className="h-4 w-4 mr-1" />
+                                보기
+                              </Button>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">없음</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
