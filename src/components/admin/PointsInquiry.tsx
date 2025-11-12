@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageIcon } from "lucide-react";
 
 interface StudentPoint {
   student_id: string;
@@ -24,6 +25,8 @@ const PointsInquiry = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentPoint | null>(null);
   const [detailType, setDetailType] = useState<"merits" | "demerits" | "monthly">("merits");
   const [details, setDetails] = useState<any[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
   useEffect(() => {
     const setAdminSession = async () => {
@@ -122,6 +125,11 @@ const PointsInquiry = () => {
     } catch (error: any) {
       toast.error(error.message || "상세 조회에 실패했습니다");
     }
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageDialogOpen(true);
   };
 
   return (
@@ -237,6 +245,7 @@ const PointsInquiry = () => {
                   )}
                   <TableHead>사유</TableHead>
                   {detailType !== "monthly" && <TableHead>점수</TableHead>}
+                  <TableHead>증빙 사진</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -247,11 +256,43 @@ const PointsInquiry = () => {
                     <TableCell>{detail.category || "-"}</TableCell>
                     <TableCell>{detail.reason || "-"}</TableCell>
                     {detailType !== "monthly" && <TableCell>{detail.score}</TableCell>}
+                    <TableCell>
+                      {detail.image_url ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleImageClick(detail.image_url)}
+                        >
+                          <ImageIcon className="h-4 w-4 mr-1" />
+                          보기
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">없음</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>증빙 사진</DialogTitle>
+          </DialogHeader>
+          {selectedImage && (
+            <div className="w-full">
+              <img
+                src={selectedImage}
+                alt="증빙 사진"
+                className="w-full h-auto rounded-lg"
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
