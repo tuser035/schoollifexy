@@ -7,6 +7,7 @@ import { Award, AlertCircle, Star, LogOut } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import MeritForm from "@/components/teacher/MeritForm";
 import DemeritForm from "@/components/teacher/DemeritForm";
+import MonthlyForm from "@/components/teacher/MonthlyForm";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ const TeacherDashboard = () => {
                 <CardTitle className="text-monthly-green">이달의 학생 추천</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">이달의 학생 추천 기능 구현 중...</p>
+                <MonthlyForm />
               </CardContent>
             </Card>
           </TabsContent>
