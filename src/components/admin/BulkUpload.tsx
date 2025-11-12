@@ -214,10 +214,8 @@ const BulkUpload = () => {
         result = await supabase.from(table).upsert(records, { onConflict: 'teacher_email' });
       } else if (table === "departments") {
         result = await supabase.from(table).upsert(records, { onConflict: 'code' });
-      } else if (table === "homeroom") {
-        result = await supabase.from(table).upsert(records, { onConflict: 'teacher_id,year' });
       } else {
-        // For merits, demerits, monthly - just insert (no unique constraint)
+        // For homeroom, merits, demerits, monthly - just insert (no unique constraint)
         result = await supabase.from(table).insert(records);
       }
       
