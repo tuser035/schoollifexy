@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -11,6 +11,7 @@ import PointsInquiry from "@/components/admin/PointsInquiry";
 import CounselingInquiry from "@/components/admin/CounselingInquiry";
 import StatisticsChart from "@/components/admin/StatisticsChart";
 import StorageManager from "@/components/admin/StorageManager";
+import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="password" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-8 mb-6">
             <TabsTrigger value="password">
               <Key className="w-4 h-4 mr-2" />
               비밀번호
@@ -81,6 +82,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="statistics">
               <TrendingUp className="w-4 h-4 mr-2" />
               통계
+            </TabsTrigger>
+            <TabsTrigger value="leaderboard">
+              <Trophy className="w-4 h-4 mr-2" />
+              순위
             </TabsTrigger>
             <TabsTrigger value="storage">
               <FolderOpen className="w-4 h-4 mr-2" />
@@ -110,6 +115,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="statistics">
             <StatisticsChart />
+          </TabsContent>
+
+          <TabsContent value="leaderboard">
+            <StudentLeaderboard />
           </TabsContent>
 
           <TabsContent value="storage">
