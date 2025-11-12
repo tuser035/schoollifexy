@@ -34,6 +34,7 @@ const DataInquiry = () => {
   const [counselingDate, setCounselingDate] = useState(new Date().toISOString().split('T')[0]);
   const [counselingContent, setCounselingContent] = useState("");
   const [isSavingCounseling, setIsSavingCounseling] = useState(false);
+  const [monthlyRawData, setMonthlyRawData] = useState<any[]>([]);
 
   const exportToCSV = () => {
     if (data.length === 0) {
@@ -41,17 +42,32 @@ const DataInquiry = () => {
       return;
     }
 
-    // CSV 헤더
-    const csvHeader = columns.join(",");
-    
-    // CSV 데이터 행
-    const csvRows = data.map(row => 
-      columns.map(col => {
-        const value = row[col]?.toString() || "";
-        // 쉼표나 줄바꿈이 포함된 경우 따옴표로 감싸기
-        return value.includes(",") || value.includes("\n") ? `"${value}"` : value;
-      }).join(",")
-    );
+    let csvHeader: string;
+    let csvRows: string[];
+
+    // 이달의 학생 테이블의 경우 상세 내역 포함
+    if (selectedTable === "monthly" && monthlyRawData.length > 0) {
+      csvHeader = "날짜,학생,학번,추천교사,구분,사유,증빙사진";
+      csvRows = monthlyRawData.map(row => {
+        const date = new Date(row.created_at).toLocaleDateString('ko-KR');
+        const studentName = row.student_name || "-";
+        const studentId = row.student_id || "-";
+        const teacher = row.teacher_name || "-";
+        const category = row.category || "-";
+        const reason = (row.reason || "-").replace(/,/g, " ").replace(/\n/g, " ");
+        const imageUrl = row.image_url || "-";
+        return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageUrl}`;
+      });
+    } else {
+      // 기존 방식대로 처리
+      csvHeader = columns.join(",");
+      csvRows = data.map(row => 
+        columns.map(col => {
+          const value = row[col]?.toString() || "";
+          return value.includes(",") || value.includes("\n") ? `"${value}"` : value;
+        }).join(",")
+      );
+    }
     
     // BOM 추가 (한글 깨짐 방지)
     const BOM = "\uFEFF";
@@ -393,6 +409,9 @@ const DataInquiry = () => {
         });
 
         if (queryError) throw queryError;
+
+        // 원본 데이터 저장 (CSV용)
+        setMonthlyRawData(data || []);
 
         // 학생별로 그룹화하여 추천 횟수 누적
         const groupedData = data?.reduce((acc: any, row: any) => {
