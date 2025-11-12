@@ -38,6 +38,39 @@ export type Database = {
         }
         Relationships: []
       }
+      career_counseling: {
+        Row: {
+          admin_id: string
+          content: string
+          counseling_date: string
+          counselor_name: string
+          created_at: string | null
+          id: string
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_id: string
+          content: string
+          counseling_date?: string
+          counselor_name: string
+          created_at?: string | null
+          id?: string
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_id?: string
+          content?: string
+          counseling_date?: string
+          counselor_name?: string
+          created_at?: string | null
+          id?: string
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       demerits: {
         Row: {
           category: string
@@ -355,6 +388,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_counseling_records: {
+        Args: { admin_id_input: string; student_id_input: string }
+        Returns: {
+          content: string
+          counseling_date: string
+          counselor_name: string
+          created_at: string
+          id: string
+        }[]
+      }
       admin_get_demerit_details: {
         Args: { admin_id_input: string; student_id_input: string }
         Returns: {

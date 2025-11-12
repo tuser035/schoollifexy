@@ -4,11 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Download } from "lucide-react";
+import { Download, ClipboardEdit } from "lucide-react";
 
 type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "monthly" | "departments";
+
+interface MonthlyStudent {
+  학생: string;
+  추천횟수: number;
+  연도: string;
+  월: string;
+  student_id?: string;
+  student_name?: string;
+}
 
 const DataInquiry = () => {
   const [selectedTable, setSelectedTable] = useState<TableType>("students");
@@ -16,6 +28,12 @@ const DataInquiry = () => {
   const [columns, setColumns] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isCounselingDialogOpen, setIsCounselingDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<MonthlyStudent | null>(null);
+  const [counselorName, setCounselorName] = useState("");
+  const [counselingDate, setCounselingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [counselingContent, setCounselingContent] = useState("");
+  const [isSavingCounseling, setIsSavingCounseling] = useState(false);
 
   const exportToCSV = () => {
     if (data.length === 0) {
@@ -63,6 +81,71 @@ const DataInquiry = () => {
     URL.revokeObjectURL(url);
     
     toast.success("CSV 파일이 다운로드되었습니다");
+  };
+
+  const handleOpenCounselingDialog = (student: MonthlyStudent) => {
+    setSelectedStudent(student);
+    setCounselorName("");
+    setCounselingDate(new Date().toISOString().split('T')[0]);
+    setCounselingContent("");
+    setIsCounselingDialogOpen(true);
+  };
+
+  const handleSaveCounseling = async () => {
+    if (!selectedStudent?.student_id) {
+      toast.error("학생 정보를 찾을 수 없습니다");
+      return;
+    }
+
+    if (!counselorName.trim()) {
+      toast.error("상담사 이름을 입력해주세요");
+      return;
+    }
+
+    if (!counselingContent.trim()) {
+      toast.error("상담 내용을 입력해주세요");
+      return;
+    }
+
+    setIsSavingCounseling(true);
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      if (parsedUser.type !== "admin" || !parsedUser.id) {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
+      // Set admin session for RLS
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: parsedUser.id
+      });
+
+      const { error } = await supabase
+        .from("career_counseling")
+        .insert({
+          student_id: selectedStudent.student_id,
+          counselor_name: counselorName.trim(),
+          counseling_date: counselingDate,
+          content: counselingContent.trim(),
+          admin_id: parsedUser.id
+        });
+
+      if (error) throw error;
+
+      toast.success("진로상담 기록이 저장되었습니다");
+      setIsCounselingDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "상담 기록 저장에 실패했습니다");
+    } finally {
+      setIsSavingCounseling(false);
+    }
   };
 
   const handleQuery = async () => {
@@ -316,6 +399,7 @@ const DataInquiry = () => {
           const studentKey = row.student_name;
           if (!acc[studentKey]) {
             acc[studentKey] = {
+              student_id: row.student_id,
               student_name: row.student_name,
               student_grade: row.student_grade,
               student_class: row.student_class,
@@ -330,12 +414,17 @@ const DataInquiry = () => {
           return acc;
         }, {});
 
-        result = Object.values(groupedData || {}).map((group: any) => ({
-          "학생": `${group.student_name} (${group.student_grade}-${group.student_class})`,
-          "추천횟수": group.count,
-          "연도": Array.from(group.years).sort().join(", "),
-          "월": Array.from(group.months).sort((a: number, b: number) => a - b).join(", ")
-        }));
+        // 추천횟수 기준 내림차순 정렬
+        result = Object.values(groupedData || {})
+          .sort((a: any, b: any) => b.count - a.count)
+          .map((group: any) => ({
+            "학생": `${group.student_name} (${group.student_grade}-${group.student_class})`,
+            "추천횟수": group.count,
+            "연도": Array.from(group.years).sort().join(", "),
+            "월": Array.from(group.months).sort((a: number, b: number) => a - b).join(", "),
+            student_id: group.student_id,
+            student_name: group.student_name
+          }));
 
       } else {
         // departments
@@ -421,21 +510,40 @@ const DataInquiry = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {columns.map((col) => (
+                    {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
                       <TableHead key={col} className="whitespace-nowrap">
                         {col}
                       </TableHead>
                     ))}
+                    {selectedTable === "monthly" && (
+                      <TableHead className="whitespace-nowrap">상담기록</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.map((row, idx) => (
                     <TableRow key={idx}>
-                      {columns.map((col) => (
+                      {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
                         <TableCell key={col} className="whitespace-nowrap">
                           {row[col]?.toString() || "-"}
                         </TableCell>
                       ))}
+                      {selectedTable === "monthly" && (
+                        <TableCell className="whitespace-nowrap">
+                          {idx < 9 ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenCounselingDialog(row)}
+                            >
+                              <ClipboardEdit className="h-4 w-4 mr-1" />
+                              기록
+                            </Button>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -444,6 +552,65 @@ const DataInquiry = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* 진로상담 기록 다이얼로그 */}
+      <Dialog open={isCounselingDialogOpen} onOpenChange={setIsCounselingDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>진로상담 기록 - {selectedStudent?.학생}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="counselor-name">상담사 이름 *</Label>
+              <Input
+                id="counselor-name"
+                value={counselorName}
+                onChange={(e) => setCounselorName(e.target.value)}
+                placeholder="상담사 이름을 입력하세요"
+                maxLength={50}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="counseling-date">상담 날짜 *</Label>
+              <Input
+                id="counseling-date"
+                type="date"
+                value={counselingDate}
+                onChange={(e) => setCounselingDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="counseling-content">상담 내용 *</Label>
+              <Textarea
+                id="counseling-content"
+                value={counselingContent}
+                onChange={(e) => setCounselingContent(e.target.value)}
+                placeholder="진로상담 내용을 상세히 입력하세요"
+                rows={8}
+                maxLength={2000}
+              />
+              <p className="text-sm text-muted-foreground">
+                {counselingContent.length} / 2000자
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCounselingDialogOpen(false)}
+              disabled={isSavingCounseling}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSaveCounseling}
+              disabled={isSavingCounseling}
+            >
+              {isSavingCounseling ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
