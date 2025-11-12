@@ -17,7 +17,7 @@ export const loginStudent = async (studentId: string, password: string) => {
       .from("students")
       .select("*")
       .eq("student_id", studentId)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data) throw new Error("학생을 찾을 수 없습니다");
@@ -52,7 +52,7 @@ export const loginTeacher = async (phone: string, password: string) => {
       .from("teachers")
       .select("*")
       .eq("call_t", phone)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data) throw new Error("교사를 찾을 수 없습니다");
@@ -87,7 +87,7 @@ export const loginAdmin = async (email: string, password: string) => {
       .from("admins")
       .select("*")
       .eq("email", email)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data) throw new Error("관리자를 찾을 수 없습니다");
