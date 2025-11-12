@@ -133,9 +133,22 @@ const BulkUpload = () => {
         records.push(record);
       }
 
-      const { error } = await supabase.from(table).insert(records);
+      // Use upsert to handle duplicate keys
+      let result;
+      if (table === "students") {
+        result = await supabase.from(table).upsert(records, { onConflict: 'student_id' });
+      } else if (table === "teachers") {
+        result = await supabase.from(table).upsert(records, { onConflict: 'email' });
+      } else if (table === "departments") {
+        result = await supabase.from(table).upsert(records, { onConflict: 'code' });
+      } else if (table === "homeroom") {
+        result = await supabase.from(table).upsert(records, { onConflict: 'teacher_id,year' });
+      } else {
+        // For merits, demerits, monthly - just insert (no unique constraint)
+        result = await supabase.from(table).insert(records);
+      }
       
-      if (error) throw error;
+      if (result.error) throw result.error;
       
       toast.success(`${records.length}개의 레코드가 성공적으로 업로드되었습니다`);
     } catch (error: any) {
