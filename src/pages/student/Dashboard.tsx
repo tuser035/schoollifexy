@@ -123,6 +123,30 @@ const StudentDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Total Score Card */}
+        <Card className="mb-6 border-2">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-2">총 상벌점</p>
+              <div
+                className={`text-6xl font-bold ${
+                  meritsTotal - demeritsTotal > 0
+                    ? "text-merit-blue"
+                    : meritsTotal - demeritsTotal < 0
+                    ? "text-demerit-orange"
+                    : "text-foreground"
+                }`}
+              >
+                {isLoading ? "..." : meritsTotal - demeritsTotal > 0 ? "+" : ""}
+                {isLoading ? "" : meritsTotal - demeritsTotal}
+              </div>
+              <p className="text-muted-foreground mt-2">
+                상점 {meritsTotal}점 - 벌점 {demeritsTotal}점
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="border-merit-blue">
             <CardHeader className="bg-merit-blue-light">
