@@ -122,10 +122,21 @@ const DataInquiry = () => {
         if (trimmedSearch) {
           // 숫자로만 검색 (학년, 반)
           if (!isNaN(Number(trimmedSearch))) {
-            query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+            const searchNum = trimmedSearch;
+            
+            // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반 (예: 38 → 3학년 8반)
+            if (searchNum.length === 2) {
+              const grade = parseInt(searchNum[0]);
+              const classNum = parseInt(searchNum[1]);
+              query = query.eq("grade", grade).eq("class", classNum);
+            } 
+            // 한 자리 숫자: 학년 또는 반으로 검색
+            else {
+              query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+            }
           } else {
             // 문자는 담임반 테이블에서 검색 불가 (teacher JOIN이 불안정하므로)
-            toast.info("담임반은 학년이나 반 번호로 검색해주세요");
+            toast.info("담임반은 학년반 번호로 검색해주세요 (예: 38 → 3학년 8반)");
             result = [];
           }
         }
@@ -439,7 +450,7 @@ const DataInquiry = () => {
               placeholder={
                 selectedTable === "students" ? "학생명, 학년, 반으로 검색" :
                 selectedTable === "teachers" ? "교사명, 학년, 반으로 검색" :
-                selectedTable === "homeroom" ? "학년, 반으로 검색" :
+                selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
                 selectedTable === "merits" || selectedTable === "demerits" ? "학생명, 교사명, 학년, 반으로 검색" :
                 selectedTable === "monthly" ? "학생명으로 검색" :
                 "검색"
