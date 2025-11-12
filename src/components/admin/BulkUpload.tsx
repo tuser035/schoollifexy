@@ -88,10 +88,26 @@ const BulkUpload = () => {
       
       console.log('Available teacher emails:', Array.from(teacherMap.keys()));
 
-      // Skip header and parse data
+      // Parse header to support flexible column order
+      const header = lines[0].split(",").map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
       const dataLines = lines.slice(1);
       const records: any[] = [];
-
+      // Resolve column indices by header (fallback to legacy positions)
+      const idx = {
+        homeroom: {
+          teacher_email: header.indexOf("teacher_email"),
+          grade: header.indexOf("grade"),
+          class: header.indexOf("class"),
+          year: header.indexOf("year"),
+        },
+        points: { // for merits and demerits
+          student_id: header.indexOf("student_id"),
+          teacher_email: header.indexOf("teacher_email"),
+          category: header.indexOf("category"),
+          reason: header.indexOf("reason"),
+          score: header.indexOf("score"),
+        }
+      } as const;
       for (let i = 0; i < dataLines.length; i++) {
         const line = dataLines[i];
         const lineNumber = i + 2; // Header is line 1, so data starts at line 2
@@ -125,37 +141,41 @@ const BulkUpload = () => {
               is_homeroom: values[6] === "true" || values[6] === "1",
             };
           } else if (table === "homeroom") {
-            const teacherEmail = values[0]?.trim().toLowerCase();
-            const teacherId = teacherMap.get(teacherEmail);
-            
+            const tIdx = idx.homeroom;
+            const teacherEmailRaw = tIdx.teacher_email !== -1 ? values[tIdx.teacher_email] : values[0];
+            const teacherEmail = teacherEmailRaw?.trim().toLowerCase();
             console.log(`Looking for teacher email: "${teacherEmail}"`);
-            
-            if (!teacherId) {
-              throw new Error(`교사 이메일 '${values[0]}'을 찾을 수 없습니다`);
+            if (!teacherEmail) {
+              throw new Error(`teacher_email 컬럼이 비어있습니다`);
             }
-            
+            const teacherId = teacherMap.get(teacherEmail);
+            if (!teacherId) {
+              throw new Error(`교사 이메일 '${teacherEmailRaw}'을 찾을 수 없습니다`);
+            }
             record = {
               teacher_id: teacherId,
-              grade: parseInt(values[1]),
-              class: parseInt(values[2]),
-              year: values[3] ? parseInt(values[3]) : new Date().getFullYear(),
+              grade: parseInt(tIdx.grade !== -1 ? values[tIdx.grade] : values[1]),
+              class: parseInt(tIdx.class !== -1 ? values[tIdx.class] : values[2]),
+              year: (tIdx.year !== -1 ? values[tIdx.year] : values[3]) ? parseInt(tIdx.year !== -1 ? values[tIdx.year] : values[3]) : new Date().getFullYear(),
             };
           } else if (table === "merits" || table === "demerits") {
-            const teacherEmail = values[1]?.trim().toLowerCase();
-            const teacherId = teacherMap.get(teacherEmail);
-            
+            const pIdx = idx.points;
+            const teacherEmailRaw = pIdx.teacher_email !== -1 ? values[pIdx.teacher_email] : values[1];
+            const teacherEmail = teacherEmailRaw?.trim().toLowerCase();
             console.log(`Looking for teacher email: "${teacherEmail}"`);
-            
-            if (!teacherId) {
-              throw new Error(`교사 이메일 '${values[1]}'을 찾을 수 없습니다`);
+            if (!teacherEmail) {
+              throw new Error(`teacher_email 컬럼이 비어있습니다`);
             }
-            
+            const teacherId = teacherMap.get(teacherEmail);
+            if (!teacherId) {
+              throw new Error(`교사 이메일 '${teacherEmailRaw}'을 찾을 수 없습니다`);
+            }
             record = {
-              student_id: values[0],
+              student_id: pIdx.student_id !== -1 ? values[pIdx.student_id] : values[0],
               teacher_id: teacherId,
-              category: values[2],
-              reason: values[3] || null,
-              score: values[4] ? parseInt(values[4]) : 1,
+              category: pIdx.category !== -1 ? values[pIdx.category] : values[2],
+              reason: (pIdx.reason !== -1 ? values[pIdx.reason] : values[3]) || null,
+              score: (pIdx.score !== -1 ? values[pIdx.score] : values[4]) ? parseInt(pIdx.score !== -1 ? values[pIdx.score] : values[4]) : 1,
             };
           } else if (table === "departments") {
             record = {
