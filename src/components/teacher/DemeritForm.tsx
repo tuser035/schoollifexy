@@ -137,9 +137,12 @@ const DemeritForm = () => {
   const handleReasonChange = (reasonIndex: string) => {
     const categoryData = demeritCategories.find(c => c.category === selectedCategory);
     if (categoryData) {
-      const reason = categoryData.reasons[parseInt(reasonIndex)];
-      setSelectedReason(reason.reason);
-      setSelectedScore(reason.score);
+      const idx = parseInt(reasonIndex);
+      const reason = categoryData.reasons[idx];
+      if (reason) {
+        setSelectedReason(reason.reason);
+        setSelectedScore(reason.score);
+      }
     }
   };
 
