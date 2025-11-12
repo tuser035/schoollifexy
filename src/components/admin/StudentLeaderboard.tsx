@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal, Award, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface StudentRank {
@@ -196,6 +196,44 @@ const StudentLeaderboard = () => {
     return "destructive";
   };
 
+  const exportToCSV = () => {
+    if (students.length === 0) {
+      toast.error("내보낼 데이터가 없습니다");
+      return;
+    }
+
+    const csvHeader = "순위,학번,이름,학년,반,번호,상점,벌점,순점수";
+    const csvRows = students.map((student, index) => 
+      `${index + 1},${student.student_id},${student.name},${student.grade},${student.class},${student.number},${student.merits},${student.demerits},${student.total}`
+    );
+    
+    const BOM = "\uFEFF";
+    const csvContent = BOM + csvHeader + "\n" + csvRows.join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    const timestamp = new Date().toISOString().slice(0, 10);
+    let fileName = `리더보드_${timestamp}`;
+    
+    if (filterType === "grade") {
+      fileName = `${selectedGrade}학년_리더보드_${timestamp}`;
+    } else if (filterType === "class") {
+      fileName = `${selectedGrade}학년_${selectedClass}반_리더보드_${timestamp}`;
+    }
+    
+    link.download = `${fileName}.csv`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success("CSV 파일이 다운로드되었습니다");
+  };
+
   useEffect(() => {
     loadLeaderboard();
   }, [filterType, selectedGrade, selectedClass, sortBy]);
@@ -281,6 +319,13 @@ const StudentLeaderboard = () => {
             <Button onClick={loadLeaderboard} disabled={isLoading}>
               {isLoading ? "조회 중..." : "새로고침"}
             </Button>
+
+            {students.length > 0 && (
+              <Button variant="outline" onClick={exportToCSV}>
+                <Download className="h-4 w-4 mr-2" />
+                CSV 내보내기
+              </Button>
+            )}
           </div>
 
           {students.length > 0 && (
