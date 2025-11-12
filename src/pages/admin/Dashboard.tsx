@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Key, Upload, Database, BarChart, LogOut } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
+import PasswordReset from "@/components/admin/PasswordReset";
+import BulkUpload from "@/components/admin/BulkUpload";
+import DataInquiry from "@/components/admin/DataInquiry";
+import PointsInquiry from "@/components/admin/PointsInquiry";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -71,47 +74,19 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="password">
-            <Card>
-              <CardHeader>
-                <CardTitle>비밀번호 재설정</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">비밀번호 재설정 기능 구현 중...</p>
-              </CardContent>
-            </Card>
+            <PasswordReset />
           </TabsContent>
 
           <TabsContent value="upload">
-            <Card>
-              <CardHeader>
-                <CardTitle>CSV 대량 업로드</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">CSV 업로드 기능 구현 중...</p>
-              </CardContent>
-            </Card>
+            <BulkUpload />
           </TabsContent>
 
           <TabsContent value="data">
-            <Card>
-              <CardHeader>
-                <CardTitle>데이터 조회</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">데이터 조회 기능 구현 중...</p>
-              </CardContent>
-            </Card>
+            <DataInquiry />
           </TabsContent>
 
           <TabsContent value="points">
-            <Card>
-              <CardHeader>
-                <CardTitle>상점/벌점 조회</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">포인트 조회 기능 구현 중...</p>
-              </CardContent>
-            </Card>
+            <PointsInquiry />
           </TabsContent>
         </Tabs>
       </main>
