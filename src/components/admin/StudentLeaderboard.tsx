@@ -79,7 +79,8 @@ const StudentLeaderboard = () => {
 
       const studentIds = studentsData.map(s => s.student_id);
 
-      // 상점 집계
+      // 상점 집계 (각 학생별로 개별 집계)
+      const meritsMap = new Map<string, number>();
       const { data: meritsData, error: meritsError } = await supabase
         .from("merits")
         .select("student_id, score")
@@ -87,7 +88,13 @@ const StudentLeaderboard = () => {
 
       if (meritsError) throw meritsError;
 
-      // 벌점 집계
+      meritsData?.forEach(merit => {
+        const current = meritsMap.get(merit.student_id) || 0;
+        meritsMap.set(merit.student_id, current + merit.score);
+      });
+
+      // 벌점 집계 (각 학생별로 개별 집계)
+      const demeritsMap = new Map<string, number>();
       const { data: demeritsData, error: demeritsError } = await supabase
         .from("demerits")
         .select("student_id, score")
@@ -95,15 +102,15 @@ const StudentLeaderboard = () => {
 
       if (demeritsError) throw demeritsError;
 
+      demeritsData?.forEach(demerit => {
+        const current = demeritsMap.get(demerit.student_id) || 0;
+        demeritsMap.set(demerit.student_id, current + demerit.score);
+      });
+
       // 학생별 집계
       const rankedStudents: StudentRank[] = studentsData.map(student => {
-        const merits = meritsData
-          ?.filter(m => m.student_id === student.student_id)
-          .reduce((sum, m) => sum + m.score, 0) || 0;
-
-        const demerits = demeritsData
-          ?.filter(d => d.student_id === student.student_id)
-          .reduce((sum, d) => sum + d.score, 0) || 0;
+        const merits = meritsMap.get(student.student_id) || 0;
+        const demerits = demeritsMap.get(student.student_id) || 0;
 
         return {
           ...student,
