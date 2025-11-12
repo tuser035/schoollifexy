@@ -81,6 +81,11 @@ const BulkUpload = () => {
         .from('teachers')
         .select('id, teacher_email, grade, class');
       
+      // Pre-fetch all students for merit/demerit teacher matching
+      const { data: students } = await supabase
+        .from('students')
+        .select('student_id, grade, class');
+      
       // Create map with normalized (trimmed and lowercase) emails as keys
       const teacherMap = new Map(
         teachers?.map(t => [t.teacher_email?.trim().toLowerCase(), t.id]) || []
@@ -176,18 +181,36 @@ const BulkUpload = () => {
             };
           } else if (table === "merits" || table === "demerits") {
             const pIdx = idx.points;
+            const studentId = pIdx.student_id !== -1 ? values[pIdx.student_id] : values[0];
             const teacherEmailRaw = pIdx.teacher_email !== -1 ? values[pIdx.teacher_email] : values[1];
             const teacherEmail = teacherEmailRaw?.trim().toLowerCase();
-            console.log(`Looking for teacher email: "${teacherEmail}"`);
-            if (!teacherEmail) {
-              throw new Error(`teacher_email 컬럼이 비어있습니다`);
+            
+            let teacherId: string | undefined;
+            
+            if (teacherEmail) {
+              // If teacher_email is provided, use it
+              teacherId = teacherMap.get(teacherEmail);
+              if (!teacherId) {
+                throw new Error(`교사 이메일 '${teacherEmailRaw}'을 찾을 수 없습니다`);
+              }
+            } else {
+              // If teacher_email is empty, find teacher by student's grade and class
+              const student = students?.find(s => s.student_id === studentId);
+              if (student) {
+                const matchingTeacher = teachers?.find(t => t.grade === student.grade && t.class === student.class);
+                if (matchingTeacher) {
+                  teacherId = matchingTeacher.id;
+                  console.log(`Found teacher for student ${studentId} (grade ${student.grade} class ${student.class}): ${matchingTeacher.teacher_email}`);
+                } else {
+                  throw new Error(`학생 ${studentId}의 담임교사를 찾을 수 없습니다 (${student.grade}학년 ${student.class}반)`);
+                }
+              } else {
+                throw new Error(`학생 ID '${studentId}'를 찾을 수 없습니다`);
+              }
             }
-            const teacherId = teacherMap.get(teacherEmail);
-            if (!teacherId) {
-              throw new Error(`교사 이메일 '${teacherEmailRaw}'을 찾을 수 없습니다`);
-            }
+            
             record = {
-              student_id: pIdx.student_id !== -1 ? values[pIdx.student_id] : values[0],
+              student_id: studentId,
               teacher_id: teacherId,
               category: pIdx.category !== -1 ? values[pIdx.category] : values[2],
               reason: (pIdx.reason !== -1 ? values[pIdx.reason] : values[3]) || null,
