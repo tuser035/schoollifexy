@@ -186,6 +186,7 @@ export type Database = {
       }
       monthly: {
         Row: {
+          category: string | null
           created_at: string | null
           id: string
           month: number
@@ -195,6 +196,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           id?: string
           month: number
@@ -204,6 +206,7 @@ export type Database = {
           year: number
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           id?: string
           month?: number
