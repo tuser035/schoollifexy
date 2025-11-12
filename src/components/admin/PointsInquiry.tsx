@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,19 @@ const PointsInquiry = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentPoint | null>(null);
   const [detailType, setDetailType] = useState<"merits" | "demerits" | "monthly">("merits");
   const [details, setDetails] = useState<any[]>([]);
+
+  useEffect(() => {
+    const setAdminSession = async () => {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: user.id,
+        });
+      }
+    };
+    setAdminSession();
+  }, []);
 
   const handleQuery = async () => {
     setIsLoading(true);
@@ -217,7 +230,11 @@ const PointsInquiry = () => {
                 <TableRow>
                   <TableHead>날짜</TableHead>
                   <TableHead>교사</TableHead>
-                  {detailType !== "monthly" && <TableHead>카테고리</TableHead>}
+                  {detailType === "monthly" ? (
+                    <TableHead>구분</TableHead>
+                  ) : (
+                    <TableHead>카테고리</TableHead>
+                  )}
                   <TableHead>사유</TableHead>
                   {detailType !== "monthly" && <TableHead>점수</TableHead>}
                 </TableRow>
@@ -227,7 +244,7 @@ const PointsInquiry = () => {
                   <TableRow key={idx}>
                     <TableCell>{new Date(detail.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>{detail.teachers?.name || "-"}</TableCell>
-                    {detailType !== "monthly" && <TableCell>{detail.category}</TableCell>}
+                    <TableCell>{detail.category || "-"}</TableCell>
                     <TableCell>{detail.reason || "-"}</TableCell>
                     {detailType !== "monthly" && <TableCell>{detail.score}</TableCell>}
                   </TableRow>
