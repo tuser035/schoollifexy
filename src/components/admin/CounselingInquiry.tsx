@@ -137,21 +137,16 @@ const CounselingInquiry = () => {
         admin_id_input: parsedUser.id
       });
 
-      const { data, error, count } = await supabase
+      const { error } = await supabase
         .from("career_counseling")
         .update({
           counselor_name: editCounselorName.trim(),
           counseling_date: editCounselingDate,
           content: editCounselingContent.trim()
         })
-        .eq("id", selectedRecord.id)
-        .select();
+        .eq("id", selectedRecord.id);
 
       if (error) throw error;
-
-      if (!data || data.length === 0) {
-        throw new Error("업데이트할 레코드를 찾을 수 없습니다");
-      }
 
       toast.success("상담 기록이 수정되었습니다");
       setIsEditDialogOpen(false);
