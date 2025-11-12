@@ -113,147 +113,248 @@ const DataInquiry = () => {
         }));
 
       } else if (selectedTable === "merits") {
-        let query = supabase
+        // 상점 데이터 조회
+        let meritQuery = supabase
           .from("merits")
-          .select(`
-            created_at,
-            students(student_id, name, grade, class),
-            teachers(name),
-            category,
-            reason,
-            score
-          `)
+          .select("*")
           .order('created_at', { ascending: false })
           .limit(50);
 
+        // 검색어가 있으면 필터링
         if (trimmedSearch) {
-          // 학생명 또는 교사명으로 검색
-          const { data: students } = await supabase
-            .from("students")
-            .select("student_id")
-            .ilike("name", `%${trimmedSearch}%`);
+          // 숫자면 학년이나 반으로 검색
+          if (!isNaN(Number(trimmedSearch))) {
+            // 해당 학년/반의 학생들 찾기
+            const { data: matchedStudents, error: studentError } = await supabase
+              .from("students")
+              .select("student_id")
+              .or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
 
-          const { data: teachers } = await supabase
-            .from("teachers")
-            .select("id")
-            .ilike("name", `%${trimmedSearch}%`);
+            if (studentError) throw studentError;
 
-          const studentIds = students?.map(s => s.student_id) || [];
-          const teacherIds = teachers?.map(t => t.id) || [];
-
-          if (studentIds.length > 0 || teacherIds.length > 0) {
-            query = query.or(`student_id.in.(${studentIds.join(",")}),teacher_id.in.(${teacherIds.join(",")})`);
+            const studentIds = matchedStudents?.map(s => s.student_id) || [];
+            if (studentIds.length > 0) {
+              meritQuery = meritQuery.in("student_id", studentIds);
+            } else {
+              result = [];
+            }
           } else {
-            // 검색 결과가 없으면 빈 결과 반환
-            result = [];
+            // 문자면 학생명이나 교사명으로 검색
+            const [{ data: matchedStudents }, { data: matchedTeachers }] = await Promise.all([
+              supabase.from("students").select("student_id").ilike("name", `%${trimmedSearch}%`),
+              supabase.from("teachers").select("id").ilike("name", `%${trimmedSearch}%`)
+            ]);
+
+            const studentIds = matchedStudents?.map(s => s.student_id) || [];
+            const teacherIds = matchedTeachers?.map(t => t.id) || [];
+
+            if (studentIds.length === 0 && teacherIds.length === 0) {
+              result = [];
+            } else if (studentIds.length > 0 && teacherIds.length === 0) {
+              meritQuery = meritQuery.in("student_id", studentIds);
+            } else if (studentIds.length === 0 && teacherIds.length > 0) {
+              meritQuery = meritQuery.in("teacher_id", teacherIds);
+            } else {
+              meritQuery = meritQuery.or(`student_id.in.(${studentIds.join(",")}),teacher_id.in.(${teacherIds.join(",")})`);
+            }
           }
         }
 
-        if (!result) {
-          const { data, error: queryError } = await query;
-          if (queryError) throw queryError;
+        if (result === undefined) {
+          const { data: meritsData, error: meritError } = await meritQuery;
+          if (meritError) throw meritError;
 
-          result = data?.map(row => ({
-            "날짜": new Date(row.created_at).toLocaleDateString('ko-KR'),
-            "학생": `${row.students?.name} (${row.students?.grade}-${row.students?.class})`,
-            "교사": row.teachers?.name || "-",
-            "카테고리": row.category,
-            "사유": row.reason || "-",
-            "점수": row.score
-          }));
+          if (meritsData && meritsData.length > 0) {
+            // 학생과 교사 정보 별도 조회
+            const studentIds = [...new Set(meritsData.map(m => m.student_id))];
+            const teacherIds = [...new Set(meritsData.map(m => m.teacher_id).filter(Boolean))];
+
+            const [{ data: studentsData }, { data: teachersData }] = await Promise.all([
+              supabase.from("students").select("student_id, name, grade, class").in("student_id", studentIds),
+              teacherIds.length > 0 
+                ? supabase.from("teachers").select("id, name").in("id", teacherIds)
+                : Promise.resolve({ data: [] })
+            ]);
+
+            // 매핑 객체 생성
+            const studentMap = new Map<string, any>();
+            studentsData?.forEach(s => studentMap.set(s.student_id, s));
+            
+            const teacherMap = new Map<string, any>();
+            teachersData?.forEach(t => teacherMap.set(t.id, t));
+
+            result = meritsData.map(row => {
+              const student = studentMap.get(row.student_id);
+              const teacher = teacherMap.get(row.teacher_id);
+              
+              return {
+                "날짜": new Date(row.created_at).toLocaleDateString('ko-KR'),
+                "학생": student ? `${student.name} (${student.grade}-${student.class})` : "-",
+                "교사": teacher?.name || "-",
+                "카테고리": row.category,
+                "사유": row.reason || "-",
+                "점수": row.score
+              };
+            });
+          } else {
+            result = [];
+          }
         }
 
       } else if (selectedTable === "demerits") {
-        let query = supabase
+        // 벌점 데이터 조회
+        let demeritQuery = supabase
           .from("demerits")
-          .select(`
-            created_at,
-            students(student_id, name, grade, class),
-            teachers(name),
-            category,
-            reason,
-            score
-          `)
+          .select("*")
           .order('created_at', { ascending: false })
           .limit(50);
 
+        // 검색어가 있으면 필터링
         if (trimmedSearch) {
-          const { data: students } = await supabase
-            .from("students")
-            .select("student_id")
-            .ilike("name", `%${trimmedSearch}%`);
+          // 숫자면 학년이나 반으로 검색
+          if (!isNaN(Number(trimmedSearch))) {
+            // 해당 학년/반의 학생들 찾기
+            const { data: matchedStudents, error: studentError } = await supabase
+              .from("students")
+              .select("student_id")
+              .or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
 
-          const { data: teachers } = await supabase
-            .from("teachers")
-            .select("id")
-            .ilike("name", `%${trimmedSearch}%`);
+            if (studentError) throw studentError;
 
-          const studentIds = students?.map(s => s.student_id) || [];
-          const teacherIds = teachers?.map(t => t.id) || [];
+            const studentIds = matchedStudents?.map(s => s.student_id) || [];
+            if (studentIds.length > 0) {
+              demeritQuery = demeritQuery.in("student_id", studentIds);
+            } else {
+              result = [];
+            }
+          } else {
+            // 문자면 학생명이나 교사명으로 검색
+            const [{ data: matchedStudents }, { data: matchedTeachers }] = await Promise.all([
+              supabase.from("students").select("student_id").ilike("name", `%${trimmedSearch}%`),
+              supabase.from("teachers").select("id").ilike("name", `%${trimmedSearch}%`)
+            ]);
 
-          if (studentIds.length > 0 || teacherIds.length > 0) {
-            query = query.or(`student_id.in.(${studentIds.join(",")}),teacher_id.in.(${teacherIds.join(",")})`);
+            const studentIds = matchedStudents?.map(s => s.student_id) || [];
+            const teacherIds = matchedTeachers?.map(t => t.id) || [];
+
+            if (studentIds.length === 0 && teacherIds.length === 0) {
+              result = [];
+            } else if (studentIds.length > 0 && teacherIds.length === 0) {
+              demeritQuery = demeritQuery.in("student_id", studentIds);
+            } else if (studentIds.length === 0 && teacherIds.length > 0) {
+              demeritQuery = demeritQuery.in("teacher_id", teacherIds);
+            } else {
+              demeritQuery = demeritQuery.or(`student_id.in.(${studentIds.join(",")}),teacher_id.in.(${teacherIds.join(",")})`);
+            }
+          }
+        }
+
+        if (result === undefined) {
+          const { data: demeritsData, error: demeritError } = await demeritQuery;
+          if (demeritError) throw demeritError;
+
+          if (demeritsData && demeritsData.length > 0) {
+            // 학생과 교사 정보 별도 조회
+            const studentIds = [...new Set(demeritsData.map(d => d.student_id))];
+            const teacherIds = [...new Set(demeritsData.map(d => d.teacher_id).filter(Boolean))];
+
+            const [{ data: studentsData }, { data: teachersData }] = await Promise.all([
+              supabase.from("students").select("student_id, name, grade, class").in("student_id", studentIds),
+              teacherIds.length > 0 
+                ? supabase.from("teachers").select("id, name").in("id", teacherIds)
+                : Promise.resolve({ data: [] })
+            ]);
+
+            // 매핑 객체 생성
+            const studentMap = new Map<string, any>();
+            studentsData?.forEach(s => studentMap.set(s.student_id, s));
+            
+            const teacherMap = new Map<string, any>();
+            teachersData?.forEach(t => teacherMap.set(t.id, t));
+
+            result = demeritsData.map(row => {
+              const student = studentMap.get(row.student_id);
+              const teacher = teacherMap.get(row.teacher_id);
+              
+              return {
+                "날짜": new Date(row.created_at).toLocaleDateString('ko-KR'),
+                "학생": student ? `${student.name} (${student.grade}-${student.class})` : "-",
+                "교사": teacher?.name || "-",
+                "카테고리": row.category,
+                "사유": row.reason || "-",
+                "점수": row.score
+              };
+            });
           } else {
             result = [];
           }
         }
 
-        if (!result) {
-          const { data, error: queryError } = await query;
-          if (queryError) throw queryError;
-
-          result = data?.map(row => ({
-            "날짜": new Date(row.created_at).toLocaleDateString('ko-KR'),
-            "학생": `${row.students?.name} (${row.students?.grade}-${row.students?.class})`,
-            "교사": row.teachers?.name || "-",
-            "카테고리": row.category,
-            "사유": row.reason || "-",
-            "점수": row.score
-          }));
-        }
-
       } else if (selectedTable === "monthly") {
-        let query = supabase
+        // 이달의 학생 데이터 조회
+        let monthlyQuery = supabase
           .from("monthly")
-          .select(`
-            year,
-            month,
-            students(student_id, name, grade, class),
-            teachers(name),
-            category,
-            reason
-          `)
+          .select("*")
           .order('year', { ascending: false })
           .order('month', { ascending: false })
           .limit(50);
 
+        // 검색어가 있으면 학생명으로 필터링
         if (trimmedSearch) {
-          const { data: students } = await supabase
+          const { data: matchedStudents, error: studentError } = await supabase
             .from("students")
             .select("student_id")
             .ilike("name", `%${trimmedSearch}%`);
 
-          const studentIds = students?.map(s => s.student_id) || [];
+          if (studentError) throw studentError;
 
+          const studentIds = matchedStudents?.map(s => s.student_id) || [];
           if (studentIds.length > 0) {
-            query = query.in("student_id", studentIds);
+            monthlyQuery = monthlyQuery.in("student_id", studentIds);
           } else {
             result = [];
           }
         }
 
-        if (!result) {
-          const { data, error: queryError } = await query;
-          if (queryError) throw queryError;
+        if (result === undefined) {
+          const { data: monthlyData, error: monthlyError } = await monthlyQuery;
+          if (monthlyError) throw monthlyError;
 
-          result = data?.map(row => ({
-            "연도": row.year,
-            "월": row.month,
-            "학생": `${row.students?.name} (${row.students?.grade}-${row.students?.class})`,
-            "추천교사": row.teachers?.name || "-",
-            "카테고리": row.category || "-",
-            "사유": row.reason || "-"
-          }));
+          if (monthlyData && monthlyData.length > 0) {
+            // 학생과 교사 정보 별도 조회
+            const studentIds = [...new Set(monthlyData.map(m => m.student_id))];
+            const teacherIds = [...new Set(monthlyData.map(m => m.teacher_id).filter(Boolean))];
+
+            const [{ data: studentsData }, { data: teachersData }] = await Promise.all([
+              supabase.from("students").select("student_id, name, grade, class").in("student_id", studentIds),
+              teacherIds.length > 0 
+                ? supabase.from("teachers").select("id, name").in("id", teacherIds)
+                : Promise.resolve({ data: [] })
+            ]);
+
+            // 매핑 객체 생성
+            const studentMap = new Map<string, any>();
+            studentsData?.forEach(s => studentMap.set(s.student_id, s));
+            
+            const teacherMap = new Map<string, any>();
+            teachersData?.forEach(t => teacherMap.set(t.id, t));
+
+            result = monthlyData.map(row => {
+              const student = studentMap.get(row.student_id);
+              const teacher = teacherMap.get(row.teacher_id);
+              
+              return {
+                "연도": row.year,
+                "월": row.month,
+                "학생": student ? `${student.name} (${student.grade}-${student.class})` : "-",
+                "추천교사": teacher?.name || "-",
+                "카테고리": row.category || "-",
+                "사유": row.reason || "-"
+              };
+            });
+          } else {
+            result = [];
+          }
         }
 
       } else {
@@ -309,13 +410,13 @@ const DataInquiry = () => {
                 selectedTable === "students" ? "학생명, 학년, 반으로 검색" :
                 selectedTable === "teachers" ? "교사명, 학년, 반으로 검색" :
                 selectedTable === "homeroom" ? "학년, 반으로 검색" :
-                selectedTable === "merits" || selectedTable === "demerits" ? "학생명 또는 교사명으로 검색" :
+                selectedTable === "merits" || selectedTable === "demerits" ? "학생명, 교사명, 학년, 반으로 검색" :
                 selectedTable === "monthly" ? "학생명으로 검색" :
                 "검색"
               }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleQuery()}
+              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
               className="max-w-xs"
               maxLength={100}
             />
