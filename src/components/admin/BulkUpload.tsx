@@ -81,9 +81,12 @@ const BulkUpload = () => {
         .from('teachers')
         .select('id, teacher_email');
       
+      // Create map with normalized (trimmed and lowercase) emails as keys
       const teacherMap = new Map(
-        teachers?.map(t => [t.teacher_email, t.id]) || []
+        teachers?.map(t => [t.teacher_email?.trim().toLowerCase(), t.id]) || []
       );
+      
+      console.log('Available teacher emails:', Array.from(teacherMap.keys()));
 
       // Skip header and parse data
       const dataLines = lines.slice(1);
@@ -122,11 +125,13 @@ const BulkUpload = () => {
               is_homeroom: values[6] === "true" || values[6] === "1",
             };
           } else if (table === "homeroom") {
-            const teacherEmail = values[0];
+            const teacherEmail = values[0]?.trim().toLowerCase();
             const teacherId = teacherMap.get(teacherEmail);
             
+            console.log(`Looking for teacher email: "${teacherEmail}"`);
+            
             if (!teacherId) {
-              throw new Error(`교사 이메일 '${teacherEmail}'을 찾을 수 없습니다`);
+              throw new Error(`교사 이메일 '${values[0]}'을 찾을 수 없습니다`);
             }
             
             record = {
@@ -136,11 +141,13 @@ const BulkUpload = () => {
               year: values[3] ? parseInt(values[3]) : new Date().getFullYear(),
             };
           } else if (table === "merits" || table === "demerits") {
-            const teacherEmail = values[1];
+            const teacherEmail = values[1]?.trim().toLowerCase();
             const teacherId = teacherMap.get(teacherEmail);
             
+            console.log(`Looking for teacher email: "${teacherEmail}"`);
+            
             if (!teacherId) {
-              throw new Error(`교사 이메일 '${teacherEmail}'을 찾을 수 없습니다`);
+              throw new Error(`교사 이메일 '${values[1]}'을 찾을 수 없습니다`);
             }
             
             record = {
