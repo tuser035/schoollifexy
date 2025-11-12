@@ -20,44 +20,55 @@ const DataInquiry = () => {
     setIsLoading(true);
     
     try {
-      // 관리자 세션 재설정 (connection pooling으로 인해 필요)
+      // 관리자 ID 가져오기
       const authUser = localStorage.getItem("auth_user");
-      if (authUser) {
-        const parsedUser = JSON.parse(authUser);
-        if (parsedUser.type === "admin" && parsedUser.id) {
-          await supabase.rpc("set_admin_session", { admin_id_input: parsedUser.id });
-        }
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        setIsLoading(false);
+        return;
       }
-
+      
+      const parsedUser = JSON.parse(authUser);
+      if (parsedUser.type !== "admin" || !parsedUser.id) {
+        toast.error("관리자 권한이 필요합니다");
+        setIsLoading(false);
+        return;
+      }
+      
+      const adminId = parsedUser.id;
       const trimmedSearch = searchTerm.trim().slice(0, 100);
       let result;
 
       if (selectedTable === "students") {
-        let query = supabase
-          .from("students")
-          .select(`
-            student_id,
-            name,
-            grade,
-            class,
-            number,
-            departments(name),
-            student_call,
-            gmail
-          `)
-          .limit(50);
+        let searchGrade: number | null = null;
+        let searchClass: number | null = null;
+        let searchText: string | null = null;
 
         if (trimmedSearch) {
           // 숫자인 경우 학년이나 반으로 검색
           if (!isNaN(Number(trimmedSearch))) {
-            query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+            const searchNum = trimmedSearch;
+            
+            // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반
+            if (searchNum.length === 2) {
+              searchGrade = parseInt(searchNum[0]);
+              searchClass = parseInt(searchNum[1]);
+            } else {
+              searchGrade = parseInt(trimmedSearch);
+            }
           } else {
-            // 문자인 경우 이름으로만 검색
-            query = query.ilike("name", `%${trimmedSearch}%`);
+            // 문자인 경우 이름으로 검색
+            searchText = trimmedSearch;
           }
         }
 
-        const { data, error: queryError } = await query;
+        const { data, error: queryError } = await supabase.rpc("admin_get_students", {
+          admin_id_input: adminId,
+          search_text: searchText,
+          search_grade: searchGrade,
+          search_class: searchClass
+        });
+
         if (queryError) throw queryError;
 
         result = data?.map(row => ({
@@ -66,36 +77,41 @@ const DataInquiry = () => {
           "학년": row.grade,
           "반": row.class,
           "번호": row.number,
-          "학과": row.departments?.name || "-",
-          "전화번호": row.student_call || "-",
-          "이메일": row.gmail || "-"
+          "학과": row.dept_name,
+          "전화번호": row.student_call,
+          "이메일": row.gmail
         }));
 
       } else if (selectedTable === "teachers") {
-        let query = supabase
-          .from("teachers")
-          .select(`
-            name,
-            call_t,
-            teacher_email,
-            grade,
-            class,
-            is_homeroom,
-            departments(name)
-          `)
-          .limit(50);
+        let searchGrade: number | null = null;
+        let searchClass: number | null = null;
+        let searchText: string | null = null;
 
         if (trimmedSearch) {
           // 숫자인 경우 학년이나 반으로 검색
           if (!isNaN(Number(trimmedSearch))) {
-            query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+            const searchNum = trimmedSearch;
+            
+            // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반
+            if (searchNum.length === 2) {
+              searchGrade = parseInt(searchNum[0]);
+              searchClass = parseInt(searchNum[1]);
+            } else {
+              searchGrade = parseInt(trimmedSearch);
+            }
           } else {
-            // 문자인 경우 이름으로만 검색
-            query = query.ilike("name", `%${trimmedSearch}%`);
+            // 문자인 경우 이름으로 검색
+            searchText = trimmedSearch;
           }
         }
 
-        const { data, error: queryError } = await query;
+        const { data, error: queryError } = await supabase.rpc("admin_get_teachers", {
+          admin_id_input: adminId,
+          search_text: searchText,
+          search_grade: searchGrade,
+          search_class: searchClass
+        });
+
         if (queryError) throw queryError;
 
         result = data?.map(row => ({
@@ -105,19 +121,12 @@ const DataInquiry = () => {
           "학년": row.grade || "-",
           "반": row.class || "-",
           "담임여부": row.is_homeroom ? "담임" : "-",
-          "학과": row.departments?.name || "-"
+          "학과": row.dept_name
         }));
 
       } else if (selectedTable === "homeroom") {
-        let query = supabase
-          .from("homeroom")
-          .select(`
-            year,
-            grade,
-            class,
-            teachers(name)
-          `)
-          .limit(50);
+        let searchGrade: number | null = null;
+        let searchClass: number | null = null;
 
         if (trimmedSearch) {
           // 숫자로만 검색 (학년, 반)
@@ -126,30 +135,31 @@ const DataInquiry = () => {
             
             // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반 (예: 38 → 3학년 8반)
             if (searchNum.length === 2) {
-              const grade = parseInt(searchNum[0]);
-              const classNum = parseInt(searchNum[1]);
-              query = query.eq("grade", grade).eq("class", classNum);
-            } 
-            // 한 자리 숫자: 학년 또는 반으로 검색
-            else {
-              query = query.or(`grade.eq.${trimmedSearch},class.eq.${trimmedSearch}`);
+              searchGrade = parseInt(searchNum[0]);
+              searchClass = parseInt(searchNum[1]);
+            } else {
+              searchGrade = parseInt(trimmedSearch);
             }
           } else {
-            // 문자는 담임반 테이블에서 검색 불가 (teacher JOIN이 불안정하므로)
             toast.info("담임반은 학년반 번호로 검색해주세요 (예: 38 → 3학년 8반)");
             result = [];
           }
         }
 
         if (result === undefined) {
-          const { data, error: queryError } = await query;
+          const { data, error: queryError } = await supabase.rpc("admin_get_homeroom", {
+            admin_id_input: adminId,
+            search_grade: searchGrade,
+            search_class: searchClass
+          });
+
           if (queryError) throw queryError;
 
           result = data?.map(row => ({
             "연도": row.year,
             "학년": row.grade,
             "반": row.class,
-            "담임교사": row.teachers?.name || "-"
+            "담임교사": row.teacher_name
           }));
         }
 

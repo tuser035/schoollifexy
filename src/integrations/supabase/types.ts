@@ -355,6 +355,54 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_homeroom: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+        }
+        Returns: {
+          class: number
+          grade: number
+          teacher_name: string
+          year: number
+        }[]
+      }
+      admin_get_students: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+          search_text?: string
+        }
+        Returns: {
+          class: number
+          dept_name: string
+          gmail: string
+          grade: number
+          name: string
+          number: number
+          student_call: string
+          student_id: string
+        }[]
+      }
+      admin_get_teachers: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+          search_text?: string
+        }
+        Returns: {
+          call_t: string
+          class: number
+          dept_name: string
+          grade: number
+          is_homeroom: boolean
+          name: string
+          teacher_email: string
+        }[]
+      }
       insert_monthly_recommendation: {
         Args: {
           category_input: string
