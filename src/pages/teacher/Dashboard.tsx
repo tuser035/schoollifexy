@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Award, AlertCircle, Star, LogOut } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import MeritForm from "@/components/teacher/MeritForm";
+import DemeritForm from "@/components/teacher/DemeritForm";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ const TeacherDashboard = () => {
                 <CardTitle className="text-demerit-orange">벌점 부여</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">벌점 부여 기능 구현 중...</p>
+                <DemeritForm />
               </CardContent>
             </Card>
           </TabsContent>
