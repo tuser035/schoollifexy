@@ -18,13 +18,41 @@ const DataInquiry = () => {
     setIsLoading(true);
     
     try {
-      const { data: result, error } = await supabase
-        .from(selectedTable)
-        .select("*")
-        .limit(50);
+      let result;
+      let error;
 
-      if (error) throw error;
-      
+      if (selectedTable === "homeroom") {
+        // homeroom 테이블은 JOIN해서 담임 선생님 이름을 가져옴
+        const { data, error: queryError } = await supabase
+          .from("homeroom")
+          .select(`
+            year,
+            grade,
+            class,
+            teachers(name)
+          `)
+          .limit(50);
+
+        if (queryError) throw queryError;
+
+        // 데이터 변환: 중첩된 객체를 평탄화하고 한글 컬럼명 사용
+        result = data?.map(row => ({
+          "연도": row.year,
+          "학년": row.grade,
+          "반": row.class,
+          "담임교사": row.teachers?.name || "-"
+        }));
+      } else {
+        // 다른 테이블은 기존처럼 전체 조회
+        const { data, error: queryError } = await supabase
+          .from(selectedTable)
+          .select("*")
+          .limit(50);
+
+        if (queryError) throw queryError;
+        result = data;
+      }
+
       if (result && result.length > 0) {
         setColumns(Object.keys(result[0]));
         setData(result);
