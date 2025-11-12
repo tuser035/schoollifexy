@@ -20,6 +20,15 @@ const DataInquiry = () => {
     setIsLoading(true);
     
     try {
+      // 관리자 세션 재설정 (connection pooling으로 인해 필요)
+      const authUser = localStorage.getItem("auth_user");
+      if (authUser) {
+        const parsedUser = JSON.parse(authUser);
+        if (parsedUser.type === "admin" && parsedUser.id) {
+          await supabase.rpc("set_admin_session", { admin_id_input: parsedUser.id });
+        }
+      }
+
       const trimmedSearch = searchTerm.trim().slice(0, 100);
       let result;
 
