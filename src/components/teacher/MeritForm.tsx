@@ -253,11 +253,18 @@ const MeritForm = () => {
             <SelectValue placeholder="상점 항목 선택" />
           </SelectTrigger>
           <SelectContent>
-            {meritCategories.map((cat) => (
-              <SelectItem key={cat.category} value={cat.category}>
-                {cat.category}
-              </SelectItem>
-            ))}
+            {meritCategories.map((cat) => {
+              const scores = cat.reasons.map(r => r.score);
+              const minScore = Math.min(...scores);
+              const maxScore = Math.max(...scores);
+              const scoreRange = minScore === maxScore ? `${minScore}점` : `${minScore}-${maxScore}점`;
+              
+              return (
+                <SelectItem key={cat.category} value={cat.category}>
+                  {cat.category} ({scoreRange})
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
