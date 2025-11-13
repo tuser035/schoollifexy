@@ -130,9 +130,8 @@ const WeeklyMeetingUpload = () => {
             const events: MeetingEvent[] = [];
             
             for (const row of results.data as any[]) {
-              // CSV 컬럼: 날짜, 시간, 부서, 내용
+              // CSV 컬럼: 날짜, 부서, 내용
               const date = row['날짜'] || row['date'] || row['Date'];
-              const time = row['시간'] || row['time'] || row['Time'];
               const dept = row['부서'] || row['department'] || row['Department'];
               const title = row['내용'] || row['title'] || row['Title'] || row['content'] || row['Content'];
               
@@ -157,9 +156,6 @@ const WeeklyMeetingUpload = () => {
                 dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
               }
 
-              // 시간 기본값
-              const timeStr = time ? time.trim() : "09:00";
-
               // 부서 매칭
               const deptCode = dept.trim();
               const colorInfo = DEPT_COLORS[deptCode];
@@ -167,7 +163,7 @@ const WeeklyMeetingUpload = () => {
               events.push({
                 id: `csv${events.length + 1}`,
                 date: dateStr,
-                time: timeStr,
+                time: "09:00", // 기본 시간
                 title: title?.trim() || `${deptCode} 회의`,
                 deptCode: deptCode,
                 colorId: colorInfo?.colorId || "9"
@@ -175,11 +171,7 @@ const WeeklyMeetingUpload = () => {
             }
 
             // 날짜순 정렬
-            events.sort((a, b) => {
-              const dateCompare = a.date.localeCompare(b.date);
-              if (dateCompare !== 0) return dateCompare;
-              return a.time.localeCompare(b.time);
-            });
+            events.sort((a, b) => a.date.localeCompare(b.date));
 
             resolve(events);
           } catch (error) {
@@ -364,7 +356,7 @@ const WeeklyMeetingUpload = () => {
                 disabled={uploading || loading}
               />
               <p className="text-xs text-muted-foreground">
-                CSV 형식: 날짜, 시간, 부서, 내용 (헤더 포함)
+                CSV 형식: 날짜, 부서, 내용 (헤더 포함)
               </p>
               {uploading && (
                 <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -390,7 +382,7 @@ const WeeklyMeetingUpload = () => {
                         className={`text-sm p-2 rounded-md ${colorInfo?.bg || 'bg-muted'} ${colorInfo?.text || 'text-foreground'}`}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold">{event.date} {event.time}</span>
+                          <span className="font-semibold">{event.date}</span>
                           <span className="font-medium px-2 py-0.5 rounded text-xs bg-white/50">
                             {event.deptCode}
                           </span>
