@@ -452,7 +452,7 @@ const WeeklyMeetingUpload = () => {
             calendarId,
             event: {
               summary: `[${deptName}] ${event.title}`,
-              description: `부서: ${deptName}\n교직원 주간 회의`,
+              description: `${event.title}\n\n부서: ${deptName}\n날짜: ${event.date}\n시간: ${event.time}\n주간 교직원 회의`,
               start: {
                 dateTime: startDateTime.toISOString(),
                 timeZone: "Asia/Seoul",
