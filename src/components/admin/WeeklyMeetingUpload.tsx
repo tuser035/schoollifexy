@@ -269,6 +269,11 @@ const WeeklyMeetingUpload = () => {
     const merged: MeetingEvent[] = [];
     let currentGroup: MeetingEvent | null = null;
 
+    // 제목 정규화 함수 (공백, 특수문자 처리)
+    const normalizeTitle = (title: string): string => {
+      return title.trim().replace(/\s+/g, ' ').toLowerCase();
+    };
+
     for (let i = 0; i < events.length; i++) {
       const event = events[i];
       
@@ -286,13 +291,16 @@ const WeeklyMeetingUpload = () => {
       const dayDiff = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
       
       // 같은 부서, 같은 제목, 연속된 날짜인지 확인
-      const isSameDept = event.deptCode === currentGroup.deptCode;
-      const isSameTitle = event.title === currentGroup.title;
+      const isSameDept = event.deptCode.trim() === currentGroup.deptCode.trim();
+      const isSameTitle = normalizeTitle(event.title) === normalizeTitle(currentGroup.title);
       const isContinuous = dayDiff === 1;
+
+      console.log(`Comparing events: date=${event.date}, dept=${event.deptCode}, continuous=${isContinuous}, sameDept=${isSameDept}, sameTitle=${isSameTitle}`);
 
       if (isSameDept && isSameTitle && isContinuous) {
         // 연속된 이벤트이므로 endDate 업데이트
         currentGroup.endDate = event.date;
+        console.log(`  -> Merged: ${currentGroup.date} ~ ${currentGroup.endDate}`);
       } else {
         // 그룹이 끊어졌으므로 현재 그룹을 저장하고 새 그룹 시작
         merged.push(currentGroup);
@@ -305,6 +313,7 @@ const WeeklyMeetingUpload = () => {
       merged.push(currentGroup);
     }
 
+    console.log(`Total events: ${events.length} -> Merged to: ${merged.length}`);
     return merged;
   };
 
