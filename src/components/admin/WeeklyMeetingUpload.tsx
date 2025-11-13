@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar, Loader2, Plus, Trash2, Upload, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -605,23 +606,35 @@ const WeeklyMeetingUpload = () => {
                 </div>
                 
                 <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-2">
-                  {parsedEvents.map((event, index) => {
-                    const colorInfo = DEPT_COLORS[event.deptCode];
-                    return (
-                      <div 
-                        key={index} 
-                        className={`text-sm p-2 rounded-md ${colorInfo?.bg || 'bg-muted'} ${colorInfo?.text || 'text-foreground'}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">{event.date}</span>
-                          <span className="font-medium px-2 py-0.5 rounded text-xs bg-white/50">
-                            {event.deptCode}
-                          </span>
-                        </div>
-                        <div className="mt-1">{event.title}</div>
-                      </div>
-                    );
-                  })}
+                  <TooltipProvider>
+                    {parsedEvents.map((event, index) => {
+                      const colorInfo = DEPT_COLORS[event.deptCode];
+                      return (
+                        <Tooltip key={index}>
+                          <TooltipTrigger asChild>
+                            <div 
+                              className={`text-sm p-2 rounded-md cursor-help ${colorInfo?.bg || 'bg-muted'} ${colorInfo?.text || 'text-foreground'}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{event.date}</span>
+                                <span className="font-medium px-2 py-0.5 rounded text-xs bg-white/50">
+                                  {event.deptCode}
+                                </span>
+                              </div>
+                              <div className="mt-1 truncate">{event.title}</div>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-sm">
+                            <div className="space-y-1">
+                              <div className="font-semibold">{event.date} {event.time}</div>
+                              <div className="text-xs text-muted-foreground">{event.deptCode} ({colorInfo?.label})</div>
+                              <div className="mt-2">{event.title}</div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </TooltipProvider>
                 </div>
               </div>
             )}
