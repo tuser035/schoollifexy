@@ -459,7 +459,8 @@ const WeeklyMeetingUpload = () => {
           <p>💡 부서별로 자동으로 색상이 구분됩니다</p>
           <p>💡 회의 시간은 기본 1시간으로 설정됩니다</p>
         </div>
-
+        </div>
+      </CardContent>
     </Card>
   );
 };
