@@ -53,7 +53,7 @@ const WeeklyMeetingUpload = () => {
   const [deleting, setDeleting] = useState(false);
   const [deleteStartDate, setDeleteStartDate] = useState("");
   const [deleteEndDate, setDeleteEndDate] = useState("");
-  const [deleteDept, setDeleteDept] = useState<string>("");
+  const [deleteDept, setDeleteDept] = useState<string>("all");
   const [deletedCount, setDeletedCount] = useState(0);
 
   useEffect(() => {
@@ -428,7 +428,7 @@ const WeeklyMeetingUpload = () => {
       console.log("Found events:", eventsToDelete.length);
 
       // 부서 필터링 (선택된 경우)
-      const filteredEvents = deleteDept
+      const filteredEvents = deleteDept && deleteDept !== "all"
         ? eventsToDelete.filter((e: any) => 
             e.summary?.includes(`[${deleteDept}]`)
           )
@@ -465,7 +465,7 @@ const WeeklyMeetingUpload = () => {
       toast.success(`${filteredEvents.length}개의 일정이 삭제되었습니다`);
       setDeleteStartDate("");
       setDeleteEndDate("");
-      setDeleteDept("");
+      setDeleteDept("all");
     } catch (error) {
       console.error("Error deleting events:", error);
       toast.error(`일정 삭제 중 오류 발생 (${deletedCount} 완료)`);
@@ -538,7 +538,7 @@ const WeeklyMeetingUpload = () => {
                   <SelectValue placeholder="전체 부서" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체 부서</SelectItem>
+                  <SelectItem value="all">전체 부서</SelectItem>
                   {Object.keys(DEPT_COLORS).map((dept) => (
                     <SelectItem key={dept} value={dept}>
                       {dept} ({DEPT_COLORS[dept].label})
