@@ -240,6 +240,41 @@ const BulkUpload = () => {
         result = await supabase.from(table).upsert(records, { onConflict: 'student_id' });
       } else if (table === "teachers") {
         result = await supabase.from(table).upsert(records, { onConflict: 'teacher_email' });
+        
+        // After upserting teachers, sync homeroom table for teachers with is_homeroom=true
+        if (!result.error) {
+          const homeroomTeachers = records.filter(r => r.is_homeroom === true);
+          
+          if (homeroomTeachers.length > 0) {
+            // Fetch the teacher IDs we just upserted
+            const { data: upsertedTeachers } = await supabase
+              .from('teachers')
+              .select('id, teacher_email, grade, class')
+              .in('teacher_email', homeroomTeachers.map(t => t.teacher_email));
+            
+            if (upsertedTeachers) {
+              const currentYear = new Date().getFullYear();
+              const homeroomRecords = upsertedTeachers.map(t => ({
+                teacher_id: t.id,
+                grade: t.grade,
+                class: t.class,
+                year: currentYear
+              }));
+              
+              // Delete existing homeroom records for this year/grade/class and insert new ones
+              for (const hr of homeroomRecords) {
+                await supabase
+                  .from('homeroom')
+                  .delete()
+                  .eq('year', hr.year)
+                  .eq('grade', hr.grade)
+                  .eq('class', hr.class);
+                
+                await supabase.from('homeroom').insert(hr);
+              }
+            }
+          }
+        }
       } else if (table === "departments") {
         result = await supabase.from(table).upsert(records, { onConflict: 'code' });
       } else {
