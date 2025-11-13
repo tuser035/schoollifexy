@@ -27,16 +27,16 @@ interface MeetingEvent {
 
 // 부서별 색상 매핑 (Google Calendar colorId + UI 배경색)
 const DEPT_COLORS: Record<string, { colorId: string; label: string; bg: string; text: string }> = {
-  교육과정: { colorId: "11", label: "빨강", bg: "bg-red-100", text: "text-red-900" },
-  교육연구: { colorId: "6", label: "주황", bg: "bg-orange-100", text: "text-orange-900" },
-  취업지원: { colorId: "5", label: "노랑", bg: "bg-yellow-100", text: "text-yellow-900" },
-  환경체육: { colorId: "10", label: "초록", bg: "bg-green-100", text: "text-green-900" },
-  교육정보: { colorId: "9", label: "파랑", bg: "bg-blue-100", text: "text-blue-900" },
-  도제교육: { colorId: "1", label: "남색", bg: "bg-indigo-100", text: "text-indigo-900" },
-  학생생활안전: { colorId: "3", label: "보라", bg: "bg-purple-100", text: "text-purple-900" },
-  진로직업: { colorId: "4", label: "핑크", bg: "bg-pink-100", text: "text-pink-900" },
-  교감: { colorId: "7", label: "청록", bg: "bg-cyan-100", text: "text-cyan-900" },
-  교장: { colorId: "8", label: "회색", bg: "bg-gray-100", text: "text-gray-900" },
+  교육과정: { colorId: "11", label: "빨강", bg: "bg-red-200", text: "text-red-900" },
+  교육연구: { colorId: "6", label: "주황", bg: "bg-orange-200", text: "text-orange-900" },
+  취업지원: { colorId: "5", label: "노랑", bg: "bg-yellow-200", text: "text-yellow-900" },
+  환경체육: { colorId: "10", label: "초록", bg: "bg-green-200", text: "text-green-900" },
+  교육정보: { colorId: "9", label: "파랑", bg: "bg-blue-200", text: "text-blue-900" },
+  도제교육: { colorId: "1", label: "남색", bg: "bg-indigo-200", text: "text-indigo-900" },
+  학생생활안전: { colorId: "3", label: "보라", bg: "bg-purple-200", text: "text-purple-900" },
+  진로직업: { colorId: "4", label: "핑크", bg: "bg-pink-200", text: "text-pink-900" },
+  교감: { colorId: "7", label: "청록", bg: "bg-cyan-200", text: "text-cyan-900" },
+  교장: { colorId: "8", label: "회색", bg: "bg-gray-200", text: "text-gray-900" },
 };
 
 const WeeklyMeetingUpload = () => {
