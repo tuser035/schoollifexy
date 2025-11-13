@@ -24,8 +24,9 @@ interface GoogleCalendarEvent {
 
 async function getAccessToken() {
   try {
-    const serviceAccountPath = new URL('./service-account.json', import.meta.url).pathname;
-    const serviceAccount = JSON.parse(await Deno.readTextFile(serviceAccountPath));
+    const raw = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
+    if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON not set");
+    const serviceAccount = JSON.parse(raw);
     
     const now = Math.floor(Date.now() / 1000);
     const expiry = now + 3600;
@@ -98,7 +99,7 @@ async function getAccessToken() {
 
 async function createCalendarEvent(accessToken: string, calendarId: string, event: GoogleCalendarEvent) {
   const response = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`,
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
     {
       method: "POST",
       headers: {

@@ -85,6 +85,16 @@ const PDFScheduleUpload = () => {
     setUploadedCount(0);
 
     try {
+      const targetCalendarId = (() => {
+        try {
+          if (calendarId.includes("calendar.google.com")) {
+            const u = new URL(calendarId);
+            const src = u.searchParams.get("src");
+            return src ? decodeURIComponent(src) : calendarId.trim();
+          }
+        } catch {}
+        return calendarId.trim();
+      })();
       for (let i = 0; i < parsedEvents.length; i++) {
         const event = parsedEvents[i];
         
@@ -95,11 +105,12 @@ const PDFScheduleUpload = () => {
         
         // For all-day events
         endDate.setDate(endDate.getDate() + 1);
+        const endDateStr = endDate.toISOString().slice(0, 10);
 
         const { error } = await supabase.functions.invoke("google-calendar", {
           body: {
             action: "create",
-            calendarId,
+            calendarId: targetCalendarId,
             event: {
               summary: event.title,
               description: `2025학년도 학사일정 - ${event.title}`,
@@ -108,7 +119,7 @@ const PDFScheduleUpload = () => {
                 timeZone: "Asia/Seoul",
               },
               end: {
-                date: event.isRange && event.endDate ? event.endDate : event.date,
+                date: endDateStr,
                 timeZone: "Asia/Seoul",
               },
             },
