@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Loader2, Plus, Trash2, Upload, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import * as pdfjsLib from 'pdfjs-dist';
+import Papa from 'papaparse';
 
 interface Department {
   code: string;
@@ -97,127 +97,100 @@ const WeeklyMeetingUpload = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== "application/pdf") {
-      toast.error("PDF 파일만 업로드 가능합니다");
+    if (!file) return;
+
+    const fileType = file.type;
+    const fileName = file.name.toLowerCase();
+
+    if (!fileName.endsWith('.csv') && fileType !== 'text/csv' && fileType !== 'application/vnd.ms-excel') {
+      toast.error("CSV 파일만 업로드 가능합니다");
       return;
     }
 
     setUploading(true);
     try {
-      const events = await parsePDFSchedule(file);
+      const events = await parseCSVSchedule(file);
       setParsedEvents(events);
       toast.success(`${events.length}개의 회의 일정을 찾았습니다`);
     } catch (error) {
-      console.error("Error parsing PDF:", error);
-      toast.error("PDF 파싱에 실패했습니다");
+      console.error("Error parsing CSV:", error);
+      toast.error("CSV 파싱에 실패했습니다");
     } finally {
       setUploading(false);
     }
   };
 
-  const parsePDFSchedule = async (file: File): Promise<MeetingEvent[]> => {
-    try {
-      // PDF.js 워커 설정 - CDN 사용
-      if (typeof window !== 'undefined' && 'Worker' in window) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`;
-      }
+  const parseCSVSchedule = async (file: File): Promise<MeetingEvent[]> => {
+    return new Promise((resolve, reject) => {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          try {
+            const events: MeetingEvent[] = [];
+            
+            for (const row of results.data as any[]) {
+              // CSV 컬럼: 날짜, 시간, 부서, 내용
+              const date = row['날짜'] || row['date'] || row['Date'];
+              const time = row['시간'] || row['time'] || row['Time'];
+              const dept = row['부서'] || row['department'] || row['Department'];
+              const title = row['내용'] || row['title'] || row['Title'] || row['content'] || row['Content'];
+              
+              if (!date || !dept) {
+                console.warn("Skipping row with missing data:", row);
+                continue;
+              }
 
-      const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
-      
-      let fullText = "";
-      
-      // 모든 페이지의 텍스트 추출
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item: any) => item.str).join(" ");
-        fullText += pageText + "\n";
-      }
+              // 날짜 형식 변환 (예: 2025-11-12 또는 11/12 등)
+              let dateStr = date.trim();
+              if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                const year = parts.length > 2 ? parts[0] : '2025';
+                const month = parts.length > 2 ? parts[1] : parts[0];
+                const day = parts.length > 2 ? parts[2] : parts[1];
+                dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+              } else if (dateStr.includes('.')) {
+                const parts = dateStr.split('.');
+                const year = parts.length > 2 ? parts[0] : '2025';
+                const month = parts.length > 2 ? parts[1] : parts[0];
+                const day = parts.length > 2 ? parts[2] : parts[1];
+                dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+              }
 
-      console.log("Extracted PDF text:", fullText);
+              // 시간 기본값
+              const timeStr = time ? time.trim() : "09:00";
 
-      const events: MeetingEvent[] = [];
-      
-      // 부서명 리스트
-      const deptNames = Object.keys(DEPT_COLORS);
-      
-      // 각 부서별로 내용 추출
-      for (const deptName of deptNames) {
-        // 부서 섹션 찾기 (부서명 이후부터 다음 부서명 또는 끝까지)
-        const deptIndex = fullText.indexOf(deptName);
-        if (deptIndex === -1) continue;
-        
-        const nextDeptIndex = deptNames
-          .map(d => fullText.indexOf(d, deptIndex + deptName.length))
-          .filter(idx => idx > deptIndex)
-          .sort((a, b) => a - b)[0];
-        
-        const deptContent = fullText.substring(
-          deptIndex + deptName.length,
-          nextDeptIndex || fullText.length
-        );
+              // 부서 매칭
+              const deptCode = dept.trim();
+              const colorInfo = DEPT_COLORS[deptCode];
 
-        // 날짜 패턴 매칭: 11.12.(수) 형식
-        const datePattern = /(\d{1,2})\.(\d{1,2})\.\((.)\)/g;
-        let match;
-        
-        while ((match = datePattern.exec(deptContent)) !== null) {
-          const month = parseInt(match[1]);
-          const day = parseInt(match[2]);
-          const year = 2025; // 현재 년도 사용
-          
-          // 날짜 생성
-          const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-          
-          // 해당 날짜 주변 텍스트에서 내용 추출
-          const contextStart = Math.max(0, match.index - 50);
-          const contextEnd = Math.min(deptContent.length, match.index + 100);
-          const context = deptContent.substring(contextStart, contextEnd);
-          
-          // 시간 패턴 추출: HH:MM 형식
-          const timePattern = /(\d{1,2}):(\d{2})/;
-          const timeMatch = context.match(timePattern);
-          const time = timeMatch ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}` : "09:00";
-          
-          // 내용 추출 (간단하게 주변 텍스트 사용)
-          let title = context
-            .replace(datePattern, '')
-            .replace(timePattern, '')
-            .trim()
-            .substring(0, 50);
-          
-          // 특수문자 및 여러 공백 정리
-          title = title.replace(/\s+/g, ' ').trim();
-          
-          if (!title) {
-            title = `${deptName} 회의`;
+              events.push({
+                id: `csv${events.length + 1}`,
+                date: dateStr,
+                time: timeStr,
+                title: title?.trim() || `${deptCode} 회의`,
+                deptCode: deptCode,
+                colorId: colorInfo?.colorId || "9"
+              });
+            }
+
+            // 날짜순 정렬
+            events.sort((a, b) => {
+              const dateCompare = a.date.localeCompare(b.date);
+              if (dateCompare !== 0) return dateCompare;
+              return a.time.localeCompare(b.time);
+            });
+
+            resolve(events);
+          } catch (error) {
+            reject(error);
           }
-
-          events.push({
-            id: `p${events.length + 1}`,
-            date: dateStr,
-            time: time,
-            title: title || `${deptName} 회의`,
-            deptCode: deptName,
-            colorId: DEPT_COLORS[deptName].colorId
-          });
+        },
+        error: (error) => {
+          reject(error);
         }
-      }
-
-      // 날짜순 정렬
-      events.sort((a, b) => {
-        const dateCompare = a.date.localeCompare(b.date);
-        if (dateCompare !== 0) return dateCompare;
-        return a.time.localeCompare(b.time);
       });
-
-      return events;
-    } catch (error) {
-      console.error("PDF parsing error:", error);
-      throw error;
-    }
+    });
   };
 
   const handleParsedBatchUpload = async () => {
@@ -382,18 +355,21 @@ const WeeklyMeetingUpload = () => {
           <h3 className="text-sm font-medium mb-3">PDF 파일로 일괄 등록</h3>
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="pdfFile">주간 회의자료 PDF 파일</Label>
+              <Label htmlFor="csvFile">주간 회의자료 CSV 파일</Label>
               <Input
-                id="pdfFile"
+                id="csvFile"
                 type="file"
-                accept="application/pdf"
+                accept=".csv,text/csv"
                 onChange={handleFileUpload}
                 disabled={uploading || loading}
               />
+              <p className="text-xs text-muted-foreground">
+                CSV 형식: 날짜, 시간, 부서, 내용 (헤더 포함)
+              </p>
               {uploading && (
                 <p className="text-sm text-muted-foreground flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  PDF 파싱 중...
+                  CSV 파싱 중...
                 </p>
               )}
             </div>
