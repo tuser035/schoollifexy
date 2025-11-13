@@ -47,6 +47,13 @@ const WeeklyMeetingUpload = () => {
   ]);
   const [parsedEvents, setParsedEvents] = useState<MeetingEvent[]>([]);
   const [uploadedCount, setUploadedCount] = useState(0);
+  
+  // 삭제 관련 상태
+  const [deleting, setDeleting] = useState(false);
+  const [deleteStartDate, setDeleteStartDate] = useState("");
+  const [deleteEndDate, setDeleteEndDate] = useState("");
+  const [deleteDept, setDeleteDept] = useState<string>("");
+  const [deletedCount, setDeletedCount] = useState(0);
 
   useEffect(() => {
     loadDepartments();
@@ -375,6 +382,97 @@ const WeeklyMeetingUpload = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!calendarId) {
+      toast.error("캘린더 ID를 입력해주세요");
+      return;
+    }
+
+    if (!deleteStartDate || !deleteEndDate) {
+      toast.error("삭제할 기간을 선택해주세요");
+      return;
+    }
+
+    setDeleting(true);
+    setDeletedCount(0);
+
+    try {
+      const targetCalendarId = (() => {
+        try {
+          if (calendarId.includes("calendar.google.com")) {
+            const u = new URL(calendarId);
+            const src = u.searchParams.get("src");
+            return src ? decodeURIComponent(src) : calendarId.trim();
+          }
+        } catch {}
+        return calendarId.trim();
+      })();
+
+      // 기간 내 일정 조회
+      const startISO = new Date(`${deleteStartDate}T00:00:00`).toISOString();
+      const endISO = new Date(`${deleteEndDate}T23:59:59`).toISOString();
+
+      const { data: listResult, error: listError } = await supabase.functions.invoke("google-calendar", {
+        body: {
+          action: "list",
+          calendarId: targetCalendarId,
+          timeMin: startISO,
+          timeMax: endISO,
+        },
+      });
+
+      if (listError) throw listError;
+
+      const eventsToDelete = listResult.items || [];
+      console.log("Found events:", eventsToDelete.length);
+
+      // 부서 필터링 (선택된 경우)
+      const filteredEvents = deleteDept
+        ? eventsToDelete.filter((e: any) => 
+            e.summary?.includes(`[${deleteDept}]`)
+          )
+        : eventsToDelete;
+
+      console.log("Filtered events:", filteredEvents.length);
+
+      if (filteredEvents.length === 0) {
+        toast.info("삭제할 일정이 없습니다");
+        return;
+      }
+
+      // 일정 삭제
+      for (let i = 0; i < filteredEvents.length; i++) {
+        const event = filteredEvents[i];
+        
+        const { error } = await supabase.functions.invoke("google-calendar", {
+          body: {
+            action: "delete",
+            calendarId: targetCalendarId,
+            eventId: event.id,
+          },
+        });
+
+        if (error) {
+          console.error("Delete error:", error);
+          continue;
+        }
+
+        setDeletedCount(i + 1);
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      toast.success(`${filteredEvents.length}개의 일정이 삭제되었습니다`);
+      setDeleteStartDate("");
+      setDeleteEndDate("");
+      setDeleteDept("");
+    } catch (error) {
+      console.error("Error deleting events:", error);
+      toast.error(`일정 삭제 중 오류 발생 (${deletedCount} 완료)`);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const getDeptColor = (deptCode: string) => {
     return DEPT_COLORS[deptCode]?.label || "";
   };
@@ -399,6 +497,81 @@ const WeeklyMeetingUpload = () => {
             onChange={(e) => setCalendarId(e.target.value)}
             placeholder="example@group.calendar.google.com"
           />
+        </div>
+
+        <div className="border-t pt-4">
+          <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-destructive">
+            <Trash2 className="w-4 h-4" />
+            일정 일괄 삭제
+          </h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            특정 기간 및 부서의 회의 일정을 삭제합니다. 삭제 후 재등록하세요.
+          </p>
+          
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">시작일</Label>
+                <Input
+                  type="date"
+                  value={deleteStartDate}
+                  onChange={(e) => setDeleteStartDate(e.target.value)}
+                  disabled={deleting}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">종료일</Label>
+                <Input
+                  type="date"
+                  value={deleteEndDate}
+                  onChange={(e) => setDeleteEndDate(e.target.value)}
+                  disabled={deleting}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">부서 (선택사항)</Label>
+              <Select value={deleteDept} onValueChange={setDeleteDept} disabled={deleting}>
+                <SelectTrigger>
+                  <SelectValue placeholder="전체 부서" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">전체 부서</SelectItem>
+                  {Object.keys(DEPT_COLORS).map((dept) => (
+                    <SelectItem key={dept} value={dept}>
+                      {dept} ({DEPT_COLORS[dept].label})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {deleting && (
+              <div className="text-sm text-muted-foreground">
+                삭제 중: {deletedCount}개 완료
+              </div>
+            )}
+
+            <Button
+              onClick={handleBulkDelete}
+              disabled={deleting || !calendarId || !deleteStartDate || !deleteEndDate}
+              variant="destructive"
+              className="w-full"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  삭제 중... ({deletedCount})
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  선택한 기간의 일정 삭제
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className="border-t pt-4">

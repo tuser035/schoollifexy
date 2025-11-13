@@ -135,13 +135,67 @@ async function createCalendarEvent(accessToken: string, calendarId: string, even
   return await response.json();
 }
 
+async function listCalendarEvents(
+  accessToken: string, 
+  calendarId: string, 
+  timeMin?: string, 
+  timeMax?: string,
+  q?: string
+) {
+  const params = new URLSearchParams();
+  if (timeMin) params.append('timeMin', timeMin);
+  if (timeMax) params.append('timeMax', timeMax);
+  if (q) params.append('q', q);
+  params.append('maxResults', '2500');
+  params.append('singleEvents', 'true');
+  params.append('orderBy', 'startTime');
+  
+  const response = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+      },
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.text();
+    console.error("Calendar API error:", error);
+    throw new Error(`Failed to list events: ${error}`);
+  }
+  
+  return await response.json();
+}
+
+async function deleteCalendarEvent(accessToken: string, calendarId: string, eventId: string) {
+  const response = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+      },
+    }
+  );
+  
+  if (!response.ok && response.status !== 204) {
+    const error = await response.text();
+    console.error("Calendar API error:", error);
+    throw new Error(`Failed to delete event: ${error}`);
+  }
+  
+  return { success: true };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { action, calendarId, event } = await req.json();
+    const { action, calendarId, event, timeMin, timeMax, q, eventId } = await req.json();
     
     console.log("Request:", { action, calendarId });
     
@@ -149,6 +203,20 @@ serve(async (req) => {
     
     if (action === "create") {
       const result = await createCalendarEvent(accessToken, calendarId, event);
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (action === "list") {
+      const result = await listCalendarEvents(accessToken, calendarId, timeMin, timeMax, q);
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (action === "delete") {
+      const result = await deleteCalendarEvent(accessToken, calendarId, eventId);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
