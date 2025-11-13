@@ -129,56 +129,96 @@ const WeeklyMeetingUpload = () => {
           try {
             const events: MeetingEvent[] = [];
             
+            console.log("CSV parsing results:", results.data);
+            
             for (const row of results.data as any[]) {
               // CSV 컬럼: 날짜, 부서, 내용
               const date = row['날짜'] || row['date'] || row['Date'];
               const dept = row['부서'] || row['department'] || row['Department'];
               const title = row['내용'] || row['title'] || row['Title'] || row['content'] || row['Content'];
               
+              console.log("Processing row:", { date, dept, title });
+              
               if (!date || !dept) {
                 console.warn("Skipping row with missing data:", row);
                 continue;
               }
 
-              // 날짜 형식 변환 (예: 2025-11-12 또는 11/12 등)
-              let dateStr = date.trim();
-              if (dateStr.includes('/')) {
-                const parts = dateStr.split('/');
-                const year = parts.length > 2 ? parts[0] : '2025';
-                const month = parts.length > 2 ? parts[1] : parts[0];
-                const day = parts.length > 2 ? parts[2] : parts[1];
-                dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-              } else if (dateStr.includes('.')) {
-                const parts = dateStr.split('.');
-                const year = parts.length > 2 ? parts[0] : '2025';
-                const month = parts.length > 2 ? parts[1] : parts[0];
-                const day = parts.length > 2 ? parts[2] : parts[1];
-                dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+              // 날짜 형식 변환
+              let dateStr = '';
+              const dateTrimmed = String(date).trim();
+              
+              if (dateTrimmed.includes('/')) {
+                // 예: 11/12 또는 2025/11/12
+                const parts = dateTrimmed.split('/');
+                if (parts.length === 2) {
+                  // 월/일 형식
+                  const month = String(parts[0]).padStart(2, '0');
+                  const day = String(parts[1]).padStart(2, '0');
+                  dateStr = `2025-${month}-${day}`;
+                } else if (parts.length === 3) {
+                  // 년/월/일 형식
+                  const year = parts[0];
+                  const month = String(parts[1]).padStart(2, '0');
+                  const day = String(parts[2]).padStart(2, '0');
+                  dateStr = `${year}-${month}-${day}`;
+                }
+              } else if (dateTrimmed.includes('.')) {
+                // 예: 11.12 또는 2025.11.12
+                const parts = dateTrimmed.split('.');
+                if (parts.length === 2) {
+                  // 월.일 형식
+                  const month = String(parts[0]).padStart(2, '0');
+                  const day = String(parts[1]).padStart(2, '0');
+                  dateStr = `2025-${month}-${day}`;
+                } else if (parts.length === 3) {
+                  // 년.월.일 형식
+                  const year = parts[0];
+                  const month = String(parts[1]).padStart(2, '0');
+                  const day = String(parts[2]).padStart(2, '0');
+                  dateStr = `${year}-${month}-${day}`;
+                }
+              } else if (dateTrimmed.includes('-')) {
+                // 이미 YYYY-MM-DD 형식
+                dateStr = dateTrimmed;
+              } else {
+                console.warn("Unknown date format:", dateTrimmed);
+                continue;
               }
 
+              console.log("Parsed date:", dateStr);
+
               // 부서 매칭
-              const deptCode = dept.trim();
+              const deptCode = String(dept).trim();
               const colorInfo = DEPT_COLORS[deptCode];
+
+              if (!colorInfo) {
+                console.warn("Unknown department:", deptCode);
+              }
 
               events.push({
                 id: `csv${events.length + 1}`,
                 date: dateStr,
-                time: "09:00", // 기본 시간
-                title: title?.trim() || `${deptCode} 회의`,
+                time: "09:00",
+                title: String(title || `${deptCode} 회의`).trim(),
                 deptCode: deptCode,
                 colorId: colorInfo?.colorId || "9"
               });
             }
 
+            console.log("Parsed events:", events);
+            
             // 날짜순 정렬
             events.sort((a, b) => a.date.localeCompare(b.date));
 
             resolve(events);
           } catch (error) {
+            console.error("CSV parsing error:", error);
             reject(error);
           }
         },
         error: (error) => {
+          console.error("Papa parse error:", error);
           reject(error);
         }
       });
