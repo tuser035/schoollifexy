@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,9 @@ const WeeklyMeetingUpload = () => {
   const [deleteEndDate, setDeleteEndDate] = useState("");
   const [deleteDept, setDeleteDept] = useState<string>("all");
   const [deletedCount, setDeletedCount] = useState(0);
+  
+  // CSV 파일 입력 ref
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadDepartments();
@@ -121,9 +124,17 @@ const WeeklyMeetingUpload = () => {
       const events = await parseCSVSchedule(file);
       setParsedEvents(events);
       toast.success(`${events.length}개의 회의 일정을 찾았습니다`);
+      // 파일 입력 필드 초기화
+      if (csvFileInputRef.current) {
+        csvFileInputRef.current.value = "";
+      }
     } catch (error) {
       console.error("Error parsing CSV:", error);
       toast.error("CSV 파싱에 실패했습니다");
+      // 에러 시에도 파일 입력 필드 초기화
+      if (csvFileInputRef.current) {
+        csvFileInputRef.current.value = "";
+      }
     } finally {
       setUploading(false);
     }
@@ -663,6 +674,7 @@ const WeeklyMeetingUpload = () => {
                 accept=".csv,text/csv"
                 onChange={handleFileUpload}
                 disabled={uploading || loading}
+                ref={csvFileInputRef}
               />
               <p className="text-xs text-muted-foreground">
                 CSV 형식: 날짜, 부서, 내용 (헤더 포함)
