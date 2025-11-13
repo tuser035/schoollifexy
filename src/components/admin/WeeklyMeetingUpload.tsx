@@ -352,7 +352,7 @@ const WeeklyMeetingUpload = () => {
           
           eventData = {
             summary: `[${event.deptCode}] ${event.title}`,
-            description: `주간 교직원 회의 - ${event.deptCode} (${event.date} ~ ${event.endDate})`,
+            description: `${event.title}\n\n부서: ${event.deptCode}\n기간: ${event.date} ~ ${event.endDate}\n주간 교직원 회의`,
             start: {
               date: startDate,
               timeZone: "Asia/Seoul",
@@ -364,30 +364,21 @@ const WeeklyMeetingUpload = () => {
             colorId: event.colorId,
           };
         } else {
-          // 단일 이벤트 - 시간 지정 이벤트로 생성
-          const [year, month, day] = event.date.split('-').map(Number);
-          const [hours, minutes] = event.time.split(':').map(Number);
-          
-          const startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
-          
-          // 날짜 유효성 검사
-          if (isNaN(startDateTime.getTime())) {
-            console.error("Invalid date:", event.date, event.time);
-            throw new Error(`잘못된 날짜 형식: ${event.date}`);
-          }
-          
-          const endDateTime = new Date(startDateTime);
-          endDateTime.setHours(endDateTime.getHours() + 1);
+          // 단일 이벤트도 all-day event로 생성 (시간 표시 안함)
+          const startDate = event.date; // YYYY-MM-DD
+          const endDateObj = new Date(event.date);
+          endDateObj.setDate(endDateObj.getDate() + 1); // Google Calendar는 종료일이 exclusive
+          const endDate = endDateObj.toISOString().split('T')[0]; // YYYY-MM-DD
 
           eventData = {
             summary: `[${event.deptCode}] ${event.title}`,
-            description: `주간 교직원 회의 - ${event.deptCode}`,
+            description: `${event.title}\n\n부서: ${event.deptCode}\n날짜: ${event.date}\n주간 교직원 회의`,
             start: {
-              dateTime: startDateTime.toISOString(),
+              date: startDate,
               timeZone: "Asia/Seoul",
             },
             end: {
-              dateTime: endDateTime.toISOString(),
+              date: endDate,
               timeZone: "Asia/Seoul",
             },
             colorId: event.colorId,
