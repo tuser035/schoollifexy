@@ -675,6 +675,7 @@ const WeeklyMeetingUpload = () => {
                 onChange={handleFileUpload}
                 disabled={uploading || loading}
                 ref={csvFileInputRef}
+                placeholder="연도-월-일.csv"
               />
               <p className="text-xs text-muted-foreground">
                 CSV 형식: 날짜, 부서, 내용 (헤더 포함)
