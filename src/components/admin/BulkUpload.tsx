@@ -5,7 +5,7 @@ import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "departments";
+type TableType = "students" | "teachers" | "merits" | "demerits" | "departments";
 
 interface TableConfig {
   name: string;
@@ -26,12 +26,6 @@ const tables: TableConfig[] = [
     table: "teachers",
     columns: "teacher_email, name, grade, class, dept_code, call_t, is_homeroom",
     color: "border-teacher-blue",
-  },
-  {
-    name: "담임반",
-    table: "homeroom",
-    columns: "teacher_email, grade, class, year",
-    color: "border-admin-green",
   },
   {
     name: "상점",
@@ -145,40 +139,6 @@ const BulkUpload = () => {
               call_t: values[5],
               is_homeroom: values[6] === "true" || values[6] === "1",
             };
-          } else if (table === "homeroom") {
-            const tIdx = idx.homeroom;
-            const gradeVal = parseInt(tIdx.grade !== -1 ? values[tIdx.grade] : values[1]);
-            const classVal = parseInt(tIdx.class !== -1 ? values[tIdx.class] : values[2]);
-            const yearVal = (tIdx.year !== -1 ? values[tIdx.year] : values[3]) ? parseInt(tIdx.year !== -1 ? values[tIdx.year] : values[3]) : new Date().getFullYear();
-            
-            const teacherEmailRaw = tIdx.teacher_email !== -1 ? values[tIdx.teacher_email] : values[0];
-            const teacherEmail = teacherEmailRaw?.trim().toLowerCase();
-            
-            let teacherId: string | undefined;
-            
-            if (teacherEmail) {
-              // If teacher_email is provided, use it
-              teacherId = teacherMap.get(teacherEmail);
-              if (!teacherId) {
-                throw new Error(`교사 이메일 '${teacherEmailRaw}'을 찾을 수 없습니다`);
-              }
-            } else {
-              // If teacher_email is empty, find teacher by grade and class
-              const matchingTeacher = teachers?.find(t => t.grade === gradeVal && t.class === classVal);
-              if (matchingTeacher) {
-                teacherId = matchingTeacher.id;
-                console.log(`Found teacher for grade ${gradeVal} class ${classVal}: ${matchingTeacher.teacher_email}`);
-              } else {
-                console.log(`No teacher found for grade ${gradeVal} class ${classVal}, creating homeroom without teacher_id`);
-              }
-            }
-            
-            record = {
-              teacher_id: teacherId || null,
-              grade: gradeVal,
-              class: classVal,
-              year: yearVal,
-            };
           } else if (table === "merits" || table === "demerits") {
             const pIdx = idx.points;
             const studentId = pIdx.student_id !== -1 ? values[pIdx.student_id] : values[0];
@@ -240,45 +200,10 @@ const BulkUpload = () => {
         result = await supabase.from(table).upsert(records, { onConflict: 'student_id' });
       } else if (table === "teachers") {
         result = await supabase.from(table).upsert(records, { onConflict: 'teacher_email' });
-        
-        // After upserting teachers, sync homeroom table for teachers with is_homeroom=true
-        if (!result.error) {
-          const homeroomTeachers = records.filter(r => r.is_homeroom === true);
-          
-          if (homeroomTeachers.length > 0) {
-            // Fetch the teacher IDs we just upserted
-            const { data: upsertedTeachers } = await supabase
-              .from('teachers')
-              .select('id, teacher_email, grade, class')
-              .in('teacher_email', homeroomTeachers.map(t => t.teacher_email));
-            
-            if (upsertedTeachers) {
-              const currentYear = new Date().getFullYear();
-              const homeroomRecords = upsertedTeachers.map(t => ({
-                teacher_id: t.id,
-                grade: t.grade,
-                class: t.class,
-                year: currentYear
-              }));
-              
-              // Delete existing homeroom records for this year/grade/class and insert new ones
-              for (const hr of homeroomRecords) {
-                await supabase
-                  .from('homeroom')
-                  .delete()
-                  .eq('year', hr.year)
-                  .eq('grade', hr.grade)
-                  .eq('class', hr.class);
-                
-                await supabase.from('homeroom').insert(hr);
-              }
-            }
-          }
-        }
       } else if (table === "departments") {
         result = await supabase.from(table).upsert(records, { onConflict: 'code' });
       } else {
-        // For homeroom, merits, demerits, monthly - just insert (no unique constraint)
+        // For merits, demerits, monthly - just insert (no unique constraint)
         result = await supabase.from(table).insert(records);
       }
       

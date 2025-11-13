@@ -140,41 +140,6 @@ export type Database = {
         }
         Relationships: []
       }
-      homeroom: {
-        Row: {
-          class: number
-          created_at: string | null
-          grade: number
-          id: string
-          teacher_id: string | null
-          year: number
-        }
-        Insert: {
-          class: number
-          created_at?: string | null
-          grade: number
-          id?: string
-          teacher_id?: string | null
-          year?: number
-        }
-        Update: {
-          class?: number
-          created_at?: string | null
-          grade?: number
-          id?: string
-          teacher_id?: string | null
-          year?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "homeroom_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       merits: {
         Row: {
           category: string
