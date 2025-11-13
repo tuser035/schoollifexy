@@ -879,7 +879,7 @@ const WeeklyMeetingUpload = () => {
         <Button
           onClick={handleBatchUpload}
           disabled={loading || !calendarId}
-          className="w-full"
+          className="w-full bg-green-600 hover:bg-green-700 text-white"
         >
           {loading ? (
             <>
