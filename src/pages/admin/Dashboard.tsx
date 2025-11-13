@@ -14,6 +14,7 @@ import StorageManager from "@/components/admin/StorageManager";
 import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
 import GoogleCalendar from "@/components/admin/GoogleCalendar";
 import PDFScheduleUpload from "@/components/admin/PDFScheduleUpload";
+import WeeklyMeetingUpload from "@/components/admin/WeeklyMeetingUpload";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="password" className="w-full">
-          <TabsList className="grid w-full grid-cols-9 mb-6">
+          <TabsList className="grid w-full grid-cols-10 mb-6">
             <TabsTrigger value="password">
               <Key className="w-4 h-4 mr-2" />
               비밀번호
@@ -96,6 +97,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="calendar">
               <Calendar className="w-4 h-4 mr-2" />
               일정
+            </TabsTrigger>
+            <TabsTrigger value="weekly-meeting">
+              <Calendar className="w-4 h-4 mr-2" />
+              회의
             </TabsTrigger>
           </TabsList>
 
@@ -134,6 +139,10 @@ const AdminDashboard = () => {
           <TabsContent value="calendar" className="space-y-6">
             <PDFScheduleUpload />
             <GoogleCalendar />
+          </TabsContent>
+
+          <TabsContent value="weekly-meeting" className="space-y-6">
+            <WeeklyMeetingUpload />
           </TabsContent>
         </Tabs>
       </main>

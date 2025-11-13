@@ -19,6 +19,7 @@ interface GoogleCalendarEvent {
     date?: string;
     timeZone: string;
   };
+  colorId?: string;
 }
 
 async function getAccessToken() {
