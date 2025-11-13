@@ -13,6 +13,7 @@ import StatisticsChart from "@/components/admin/StatisticsChart";
 import StorageManager from "@/components/admin/StorageManager";
 import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
 import GoogleCalendar from "@/components/admin/GoogleCalendar";
+import PDFScheduleUpload from "@/components/admin/PDFScheduleUpload";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -130,7 +131,8 @@ const AdminDashboard = () => {
             <StorageManager />
           </TabsContent>
 
-          <TabsContent value="calendar">
+          <TabsContent value="calendar" className="space-y-6">
+            <PDFScheduleUpload />
             <GoogleCalendar />
           </TabsContent>
         </Tabs>
