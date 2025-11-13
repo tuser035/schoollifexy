@@ -746,16 +746,7 @@ const WeeklyMeetingUpload = () => {
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-sm">
-                            <div className="space-y-1">
-                              <div className="font-semibold">
-                                {event.endDate 
-                                  ? `${event.date} ~ ${event.endDate}` 
-                                  : `${event.date} ${event.time}`
-                                }
-                              </div>
-                              <div className="text-xs text-muted-foreground">{event.deptCode} ({colorInfo?.label})</div>
-                              <div className="mt-2">{event.title}</div>
-                            </div>
+                            <div>{event.title}</div>
                           </TooltipContent>
                         </Tooltip>
                       );
