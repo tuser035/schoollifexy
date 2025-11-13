@@ -452,6 +452,7 @@ export type Database = {
           demerits: number
           grade: number
           merits: number
+          monthly: number
           name: string
           number: number
           student_id: string

@@ -17,6 +17,7 @@ interface StudentRank {
   number: number;
   merits: number;
   demerits: number;
+  monthly: number;
   total: number;
 }
 
@@ -158,9 +159,9 @@ const StudentLeaderboard = () => {
       return;
     }
 
-    const csvHeader = "순위,학번,이름,학년,반,번호,상점,벌점,순점수";
+    const csvHeader = "순위,학번,이름,학년,반,번호,상점,벌점,이달의학생,순점수";
     const csvRows = students.map((student, index) => 
-      `${index + 1},${student.student_id},${student.name},${student.grade},${student.class},${student.number},${student.merits},${student.demerits},${student.total}`
+      `${index + 1},${student.student_id},${student.name},${student.grade},${student.class},${student.number},${student.merits},${student.demerits},${student.monthly},${student.total}`
     );
     
     const BOM = "\uFEFF";
@@ -294,6 +295,7 @@ const StudentLeaderboard = () => {
                     <TableHead>학년반</TableHead>
                     <TableHead className="text-right">상점</TableHead>
                     <TableHead className="text-right">벌점</TableHead>
+                    <TableHead className="text-right">이달의학생</TableHead>
                     <TableHead className="text-right">순점수</TableHead>
                     <TableHead className="text-right">추이</TableHead>
                   </TableRow>
@@ -323,6 +325,11 @@ const StudentLeaderboard = () => {
                       <TableCell className="text-right">
                         <Badge variant="secondary" className="bg-demerit-orange-light text-demerit-orange">
                           {student.demerits}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="secondary" className="bg-monthly-green-light text-monthly-green">
+                          {student.monthly}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
