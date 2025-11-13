@@ -88,6 +88,17 @@ const StudentLeaderboard = () => {
 
   const loadMonthlyTrend = async (studentId: string) => {
     try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const parsedUser = JSON.parse(authUser);
+      if (parsedUser.type !== "admin" || !parsedUser.id) return;
+
+      // 관리자 세션 설정
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: parsedUser.id,
+      });
+
       const currentYear = new Date().getFullYear();
       
       // 월별 상점
