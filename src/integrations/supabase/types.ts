@@ -440,6 +440,24 @@ export type Database = {
           year: number
         }[]
       }
+      admin_get_leaderboard: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+          year_input?: number
+        }
+        Returns: {
+          class: number
+          demerits: number
+          grade: number
+          merits: number
+          name: string
+          number: number
+          student_id: string
+          total: number
+        }[]
+      }
       admin_get_merit_details: {
         Args: { admin_id_input: string; student_id_input: string }
         Returns: {
