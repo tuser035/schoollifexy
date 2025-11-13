@@ -214,7 +214,18 @@ const WeeklyMeetingUpload = () => {
       for (let i = 0; i < parsedEvents.length; i++) {
         const event = parsedEvents[i];
         
-        const startDateTime = new Date(`${event.date}T${event.time}:00`);
+        // 안전한 날짜 생성
+        const [year, month, day] = event.date.split('-').map(Number);
+        const [hours, minutes] = event.time.split(':').map(Number);
+        
+        const startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
+        
+        // 날짜 유효성 검사
+        if (isNaN(startDateTime.getTime())) {
+          console.error("Invalid date:", event.date, event.time);
+          throw new Error(`잘못된 날짜 형식: ${event.date}`);
+        }
+        
         const endDateTime = new Date(startDateTime);
         endDateTime.setHours(endDateTime.getHours() + 1);
 
