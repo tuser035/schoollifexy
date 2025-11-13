@@ -22,6 +22,7 @@ interface MeetingEvent {
   title: string;
   deptCode: string;
   colorId: string;
+  endDate?: string; // 연속 이벤트의 종료일
 }
 
 // 부서별 색상 매핑 (Google Calendar colorId + UI 배경색)
@@ -226,7 +227,11 @@ const WeeklyMeetingUpload = () => {
             // 날짜순 정렬
             events.sort((a, b) => a.date.localeCompare(b.date));
 
-            resolve(events);
+            // 연속된 같은 부서 이벤트 병합
+            const mergedEvents = mergeContinuousEvents(events);
+            console.log("Merged continuous events:", mergedEvents);
+
+            resolve(mergedEvents);
           } catch (error) {
             console.error("CSV parsing error:", error);
             reject(error);
@@ -238,6 +243,52 @@ const WeeklyMeetingUpload = () => {
         }
       });
     });
+  };
+
+  // 연속된 같은 부서 이벤트를 병합하는 함수
+  const mergeContinuousEvents = (events: MeetingEvent[]): MeetingEvent[] => {
+    if (events.length === 0) return events;
+
+    const merged: MeetingEvent[] = [];
+    let currentGroup: MeetingEvent | null = null;
+
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i];
+      
+      if (!currentGroup) {
+        // 첫 번째 이벤트 또는 새 그룹 시작
+        currentGroup = { ...event };
+        continue;
+      }
+
+      // 현재 이벤트와 이전 이벤트 비교
+      const prevDate = new Date(currentGroup.endDate || currentGroup.date);
+      const currDate = new Date(event.date);
+      
+      // 날짜 차이 계산 (일 단위)
+      const dayDiff = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // 같은 부서, 같은 제목, 연속된 날짜인지 확인
+      const isSameDept = event.deptCode === currentGroup.deptCode;
+      const isSameTitle = event.title === currentGroup.title;
+      const isContinuous = dayDiff === 1;
+
+      if (isSameDept && isSameTitle && isContinuous) {
+        // 연속된 이벤트이므로 endDate 업데이트
+        currentGroup.endDate = event.date;
+      } else {
+        // 그룹이 끊어졌으므로 현재 그룹을 저장하고 새 그룹 시작
+        merged.push(currentGroup);
+        currentGroup = { ...event };
+      }
+    }
+
+    // 마지막 그룹 추가
+    if (currentGroup) {
+      merged.push(currentGroup);
+    }
+
+    return merged;
   };
 
   const handleParsedBatchUpload = async () => {
@@ -269,38 +320,64 @@ const WeeklyMeetingUpload = () => {
       for (let i = 0; i < parsedEvents.length; i++) {
         const event = parsedEvents[i];
         
-        // 안전한 날짜 생성
-        const [year, month, day] = event.date.split('-').map(Number);
-        const [hours, minutes] = event.time.split(':').map(Number);
+        let eventData;
         
-        const startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
-        
-        // 날짜 유효성 검사
-        if (isNaN(startDateTime.getTime())) {
-          console.error("Invalid date:", event.date, event.time);
-          throw new Error(`잘못된 날짜 형식: ${event.date}`);
+        if (event.endDate) {
+          // 기간 이벤트 (연속된 날짜) - all-day event로 생성
+          const startDate = event.date; // YYYY-MM-DD
+          const endDateObj = new Date(event.endDate);
+          endDateObj.setDate(endDateObj.getDate() + 1); // Google Calendar는 종료일이 exclusive
+          const endDate = endDateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+          
+          eventData = {
+            summary: `[${event.deptCode}] ${event.title}`,
+            description: `주간 교직원 회의 - ${event.deptCode} (${event.date} ~ ${event.endDate})`,
+            start: {
+              date: startDate,
+              timeZone: "Asia/Seoul",
+            },
+            end: {
+              date: endDate,
+              timeZone: "Asia/Seoul",
+            },
+            colorId: event.colorId,
+          };
+        } else {
+          // 단일 이벤트 - 시간 지정 이벤트로 생성
+          const [year, month, day] = event.date.split('-').map(Number);
+          const [hours, minutes] = event.time.split(':').map(Number);
+          
+          const startDateTime = new Date(year, month - 1, day, hours, minutes, 0);
+          
+          // 날짜 유효성 검사
+          if (isNaN(startDateTime.getTime())) {
+            console.error("Invalid date:", event.date, event.time);
+            throw new Error(`잘못된 날짜 형식: ${event.date}`);
+          }
+          
+          const endDateTime = new Date(startDateTime);
+          endDateTime.setHours(endDateTime.getHours() + 1);
+
+          eventData = {
+            summary: `[${event.deptCode}] ${event.title}`,
+            description: `주간 교직원 회의 - ${event.deptCode}`,
+            start: {
+              dateTime: startDateTime.toISOString(),
+              timeZone: "Asia/Seoul",
+            },
+            end: {
+              dateTime: endDateTime.toISOString(),
+              timeZone: "Asia/Seoul",
+            },
+            colorId: event.colorId,
+          };
         }
-        
-        const endDateTime = new Date(startDateTime);
-        endDateTime.setHours(endDateTime.getHours() + 1);
 
         const { error } = await supabase.functions.invoke("google-calendar", {
           body: {
             action: "create",
             calendarId: targetCalendarId,
-            event: {
-              summary: `[${event.deptCode}] ${event.title}`,
-              description: `주간 교직원 회의 - ${event.deptCode}`,
-              start: {
-                dateTime: startDateTime.toISOString(),
-                timeZone: "Asia/Seoul",
-              },
-              end: {
-                dateTime: endDateTime.toISOString(),
-                timeZone: "Asia/Seoul",
-              },
-              colorId: event.colorId,
-            },
+            event: eventData,
           },
         });
 
@@ -616,7 +693,12 @@ const WeeklyMeetingUpload = () => {
                               className={`text-sm p-2 rounded-md cursor-help ${colorInfo?.bg || 'bg-muted'} ${colorInfo?.text || 'text-foreground'}`}
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold">{event.date}</span>
+                                <span className="font-semibold">
+                                  {event.endDate 
+                                    ? `${event.date} ~ ${event.endDate}` 
+                                    : event.date
+                                  }
+                                </span>
                                 <span className="font-medium px-2 py-0.5 rounded text-xs bg-white/50">
                                   {event.deptCode}
                                 </span>
@@ -626,7 +708,12 @@ const WeeklyMeetingUpload = () => {
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-sm">
                             <div className="space-y-1">
-                              <div className="font-semibold">{event.date} {event.time}</div>
+                              <div className="font-semibold">
+                                {event.endDate 
+                                  ? `${event.date} ~ ${event.endDate}` 
+                                  : `${event.date} ${event.time}`
+                                }
+                              </div>
                               <div className="text-xs text-muted-foreground">{event.deptCode} ({colorInfo?.label})</div>
                               <div className="mt-2">{event.title}</div>
                             </div>
