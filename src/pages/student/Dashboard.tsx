@@ -364,16 +364,16 @@ const StudentDashboard = () => {
 
       {/* Image Preview Dialog */}
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-3xl max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>증빙 사진</DialogTitle>
           </DialogHeader>
           {selectedImage && (
-            <div className="w-full">
+            <div className="w-full flex items-center justify-center">
               <img
                 src={selectedImage}
                 alt="증빙 사진"
-                className="w-full h-auto rounded-lg"
+                className="max-w-full max-h-[70vh] h-auto object-contain rounded-lg"
               />
             </div>
           )}
