@@ -20,6 +20,7 @@ interface CounselingRecord {
 }
 
 const CounselingInquiry = () => {
+  const [searchInput, setSearchInput] = useState("");
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
   const [records, setRecords] = useState<CounselingRecord[]>([]);
@@ -35,8 +36,8 @@ const CounselingInquiry = () => {
   const [recordToDelete, setRecordToDelete] = useState<CounselingRecord | null>(null);
 
   const handleQuery = async () => {
-    if (!studentId.trim()) {
-      toast.error("학번을 입력해주세요");
+    if (!searchInput.trim()) {
+      toast.error("학번 또는 이름을 입력해주세요");
       return;
     }
 
@@ -55,26 +56,29 @@ const CounselingInquiry = () => {
         return;
       }
 
-      // 학생 정보 확인
+      // 학생 정보 확인 (학번 또는 이름으로 검색)
       const { data: studentData, error: studentError } = await supabase
         .from("students")
         .select("name, student_id")
-        .eq("student_id", studentId.trim())
+        .or(`student_id.eq.${searchInput.trim()},name.ilike.%${searchInput.trim()}%`)
+        .limit(1)
         .single();
 
       if (studentError || !studentData) {
-        toast.error("해당 학번의 학생을 찾을 수 없습니다");
+        toast.error("해당 학생을 찾을 수 없습니다");
         setRecords([]);
         setStudentName("");
+        setStudentId("");
         return;
       }
 
       setStudentName(studentData.name);
+      setStudentId(studentData.student_id);
 
       // 상담 기록 조회
       const { data, error } = await supabase.rpc("admin_get_counseling_records", {
         admin_id_input: parsedUser.id,
-        student_id_input: studentId.trim()
+        student_id_input: studentData.student_id
       });
 
       if (error) throw error;
@@ -213,20 +217,20 @@ const CounselingInquiry = () => {
         <CardContent className="space-y-4">
           <div className="flex gap-4">
             <Input
-              placeholder="학번 (예: 386)"
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
+              placeholder="학번 또는 이름 (예: 3817, 한정훈)"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
               className="max-w-xs"
-              maxLength={20}
             />
             <Button onClick={handleQuery} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
-            {studentId && (
+            {searchInput && (
               <Button 
                 variant="outline" 
                 onClick={() => {
+                  setSearchInput("");
                   setStudentId("");
                   setStudentName("");
                   setRecords([]);
