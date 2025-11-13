@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Loader2, Plus, Trash2, Upload, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import * as pdfjsLib from 'pdfjs-dist';
 
 interface Department {
   code: string;
@@ -115,16 +116,105 @@ const WeeklyMeetingUpload = () => {
   };
 
   const parsePDFSchedule = async (file: File): Promise<MeetingEvent[]> => {
-    // 예시 데이터 - 실제 PDF 파싱 로직으로 교체 필요
-    const exampleEvents: MeetingEvent[] = [
-      { id: "p1", date: "2025-01-13", time: "14:00", title: "학사일정 논의", deptCode: "교육과정", colorId: DEPT_COLORS["교육과정"].colorId },
-      { id: "p2", date: "2025-01-13", time: "14:30", title: "교육과정 개편", deptCode: "교육연구", colorId: DEPT_COLORS["교육연구"].colorId },
-      { id: "p3", date: "2025-01-13", time: "15:00", title: "취업률 현황 보고", deptCode: "취업지원", colorId: DEPT_COLORS["취업지원"].colorId },
-      { id: "p4", date: "2025-01-13", time: "15:30", title: "체육대회 준비", deptCode: "환경체육", colorId: DEPT_COLORS["환경체육"].colorId },
-      { id: "p5", date: "2025-01-13", time: "16:00", title: "정보시스템 점검", deptCode: "교육정보", colorId: DEPT_COLORS["교육정보"].colorId },
-    ];
-    
-    return exampleEvents;
+    try {
+      // PDF.js 워커 설정
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      let fullText = "";
+      
+      // 모든 페이지의 텍스트 추출
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(" ");
+        fullText += pageText + "\n";
+      }
+
+      console.log("Extracted PDF text:", fullText);
+
+      const events: MeetingEvent[] = [];
+      
+      // 부서명 리스트
+      const deptNames = Object.keys(DEPT_COLORS);
+      
+      // 각 부서별로 내용 추출
+      for (const deptName of deptNames) {
+        // 부서 섹션 찾기 (부서명 이후부터 다음 부서명 또는 끝까지)
+        const deptIndex = fullText.indexOf(deptName);
+        if (deptIndex === -1) continue;
+        
+        const nextDeptIndex = deptNames
+          .map(d => fullText.indexOf(d, deptIndex + deptName.length))
+          .filter(idx => idx > deptIndex)
+          .sort((a, b) => a - b)[0];
+        
+        const deptContent = fullText.substring(
+          deptIndex + deptName.length,
+          nextDeptIndex || fullText.length
+        );
+
+        // 날짜 패턴 매칭: 11.12.(수) 형식
+        const datePattern = /(\d{1,2})\.(\d{1,2})\.\((.)\)/g;
+        let match;
+        
+        while ((match = datePattern.exec(deptContent)) !== null) {
+          const month = parseInt(match[1]);
+          const day = parseInt(match[2]);
+          const year = 2025; // 현재 년도 사용
+          
+          // 날짜 생성
+          const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+          
+          // 해당 날짜 주변 텍스트에서 내용 추출
+          const contextStart = Math.max(0, match.index - 50);
+          const contextEnd = Math.min(deptContent.length, match.index + 100);
+          const context = deptContent.substring(contextStart, contextEnd);
+          
+          // 시간 패턴 추출: HH:MM 형식
+          const timePattern = /(\d{1,2}):(\d{2})/;
+          const timeMatch = context.match(timePattern);
+          const time = timeMatch ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}` : "09:00";
+          
+          // 내용 추출 (간단하게 주변 텍스트 사용)
+          let title = context
+            .replace(datePattern, '')
+            .replace(timePattern, '')
+            .trim()
+            .substring(0, 50);
+          
+          // 특수문자 및 여러 공백 정리
+          title = title.replace(/\s+/g, ' ').trim();
+          
+          if (!title) {
+            title = `${deptName} 회의`;
+          }
+
+          events.push({
+            id: `p${events.length + 1}`,
+            date: dateStr,
+            time: time,
+            title: title || `${deptName} 회의`,
+            deptCode: deptName,
+            colorId: DEPT_COLORS[deptName].colorId
+          });
+        }
+      }
+
+      // 날짜순 정렬
+      events.sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.time.localeCompare(b.time);
+      });
+
+      return events;
+    } catch (error) {
+      console.error("PDF parsing error:", error);
+      throw error;
+    }
   };
 
   const handleParsedBatchUpload = async () => {
