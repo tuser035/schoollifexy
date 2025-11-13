@@ -40,7 +40,8 @@ const DEPT_COLORS: Record<string, { colorId: string; label: string; bg: string; 
 };
 
 const WeeklyMeetingUpload = () => {
-  const [loading, setLoading] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false); // CSV 일괄 등록용
+  const [manualLoading, setManualLoading] = useState(false); // 수동 개별 등록용
   const [uploading, setUploading] = useState(false);
   const [calendarId, setCalendarId] = useState("");
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -332,7 +333,7 @@ const WeeklyMeetingUpload = () => {
       return;
     }
 
-    setLoading(true);
+    setBatchLoading(true);
     setUploadedCount(0);
 
     try {
@@ -414,7 +415,7 @@ const WeeklyMeetingUpload = () => {
       console.error("Error uploading events:", error);
       toast.error(`일정 등록 중 오류 발생 (${uploadedCount}/${parsedEvents.length} 완료)`);
     } finally {
-      setLoading(false);
+      setBatchLoading(false);
     }
   };
 
@@ -430,7 +431,7 @@ const WeeklyMeetingUpload = () => {
       return;
     }
 
-    setLoading(true);
+    setManualLoading(true);
     let successCount = 0;
 
     try {
@@ -477,7 +478,7 @@ const WeeklyMeetingUpload = () => {
       console.error("Error uploading events:", error);
       toast.error(`일정 등록 중 오류 발생 (${successCount}/${validEvents.length} 완료)`);
     } finally {
-      setLoading(false);
+      setManualLoading(false);
     }
   };
 
@@ -687,7 +688,7 @@ const WeeklyMeetingUpload = () => {
                   type="file"
                   accept=".csv,text/csv"
                   onChange={handleFileUpload}
-                  disabled={uploading || loading}
+                  disabled={uploading || batchLoading}
                   ref={csvFileInputRef}
                   className="hidden"
                 />
@@ -695,7 +696,7 @@ const WeeklyMeetingUpload = () => {
                   type="button"
                   variant="outline"
                   onClick={() => csvFileInputRef.current?.click()}
-                  disabled={uploading || loading}
+                  disabled={uploading || batchLoading}
                   className="w-full justify-start text-left font-normal"
                 >
                   <Upload className="w-4 h-4 mr-2" />
@@ -761,7 +762,7 @@ const WeeklyMeetingUpload = () => {
               </div>
             )}
 
-            {loading && (
+            {batchLoading && (
               <div className="text-sm text-muted-foreground">
                 등록 중: {uploadedCount} / {parsedEvents.length}
               </div>
@@ -775,10 +776,10 @@ const WeeklyMeetingUpload = () => {
             
             <Button
               onClick={handleParsedBatchUpload}
-              disabled={loading || parsedEvents.length === 0 || !calendarId}
+              disabled={batchLoading || parsedEvents.length === 0 || !calendarId}
               className="w-full"
             >
-              {loading ? (
+              {batchLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   일괄 등록 중... ({uploadedCount}/{parsedEvents.length})
@@ -883,10 +884,10 @@ const WeeklyMeetingUpload = () => {
 
         <Button
           onClick={handleBatchUpload}
-          disabled={loading || !calendarId}
+          disabled={manualLoading || !calendarId}
           className="w-full bg-green-600 hover:bg-green-700 text-white"
         >
-          {loading ? (
+          {manualLoading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               등록 중...
