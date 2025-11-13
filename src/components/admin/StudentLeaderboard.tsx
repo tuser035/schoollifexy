@@ -70,7 +70,7 @@ const StudentLeaderboard = () => {
         return;
       }
 
-      // 정렬 적용
+      // 정렬 적용 (데이터베이스에서 이미 정렬되어 오지만 클라이언트 정렬 옵션 지원)
       const rankedStudents = [...leaderboardData].sort((a, b) => {
         if (sortBy === "total") return b.total - a.total;
         if (sortBy === "merits") return b.merits - a.merits;
