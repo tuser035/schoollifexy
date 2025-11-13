@@ -144,45 +144,52 @@ const WeeklyMeetingUpload = () => {
                 continue;
               }
 
-              // 날짜 형식 변환
+              // 날짜 형식 변환 (다양한 패턴 지원)
               let dateStr = '';
               const dateTrimmed = String(date).trim();
+              const digits = (s: string) => String(s).replace(/\D/g, '');
+              const pad2 = (s: string) => s.padStart(2, '0');
+              const defaultYear = String(new Date().getFullYear());
               
               if (dateTrimmed.includes('/')) {
-                // 예: 11/12 또는 2025/11/12
-                const parts = dateTrimmed.split('/');
-                if (parts.length === 2) {
-                  // 월/일 형식
-                  const month = String(parts[0]).padStart(2, '0');
-                  const day = String(parts[1]).padStart(2, '0');
-                  dateStr = `2025-${month}-${day}`;
-                } else if (parts.length === 3) {
-                  // 년/월/일 형식
-                  const year = parts[0];
-                  const month = String(parts[1]).padStart(2, '0');
-                  const day = String(parts[2]).padStart(2, '0');
-                  dateStr = `${year}-${month}-${day}`;
+                const raw = dateTrimmed.split('/').map(digits).filter(Boolean);
+                if (raw.length === 2) {
+                  const [m, d] = raw;
+                  dateStr = `${defaultYear}-${pad2(m)}-${pad2(d)}`;
+                } else if (raw.length >= 3) {
+                  const [y, m, d] = raw;
+                  const year = y.length === 4 ? y : defaultYear;
+                  dateStr = `${year}-${pad2(m)}-${pad2(d)}`;
                 }
               } else if (dateTrimmed.includes('.')) {
-                // 예: 11.12 또는 2025.11.12
-                const parts = dateTrimmed.split('.');
-                if (parts.length === 2) {
-                  // 월.일 형식
-                  const month = String(parts[0]).padStart(2, '0');
-                  const day = String(parts[1]).padStart(2, '0');
-                  dateStr = `2025-${month}-${day}`;
-                } else if (parts.length === 3) {
-                  // 년.월.일 형식
-                  const year = parts[0];
-                  const month = String(parts[1]).padStart(2, '0');
-                  const day = String(parts[2]).padStart(2, '0');
-                  dateStr = `${year}-${month}-${day}`;
+                const raw = dateTrimmed.split('.').map(digits).filter(Boolean);
+                if (raw.length === 2) {
+                  const [m, d] = raw;
+                  dateStr = `${defaultYear}-${pad2(m)}-${pad2(d)}`;
+                } else if (raw.length >= 3) {
+                  // 처리 예: 2025.11.12 또는 11.12.(수) 형태
+                  const [a, b, c] = raw;
+                  const isYearFirst = a.length === 4;
+                  const year = isYearFirst ? a : defaultYear;
+                  const month = isYearFirst ? b : a;
+                  const day = isYearFirst ? c : b;
+                  dateStr = `${year}-${pad2(month)}-${pad2(day)}`;
                 }
-              } else if (dateTrimmed.includes('-')) {
-                // 이미 YYYY-MM-DD 형식
+              } else if (/[년월일]/.test(dateTrimmed)) {
+                // 한국어 표기: 2025년 11월 12일, 11월 12일 등
+                const y = digits(dateTrimmed.match(/(\d{4})\s*년/)?.[1] || '') || defaultYear;
+                const m = digits(dateTrimmed.match(/(\d{1,2})\s*월/)?.[1] || '');
+                const d = digits(dateTrimmed.match(/(\d{1,2})\s*일/)?.[1] || '');
+                if (m && d) dateStr = `${y}-${pad2(m)}-${pad2(d)}`;
+              } else if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(dateTrimmed)) {
                 dateStr = dateTrimmed;
               } else {
                 console.warn("Unknown date format:", dateTrimmed);
+                continue;
+              }
+
+              if (!dateStr) {
+                console.warn("Failed to parse date:", dateTrimmed);
                 continue;
               }
 
