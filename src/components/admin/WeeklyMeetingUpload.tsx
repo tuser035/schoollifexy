@@ -57,8 +57,9 @@ const WeeklyMeetingUpload = () => {
   const [deleteDept, setDeleteDept] = useState<string>("all");
   const [deletedCount, setDeletedCount] = useState(0);
   
-  // CSV 파일 입력 ref
+  // CSV 파일 입력 ref 및 파일명
   const csvFileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string>("");
 
   useEffect(() => {
     loadDepartments();
@@ -113,6 +114,9 @@ const WeeklyMeetingUpload = () => {
 
     const fileType = file.type;
     const fileName = file.name.toLowerCase();
+    
+    // 파일명 저장
+    setSelectedFileName(file.name);
 
     if (!fileName.endsWith('.csv') && fileType !== 'text/csv' && fileType !== 'application/vnd.ms-excel') {
       toast.error("CSV 파일만 업로드 가능합니다");
@@ -668,15 +672,28 @@ const WeeklyMeetingUpload = () => {
           <div className="space-y-3">
             <div className="space-y-2">
               <Label htmlFor="csvFile">주간 회의자료 CSV 파일</Label>
-              <Input
-                id="csvFile"
-                type="file"
-                accept=".csv,text/csv"
-                onChange={handleFileUpload}
-                disabled={uploading || loading}
-                ref={csvFileInputRef}
-                placeholder="연도-월-일.csv"
-              />
+              <div className="space-y-2">
+                <Input
+                  id="csvFile"
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={handleFileUpload}
+                  disabled={uploading || loading}
+                  ref={csvFileInputRef}
+                  placeholder="연도-월-일.csv"
+                />
+                {selectedFileName && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <span className="font-medium">선택된 파일:</span>
+                    <span className="text-foreground">{selectedFileName}</span>
+                  </p>
+                )}
+                {!selectedFileName && (
+                  <p className="text-xs text-muted-foreground">
+                    예: 2025-11-10.csv
+                  </p>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
                 CSV 형식: 날짜, 부서, 내용 (헤더 포함)
               </p>
