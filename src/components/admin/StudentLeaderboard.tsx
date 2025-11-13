@@ -50,78 +50,27 @@ const StudentLeaderboard = () => {
         return;
       }
 
-      // Set admin session
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: parsedUser.id
-      });
+      // 서버측 집계 RPC 사용 (student_id trim 처리로 공백 문제 해결)
+      const { data: leaderboardData, error: leaderboardError } = await supabase.rpc(
+        "admin_get_leaderboard",
+        {
+          admin_id_input: parsedUser.id,
+          search_grade: filterType === "grade" || filterType === "class" ? parseInt(selectedGrade) : null,
+          search_class: filterType === "class" ? parseInt(selectedClass) : null,
+          year_input: null
+        }
+      );
 
-      // 학생 목록 가져오기
-      let studentsQuery = supabase
-        .from("students")
-        .select("student_id, name, grade, class, number");
+      if (leaderboardError) throw leaderboardError;
 
-      if (filterType === "grade") {
-        studentsQuery = studentsQuery.eq("grade", parseInt(selectedGrade));
-      } else if (filterType === "class") {
-        studentsQuery = studentsQuery
-          .eq("grade", parseInt(selectedGrade))
-          .eq("class", parseInt(selectedClass));
-      }
-
-      const { data: studentsData, error: studentsError } = await studentsQuery;
-      if (studentsError) throw studentsError;
-
-      if (!studentsData || studentsData.length === 0) {
+      if (!leaderboardData || leaderboardData.length === 0) {
         setStudents([]);
         toast.info("해당 조건의 학생이 없습니다");
         return;
       }
 
-      const studentIds = studentsData.map(s => s.student_id);
-
-      // 상점 집계 (각 학생별로 개별 집계)
-      const meritsMap = new Map<string, number>();
-      const { data: meritsData, error: meritsError } = await supabase
-        .from("merits")
-        .select("student_id, score")
-        .in("student_id", studentIds);
-
-      if (meritsError) throw meritsError;
-
-      meritsData?.forEach(merit => {
-        const current = meritsMap.get(merit.student_id) || 0;
-        meritsMap.set(merit.student_id, current + merit.score);
-      });
-
-      // 벌점 집계 (각 학생별로 개별 집계)
-      const demeritsMap = new Map<string, number>();
-      const { data: demeritsData, error: demeritsError } = await supabase
-        .from("demerits")
-        .select("student_id, score")
-        .in("student_id", studentIds);
-
-      if (demeritsError) throw demeritsError;
-
-      demeritsData?.forEach(demerit => {
-        const current = demeritsMap.get(demerit.student_id) || 0;
-        demeritsMap.set(demerit.student_id, current + demerit.score);
-      });
-
-      // 학생별 집계
-      const rankedStudents: StudentRank[] = studentsData.map(student => {
-        const merits = meritsMap.get(student.student_id) || 0;
-        const demerits = demeritsMap.get(student.student_id) || 0;
-
-        return {
-          ...student,
-          merits,
-          demerits,
-          total: merits - demerits
-        };
-      });
-
-      // 정렬
-      rankedStudents.sort((a, b) => {
+      // 정렬 적용
+      const rankedStudents = [...leaderboardData].sort((a, b) => {
         if (sortBy === "total") return b.total - a.total;
         if (sortBy === "merits") return b.merits - a.merits;
         return b.demerits - a.demerits;
