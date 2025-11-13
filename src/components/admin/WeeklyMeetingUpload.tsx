@@ -126,6 +126,8 @@ const WeeklyMeetingUpload = () => {
     setUploading(true);
     try {
       const events = await parseCSVSchedule(file);
+      console.log("Parsed events count:", events.length);
+      console.log("Parsed events:", events);
       setParsedEvents(events);
       toast.success(`${events.length}개의 회의 일정을 찾았습니다`);
       // 파일 입력 필드 초기화
@@ -307,6 +309,10 @@ const WeeklyMeetingUpload = () => {
   };
 
   const handleParsedBatchUpload = async () => {
+    console.log("handleParsedBatchUpload called");
+    console.log("calendarId:", calendarId);
+    console.log("parsedEvents.length:", parsedEvents.length);
+    
     if (!calendarId) {
       toast.error("캘린더 ID를 입력해주세요");
       return;
@@ -762,6 +768,12 @@ const WeeklyMeetingUpload = () => {
               </div>
             )}
 
+            {!calendarId && parsedEvents.length > 0 && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                ⚠️ 캘린더 ID를 먼저 입력해주세요
+              </div>
+            )}
+            
             <Button
               onClick={handleParsedBatchUpload}
               disabled={loading || parsedEvents.length === 0 || !calendarId}
