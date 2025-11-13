@@ -23,18 +23,18 @@ interface MeetingEvent {
   colorId: string;
 }
 
-// 부서별 색상 매핑 (Google Calendar colorId)
-const DEPT_COLORS: Record<string, { colorId: string; label: string }> = {
-  교육과정: { colorId: "11", label: "빨강" },
-  교육연구: { colorId: "6", label: "주황" },
-  취업지원: { colorId: "5", label: "노랑" },
-  환경체육: { colorId: "10", label: "초록" },
-  교육정보: { colorId: "9", label: "파랑" },
-  도제교육: { colorId: "1", label: "남색" },
-  학생생활안전: { colorId: "3", label: "보라" },
-  진로직업: { colorId: "4", label: "핑크" },
-  교감: { colorId: "7", label: "청록" },
-  교장: { colorId: "8", label: "회색" },
+// 부서별 색상 매핑 (Google Calendar colorId + UI 배경색)
+const DEPT_COLORS: Record<string, { colorId: string; label: string; bg: string; text: string }> = {
+  교육과정: { colorId: "11", label: "빨강", bg: "bg-red-100", text: "text-red-900" },
+  교육연구: { colorId: "6", label: "주황", bg: "bg-orange-100", text: "text-orange-900" },
+  취업지원: { colorId: "5", label: "노랑", bg: "bg-yellow-100", text: "text-yellow-900" },
+  환경체육: { colorId: "10", label: "초록", bg: "bg-green-100", text: "text-green-900" },
+  교육정보: { colorId: "9", label: "파랑", bg: "bg-blue-100", text: "text-blue-900" },
+  도제교육: { colorId: "1", label: "남색", bg: "bg-indigo-100", text: "text-indigo-900" },
+  학생생활안전: { colorId: "3", label: "보라", bg: "bg-purple-100", text: "text-purple-900" },
+  진로직업: { colorId: "4", label: "핑크", bg: "bg-pink-100", text: "text-pink-900" },
+  교감: { colorId: "7", label: "청록", bg: "bg-cyan-100", text: "text-cyan-900" },
+  교장: { colorId: "8", label: "회색", bg: "bg-gray-100", text: "text-gray-900" },
 };
 
 const WeeklyMeetingUpload = () => {
@@ -402,16 +402,24 @@ const WeeklyMeetingUpload = () => {
                   <span>{parsedEvents.length}개의 회의 일정이 준비되었습니다</span>
                 </div>
                 
-                <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-1">
-                  {parsedEvents.map((event, index) => (
-                    <div key={index} className="text-sm flex items-center gap-2">
-                      <span className="font-medium">{event.date} {event.time}</span>
-                      <span className="px-2 py-0.5 rounded text-xs bg-muted">
-                        {event.deptCode} ({getDeptColor(event.deptCode)})
-                      </span>
-                      : {event.title}
-                    </div>
-                  ))}
+                <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-2">
+                  {parsedEvents.map((event, index) => {
+                    const colorInfo = DEPT_COLORS[event.deptCode];
+                    return (
+                      <div 
+                        key={index} 
+                        className={`text-sm p-2 rounded-md ${colorInfo?.bg || 'bg-muted'} ${colorInfo?.text || 'text-foreground'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{event.date} {event.time}</span>
+                          <span className="font-medium px-2 py-0.5 rounded text-xs bg-white/50">
+                            {event.deptCode}
+                          </span>
+                        </div>
+                        <div className="mt-1">{event.title}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
