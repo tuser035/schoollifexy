@@ -682,24 +682,29 @@ const WeeklyMeetingUpload = () => {
             <div className="space-y-2">
               <Label htmlFor="csvFile">CSV 파일 선택 (예: 2025-11-10.csv)</Label>
               <div className="space-y-2">
-                <Input
+                <input
                   id="csvFile"
                   type="file"
                   accept=".csv,text/csv"
                   onChange={handleFileUpload}
                   disabled={uploading || loading}
                   ref={csvFileInputRef}
-                  placeholder="연도-월-일.csv"
+                  className="hidden"
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => csvFileInputRef.current?.click()}
+                  disabled={uploading || loading}
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {selectedFileName || "클릭하여 주간 회의 자료 CSV파일을 선택하세요"}
+                </Button>
                 {selectedFileName && (
                   <p className="text-sm text-muted-foreground flex items-center gap-2">
                     <span className="font-medium">선택된 파일:</span>
                     <span className="text-foreground">{selectedFileName}</span>
-                  </p>
-                )}
-                {!selectedFileName && (
-                  <p className="text-xs text-muted-foreground">
-                    예: 2025-11-10.csv
                   </p>
                 )}
               </div>
