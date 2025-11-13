@@ -106,7 +106,6 @@ const MonthlyForm = () => {
       }
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
 
       let imageUrl = null;
 
