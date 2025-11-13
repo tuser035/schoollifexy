@@ -590,7 +590,7 @@ const WeeklyMeetingUpload = () => {
         </div>
 
         <div className="border-t pt-4">
-          <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-destructive">
+          <h3 className="text-sm font-bold mb-3 flex items-center gap-2 text-destructive">
             <Trash2 className="w-4 h-4" />
             일정 일괄 삭제
           </h3>
@@ -665,13 +665,13 @@ const WeeklyMeetingUpload = () => {
         </div>
 
         <div className="border-t pt-4">
-          <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-blue-600">
+          <h3 className="text-sm font-bold mb-3 flex items-center gap-2 text-blue-600">
             <Upload className="w-4 h-4" />
-            PDF 파일로 일괄 등록
+            주간 회의자료 CSV 파일
           </h3>
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="csvFile">주간 회의자료 CSV 파일</Label>
+              <Label htmlFor="csvFile">CSV 파일 선택</Label>
               <div className="space-y-2">
                 <Input
                   id="csvFile"
@@ -789,7 +789,7 @@ const WeeklyMeetingUpload = () => {
         </div>
 
         <div className="border-t pt-4">
-          <h3 className="text-sm font-medium mb-3 flex items-center gap-2 text-green-600">
+          <h3 className="text-sm font-bold mb-3 flex items-center gap-2 text-green-600">
             <Plus className="w-4 h-4" />
             수동으로 개별 등록
           </h3>
