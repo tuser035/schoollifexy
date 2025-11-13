@@ -671,7 +671,7 @@ const WeeklyMeetingUpload = () => {
           </h3>
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="csvFile">CSV 파일 선택</Label>
+              <Label htmlFor="csvFile">CSV 파일 선택 (예: 2025-11-10.csv)</Label>
               <div className="space-y-2">
                 <Input
                   id="csvFile"
