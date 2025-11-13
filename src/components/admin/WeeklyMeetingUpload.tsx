@@ -117,11 +117,14 @@ const WeeklyMeetingUpload = () => {
 
   const parsePDFSchedule = async (file: File): Promise<MeetingEvent[]> => {
     try {
-      // PDF.js 워커 설정
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      // PDF.js 워커 설정 - CDN 사용
+      if (typeof window !== 'undefined' && 'Worker' in window) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`;
+      }
 
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
       
       let fullText = "";
       
