@@ -62,6 +62,13 @@ const AdminLogin = () => {
       >
         {isLoading ? "로그인 중..." : "관리자 로그인"}
       </Button>
+      
+      <p className="text-sm text-center text-muted-foreground">
+        비밀번호를 잊으셨나요?{" "}
+        <a href="mailto:gyeongjuhs@naver.com" className="text-blue-600 hover:underline">
+          관리자에게 문의
+        </a>
+      </p>
     </form>
   );
 };
