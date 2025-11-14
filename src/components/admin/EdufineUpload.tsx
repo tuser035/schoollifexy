@@ -104,11 +104,24 @@ const EdufineUpload = () => {
     return new Promise((resolve, reject) => {
       // UTF-8 BOM 제거
       const cleanedText = csvText.replace(/^\uFEFF/, '');
+
+      // 구분자 자동 추론 (콤마, 세미콜론, 탭, 파이프)
+      const headerLine = cleanedText.split(/\r?\n/)[0] || '';
+      const counts = {
+        ',': (headerLine.match(/,/g) || []).length,
+        ';': (headerLine.match(/;/g) || []).length,
+        '\t': (headerLine.match(/\t/g) || []).length,
+        '|': (headerLine.match(/\|/g) || []).length,
+      } as Record<string, number>;
+      const delimiter = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || ',';
+      console.log('추론된 구분자:', JSON.stringify(counts), '=>', JSON.stringify(delimiter));
       
       Papa.parse(cleanedText, {
         header: true,
         skipEmptyLines: true,
         encoding: 'UTF-8',
+        delimiter,
+        transformHeader: (h: string) => h.replace(/^\uFEFF/, '').trim(),
         complete: (results) => {
           try {
             console.log('CSV 파싱 결과:', results);
@@ -207,7 +220,7 @@ const EdufineUpload = () => {
         return isNaN(dt.getTime()) ? null : dt;
       }
 
-      // Full date with year present
+      // Full date with year present (YYYY-MM-DD)
       const full = s.match(/(\d{4})[-\s]?(\d{1,2})[-\s]?(\d{1,2})/);
       if (full) {
         const [, y, m, d] = full;
@@ -215,7 +228,16 @@ const EdufineUpload = () => {
         return isNaN(dt.getTime()) ? null : dt;
       }
 
-      // Without year: assume current year
+      // 2-digit year (YY-MM-DD)
+      const yy = s.match(/^(\d{2})[-\s]?(\d{1,2})[-\s]?(\d{1,2})$/);
+      if (yy) {
+        const [, y2, m, d] = yy;
+        const y = Number(y2) + 2000; // 2000년대 가정
+        const dt = new Date(y, Number(m) - 1, Number(d));
+        return isNaN(dt.getTime()) ? null : dt;
+      }
+
+      // Without year: assume current year (MM-DD)
       const md = s.match(/(\d{1,2})[-\s](\d{1,2})/);
       if (md) {
         const year = new Date().getFullYear();
