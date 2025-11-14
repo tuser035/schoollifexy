@@ -18,7 +18,7 @@ const tables: TableConfig[] = [
   {
     name: "에듀파인 문서",
     table: "edufine",
-    columns: "접수일, 마감일, 발신부서, 제목, 생산문서번호, 붙임파일명1-5",
+    columns: "rcv_date, due, dept, subj, doc_no, att1, att2, att3, att4, att5",
     color: "border-primary",
   },
   {
