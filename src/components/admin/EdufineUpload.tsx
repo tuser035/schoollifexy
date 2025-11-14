@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, Loader2, Upload, CheckCircle2, Trash2, Download } from "lucide-react";
+import { Calendar, Loader2, Upload, CheckCircle2, Trash2, Download, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import Papa from 'papaparse';
@@ -52,6 +52,14 @@ const EdufineUpload = () => {
   const [filterKeyword, setFilterKeyword] = useState<string>("");
   const [filterStartDate, setFilterStartDate] = useState<string>("");
   const [filterEndDate, setFilterEndDate] = useState<string>("");
+  
+  // 정렬 상태
+  const [sortColumn, setSortColumn] = useState<'department' | 'title' | 'receiptDate' | 'deadline' | 'docNumber' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
 
   const getDeptColor = (dept: string): { colorId: string; bg: string; text: string } => {
     // 부서명에 키워드가 포함되어 있으면 해당 색상 반환
@@ -63,9 +71,29 @@ const EdufineUpload = () => {
     return DEPT_COLORS["기타"];
   };
 
+  // 필터 초기화
+  const handleResetFilters = () => {
+    setFilterDept("all");
+    setFilterKeyword("");
+    setFilterStartDate("");
+    setFilterEndDate("");
+    setCurrentPage(1);
+  };
+
+  // 정렬 핸들러
+  const handleSort = (column: 'department' | 'title' | 'receiptDate' | 'deadline' | 'docNumber') => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
   // 필터링된 이벤트 계산
   const filteredEvents = useMemo(() => {
-    return parsedEvents.filter(event => {
+    let filtered = parsedEvents.filter(event => {
       // 발신부서 필터
       if (filterDept !== "all" && !event.department.includes(filterDept)) {
         return false;
@@ -102,7 +130,52 @@ const EdufineUpload = () => {
 
       return true;
     });
-  }, [parsedEvents, filterDept, filterKeyword, filterStartDate, filterEndDate]);
+
+    // 정렬 적용
+    if (sortColumn) {
+      filtered = [...filtered].sort((a, b) => {
+        let aVal, bVal;
+        
+        switch (sortColumn) {
+          case 'department':
+            aVal = a.department || '';
+            bVal = b.department || '';
+            break;
+          case 'title':
+            aVal = a.title || '';
+            bVal = b.title || '';
+            break;
+          case 'receiptDate':
+            aVal = parseKoreanDate(a.receiptDate)?.getTime() || 0;
+            bVal = parseKoreanDate(b.receiptDate)?.getTime() || 0;
+            break;
+          case 'deadline':
+            aVal = parseKoreanDate(a.deadline)?.getTime() || 0;
+            bVal = parseKoreanDate(b.deadline)?.getTime() || 0;
+            break;
+          case 'docNumber':
+            aVal = a.docNumber || '';
+            bVal = b.docNumber || '';
+            break;
+          default:
+            return 0;
+        }
+
+        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [parsedEvents, filterDept, filterKeyword, filterStartDate, filterEndDate, sortColumn, sortDirection]);
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const paginatedEvents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredEvents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredEvents, currentPage, itemsPerPage]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -649,47 +722,62 @@ const EdufineUpload = () => {
               </div>
 
               {/* 필터 UI */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-muted/50 rounded-lg">
-                <div className="space-y-2">
-                  <Label className="text-xs">발신부서</Label>
-                  <Select value={filterDept} onValueChange={setFilterDept}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="전체" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">전체</SelectItem>
-                      {Object.keys(DEPT_COLORS).filter(d => d !== "기타").map(dept => (
-                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold">필터</Label>
+                  <Button
+                    onClick={handleResetFilters}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    초기화
+                  </Button>
                 </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">발신부서</Label>
+                    <Select value={filterDept} onValueChange={setFilterDept}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="전체" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">전체</SelectItem>
+                        {Object.keys(DEPT_COLORS).filter(d => d !== "기타").map(dept => (
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs">키워드 검색</Label>
-                  <Input
-                    placeholder="제목, 문서번호, 첨부파일"
-                    value={filterKeyword}
-                    onChange={(e) => setFilterKeyword(e.target.value)}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">키워드 검색</Label>
+                    <Input
+                      placeholder="제목, 문서번호, 첨부파일"
+                      value={filterKeyword}
+                      onChange={(e) => setFilterKeyword(e.target.value)}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs">접수일 시작</Label>
-                  <Input
-                    type="date"
-                    value={filterStartDate}
-                    onChange={(e) => setFilterStartDate(e.target.value)}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">접수일 시작</Label>
+                    <Input
+                      type="date"
+                      value={filterStartDate}
+                      onChange={(e) => setFilterStartDate(e.target.value)}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs">접수일 종료</Label>
-                  <Input
-                    type="date"
-                    value={filterEndDate}
-                    onChange={(e) => setFilterEndDate(e.target.value)}
-                  />
+                  <div className="space-y-2">
+                    <Label className="text-xs">접수일 종료</Label>
+                    <Input
+                      type="date"
+                      value={filterEndDate}
+                      onChange={(e) => setFilterEndDate(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -704,16 +792,76 @@ const EdufineUpload = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[120px]">발신부서</TableHead>
-                      <TableHead className="min-w-[200px]">제목</TableHead>
-                      <TableHead className="w-[100px]">접수일</TableHead>
-                      <TableHead className="w-[100px]">마감일</TableHead>
-                      <TableHead className="w-[150px]">문서번호</TableHead>
+                      <TableHead className="w-[120px]">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => handleSort('department')}
+                        >
+                          발신부서
+                          {sortColumn === 'department' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />
+                          ) : <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="min-w-[200px]">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => handleSort('title')}
+                        >
+                          제목
+                          {sortColumn === 'title' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />
+                          ) : <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-[100px]">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => handleSort('receiptDate')}
+                        >
+                          접수일
+                          {sortColumn === 'receiptDate' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />
+                          ) : <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-[100px]">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => handleSort('deadline')}
+                        >
+                          마감일
+                          {sortColumn === 'deadline' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />
+                          ) : <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-[150px]">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2"
+                          onClick={() => handleSort('docNumber')}
+                        >
+                          문서번호
+                          {sortColumn === 'docNumber' ? (
+                            sortDirection === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />
+                          ) : <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />}
+                        </Button>
+                      </TableHead>
                       <TableHead className="w-[200px]">첨부파일</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredEvents.map((event) => {
+                    {paginatedEvents.map((event) => {
                       const deptColor = getDeptColor(event.department);
                       return (
                         <TableRow key={event.id}>
@@ -744,6 +892,35 @@ const EdufineUpload = () => {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* 페이지네이션 */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-2">
+                  <div className="text-sm text-muted-foreground">
+                    {currentPage} / {totalPages} 페이지 (전체 {filteredEvents.length}개)
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      이전
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      다음
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
