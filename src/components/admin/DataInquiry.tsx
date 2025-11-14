@@ -35,6 +35,8 @@ const DataInquiry = () => {
   const [counselingContent, setCounselingContent] = useState("");
   const [isSavingCounseling, setIsSavingCounseling] = useState(false);
   const [monthlyRawData, setMonthlyRawData] = useState<any[]>([]);
+  const [meritsRawData, setMeritsRawData] = useState<any[]>([]);
+  const [demeritsRawData, setDemeritsRawData] = useState<any[]>([]);
 
   const exportToCSV = () => {
     if (data.length === 0) {
@@ -65,6 +67,44 @@ const DataInquiry = () => {
         }
         
         return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageDisplay}`;
+      });
+    } else if (selectedTable === "merits" && meritsRawData.length > 0) {
+      csvHeader = "날짜,학생,교사,카테고리,사유,점수,증빙사진";
+      csvRows = meritsRawData.map(row => {
+        const date = new Date(row.created_at).toLocaleDateString('ko-KR');
+        const studentName = `${row.student_name} (${row.student_grade}-${row.student_class})`;
+        const teacher = row.teacher_name || "-";
+        const category = row.category;
+        const reason = (row.reason || "-").replace(/,/g, " ").replace(/\n/g, " ");
+        const score = row.score;
+        
+        // 이미지 URL에서 파일명 추출 및 하이퍼링크 생성
+        let imageDisplay = "-";
+        if (row.image_url && row.image_url !== "-") {
+          const fileName = row.image_url.split('/').pop() || "이미지";
+          imageDisplay = `=HYPERLINK("${row.image_url}","${fileName}")`;
+        }
+        
+        return `${date},${studentName},${teacher},${category},"${reason}",${score},${imageDisplay}`;
+      });
+    } else if (selectedTable === "demerits" && demeritsRawData.length > 0) {
+      csvHeader = "날짜,학생,교사,카테고리,사유,점수,증빙사진";
+      csvRows = demeritsRawData.map(row => {
+        const date = new Date(row.created_at).toLocaleDateString('ko-KR');
+        const studentName = `${row.student_name} (${row.student_grade}-${row.student_class})`;
+        const teacher = row.teacher_name || "-";
+        const category = row.category;
+        const reason = (row.reason || "-").replace(/,/g, " ").replace(/\n/g, " ");
+        const score = row.score;
+        
+        // 이미지 URL에서 파일명 추출 및 하이퍼링크 생성
+        let imageDisplay = "-";
+        if (row.image_url && row.image_url !== "-") {
+          const fileName = row.image_url.split('/').pop() || "이미지";
+          imageDisplay = `=HYPERLINK("${row.image_url}","${fileName}")`;
+        }
+        
+        return `${date},${studentName},${teacher},${category},"${reason}",${score},${imageDisplay}`;
       });
     } else {
       // 기존 방식대로 처리
@@ -346,6 +386,9 @@ const DataInquiry = () => {
 
         if (queryError) throw queryError;
 
+        // 원본 데이터 저장 (CSV용)
+        setMeritsRawData(data || []);
+
         result = data?.map((row: any) => ({
           "날짜": new Date(row.created_at).toLocaleDateString('ko-KR'),
           "학생": `${row.student_name} (${row.student_grade}-${row.student_class})`,
@@ -381,6 +424,9 @@ const DataInquiry = () => {
         });
 
         if (queryError) throw queryError;
+
+        // 원본 데이터 저장 (CSV용)
+        setDemeritsRawData(data || []);
 
         result = data?.map((row: any) => ({
           "날짜": new Date(row.created_at).toLocaleDateString('ko-KR'),
