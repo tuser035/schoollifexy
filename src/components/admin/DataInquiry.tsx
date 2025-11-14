@@ -449,11 +449,14 @@ const DataInquiry = () => {
         // departments
         const { data, error: queryError } = await supabase
           .from(selectedTable)
-          .select("*")
+          .select("code, name")
           .limit(50);
 
         if (queryError) throw queryError;
-        result = data;
+        result = data?.map(row => ({
+          "학과코드": row.code,
+          "학과명": row.name
+        }));
       }
 
       if (result && result.length > 0) {
