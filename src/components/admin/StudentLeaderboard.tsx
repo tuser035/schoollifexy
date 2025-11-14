@@ -30,7 +30,7 @@ const StudentLeaderboard = () => {
   const [filterType, setFilterType] = useState<"all" | "grade" | "class">("all");
   const [selectedGrade, setSelectedGrade] = useState<string>("1");
   const [selectedClass, setSelectedClass] = useState<string>("1");
-  const [sortBy, setSortBy] = useState<"total" | "merits" | "demerits">("total");
+  const [sortBy, setSortBy] = useState<"total" | "merits" | "demerits" | "monthly">("total");
   const [students, setStudents] = useState<StudentRank[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
@@ -74,6 +74,7 @@ const StudentLeaderboard = () => {
       const rankedStudents = [...leaderboardData].sort((a, b) => {
         if (sortBy === "total") return b.total - a.total;
         if (sortBy === "merits") return b.merits - a.merits;
+        if (sortBy === "monthly") return b.monthly - a.monthly;
         return b.demerits - a.demerits;
       });
 
@@ -280,6 +281,7 @@ const StudentLeaderboard = () => {
                   <SelectItem value="total">순점수</SelectItem>
                   <SelectItem value="merits">상점</SelectItem>
                   <SelectItem value="demerits">벌점</SelectItem>
+                  <SelectItem value="monthly">이달의 학생</SelectItem>
                 </SelectContent>
               </Select>
             </div>
