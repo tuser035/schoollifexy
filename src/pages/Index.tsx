@@ -1,22 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import AdminLogin from "@/components/auth/AdminLogin";
-import heroImage from "@/assets/nature-hero.jpg";
 import { School } from "lucide-react";
 
+const backgroundImages = [
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4", // 산 풍경
+  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d", // 초원
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b", // 산악 호수
+  "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5", // 숲
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920", // 석양 산
+];
+
 const Index = () => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % backgroundImages.length);
+    }, 5000); // 5초마다 이미지 변경
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ 
-          backgroundImage: `url(https://images.unsplash.com/photo-1635148040718-acf281233b8e)`,
-        }}
-      >
+      {/* Animated Background with rotating images */}
+      <div className="absolute inset-0">
+        {backgroundImages.map((image, index) => (
+          <div
+            key={index}
+            className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
+            style={{
+              backgroundImage: `url(${image})`,
+              opacity: currentImageIndex === index ? 1 : 0,
+            }}
+          />
+        ))}
         <div className="absolute inset-0 animate-sunrise-sunset" />
       </div>
 
