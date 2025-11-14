@@ -114,6 +114,8 @@ async function getAccessToken() {
 }
 
 async function createCalendarEvent(accessToken: string, calendarId: string, event: GoogleCalendarEvent) {
+  console.log("Creating event with colorId:", event.colorId, "summary:", event.summary);
+  
   const response = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
     {
