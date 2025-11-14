@@ -68,7 +68,6 @@ const TeacherLogin = () => {
         <Input
           id="teacher-password"
           type="password"
-          placeholder="초기 비밀번호: 1234qwert"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
