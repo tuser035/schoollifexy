@@ -8,6 +8,9 @@ export interface AuthUser {
   name?: string;
   studentId?: string;
   email?: string;
+  isHomeroom?: boolean;
+  grade?: number;
+  class?: number;
 }
 
 // Student login
@@ -80,6 +83,9 @@ export const loginTeacher = async (phone: string, password: string) => {
       type: "teacher" as UserType,
       name: data.name,
       email: data.teacher_email,
+      isHomeroom: data.is_homeroom,
+      grade: data.grade,
+      class: data.class,
     };
   } catch (error: any) {
     throw new Error(error.message || "로그인에 실패했습니다");
