@@ -104,6 +104,13 @@ const PDFScheduleUpload = () => {
       for (let i = 0; i < parsedEvents.length; i++) {
         const event = parsedEvents[i];
         
+        // Create all-day event with today's date
+        const today = new Date();
+        const startDate = today.toISOString().slice(0, 10);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const endDate = tomorrow.toISOString().slice(0, 10);
+        
         const { error } = await supabase.functions.invoke("google-calendar", {
           body: {
             action: "create",
@@ -111,6 +118,8 @@ const PDFScheduleUpload = () => {
             event: {
               summary: `[${event.department}] ${event.title}`,
               description: `제목: ${event.title}\n발신부서: ${event.department}`,
+              start: { date: startDate },
+              end: { date: endDate },
             },
           },
         });
