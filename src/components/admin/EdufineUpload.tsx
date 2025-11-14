@@ -68,14 +68,26 @@ const EdufineUpload = () => {
     setLoading(true);
 
     try {
-      const text = await file.text();
-      const parsed = await parseCSVSchedule(text);
-      setParsedEvents(parsed);
-      toast.success(`${parsed.length}개의 일정을 불러왔습니다`);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const text = e.target?.result as string;
+          console.log("파일 내용 (첫 200자):", text.substring(0, 200));
+          const parsed = await parseCSVSchedule(text);
+          console.log("파싱 완료, 이벤트 개수:", parsed.length);
+          setParsedEvents(parsed);
+          toast.success(`${parsed.length}개의 일정을 불러왔습니다`);
+        } catch (error) {
+          console.error("CSV parsing error:", error);
+          toast.error("CSV 파일 파싱 중 오류가 발생했습니다");
+        } finally {
+          setLoading(false);
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
     } catch (error) {
-      console.error("CSV parsing error:", error);
-      toast.error("CSV 파일 파싱 중 오류가 발생했습니다");
-    } finally {
+      console.error("File read error:", error);
+      toast.error("파일 읽기 중 오류가 발생했습니다");
       setLoading(false);
     }
   };
@@ -134,18 +146,31 @@ const EdufineUpload = () => {
   };
 
   const parseKoreanDate = (dateStr: string): Date | null => {
-    if (!dateStr || dateStr === 'N/A') return null;
+    if (!dateStr || dateStr === 'N/A' || dateStr.trim() === '') return null;
     
     try {
-      // "2025. 4. 22." 형식 처리
-      const cleaned = dateStr.replace(/\s+/g, '').replace(/\./g, '-');
+      // "2025. 5. 2.(금)까지" 같은 형식에서 괄호와 텍스트 제거
+      let cleaned = dateStr.replace(/\([^)]*\)/g, '').replace(/까지/g, '').trim();
+      
+      // 공백 제거하고 점을 하이픈으로 변경
+      cleaned = cleaned.replace(/\s+/g, '').replace(/\./g, '-');
+      
+      // "2025-4-22-" 형식에서 마지막 하이픈 제거
+      cleaned = cleaned.replace(/-+$/, '');
+      
+      console.log("날짜 파싱:", dateStr, "->", cleaned);
+      
       const match = cleaned.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
       if (match) {
         const [, year, month, day] = match;
-        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        console.log("파싱된 날짜:", date);
+        return date;
       }
+      
+      console.warn("날짜 매칭 실패:", cleaned);
     } catch (error) {
-      console.error("Date parsing error:", error);
+      console.error("Date parsing error:", error, dateStr);
     }
     return null;
   };
