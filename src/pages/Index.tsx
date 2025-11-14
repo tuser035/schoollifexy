@@ -5,6 +5,7 @@ import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import AdminLogin from "@/components/auth/AdminLogin";
 import heroImage from "@/assets/nature-hero.jpg";
+import logoImage from "@/assets/logo.png";
 
 const Index = () => {
   return (
@@ -21,14 +22,17 @@ const Index = () => {
 
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl">
+        <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl">
           <div className="p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                학교생활 포인트 관리
+              <div className="flex justify-center mb-4">
+                <img src={logoImage} alt="School Point Logo" className="h-20 w-auto" />
+              </div>
+              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                스쿨포인트.상점
               </h1>
-              <p className="text-muted-foreground">
-                School Point Management System
+              <p className="text-2xl font-semibold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                SchoolPoint.Store
               </p>
             </div>
 
