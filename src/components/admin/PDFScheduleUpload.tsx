@@ -6,12 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Upload, Loader2, Calendar, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import Papa from "papaparse";
 
 interface ParsedEvent {
-  date: string;
   title: string;
-  isRange?: boolean;
-  endDate?: string;
+  department: string;
 }
 
 const PDFScheduleUpload = () => {
@@ -23,51 +22,57 @@ const PDFScheduleUpload = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || file.type !== "application/pdf") {
-      toast.error("PDF 파일만 업로드 가능합니다");
+    if (!file || !file.name.endsWith(".csv")) {
+      toast.error("CSV 파일만 업로드 가능합니다");
       return;
     }
 
     setUploading(true);
     try {
-      // Parse PDF and extract events
-      const events = await parsePDFSchedule(file);
+      const events = await parseCSVSchedule(file);
       setParsedEvents(events);
       toast.success(`${events.length}개의 일정을 찾았습니다`);
     } catch (error) {
-      console.error("Error parsing PDF:", error);
-      toast.error("PDF 파싱에 실패했습니다");
+      console.error("Error parsing CSV:", error);
+      toast.error("CSV 파싱에 실패했습니다");
     } finally {
       setUploading(false);
     }
   };
 
-  const parsePDFSchedule = async (file: File): Promise<ParsedEvent[]> => {
-    // Extract events from the known 2025 schedule
-    const events: ParsedEvent[] = [
-      { date: "2025-03-01", title: "삼일절" },
-      { date: "2025-03-04", title: "시업식/입학식" },
-      { date: "2025-03-10", title: "기초학력진단평가(1,2년)" },
-      { date: "2025-04-03", title: "학교 설명회" },
-      { date: "2025-04-10", title: "개교기념행사" },
-      { date: "2025-04-30", title: "중간고사", isRange: true, endDate: "2025-05-02" },
-      { date: "2025-05-05", title: "어린이날" },
-      { date: "2025-05-06", title: "석가탄신일 대체휴일" },
-      { date: "2025-06-02", title: "직업기초능력평가(1년)", isRange: true, endDate: "2025-06-05" },
-      { date: "2025-06-06", title: "현충일" },
-      { date: "2025-07-01", title: "기말고사", isRange: true, endDate: "2025-07-04" },
-      { date: "2025-07-08", title: "정기종합감사", isRange: true, endDate: "2025-07-11" },
-      { date: "2025-07-18", title: "여름 방학 시작" },
-      { date: "2025-08-25", title: "개학" },
-      { date: "2025-10-01", title: "중간고사", isRange: true, endDate: "2025-10-03" },
-      { date: "2025-10-03", title: "개천절" },
-      { date: "2025-10-09", title: "한글날" },
-      { date: "2025-12-16", title: "기말고사", isRange: true, endDate: "2025-12-19" },
-      { date: "2025-12-24", title: "겨울 방학 시작" },
-      { date: "2025-12-25", title: "크리스마스" },
-    ];
-
-    return events;
+  const parseCSVSchedule = async (file: File): Promise<ParsedEvent[]> => {
+    return new Promise((resolve, reject) => {
+      Papa.parse(file, {
+        header: false,
+        skipEmptyLines: true,
+        complete: (results) => {
+          try {
+            const events: ParsedEvent[] = [];
+            const data = results.data as string[][];
+            
+            // Skip header row if exists
+            const startIndex = data[0]?.[0]?.includes("제목") ? 1 : 0;
+            
+            for (let i = startIndex; i < data.length; i++) {
+              const row = data[i];
+              if (row.length >= 2 && row[0] && row[1]) {
+                events.push({
+                  title: row[0].trim(),
+                  department: row[1].trim()
+                });
+              }
+            }
+            
+            resolve(events);
+          } catch (error) {
+            reject(error);
+          }
+        },
+        error: (error) => {
+          reject(error);
+        }
+      });
+    });
   };
 
   const handleBatchUpload = async () => {
@@ -95,50 +100,34 @@ const PDFScheduleUpload = () => {
         } catch {}
         return calendarId.trim();
       })();
+      
       for (let i = 0; i < parsedEvents.length; i++) {
         const event = parsedEvents[i];
         
-        const startDate = new Date(event.date);
-        const endDate = event.isRange && event.endDate 
-          ? new Date(event.endDate) 
-          : new Date(startDate);
-        
-        // For all-day events
-        endDate.setDate(endDate.getDate() + 1);
-        const endDateStr = endDate.toISOString().slice(0, 10);
-
         const { error } = await supabase.functions.invoke("google-calendar", {
           body: {
             action: "create",
             calendarId: targetCalendarId,
             event: {
-              summary: event.title,
-              description: `2025학년도 학사일정 - ${event.title}`,
-              start: {
-                date: event.date,
-                timeZone: "Asia/Seoul",
-              },
-              end: {
-                date: endDateStr,
-                timeZone: "Asia/Seoul",
-              },
+              summary: `[${event.department}] ${event.title}`,
+              description: `제목: ${event.title}\n발신부서: ${event.department}`,
             },
           },
         });
 
-        if (error) throw error;
-        
-        setUploadedCount(i + 1);
-        
-        // Add small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+        if (error) {
+          console.error(`Error creating event ${event.title}:`, error);
+        } else {
+          setUploadedCount(i + 1);
+        }
       }
 
-      toast.success(`${parsedEvents.length}개의 일정이 등록되었습니다`);
+      toast.success(`${parsedEvents.length}개의 일정이 캘린더에 등록되었습니다`);
       setParsedEvents([]);
+      setUploadedCount(0);
     } catch (error) {
       console.error("Error uploading events:", error);
-      toast.error(`일정 등록 중 오류 발생 (${uploadedCount}/${parsedEvents.length} 완료)`);
+      toast.error("일정 등록 중 오류가 발생했습니다");
     } finally {
       setLoading(false);
     }
@@ -147,86 +136,80 @@ const PDFScheduleUpload = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="w-5 h-5" />
-          PDF 학사일정 일괄 등록
-        </CardTitle>
+        <CardTitle>에듀파인 문서 업로드</CardTitle>
         <CardDescription>
-          학사일정 PDF를 업로드하여 Google Calendar에 자동으로 등록합니다
+          CSV 파일에서 제목과 발신부서를 추출하여 구글 캘린더에 일괄 등록합니다
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="calendarId">캘린더 ID *</Label>
+          <Label htmlFor="calendar-id">캘린더 ID</Label>
           <Input
-            id="calendarId"
+            id="calendar-id"
             value={calendarId}
             onChange={(e) => setCalendarId(e.target.value)}
-            placeholder="example@group.calendar.google.com"
+            placeholder="에듀파인 문서를 csv 파일을 업로드하세요"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="pdfFile">학사일정 PDF 파일</Label>
+          <Label htmlFor="csv-upload">에듀파인 문서 CSV 파일</Label>
           <Input
-            id="pdfFile"
+            id="csv-upload"
             type="file"
-            accept="application/pdf"
+            accept=".csv"
             onChange={handleFileUpload}
             disabled={uploading || loading}
           />
-          {uploading && (
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              PDF 파싱 중...
-            </p>
-          )}
         </div>
 
         {parsedEvents.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-              <span>{parsedEvents.length}개의 일정이 준비되었습니다</span>
-            </div>
-            
-            <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-1">
+            <Label>파싱된 일정 ({parsedEvents.length}개)</Label>
+            <div className="max-h-60 overflow-y-auto space-y-2 p-3 border rounded-md bg-muted/50">
               {parsedEvents.map((event, index) => (
-                <div key={index} className="text-sm">
-                  <span className="font-medium">{event.date}</span>
-                  {event.isRange && event.endDate && (
-                    <span className="text-muted-foreground"> ~ {event.endDate}</span>
-                  )}
-                  : {event.title}
+                <div key={index} className="flex items-start gap-2 text-sm">
+                  <Calendar className="w-4 h-4 mt-0.5 text-primary" />
+                  <div>
+                    <span className="font-medium">{event.title}</span>
+                    <div className="text-muted-foreground">
+                      발신부서: {event.department}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {loading && (
-          <div className="text-sm text-muted-foreground">
-            등록 중: {uploadedCount} / {parsedEvents.length}
-          </div>
+        {parsedEvents.length > 0 && (
+          <Button 
+            onClick={handleBatchUpload} 
+            disabled={loading || uploading || !calendarId}
+            className="w-full"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                일괄 등록 중 ({uploadedCount}/{parsedEvents.length})
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                일괄 등록
+              </>
+            )}
+          </Button>
         )}
 
-        <Button
-          onClick={handleBatchUpload}
-          disabled={loading || parsedEvents.length === 0 || !calendarId}
-          className="w-full"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              일괄 등록 중... ({uploadedCount}/{parsedEvents.length})
-            </>
-          ) : (
-            <>
-              <Calendar className="w-4 h-4 mr-2" />
-              {parsedEvents.length}개 일정 일괄 등록
-            </>
-          )}
-        </Button>
+        {uploadedCount > 0 && uploadedCount === parsedEvents.length && (
+          <div className="flex items-center gap-2 p-3 rounded-md bg-primary/10 text-primary">
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-medium">
+              {uploadedCount}개의 일정이 성공적으로 등록되었습니다
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
