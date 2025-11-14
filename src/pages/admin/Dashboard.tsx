@@ -17,7 +17,6 @@ import PDFScheduleUpload from "@/components/admin/PDFScheduleUpload";
 import WeeklyMeetingUpload from "@/components/admin/WeeklyMeetingUpload";
 import EdufineUpload from "@/components/admin/EdufineUpload";
 import EdufineDocumentStorage from "@/components/admin/EdufineDocumentStorage";
-import EdufineCSVUpload from "@/components/admin/EdufineCSVUpload";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -111,8 +110,7 @@ const AdminDashboard = () => {
             <PasswordReset />
           </TabsContent>
 
-          <TabsContent value="upload" className="space-y-6">
-            <EdufineCSVUpload />
+          <TabsContent value="upload">
             <BulkUpload />
           </TabsContent>
 
