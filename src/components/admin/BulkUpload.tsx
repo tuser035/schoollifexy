@@ -60,26 +60,80 @@ const BulkUpload = () => {
     setUploading(table);
     
     try {
-      // Handle Edufine document upload to storage
+      // Handle Edufine document upload to storage and database
       if (table === "edufine") {
+        // Get admin user from localStorage and set session
+        const authUser = localStorage.getItem("auth_user");
+        if (!authUser) {
+          throw new Error("로그인이 필요합니다");
+        }
+        
+        const user = JSON.parse(authUser);
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
         const timestamp = new Date().getTime();
         const fileName = `edufine_${timestamp}_${file.name}`;
         const filePath = `uploads/${fileName}`;
 
-        const { error } = await supabase.storage
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
           .from('edufine-documents')
           .upload(filePath, file, {
             cacheControl: '3600',
             upsert: false
           });
 
-        if (error) {
-          console.error("업로드 오류:", error);
+        if (uploadError) {
+          console.error("업로드 오류:", uploadError);
           throw new Error("파일 업로드 중 오류가 발생했습니다");
         }
 
-        toast.success(`에듀파인 문서가 성공적으로 업로드되었습니다`);
-        setUploading(null);
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('edufine-documents')
+          .getPublicUrl(filePath);
+
+        // Parse CSV and insert to database
+        const Papa = await import('papaparse');
+        const text = await file.text();
+        
+        Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+          complete: async (results) => {
+            const records = results.data.map((row: any) => ({
+              rcv_date: row.rcv_date || row['접수일'] || null,
+              due: row.due || row['마감일'] || null,
+              dept: row.dept || row['발신부서'] || null,
+              subj: row.subj || row['제목'] || null,
+              doc_no: row.doc_no || row['생산문서번호'] || null,
+              att1: row.att1 || row['붙임파일1'] || null,
+              att2: row.att2 || row['붙임파일2'] || null,
+              att3: row.att3 || row['붙임파일3'] || null,
+              att4: row.att4 || row['붙임파일4'] || null,
+              att5: row.att5 || row['붙임파일5'] || null,
+              file_url: publicUrl,
+              admin_id: user.id
+            }));
+
+            const { error: insertError } = await supabase
+              .from('edufine_documents')
+              .insert(records);
+
+            if (insertError) {
+              console.error("데이터베이스 저장 오류:", insertError);
+              throw new Error("데이터베이스 저장 중 오류가 발생했습니다");
+            }
+
+            toast.success(`${records.length}개의 에듀파인 문서가 성공적으로 저장되었습니다`);
+            setUploading(null);
+          },
+          error: (error) => {
+            console.error("CSV 파싱 오류:", error);
+            throw new Error("CSV 파일 파싱 중 오류가 발생했습니다");
+          }
+        });
+
         return;
       }
 

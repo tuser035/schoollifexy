@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, Calendar } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, Calendar, FileText } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -17,6 +17,7 @@ import PDFScheduleUpload from "@/components/admin/PDFScheduleUpload";
 import WeeklyMeetingUpload from "@/components/admin/WeeklyMeetingUpload";
 import EdufineUpload from "@/components/admin/EdufineUpload";
 import EdufineDocumentStorage from "@/components/admin/EdufineDocumentStorage";
+import EdufineInquiry from "@/components/admin/EdufineInquiry";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="password" className="w-full">
-          <TabsList className="grid w-full grid-cols-10 mb-6">
+          <TabsList className="grid w-full grid-cols-11 mb-6">
             <TabsTrigger value="password">
               <Key className="w-4 h-4 mr-2" />
               비밀번호
@@ -103,6 +104,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="weekly-meeting">
               <Calendar className="w-4 h-4 mr-2" />
               회의
+            </TabsTrigger>
+            <TabsTrigger value="edufine">
+              <FileText className="w-4 h-4 mr-2" />
+              에듀파인
             </TabsTrigger>
           </TabsList>
 
@@ -145,6 +150,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="weekly-meeting" className="space-y-6">
             <WeeklyMeetingUpload />
+          </TabsContent>
+
+          <TabsContent value="edufine">
+            <EdufineInquiry />
           </TabsContent>
         </Tabs>
       </main>
