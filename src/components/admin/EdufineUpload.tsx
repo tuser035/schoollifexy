@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, Loader2, Upload, CheckCircle2, Trash2 } from "lucide-react";
+import { Calendar, Loader2, Upload, CheckCircle2, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import Papa from 'papaparse';
@@ -360,6 +360,51 @@ const EdufineUpload = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (parsedEvents.length === 0) {
+      toast.error("내보낼 데이터가 없습니다");
+      return;
+    }
+
+    try {
+      // CSV 데이터 생성
+      const csvData = parsedEvents.map(event => ({
+        '발신부서': event.department,
+        '제목': event.title,
+        '접수일': event.receiptDate,
+        '마감일': event.deadline,
+        '문서번호': event.docNumber,
+        '첨부파일': event.attachments.join('; '),
+      }));
+
+      // Papa.unparse를 사용하여 CSV 문자열 생성
+      const csv = Papa.unparse(csvData, {
+        quotes: true,
+        delimiter: ',',
+        header: true,
+      });
+
+      // BOM 추가 (한글 깨짐 방지)
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+      
+      // 다운로드 링크 생성
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `에듀파인_파싱데이터_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('CSV 파일이 다운로드되었습니다');
+    } catch (error) {
+      console.error('CSV 내보내기 오류:', error);
+      toast.error('CSV 내보내기 중 오류가 발생했습니다');
+    }
+  };
+
   const handleBulkDelete = async () => {
     if (!calendarId) {
       toast.error("캘린더 ID를 입력해주세요");
@@ -543,7 +588,17 @@ const EdufineUpload = () => {
 
           {parsedEvents.length > 0 && (
             <div className="space-y-2">
-              <Label>파싱된 일정 ({parsedEvents.length}개)</Label>
+              <div className="flex items-center justify-between">
+                <Label>파싱된 일정 ({parsedEvents.length}개)</Label>
+                <Button
+                  onClick={handleExportCSV}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  CSV 다운로드
+                </Button>
+              </div>
               <div className="max-h-96 overflow-y-auto border rounded">
                 <Table>
                   <TableHeader>
