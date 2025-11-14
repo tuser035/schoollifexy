@@ -328,7 +328,7 @@ const DemeritForm = () => {
       {selectedCategory && (
         <>
           <div className="space-y-2">
-            <Label>벌점 사유 선택</Label>
+            <Label>벌점 기본 사유</Label>
             <Select value={selectedReasonIndex} onValueChange={handleReasonChange}>
               <SelectTrigger>
                 <SelectValue placeholder="벌점 사유 선택" />
