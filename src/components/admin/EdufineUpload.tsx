@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar, Loader2, Upload, CheckCircle2, Trash2, Download } from "lucide-react";
@@ -45,6 +46,12 @@ const EdufineUpload = () => {
   const [deleteDept, setDeleteDept] = useState<string>("all");
   const csvFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
+  
+  // 필터 상태
+  const [filterDept, setFilterDept] = useState<string>("all");
+  const [filterKeyword, setFilterKeyword] = useState<string>("");
+  const [filterStartDate, setFilterStartDate] = useState<string>("");
+  const [filterEndDate, setFilterEndDate] = useState<string>("");
 
   const getDeptColor = (dept: string): { colorId: string; bg: string; text: string } => {
     // 부서명에 키워드가 포함되어 있으면 해당 색상 반환
@@ -55,6 +62,47 @@ const EdufineUpload = () => {
     }
     return DEPT_COLORS["기타"];
   };
+
+  // 필터링된 이벤트 계산
+  const filteredEvents = useMemo(() => {
+    return parsedEvents.filter(event => {
+      // 발신부서 필터
+      if (filterDept !== "all" && !event.department.includes(filterDept)) {
+        return false;
+      }
+
+      // 키워드 필터 (제목, 문서번호, 첨부파일명에서 검색)
+      if (filterKeyword) {
+        const keyword = filterKeyword.toLowerCase();
+        const matchesTitle = event.title?.toLowerCase().includes(keyword);
+        const matchesDocNumber = event.docNumber?.toLowerCase().includes(keyword);
+        const matchesAttachments = event.attachments.some(att => 
+          att.toLowerCase().includes(keyword)
+        );
+        if (!matchesTitle && !matchesDocNumber && !matchesAttachments) {
+          return false;
+        }
+      }
+
+      // 날짜 범위 필터 (접수일 기준)
+      if (filterStartDate || filterEndDate) {
+        const receiptDate = parseKoreanDate(event.receiptDate);
+        if (receiptDate) {
+          if (filterStartDate) {
+            const startDate = new Date(filterStartDate);
+            if (receiptDate < startDate) return false;
+          }
+          if (filterEndDate) {
+            const endDate = new Date(filterEndDate);
+            endDate.setHours(23, 59, 59, 999);
+            if (receiptDate > endDate) return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [parsedEvents, filterDept, filterKeyword, filterStartDate, filterEndDate]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -361,14 +409,14 @@ const EdufineUpload = () => {
   };
 
   const handleExportCSV = () => {
-    if (parsedEvents.length === 0) {
+    if (filteredEvents.length === 0) {
       toast.error("내보낼 데이터가 없습니다");
       return;
     }
 
     try {
-      // CSV 데이터 생성
-      const csvData = parsedEvents.map(event => ({
+      // CSV 데이터 생성 (필터링된 데이터 사용)
+      const csvData = filteredEvents.map(event => ({
         '발신부서': event.department,
         '제목': event.title,
         '접수일': event.receiptDate,
@@ -587,7 +635,7 @@ const EdufineUpload = () => {
           </div>
 
           {parsedEvents.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label>파싱된 일정 ({parsedEvents.length}개)</Label>
                 <Button
@@ -599,6 +647,59 @@ const EdufineUpload = () => {
                   CSV 다운로드
                 </Button>
               </div>
+
+              {/* 필터 UI */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-muted/50 rounded-lg">
+                <div className="space-y-2">
+                  <Label className="text-xs">발신부서</Label>
+                  <Select value={filterDept} onValueChange={setFilterDept}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체</SelectItem>
+                      {Object.keys(DEPT_COLORS).filter(d => d !== "기타").map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">키워드 검색</Label>
+                  <Input
+                    placeholder="제목, 문서번호, 첨부파일"
+                    value={filterKeyword}
+                    onChange={(e) => setFilterKeyword(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">접수일 시작</Label>
+                  <Input
+                    type="date"
+                    value={filterStartDate}
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">접수일 종료</Label>
+                  <Input
+                    type="date"
+                    value={filterEndDate}
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* 필터링 결과 표시 */}
+              <div className="text-sm text-muted-foreground">
+                {filteredEvents.length !== parsedEvents.length && (
+                  <span>필터링 결과: {filteredEvents.length}개 / 전체 {parsedEvents.length}개</span>
+                )}
+              </div>
+
               <div className="max-h-96 overflow-y-auto border rounded">
                 <Table>
                   <TableHeader>
@@ -612,7 +713,7 @@ const EdufineUpload = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {parsedEvents.map((event) => {
+                    {filteredEvents.map((event) => {
                       const deptColor = getDeptColor(event.department);
                       return (
                         <TableRow key={event.id}>
