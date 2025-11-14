@@ -9,8 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import Papa from "papaparse";
 
 interface ParsedEvent {
-  title: string;
   department: string;
+  title: string;
+  attachmentName: string;
+  documentNumber: string;
+  receiptDate: string;
   deadline: string;
 }
 
@@ -52,17 +55,18 @@ const PDFScheduleUpload = () => {
             const data = results.data as string[][];
             
             // Skip header row if exists
-            const startIndex = data[0]?.[0]?.includes("제목") ? 1 : 0;
+            const startIndex = data[0]?.[0]?.includes("발신부서") ? 1 : 0;
             
             for (let i = startIndex; i < data.length; i++) {
               const row = data[i];
-              if (row.length >= 2 && row[0] && row[1]) {
-                // 마감일이 없으면 오늘 날짜 사용
-                const today = new Date().toISOString().slice(0, 10);
+              if (row.length >= 6 && row[0] && row[1]) {
                 events.push({
-                  title: row[0].trim(),
-                  department: row[1].trim(),
-                  deadline: row[2]?.trim() || today
+                  department: row[0].trim(),
+                  title: row[1].trim(),
+                  attachmentName: row[2]?.trim() || '-',
+                  documentNumber: row[3]?.trim() || '-',
+                  receiptDate: row[4]?.trim() || new Date().toISOString().slice(0, 10),
+                  deadline: row[5]?.trim() || '-'
                 });
               }
             }
@@ -110,19 +114,19 @@ const PDFScheduleUpload = () => {
         
         console.log('Processing event:', event);
         
-        // Parse deadline date from CSV (YYYY-MM-DD format)
-        let deadlineDate = new Date(event.deadline);
+        // Parse receipt date from CSV (YYYY-MM-DD format)
+        let receiptDate = new Date(event.receiptDate);
         
         // Validate date
-        if (isNaN(deadlineDate.getTime())) {
+        if (isNaN(receiptDate.getTime())) {
           console.error(`Invalid date for event: ${event.title}, using today's date`);
-          deadlineDate = new Date();
+          receiptDate = new Date();
         }
         
-        const nextDay = new Date(deadlineDate);
+        const nextDay = new Date(receiptDate);
         nextDay.setDate(nextDay.getDate() + 1);
         
-        const startDate = deadlineDate.toISOString().slice(0, 10);
+        const startDate = receiptDate.toISOString().slice(0, 10);
         const endDate = nextDay.toISOString().slice(0, 10);
         
         console.log('Event dates:', { startDate, endDate });
@@ -133,7 +137,7 @@ const PDFScheduleUpload = () => {
             calendarId: targetCalendarId,
             event: {
               summary: `[${event.department}] ${event.title}`,
-              description: `제목: ${event.title}\n발신부서: ${event.department}\n마감일: ${event.deadline}`,
+              description: `발신부서: ${event.department}\n제목: ${event.title}\n마감일: ${event.deadline}\n붙임파일명: ${event.attachmentName}\n생산문서번호: ${event.documentNumber}`,
               start: { date: startDate },
               end: { date: endDate },
             },
@@ -181,7 +185,7 @@ const PDFScheduleUpload = () => {
         <div className="space-y-2">
           <Label htmlFor="csv-upload">에듀파인 문서 CSV 파일</Label>
           <p className="text-sm text-muted-foreground">
-            CSV 형식: 제목, 발신부서, 마감일 (YYYY-MM-DD)
+            CSV 형식: 발신부서, 제목, 붙임파일명, 생산문서번호, 접수일, 마감일
           </p>
           <Input
             id="csv-upload"
@@ -200,9 +204,9 @@ const PDFScheduleUpload = () => {
                 <div key={index} className="flex items-start gap-2 text-sm">
                   <Calendar className="w-4 h-4 mt-0.5 text-primary" />
                   <div>
-                    <span className="font-medium">{event.title}</span>
+                    <span className="font-medium">[{event.department}] {event.title}</span>
                     <div className="text-muted-foreground">
-                      발신부서: {event.department} | 마감일: {event.deadline}
+                      접수일: {event.receiptDate} | 마감일: {event.deadline}
                     </div>
                   </div>
                 </div>
