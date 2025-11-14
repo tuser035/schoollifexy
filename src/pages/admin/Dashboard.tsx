@@ -137,7 +137,10 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">
-            <PDFScheduleUpload />
+            <div>
+              <h2 className="text-xl font-semibold mb-4">에듀파인 문서 일괄 등록</h2>
+              <PDFScheduleUpload />
+            </div>
             <GoogleCalendar />
           </TabsContent>
 
