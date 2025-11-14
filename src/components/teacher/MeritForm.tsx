@@ -333,7 +333,7 @@ const MeritForm = () => {
       {selectedCategory && (
         <>
           <div className="space-y-2">
-            <Label>상점 사유 (기본)</Label>
+            <Label>상점 기본 사유</Label>
             <Select value={selectedReasonIndex} onValueChange={handleReasonChange}>
               <SelectTrigger>
                 <SelectValue placeholder="상점 사유 선택" />
@@ -349,27 +349,15 @@ const MeritForm = () => {
           </div>
 
           {selectedReasonIndex && (
-            <>
-              <div className="space-y-2">
-                <Label>상점 사유 (기본)</Label>
-                <Input
-                  value={basicReason}
-                  onChange={(e) => setBasicReason(e.target.value)}
-                  placeholder="상점 사유"
-                  readOnly={false}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>구체적인 사유 (선택사항)</Label>
-                <Textarea
-                  placeholder="기본 사유에 추가할 구체적인 내용을 입력하세요..."
-                  value={additionalReason}
-                  onChange={(e) => setAdditionalReason(e.target.value)}
-                  rows={3}
-                />
-              </div>
-            </>
+            <div className="space-y-2">
+              <Label>구체적인 사유 (선택사항)</Label>
+              <Textarea
+                placeholder="기본 사유에 추가할 구체적인 내용을 입력하세요..."
+                value={additionalReason}
+                onChange={(e) => setAdditionalReason(e.target.value)}
+                rows={3}
+              />
+            </div>
           )}
         </>
       )}
