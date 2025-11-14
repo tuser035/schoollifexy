@@ -105,8 +105,15 @@ const EdufineUpload = () => {
       // UTF-8 BOM 제거
       const cleanedText = csvText.replace(/^\uFEFF/, '');
 
+      // 코드펜스(```...) 및 빈 줄 제거 후 헤더 라인 결정
+      const lines = cleanedText.split(/\r?\n/);
+      const filteredLines = lines.filter((l) => {
+        const t = l.trim();
+        return t && !t.startsWith('```');
+      });
+
       // 구분자 자동 추론 (콤마, 세미콜론, 탭, 파이프)
-      const headerLine = cleanedText.split(/\r?\n/)[0] || '';
+      const headerLine = filteredLines[0] || '';
       const counts = {
         ',': (headerLine.match(/,/g) || []).length,
         ';': (headerLine.match(/;/g) || []).length,
@@ -115,13 +122,15 @@ const EdufineUpload = () => {
       } as Record<string, number>;
       const delimiter = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || ',';
       console.log('추론된 구분자:', JSON.stringify(counts), '=>', JSON.stringify(delimiter));
+
+      const finalText = filteredLines.join('\n');
       
-      Papa.parse(cleanedText, {
+      Papa.parse(finalText, {
         header: true,
         skipEmptyLines: true,
         encoding: 'UTF-8',
         delimiter,
-        transformHeader: (h: string) => h.replace(/^\uFEFF/, '').trim(),
+        transformHeader: (h: string) => h.replace(/^\uFEFF/, '').replace(/^"+|"+$/g, '').trim(),
         complete: (results) => {
           try {
             console.log('CSV 파싱 결과:', results);
@@ -271,6 +280,18 @@ const EdufineUpload = () => {
       let successCount = 0;
       let skipCount = 0;
 
+      // Google Calendar ID 정규화 (URL 붙여넣을 경우 src 파라미터 추출)
+      const targetCalendarId = (() => {
+        try {
+          if (calendarId.includes("calendar.google.com")) {
+            const u = new URL(calendarId);
+            const src = u.searchParams.get("src");
+            return src ? decodeURIComponent(src) : calendarId.trim();
+          }
+        } catch {}
+        return calendarId.trim();
+      })();
+
       for (const event of parsedEvents) {
         try {
           console.log('처리 중인 이벤트:', event);
@@ -307,7 +328,7 @@ const EdufineUpload = () => {
           const { data, error } = await supabase.functions.invoke('google-calendar', {
             body: {
               action: 'create',
-              calendarId: calendarId,
+              calendarId: targetCalendarId,
               event: eventData,
             },
           });
