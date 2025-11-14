@@ -210,48 +210,51 @@ const EdufineUpload = () => {
     if (!s || s === 'N/A') return null;
 
     try {
-      // Remove parentheses and suffix words like '까지'
-      s = s.replace(/\([^)]*\)/g, '').replace(/까지|부터|~|to/gi, ' ').trim();
-      // Normalize Korean date terms and separators
+      // 불필요한 설명/괄호/접미어 제거 후 공백 정규화
       s = s
-        .replace(/년|\.|\//g, '-')
-        .replace(/월/g, '-')
-        .replace(/일/g, '')
-        .replace(/\s+/g, ' ')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replace(/\([^)]*\)/g, ' ') // 괄호 제거
+        .replace(/까지|부터|제출|마감|~|to/gi, ' ') // 접미어 제거
+        .replace(/년|월|일|\.|\//g, ' ') // 구분자 통일
+        .replace(/\s+/g, ' ') // 다중 공백 축약
+        .trim();
 
-      // Handle compact YYYYMMDD
-      const compact = s.match(/^(\d{4})(\d{2})(\d{2})$/);
-      if (compact) {
-        const [, y, m, d] = compact;
-        const dt = new Date(Number(y), Number(m) - 1, Number(d));
+      // 1) YYYY M D (임의 구분자) 패턴
+      let m = s.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+      if (m) {
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = Number(m[3]);
+        const dt = new Date(y, mo - 1, d);
         return isNaN(dt.getTime()) ? null : dt;
       }
 
-      // Full date with year present (YYYY-MM-DD)
-      const full = s.match(/(\d{4})[-\s]?(\d{1,2})[-\s]?(\d{1,2})/);
-      if (full) {
-        const [, y, m, d] = full;
-        const dt = new Date(Number(y), Number(m) - 1, Number(d));
+      // 2) YYYYMMDD 압축 패턴
+      m = s.match(/(\d{4})(\d{2})(\d{2})/);
+      if (m) {
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = Number(m[3]);
+        const dt = new Date(y, mo - 1, d);
         return isNaN(dt.getTime()) ? null : dt;
       }
 
-      // 2-digit year (YY-MM-DD)
-      const yy = s.match(/^(\d{2})[-\s]?(\d{1,2})[-\s]?(\d{1,2})$/);
-      if (yy) {
-        const [, y2, m, d] = yy;
-        const y = Number(y2) + 2000; // 2000년대 가정
-        const dt = new Date(y, Number(m) - 1, Number(d));
+      // 3) YY M D (임의 구분자) → 2000년대 가정
+      m = s.match(/(^|\D)(\d{2})\D+(\d{1,2})\D+(\d{1,2})(\D|$)/);
+      if (m) {
+        const y = 2000 + Number(m[2]);
+        const mo = Number(m[3]);
+        const d = Number(m[4]);
+        const dt = new Date(y, mo - 1, d);
         return isNaN(dt.getTime()) ? null : dt;
       }
 
-      // Without year: assume current year (MM-DD)
-      const md = s.match(/(\d{1,2})[-\s](\d{1,2})/);
-      if (md) {
+      // 4) 년도 없이 MM D → 올해로 가정
+      m = s.match(/(^|\D)(\d{1,2})\D+(\d{1,2})(\D|$)/);
+      if (m) {
         const year = new Date().getFullYear();
-        const [, m, d] = md;
-        const dt = new Date(Number(year), Number(m) - 1, Number(d));
+        const mo = Number(m[2]);
+        const d = Number(m[3]);
+        const dt = new Date(year, mo - 1, d);
         return isNaN(dt.getTime()) ? null : dt;
       }
 
