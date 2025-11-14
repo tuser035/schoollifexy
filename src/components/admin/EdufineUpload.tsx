@@ -23,14 +23,14 @@ interface EdufineEvent {
 
 // 발신부서별 색상 매핑
 const DEPT_COLORS: Record<string, { colorId: string; bg: string; text: string }> = {
-  경상북도교육청: { colorId: "11", bg: "bg-red-200", text: "text-red-900" },
-  경북지사: { colorId: "6", bg: "bg-orange-200", text: "text-orange-900" },
-  시청자미디어재단: { colorId: "5", bg: "bg-yellow-200", text: "text-yellow-900" },
-  한양대학교: { colorId: "10", bg: "bg-green-200", text: "text-green-900" },
-  로보그램코딩교육센터: { colorId: "9", bg: "bg-blue-200", text: "text-blue-900" },
-  포항시: { colorId: "1", bg: "bg-indigo-200", text: "text-indigo-900" },
-  한국산업인력공단: { colorId: "3", bg: "bg-purple-200", text: "text-purple-900" },
-  기타: { colorId: "4", bg: "bg-pink-200", text: "text-pink-900" },
+  경상북도교육청: { colorId: "11", bg: "bg-red-50", text: "text-red-900" },
+  경북지사: { colorId: "6", bg: "bg-orange-50", text: "text-orange-900" },
+  시청자미디어재단: { colorId: "5", bg: "bg-yellow-50", text: "text-yellow-900" },
+  한양대학교: { colorId: "10", bg: "bg-green-50", text: "text-green-900" },
+  로보그램코딩교육센터: { colorId: "9", bg: "bg-blue-50", text: "text-blue-900" },
+  포항시: { colorId: "1", bg: "bg-indigo-50", text: "text-indigo-900" },
+  한국산업인력공단: { colorId: "3", bg: "bg-purple-50", text: "text-purple-900" },
+  기타: { colorId: "4", bg: "bg-pink-50", text: "text-pink-900" },
 };
 
 const EdufineUpload = () => {
@@ -315,18 +315,21 @@ const EdufineUpload = () => {
             continue;
           }
 
-          // 마감일이 있으면 마감일을 종료일로, 없으면 접수일과 같은 날로
-          const endDate = deadlineDate || receiptDate;
+          // 제목에 마감일 추가
+          const deadlineText = deadlineDate ? ` (마감: ${format(deadlineDate, 'MM/dd')})` : '';
+          const summary = event.department 
+            ? `[${event.department}] ${event.title || '(제목 없음)'}${deadlineText}`
+            : `${event.title || '(제목 없음)'}${deadlineText}`;
 
           const eventData = {
-            summary: event.department ? `[${event.department}] ${event.title || '(제목 없음)'}` : (event.title || '(제목 없음)'),
+            summary,
             description: `생산문서번호: ${event.docNumber || '-'}\n접수일: ${event.receiptDate || '-'}\n마감일: ${event.deadline || '-'}\n\n붙임파일:\n${event.attachments.length > 0 ? event.attachments.map((a, i) => `${i + 1}. ${a}`).join('\n') : '없음'}`,
             start: {
               date: format(receiptDate, 'yyyy-MM-dd'),
               timeZone: 'Asia/Seoul',
             },
             end: {
-              date: format(new Date(endDate.getTime() + 86400000), 'yyyy-MM-dd'), // 다음날
+              date: format(new Date(receiptDate.getTime() + 86400000), 'yyyy-MM-dd'), // 접수일 기준 다음날 (전일 이벤트)
               timeZone: 'Asia/Seoul',
             },
             colorId: event.colorId,
