@@ -43,7 +43,10 @@ const TeacherDashboard = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-foreground">교사 대시보드</h1>
-            <p className="text-muted-foreground">{user.name}님 환영합니다</p>
+            <p className="text-muted-foreground">
+              {user.name}님 환영합니다
+              {user.isHomeroom && user.grade && user.class && ` (${user.grade}-${user.class})`}
+            </p>
           </div>
           <Button onClick={handleLogout} variant="outline">
             <LogOut className="w-4 h-4 mr-2" />
