@@ -15,6 +15,35 @@ const PasswordReset = () => {
   const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // 전화번호 포맷팅 함수
+  const formatPhoneNumber = (value: string) => {
+    // 숫자만 추출
+    const numbers = value.replace(/[^\d]/g, '');
+    
+    // 최대 11자리까지만 허용
+    const limitedNumbers = numbers.slice(0, 11);
+    
+    // 하이픈 추가
+    if (limitedNumbers.length <= 3) {
+      return limitedNumbers;
+    } else if (limitedNumbers.length <= 7) {
+      return `${limitedNumbers.slice(0, 3)}-${limitedNumbers.slice(3)}`;
+    } else {
+      return `${limitedNumbers.slice(0, 3)}-${limitedNumbers.slice(3, 7)}-${limitedNumbers.slice(7)}`;
+    }
+  };
+
+  const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    if (userType === "teacher") {
+      // 교사일 경우 전화번호 포맷팅 적용
+      setIdentifier(formatPhoneNumber(value));
+    } else {
+      setIdentifier(value);
+    }
+  };
+
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -100,7 +129,7 @@ const PasswordReset = () => {
             </Label>
             <Input
               value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              onChange={handleIdentifierChange}
               placeholder={
                 userType === "student" ? "예: 10101" :
                 userType === "teacher" ? "예: 010-1234-5678" :
