@@ -15,6 +15,7 @@ import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
 import GoogleCalendar from "@/components/admin/GoogleCalendar";
 import PDFScheduleUpload from "@/components/admin/PDFScheduleUpload";
 import WeeklyMeetingUpload from "@/components/admin/WeeklyMeetingUpload";
+import EdufineUpload from "@/components/admin/EdufineUpload";
 import EdufineDocumentStorage from "@/components/admin/EdufineDocumentStorage";
 
 const AdminDashboard = () => {
@@ -97,7 +98,7 @@ const AdminDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="calendar">
               <Calendar className="w-4 h-4 mr-2" />
-              일정
+              업무
             </TabsTrigger>
             <TabsTrigger value="weekly-meeting">
               <Calendar className="w-4 h-4 mr-2" />
@@ -139,11 +140,7 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">에듀파인 문서 일괄 등록</h2>
-              <PDFScheduleUpload />
-            </div>
-            <GoogleCalendar />
+            <EdufineUpload />
           </TabsContent>
 
           <TabsContent value="weekly-meeting" className="space-y-6">
