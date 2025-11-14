@@ -56,11 +56,13 @@ const PDFScheduleUpload = () => {
             
             for (let i = startIndex; i < data.length; i++) {
               const row = data[i];
-              if (row.length >= 3 && row[0] && row[1] && row[2]) {
+              if (row.length >= 2 && row[0] && row[1]) {
+                // 마감일이 없으면 오늘 날짜 사용
+                const today = new Date().toISOString().slice(0, 10);
                 events.push({
                   title: row[0].trim(),
                   department: row[1].trim(),
-                  deadline: row[2].trim()
+                  deadline: row[2]?.trim() || today
                 });
               }
             }
