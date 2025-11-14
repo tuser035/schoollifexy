@@ -65,7 +65,7 @@ const GoogleCalendar = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="w-5 h-5" />
-          Google Calendar 일정 생성
+          에듀파인 문서 생성
         </CardTitle>
         <CardDescription>
           학교 일정을 Google Calendar에 추가합니다
