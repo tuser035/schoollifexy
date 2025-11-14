@@ -73,7 +73,7 @@ const Index = () => {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="student"
-                  className="data-[state=active]:bg-student data-[state=active]:text-white"
+                  className="data-[state=active]:bg-student data-[state=active]:text-white font-bold"
                 >
                   학생
                 </TabsTrigger>
