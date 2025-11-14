@@ -55,8 +55,16 @@ const DataInquiry = () => {
         const teacher = row.teacher_name || "-";
         const category = row.category || "-";
         const reason = (row.reason || "-").replace(/,/g, " ").replace(/\n/g, " ");
-        const imageUrl = row.image_url || "-";
-        return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageUrl}`;
+        
+        // 이미지 URL에서 파일명 추출 및 하이퍼링크 생성
+        let imageDisplay = "-";
+        if (row.image_url && row.image_url !== "-") {
+          const fileName = row.image_url.split('/').pop() || "이미지";
+          // Excel에서 클릭 가능한 하이퍼링크 수식 생성
+          imageDisplay = `=HYPERLINK("${row.image_url}","${fileName}")`;
+        }
+        
+        return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageDisplay}`;
       });
     } else {
       // 기존 방식대로 처리
