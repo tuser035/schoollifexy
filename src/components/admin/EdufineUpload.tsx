@@ -23,7 +23,7 @@ interface EdufineEvent {
 
 // 발신부서별 색상 매핑
 const DEPT_COLORS: Record<string, { colorId: string; bg: string; text: string }> = {
-  경상북도교육청: { colorId: "11", bg: "bg-red-50", text: "text-red-900" },
+  경상북도교육청: { colorId: "3", bg: "bg-purple-50", text: "text-purple-900" },
   경북지사: { colorId: "6", bg: "bg-orange-50", text: "text-orange-900" },
   시청자미디어재단: { colorId: "5", bg: "bg-yellow-50", text: "text-yellow-900" },
   한양대학교: { colorId: "10", bg: "bg-green-50", text: "text-green-900" },
