@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar, Loader2, Upload, CheckCircle2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -543,31 +544,49 @@ const EdufineUpload = () => {
           {parsedEvents.length > 0 && (
             <div className="space-y-2">
               <Label>파싱된 일정 ({parsedEvents.length}개)</Label>
-              <div className="max-h-96 overflow-y-auto space-y-2 border rounded p-4">
-                {parsedEvents.map((event) => {
-                  const deptColor = getDeptColor(event.department);
-                  return (
-                    <div
-                      key={event.id}
-                      className={`p-3 rounded ${deptColor.bg} ${deptColor.text}`}
-                    >
-                      <div className="font-medium">
-                        [{event.department}] {event.title}
-                        <span className="text-xs ml-2 opacity-70">(색상ID: {event.colorId})</span>
-                      </div>
-                      <div className="text-sm mt-1">
-                        접수일: {event.receiptDate} | 마감일: {event.deadline}
-                      </div>
-                      <div className="text-sm">문서번호: {event.docNumber}</div>
-                      {event.attachments.length > 0 && (
-                        <div className="text-xs mt-1">
-                          첨부: {event.attachments.slice(0, 2).join(', ')}
-                          {event.attachments.length > 2 && ` 외 ${event.attachments.length - 2}개`}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="max-h-96 overflow-y-auto border rounded">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[120px]">발신부서</TableHead>
+                      <TableHead className="min-w-[200px]">제목</TableHead>
+                      <TableHead className="w-[100px]">접수일</TableHead>
+                      <TableHead className="w-[100px]">마감일</TableHead>
+                      <TableHead className="w-[150px]">문서번호</TableHead>
+                      <TableHead className="w-[200px]">첨부파일</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {parsedEvents.map((event) => {
+                      const deptColor = getDeptColor(event.department);
+                      return (
+                        <TableRow key={event.id}>
+                          <TableCell className={`font-medium ${deptColor.bg} ${deptColor.text}`}>
+                            {event.department}
+                          </TableCell>
+                          <TableCell>{event.title || '(제목 없음)'}</TableCell>
+                          <TableCell className="text-sm">{event.receiptDate || '-'}</TableCell>
+                          <TableCell className="text-sm">{event.deadline || '-'}</TableCell>
+                          <TableCell className="text-sm">{event.docNumber || '-'}</TableCell>
+                          <TableCell className="text-xs">
+                            {event.attachments.length > 0 ? (
+                              <div className="space-y-1">
+                                {event.attachments.slice(0, 2).map((att, idx) => (
+                                  <div key={idx} className="truncate">{att}</div>
+                                ))}
+                                {event.attachments.length > 2 && (
+                                  <div className="text-muted-foreground">외 {event.attachments.length - 2}개</div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">없음</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           )}
