@@ -83,7 +83,7 @@ const TeacherLogin = () => {
       </Button>
       
       <p className="text-sm text-center text-muted-foreground">
-        스쿨포인트.상점 시스템 문의가 있으신가요?{" "}
+        스쿨포인트.상점 시스템 문의가 있을까요?{" "}
         <a 
           href="https://mail.google.com/mail/?view=cm&fs=1&to=gyeongjuhs@naver.com&su=%EC%8A%A4%EC%BF%A8%ED%8F%AC%EC%9D%B8%ED%8A%B8%20%EC%8B%9C%EC%8A%A4%ED%85%9C%20%EB%AC%B8%EC%9D%98&body=%EB%AC%B8%EC%9D%98%20%EB%82%B4%EC%9A%A9%EC%9D%84%20%EC%9E%85%EB%A0%A5%ED%95%B4%EC%A3%BC%EC%84%B8%EC%9A%94.%0A%0A%EB%AC%B8%EC%9D%98%20%EC%9C%A0%ED%98%95%3A%20%5B%EB%A1%9C%EA%B7%B8%EC%9D%B8%20%EB%AC%B8%EC%A0%9C%20%2F%20%ED%8F%AC%EC%9D%B8%ED%8A%B8%20%EC%A1%B0%ED%9A%8C%20%2F%20%EA%B8%B0%ED%83%80%5D%0A%0A%EB%8B%B4%EB%8B%B9%EC%9E%90%3A%20%EA%B2%BD%EC%A3%BC%EC%A0%95%EB%B3%B4%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90%20%EC%9D%B4%EC%A0%95%EC%9B%90"
           target="_blank"
