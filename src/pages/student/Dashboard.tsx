@@ -204,9 +204,9 @@ const StudentDashboard = () => {
             ) : (
               <Tabs defaultValue="merits" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="merits" className="data-[state=active]:border-blue-500 data-[state=active]:border-2">상점</TabsTrigger>
-                  <TabsTrigger value="demerits" className="data-[state=active]:border-orange-500 data-[state=active]:border-2">벌점</TabsTrigger>
-                  <TabsTrigger value="monthly" className="data-[state=active]:border-green-500 data-[state=active]:border-2">이달의 학생</TabsTrigger>
+                  <TabsTrigger value="merits">상점</TabsTrigger>
+                  <TabsTrigger value="demerits">벌점</TabsTrigger>
+                  <TabsTrigger value="monthly">이달의 학생</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="merits">
