@@ -132,18 +132,24 @@ const EdufineUpload = () => {
               
               // 첨부파일
               const attachments: string[] = [];
-              const combined = pick('붙임파일', '붙임파일명', 'attachments', 'att1');
+              
+              // 붙임파일명 컬럼 먼저 처리
+              const combined = pick('붙임파일명', '붙임파일', 'attachments', 'att1');
               if (combined) {
-                combined
-                  .split(/[;,.|\n\t\r\f\u00B7/]+/)
-                  .map((a) => a.trim())
-                  .filter((a) => a.length > 0)
-                  .slice(0, 5)
-                  .forEach((a) => attachments.push(a));
+                const parts = combined.split(/[;,.\n\t\r\f\u00B7]+/).map(a => a.trim()).filter(a => a.length > 0);
+                parts.forEach(a => {
+                  if (a && !attachments.includes(a)) {
+                    attachments.push(a);
+                  }
+                });
               }
-              ['att2', 'att3', 'att4', 'att5', '붙임파일명2', '붙임파일명3', '붙임파일명4', '붙임파일명5'].forEach((k) => {
+              
+              // 나머지 붙임파일명2, 3, 4, 5 처리
+              ['붙임파일명2', '붙임파일명3', '붙임파일명4', '붙임파일명5', 'att2', 'att3', 'att4', 'att5'].forEach((k) => {
                 const v = pick(k);
-                if (v) attachments.push(v.trim());
+                if (v && v.trim() && !attachments.includes(v.trim())) {
+                  attachments.push(v.trim());
+                }
               });
               
               return {
