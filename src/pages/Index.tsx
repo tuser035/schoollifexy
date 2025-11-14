@@ -5,6 +5,7 @@ import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import AdminLogin from "@/components/auth/AdminLogin";
 import heroImage from "@/assets/nature-hero.jpg";
+import { School } from "lucide-react";
 
 const Index = () => {
   return (
@@ -25,8 +26,8 @@ const Index = () => {
           <div className="p-8">
             <div className="text-center mb-8">
               <div className="flex justify-center mb-6">
-                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-2xl">SP</span>
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 via-orange-500 to-green-600 flex items-center justify-center">
+                  <School className="w-12 h-12 text-white" strokeWidth={2} />
                 </div>
               </div>
               <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
