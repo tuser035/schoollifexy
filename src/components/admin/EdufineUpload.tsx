@@ -82,11 +82,18 @@ const EdufineUpload = () => {
 
   const parseCSVSchedule = async (csvText: string): Promise<EdufineEvent[]> => {
     return new Promise((resolve, reject) => {
-      Papa.parse(csvText, {
+      // UTF-8 BOM 제거
+      const cleanedText = csvText.replace(/^\uFEFF/, '');
+      
+      Papa.parse(cleanedText, {
         header: true,
         skipEmptyLines: true,
+        encoding: 'UTF-8',
         complete: (results) => {
           try {
+            console.log('CSV 파싱 결과:', results);
+            console.log('첫 번째 row:', results.data[0]);
+            
             const events: EdufineEvent[] = results.data.map((row: any, idx: number) => {
               const department = row['발신부서'] || '';
               const deptColor = getDeptColor(department);
@@ -111,12 +118,15 @@ const EdufineUpload = () => {
               };
             });
 
+            console.log('파싱된 이벤트:', events);
             resolve(events);
           } catch (error) {
+            console.error('CSV 파싱 오류:', error);
             reject(error);
           }
         },
         error: (error) => {
+          console.error('Papa.parse 오류:', error);
           reject(error);
         }
       });
