@@ -108,13 +108,24 @@ const PDFScheduleUpload = () => {
       for (let i = 0; i < parsedEvents.length; i++) {
         const event = parsedEvents[i];
         
+        console.log('Processing event:', event);
+        
         // Parse deadline date from CSV (YYYY-MM-DD format)
-        const deadlineDate = new Date(event.deadline);
+        let deadlineDate = new Date(event.deadline);
+        
+        // Validate date
+        if (isNaN(deadlineDate.getTime())) {
+          console.error(`Invalid date for event: ${event.title}, using today's date`);
+          deadlineDate = new Date();
+        }
+        
         const nextDay = new Date(deadlineDate);
         nextDay.setDate(nextDay.getDate() + 1);
         
         const startDate = deadlineDate.toISOString().slice(0, 10);
         const endDate = nextDay.toISOString().slice(0, 10);
+        
+        console.log('Event dates:', { startDate, endDate });
         
         const { error } = await supabase.functions.invoke("google-calendar", {
           body: {
@@ -131,6 +142,7 @@ const PDFScheduleUpload = () => {
 
         if (error) {
           console.error(`Error creating event ${event.title}:`, error);
+          toast.error(`일정 등록 실패: ${event.title}`);
         } else {
           setUploadedCount(i + 1);
         }
