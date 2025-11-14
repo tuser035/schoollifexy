@@ -93,27 +93,57 @@ const BulkUpload = () => {
           .from('edufine-documents')
           .getPublicUrl(filePath);
 
-        // Parse CSV and insert to database
+        // Parse CSV and insert to database (handle UTF-8 and EUC-KR)
         const Papa = await import('papaparse');
-        const text = await file.text();
-        
+
+        // Read as ArrayBuffer to support legacy encodings
+        const buffer = await file.arrayBuffer();
+        const uint8 = new Uint8Array(buffer);
+
+        const decodeWith = (enc: string) => {
+          try {
+            // @ts-ignore - euc-kr may not be in TS lib typings but is supported by modern browsers
+            return new TextDecoder(enc).decode(uint8);
+          } catch {
+            return '';
+          }
+        };
+
+        let text = decodeWith('utf-8');
+        const looksValid = /접수일|발신부서|제목|생산문서번호|붙임/.test(text) || /rcv_date|dept|subj|doc_no/.test(text);
+        if (!looksValid) {
+          const alt = decodeWith('euc-kr');
+          if (alt) text = alt;
+        }
+
+        const norm = (v: any) => (v === undefined || v === null ? null : String(v).trim());
+        const parseDate = (v: any) => {
+          const s = norm(v);
+          if (!s) return null;
+          const m = s.replace(/[./]/g, '-').match(/^(\d{4})[-](\d{1,2})[-](\d{1,2})$/);
+          if (!m) return s; // keep as-is if unknown
+          const [_, y, mo, d] = m;
+          const pad = (n: string) => n.padStart(2, '0');
+          return `${y}-${pad(mo)}-${pad(d)}`;
+        };
+
         Papa.parse(text, {
           header: true,
           skipEmptyLines: true,
           complete: async (results) => {
-            const records = results.data.map((row: any) => ({
-              rcv_date: row.rcv_date || row['접수일'] || null,
-              due: row.due || row['마감일'] || null,
-              dept: row.dept || row['발신부서'] || null,
-              subj: row.subj || row['제목'] || null,
-              doc_no: row.doc_no || row['생산문서번호'] || null,
-              att1: row.att1 || row['붙임파일1'] || null,
-              att2: row.att2 || row['붙임파일2'] || null,
-              att3: row.att3 || row['붙임파일3'] || null,
-              att4: row.att4 || row['붙임파일4'] || null,
-              att5: row.att5 || row['붙임파일5'] || null,
+            const records = (results.data as any[]).map((row) => ({
+              rcv_date: parseDate(row.rcv_date ?? row['접수일']),
+              due: parseDate(row.due ?? row['마감일']),
+              dept: norm(row.dept ?? row['발신부서']),
+              subj: norm(row.subj ?? row['제목']),
+              doc_no: norm(row.doc_no ?? row['생산문서번호'] ?? row['문서번호']),
+              att1: norm(row.att1 ?? row['붙임파일1'] ?? row['붙임파일명1']),
+              att2: norm(row.att2 ?? row['붙임파일2'] ?? row['붙임파일명2']),
+              att3: norm(row.att3 ?? row['붙임파일3'] ?? row['붙임파일명3']),
+              att4: norm(row.att4 ?? row['붙임파일4'] ?? row['붙임파일명4']),
+              att5: norm(row.att5 ?? row['붙임파일5'] ?? row['붙임파일명5']),
               file_url: publicUrl,
-              admin_id: user.id
+              admin_id: user.id,
             }));
 
             const { error: insertError } = await supabase
@@ -121,17 +151,17 @@ const BulkUpload = () => {
               .insert(records);
 
             if (insertError) {
-              console.error("데이터베이스 저장 오류:", insertError);
-              throw new Error("데이터베이스 저장 중 오류가 발생했습니다");
+              console.error('데이터베이스 저장 오류:', insertError);
+              throw new Error('데이터베이스 저장 중 오류가 발생했습니다');
             }
 
             toast.success(`${records.length}개의 에듀파인 문서가 성공적으로 저장되었습니다`);
             setUploading(null);
           },
           error: (error) => {
-            console.error("CSV 파싱 오류:", error);
-            throw new Error("CSV 파일 파싱 중 오류가 발생했습니다");
-          }
+            console.error('CSV 파싱 오류:', error);
+            throw new Error('CSV 파일 파싱 중 오류가 발생했습니다');
+          },
         });
 
         return;
