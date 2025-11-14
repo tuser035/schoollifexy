@@ -290,7 +290,7 @@ const MonthlyForm = () => {
                   <img
                     src={imagePreview}
                     alt="증빙 사진"
-                    className="w-full h-48 object-cover rounded"
+                    className="w-full h-auto max-h-[300px] sm:max-h-[400px] md:max-h-[500px] object-contain rounded"
                   />
                   <Button
                     type="button"
