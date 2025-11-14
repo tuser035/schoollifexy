@@ -253,18 +253,12 @@ const EdufineUpload = () => {
         try {
           console.log('처리 중인 이벤트:', event);
           
-          // 필수 필드 검증
-          if (!event.title || event.title.trim() === '') {
-            console.warn(`제목이 비어있음, 스킵:`, event);
-            skipCount++;
-            continue;
-          }
-
-          const receiptDate = parseKoreanDate(event.receiptDate);
+          // 날짜 파싱 (접수일 우선, 없으면 마감일 사용)
+          const receiptDate = parseKoreanDate(event.receiptDate) || parseKoreanDate(event.deadline);
           const deadlineDate = parseKoreanDate(event.deadline);
 
           if (!receiptDate) {
-            console.warn(`접수일 파싱 실패, 스킵: ${event.title}, 접수일: ${event.receiptDate}`);
+            console.warn(`날짜 파싱 실패, 스킵: ${event.title} | 접수일: ${event.receiptDate} | 마감일: ${event.deadline}`);
             skipCount++;
             continue;
           }
@@ -273,7 +267,7 @@ const EdufineUpload = () => {
           const endDate = deadlineDate || receiptDate;
 
           const eventData = {
-            summary: event.department ? `[${event.department}] ${event.title}` : event.title,
+            summary: event.department ? `[${event.department}] ${event.title || '(제목 없음)'}` : (event.title || '(제목 없음)'),
             description: `생산문서번호: ${event.docNumber || '-'}\n접수일: ${event.receiptDate || '-'}\n마감일: ${event.deadline || '-'}\n\n붙임파일:\n${event.attachments.length > 0 ? event.attachments.map((a, i) => `${i + 1}. ${a}`).join('\n') : '없음'}`,
             start: {
               date: format(receiptDate, 'yyyy-MM-dd'),
