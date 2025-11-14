@@ -1,113 +1,80 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Upload, Loader2, FileText } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const EdufineCSVUpload = () => {
   const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.name.endsWith('.csv')) {
-      toast.error("CSV 파일만 업로드 가능합니다");
-      return;
-    }
-
-    setSelectedFile(file);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      toast.error("파일을 선택해주세요");
-      return;
-    }
-
+  const handleFileUpload = async (file: File) => {
     setUploading(true);
-
+    
     try {
+      if (!file.name.endsWith('.csv')) {
+        throw new Error("CSV 파일만 업로드 가능합니다");
+      }
+
       // 파일명에 타임스탬프 추가
       const timestamp = new Date().getTime();
-      const fileName = `edufine_${timestamp}_${selectedFile.name}`;
+      const fileName = `edufine_${timestamp}_${file.name}`;
       const filePath = `uploads/${fileName}`;
 
       // 스토리지에 업로드
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('edufine-documents')
-        .upload(filePath, selectedFile, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
         });
 
       if (error) {
         console.error("업로드 오류:", error);
-        toast.error("파일 업로드 중 오류가 발생했습니다");
-        return;
+        throw new Error("파일 업로드 중 오류가 발생했습니다");
       }
 
-      toast.success("파일이 성공적으로 업로드되었습니다");
-      setSelectedFile(null);
-      
-      // input 초기화
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-    } catch (error) {
-      console.error("업로드 오류:", error);
-      toast.error("파일 업로드 중 오류가 발생했습니다");
+      toast.success(`에듀파인 파일이 성공적으로 업로드되었습니다`);
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error(error.message || "업로드 중 오류가 발생했습니다");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>에듀파인 문서 업로드</CardTitle>
-        <CardDescription>CSV 파일을 스토리지에 업로드합니다</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="csvFile">CSV 파일 선택</Label>
-          <Input
-            id="csvFile"
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Card className="border-l-4 border-primary">
+        <CardHeader>
+          <CardTitle>에듀파인 문서</CardTitle>
+          <CardDescription className="text-xs">
+            접수일, 마감일, 발신부서, 제목, 생산문서번호, 붙임파일명1-5
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <input
             type="file"
             accept=".csv"
-            onChange={handleFileSelect}
-            className="mt-2"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFileUpload(file);
+            }}
+            style={{ display: "none" }}
+            id="edufine-upload"
+            disabled={uploading}
           />
-          {selectedFile && (
-            <div className="mt-2 flex items-center text-sm text-muted-foreground">
-              <FileText className="w-4 h-4 mr-2" />
-              {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
-            </div>
-          )}
-        </div>
-
-        <Button
-          onClick={handleUpload}
-          disabled={uploading || !selectedFile}
-          className="w-full"
-        >
-          {uploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              업로드 중...
-            </>
-          ) : (
-            <>
-              <Upload className="mr-2 h-4 w-4" />
-              스토리지에 업로드
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+          <Button
+            onClick={() => document.getElementById("edufine-upload")?.click()}
+            disabled={uploading}
+            className="w-full"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            {uploading ? "업로드 중..." : "CSV 업로드"}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
