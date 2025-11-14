@@ -68,26 +68,34 @@ const EdufineUpload = () => {
     setLoading(true);
 
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
+      // ArrayBuffer로 읽어서 인코딩 처리
+      const buffer = await file.arrayBuffer();
+      const uint8 = new Uint8Array(buffer);
+
+      const decodeWith = (enc: string) => {
         try {
-          const text = e.target?.result as string;
-          console.log("파일 내용 (첫 200자):", text.substring(0, 200));
-          const parsed = await parseCSVSchedule(text);
-          console.log("파싱 완료, 이벤트 개수:", parsed.length);
-          setParsedEvents(parsed);
-          toast.success(`${parsed.length}개의 일정을 불러왔습니다`);
-        } catch (error) {
-          console.error("CSV parsing error:", error);
-          toast.error("CSV 파일 파싱 중 오류가 발생했습니다");
-        } finally {
-          setLoading(false);
+          return new TextDecoder(enc).decode(uint8);
+        } catch {
+          return '';
         }
       };
-      reader.readAsText(file, 'UTF-8');
+
+      let text = decodeWith('utf-8');
+      const looksValid = /접수일|발신부서|제목|생산문서번호|rcv_date|dept|subj|doc_no/.test(text);
+      if (!looksValid) {
+        const alt = decodeWith('euc-kr');
+        if (alt) text = alt;
+      }
+
+      console.log("파일 내용 (첫 200자):", text.substring(0, 200));
+      const parsed = await parseCSVSchedule(text);
+      console.log("파싱 완료, 이벤트 개수:", parsed.length);
+      setParsedEvents(parsed);
+      toast.success(`${parsed.length}개의 일정을 불러왔습니다`);
     } catch (error) {
       console.error("File read error:", error);
       toast.error("파일 읽기 중 오류가 발생했습니다");
+    } finally {
       setLoading(false);
     }
   };
@@ -107,25 +115,47 @@ const EdufineUpload = () => {
             console.log('첫 번째 row:', results.data[0]);
             
             const events: EdufineEvent[] = results.data.map((row: any, idx: number) => {
-              const department = row['발신부서'] || '';
+              // 한글/영문 컬럼명 모두 지원
+              const department = row['발신부서'] || row['dept'] || '';
               const deptColor = getDeptColor(department);
               
               // 붙임파일명을 세미콜론이나 마침표로 분리
-              const attachmentStr = row['붙임파일명'] || '';
+              const attachmentStr = row['붙임파일명'] || row['att1'] || '';
               const attachments = attachmentStr
                 .split(/[;.]/)
                 .map((a: string) => a.trim())
                 .filter((a: string) => a.length > 0)
                 .slice(0, 5); // 최대 5개까지
+              
+              // 추가 붙임파일들도 처리
+              [row['att2'], row['att3'], row['att4'], row['att5']].forEach(att => {
+                if (att && att.trim()) {
+                  attachments.push(att.trim());
+                }
+              });
+
+              const receiptDate = row['접수일'] || row['rcv_date'] || '';
+              const deadline = row['마감일'] || row['due'] || '';
+              const title = row['제목'] || row['subj'] || '';
+              const docNumber = row['생산문서번호'] || row['문서번호'] || row['doc_no'] || '';
+
+              console.log(`파싱된 행 ${idx}:`, {
+                receiptDate,
+                deadline,
+                department,
+                title,
+                docNumber,
+                attachments
+              });
 
               return {
                 id: `edufine-${idx}`,
-                receiptDate: row['접수일'] || '',
-                deadline: row['마감일'] || '',
-                department: department,
-                title: row['제목'] || '',
-                docNumber: row['생산문서번호'] || '',
-                attachments: attachments,
+                receiptDate,
+                deadline,
+                department,
+                title,
+                docNumber,
+                attachments,
                 colorId: deptColor.colorId,
               };
             });
@@ -165,7 +195,11 @@ const EdufineUpload = () => {
         const [, year, month, day] = match;
         const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         console.log("파싱된 날짜:", date);
-        return date;
+        
+        // 유효한 날짜인지 확인
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
       }
       
       console.warn("날짜 매칭 실패:", cleaned);
@@ -191,14 +225,25 @@ const EdufineUpload = () => {
 
     try {
       let successCount = 0;
+      let skipCount = 0;
 
       for (const event of parsedEvents) {
         try {
+          console.log('처리 중인 이벤트:', event);
+          
+          // 필수 필드 검증
+          if (!event.title || event.title.trim() === '') {
+            console.warn(`제목이 비어있음, 스킵:`, event);
+            skipCount++;
+            continue;
+          }
+
           const receiptDate = parseKoreanDate(event.receiptDate);
           const deadlineDate = parseKoreanDate(event.deadline);
 
           if (!receiptDate) {
-            console.warn(`접수일 파싱 실패: ${event.title}`);
+            console.warn(`접수일 파싱 실패, 스킵: ${event.title}, 접수일: ${event.receiptDate}`);
+            skipCount++;
             continue;
           }
 
@@ -206,8 +251,8 @@ const EdufineUpload = () => {
           const endDate = deadlineDate || receiptDate;
 
           const eventData = {
-            summary: `[${event.department}] ${event.title}`,
-            description: `생산문서번호: ${event.docNumber}\n접수일: ${event.receiptDate}\n마감일: ${event.deadline}\n\n붙임파일:\n${event.attachments.map((a, i) => `${i + 1}. ${a}`).join('\n')}`,
+            summary: event.department ? `[${event.department}] ${event.title}` : event.title,
+            description: `생산문서번호: ${event.docNumber || '-'}\n접수일: ${event.receiptDate || '-'}\n마감일: ${event.deadline || '-'}\n\n붙임파일:\n${event.attachments.length > 0 ? event.attachments.map((a, i) => `${i + 1}. ${a}`).join('\n') : '없음'}`,
             start: {
               date: format(receiptDate, 'yyyy-MM-dd'),
               timeZone: 'Asia/Seoul',
@@ -219,6 +264,8 @@ const EdufineUpload = () => {
             colorId: event.colorId,
           };
 
+          console.log('전송할 이벤트 데이터:', eventData);
+
           const { data, error } = await supabase.functions.invoke('google-calendar', {
             body: {
               action: 'create',
@@ -229,7 +276,9 @@ const EdufineUpload = () => {
 
           if (error) {
             console.error(`업로드 실패 (${event.title}):`, error);
+            skipCount++;
           } else {
+            console.log(`업로드 성공: ${event.title}`);
             successCount++;
             setUploadedCount(successCount);
           }
@@ -238,10 +287,15 @@ const EdufineUpload = () => {
           await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
           console.error(`이벤트 생성 오류 (${event.title}):`, error);
+          skipCount++;
         }
       }
 
-      toast.success(`${successCount}개의 일정이 구글 캘린더에 등록되었습니다`);
+      const message = skipCount > 0 
+        ? `${successCount}개 등록 완료, ${skipCount}개 스킵됨` 
+        : `${successCount}개의 일정이 구글 캘린더에 등록되었습니다`;
+      
+      toast.success(message);
       setParsedEvents([]);
       setSelectedFileName("");
       if (csvFileInputRef.current) {
