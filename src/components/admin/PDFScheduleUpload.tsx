@@ -11,6 +11,7 @@ import Papa from "papaparse";
 interface ParsedEvent {
   title: string;
   department: string;
+  deadline: string;
 }
 
 const PDFScheduleUpload = () => {
@@ -55,10 +56,11 @@ const PDFScheduleUpload = () => {
             
             for (let i = startIndex; i < data.length; i++) {
               const row = data[i];
-              if (row.length >= 2 && row[0] && row[1]) {
+              if (row.length >= 3 && row[0] && row[1] && row[2]) {
                 events.push({
                   title: row[0].trim(),
-                  department: row[1].trim()
+                  department: row[1].trim(),
+                  deadline: row[2].trim()
                 });
               }
             }
@@ -104,12 +106,13 @@ const PDFScheduleUpload = () => {
       for (let i = 0; i < parsedEvents.length; i++) {
         const event = parsedEvents[i];
         
-        // Create all-day event with today's date
-        const today = new Date();
-        const startDate = today.toISOString().slice(0, 10);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const endDate = tomorrow.toISOString().slice(0, 10);
+        // Parse deadline date from CSV (YYYY-MM-DD format)
+        const deadlineDate = new Date(event.deadline);
+        const nextDay = new Date(deadlineDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        
+        const startDate = deadlineDate.toISOString().slice(0, 10);
+        const endDate = nextDay.toISOString().slice(0, 10);
         
         const { error } = await supabase.functions.invoke("google-calendar", {
           body: {
@@ -117,7 +120,7 @@ const PDFScheduleUpload = () => {
             calendarId: targetCalendarId,
             event: {
               summary: `[${event.department}] ${event.title}`,
-              description: `제목: ${event.title}\n발신부서: ${event.department}`,
+              description: `제목: ${event.title}\n발신부서: ${event.department}\n마감일: ${event.deadline}`,
               start: { date: startDate },
               end: { date: endDate },
             },
@@ -163,6 +166,9 @@ const PDFScheduleUpload = () => {
 
         <div className="space-y-2">
           <Label htmlFor="csv-upload">에듀파인 문서 CSV 파일</Label>
+          <p className="text-sm text-muted-foreground">
+            CSV 형식: 제목, 발신부서, 마감일 (YYYY-MM-DD)
+          </p>
           <Input
             id="csv-upload"
             type="file"
@@ -182,7 +188,7 @@ const PDFScheduleUpload = () => {
                   <div>
                     <span className="font-medium">{event.title}</span>
                     <div className="text-muted-foreground">
-                      발신부서: {event.department}
+                      발신부서: {event.department} | 마감일: {event.deadline}
                     </div>
                   </div>
                 </div>
