@@ -59,8 +59,8 @@ const EdufineUpload = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.md')) {
-      toast.error("MD 파일만 업로드 가능합니다");
+    if (!file.name.endsWith('.csv')) {
+      toast.error("CSV 파일만 업로드 가능합니다");
       return;
     }
 
@@ -88,7 +88,7 @@ const EdufineUpload = () => {
       }
 
       console.log("파일 내용 (첫 200자):", text.substring(0, 200));
-      const parsed = await parseMDSchedule(text);
+      const parsed = await parseCSVSchedule(text);
       console.log("파싱 완료, 이벤트 개수:", parsed.length);
       setParsedEvents(parsed);
       toast.success(`${parsed.length}개의 일정을 불러왔습니다`);
@@ -100,106 +100,76 @@ const EdufineUpload = () => {
     }
   };
 
-  const parseMDSchedule = async (mdText: string): Promise<EdufineEvent[]> => {
+  const parseCSVSchedule = async (csvText: string): Promise<EdufineEvent[]> => {
     return new Promise((resolve, reject) => {
-      try {
-        // UTF-8 BOM 제거
-        const cleanedText = mdText.replace(/^\uFEFF/, '');
-        
-        // 줄 단위로 분리
-        const lines = cleanedText.split(/\r?\n/).map(l => l.trim()).filter(l => l);
-        
-        // 마크다운 테이블 찾기 (| 로 시작하는 줄들)
-        const tableLines = lines.filter(l => l.startsWith('|') && l.endsWith('|'));
-        
-        if (tableLines.length < 2) {
-          reject(new Error('마크다운 테이블을 찾을 수 없습니다'));
-          return;
-        }
-        
-        // 헤더 행 파싱
-        const headerLine = tableLines[0];
-        const headers = headerLine
-          .split('|')
-          .map(h => h.trim())
-          .filter(h => h)
-          .map(h => h.replace(/^\*\*|\*\*$/g, '')); // 볼드 제거
-        
-        console.log('파싱된 헤더:', headers);
-        
-        // 구분선 건너뛰기 (두 번째 줄은 보통 |---|---|)
-        const dataLines = tableLines.slice(2);
-        
-        const events: EdufineEvent[] = dataLines.map((line, idx) => {
-          const cells = line
-            .split('|')
-            .map(c => c.trim())
-            .filter(c => c);
-          
-          // 헤더와 셀 매핑
-          const row: Record<string, string> = {};
-          headers.forEach((header, i) => {
-            row[header] = cells[i] || '';
-          });
-          
-          console.log(`파싱된 행 ${idx}:`, row);
-          
-          // 키 정규화 함수
-          const normalizeKey = (k: string) => k?.toString().trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '');
-          const nk = new Map<string, any>(Object.entries(row).map(([k, v]) => [normalizeKey(k), v]));
-          
-          const pick = (...keys: string[]) => {
-            for (const k of keys) {
-              const raw = row[k];
-              if (raw !== undefined && raw !== null && String(raw).trim() !== '') return String(raw);
-              const alt = nk.get(normalizeKey(k));
-              if (alt !== undefined && alt !== null && String(alt).trim() !== '') return String(alt);
-            }
-            return '';
-          };
-          
-          const department = pick('dept', '발신부서', 'department');
-          const deptColor = getDeptColor(department);
-          
-          const receiptDate = pick('rcv_date', 'rcvdate', '접수일', 'receiptdate');
-          const deadline = pick('due', '마감일', 'deadline');
-          const title = pick('subj', '제목', 'title');
-          const docNumber = pick('doc_no', 'docnumber', '생산문서번호', '문서번호');
-          
-          // 첨부파일
-          const attachments: string[] = [];
-          const combined = pick('붙임파일', '붙임파일명', 'attachments');
-          if (combined) {
-            combined
-              .split(/[;,.|\n\t\r\f\u00B7/]+/)
-              .map((a) => a.trim())
-              .filter((a) => a.length > 0)
-              .slice(0, 5)
-              .forEach((a) => attachments.push(a));
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          try {
+            const events: EdufineEvent[] = results.data.map((row: any, idx: number) => {
+              // 키 정규화 함수
+              const normalizeKey = (k: string) => k?.toString().trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '');
+              const nk = new Map<string, any>(Object.entries(row).map(([k, v]) => [normalizeKey(k), v]));
+              
+              const pick = (...keys: string[]) => {
+                for (const k of keys) {
+                  const raw = row[k];
+                  if (raw !== undefined && raw !== null && String(raw).trim() !== '') return String(raw);
+                  const alt = nk.get(normalizeKey(k));
+                  if (alt !== undefined && alt !== null && String(alt).trim() !== '') return String(alt);
+                }
+                return '';
+              };
+              
+              const department = pick('dept', '발신부서', 'department');
+              const deptColor = getDeptColor(department);
+              
+              const receiptDate = pick('rcv_date', 'rcvdate', '접수일', 'receiptdate');
+              const deadline = pick('due', '마감일', 'deadline');
+              const title = pick('subj', '제목', 'title');
+              const docNumber = pick('doc_no', 'docnumber', '생산문서번호', '문서번호');
+              
+              // 첨부파일
+              const attachments: string[] = [];
+              const combined = pick('붙임파일', '붙임파일명', 'attachments', 'att1');
+              if (combined) {
+                combined
+                  .split(/[;,.|\n\t\r\f\u00B7/]+/)
+                  .map((a) => a.trim())
+                  .filter((a) => a.length > 0)
+                  .slice(0, 5)
+                  .forEach((a) => attachments.push(a));
+              }
+              ['att2', 'att3', 'att4', 'att5', '붙임파일명2', '붙임파일명3', '붙임파일명4', '붙임파일명5'].forEach((k) => {
+                const v = pick(k);
+                if (v) attachments.push(v.trim());
+              });
+              
+              return {
+                id: `edufine-${idx}`,
+                receiptDate,
+                deadline,
+                department,
+                title,
+                docNumber,
+                attachments,
+                colorId: deptColor.colorId,
+              };
+            });
+            
+            console.log('파싱된 이벤트:', events);
+            resolve(events);
+          } catch (error) {
+            console.error('CSV 파싱 오류:', error);
+            reject(error);
           }
-          ['att1', 'att2', 'att3', 'att4', 'att5', '붙임파일1', '붙임파일2', '붙임파일3', '붙임파일4', '붙임파일5'].forEach((k) => {
-            const v = pick(k);
-            if (v) attachments.push(v.trim());
-          });
-          
-          return {
-            id: `edufine-${idx}`,
-            receiptDate,
-            deadline,
-            department,
-            title,
-            docNumber,
-            attachments,
-            colorId: deptColor.colorId,
-          };
-        });
-        
-        console.log('파싱된 이벤트:', events);
-        resolve(events);
-      } catch (error) {
-        console.error('MD 파싱 오류:', error);
-        reject(error);
-      }
+        },
+        error: (error) => {
+          console.error('CSV 파싱 오류:', error);
+          reject(error);
+        },
+      });
     });
   };
 
@@ -304,12 +274,12 @@ const EdufineUpload = () => {
             deadline: event.deadline
           });
           
-          // 날짜 파싱 (접수일 우선, 없으면 마감일 사용)
-          const receiptDate = parseKoreanDate(event.receiptDate) || parseKoreanDate(event.deadline);
+          // 날짜 파싱 (접수일 기준)
+          const receiptDate = parseKoreanDate(event.receiptDate);
           const deadlineDate = parseKoreanDate(event.deadline);
 
           if (!receiptDate) {
-            console.warn(`날짜 파싱 실패, 스킵: ${event.title} | 접수일: ${event.receiptDate} | 마감일: ${event.deadline}`);
+            console.warn(`접수일 파싱 실패, 스킵: ${event.title} | 접수일: ${event.receiptDate}`);
             skipCount++;
             continue;
           }
@@ -521,7 +491,7 @@ const EdufineUpload = () => {
       <Card>
         <CardHeader>
           <CardTitle>에듀파인 문서 일괄 등록</CardTitle>
-          <CardDescription>MD 파일을 업로드하여 구글 캘린더에 일괄 등록합니다</CardDescription>
+          <CardDescription>CSV 파일을 업로드하여 구글 캘린더에 일괄 등록합니다</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -547,12 +517,12 @@ const EdufineUpload = () => {
           </div>
 
           <div>
-            <Label>MD 파일 업로드</Label>
+            <Label>CSV 파일 업로드</Label>
             <div className="flex gap-2">
               <Input
                 ref={csvFileInputRef}
                 type="file"
-                accept=".md"
+                accept=".csv"
                 onChange={handleFileUpload}
                 className="flex-1"
               />
