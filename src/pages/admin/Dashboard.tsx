@@ -15,6 +15,7 @@ import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
 import GoogleCalendar from "@/components/admin/GoogleCalendar";
 import PDFScheduleUpload from "@/components/admin/PDFScheduleUpload";
 import WeeklyMeetingUpload from "@/components/admin/WeeklyMeetingUpload";
+import EdufineDocumentStorage from "@/components/admin/EdufineDocumentStorage";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -132,7 +133,8 @@ const AdminDashboard = () => {
             <StudentLeaderboard />
           </TabsContent>
 
-          <TabsContent value="storage">
+          <TabsContent value="storage" className="space-y-6">
+            <EdufineDocumentStorage />
             <StorageManager />
           </TabsContent>
 
