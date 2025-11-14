@@ -11,7 +11,10 @@ const backgroundImages = [
   "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d", // 초원
   "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b", // 산악 호수
   "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5", // 숲
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920", // 석양 산
+  "https://images.unsplash.com/photo-1490750967868-88aa4486c946", // 작약꽃
+  "https://images.unsplash.com/photo-1595815771614-ade9d652a65d", // 연꽃
+  "https://images.unsplash.com/photo-1604762524889-d0c50a279a20", // 국화
+  "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11", // 흰 들꽃
 ];
 
 const Index = () => {
