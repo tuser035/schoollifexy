@@ -67,7 +67,7 @@ const Index = () => {
               <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger 
                   value="teacher"
-                  className="data-[state=active]:bg-teacher data-[state=active]:text-white text-lg font-bold"
+                  className="data-[state=active]:bg-teacher data-[state=active]:text-white font-bold"
                 >
                   교사
                 </TabsTrigger>
