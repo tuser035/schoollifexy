@@ -5,7 +5,7 @@ import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type TableType = "students" | "teachers" | "merits" | "demerits" | "departments";
+type TableType = "edufine" | "students" | "teachers" | "merits" | "demerits" | "departments";
 
 interface TableConfig {
   name: string;
@@ -15,6 +15,12 @@ interface TableConfig {
 }
 
 const tables: TableConfig[] = [
+  {
+    name: "에듀파인 문서",
+    table: "edufine",
+    columns: "접수일, 마감일, 발신부서, 제목, 생산문서번호, 붙임파일명1-5",
+    color: "border-primary",
+  },
   {
     name: "학생",
     table: "students",
@@ -54,6 +60,29 @@ const BulkUpload = () => {
     setUploading(table);
     
     try {
+      // Handle Edufine document upload to storage
+      if (table === "edufine") {
+        const timestamp = new Date().getTime();
+        const fileName = `edufine_${timestamp}_${file.name}`;
+        const filePath = `uploads/${fileName}`;
+
+        const { error } = await supabase.storage
+          .from('edufine-documents')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          console.error("업로드 오류:", error);
+          throw new Error("파일 업로드 중 오류가 발생했습니다");
+        }
+
+        toast.success(`에듀파인 문서가 성공적으로 업로드되었습니다`);
+        setUploading(null);
+        return;
+      }
+
       // Get admin user from localStorage and set session
       const authUser = localStorage.getItem("auth_user");
       if (!authUser) {
