@@ -41,21 +41,25 @@ const EdufineInquiry = () => {
       await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
       let query = supabase
-        .from("edufine_documents")
+        .from("edufine_documents" as any)
         .select("*")
         .order("created_at", { ascending: false });
 
       if (searchText.trim()) {
-        query = query.or(
-          `dept.ilike.%${searchText}%,subj.ilike.%${searchText}%,doc_no.ilike.%${searchText}%`
-        );
+        const search = `%${searchText}%`;
+        query = query.or(`dept.ilike.${search},subj.ilike.${search},doc_no.ilike.${search}`);
       }
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("조회 오류:", error);
+        throw error;
+      }
 
-      setDocuments(data || []);
+      console.log("조회된 문서 수:", data?.length);
+      console.log("첫 번째 문서:", data?.[0]);
+      setDocuments((data || []) as unknown as EdufineDocument[]);
     } catch (error: any) {
       console.error("조회 오류:", error);
       toast.error("문서 조회 중 오류가 발생했습니다");
@@ -78,7 +82,7 @@ const EdufineInquiry = () => {
       await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
       const { error } = await supabase
-        .from("edufine_documents")
+        .from("edufine_documents" as any)
         .delete()
         .eq("id", id);
 

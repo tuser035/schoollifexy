@@ -117,7 +117,7 @@ const BulkUpload = () => {
             }));
 
             const { error: insertError } = await supabase
-              .from('edufine_documents')
+              .from('edufine_documents' as any)
               .insert(records);
 
             if (insertError) {
