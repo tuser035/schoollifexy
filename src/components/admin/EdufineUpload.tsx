@@ -115,32 +115,45 @@ const EdufineUpload = () => {
             console.log('첫 번째 row:', results.data[0]);
             
             const events: EdufineEvent[] = results.data.map((row: any, idx: number) => {
-              // 한글/영문 컬럼명 모두 지원
-              const department = row['dept'] || row['발신부서'] || '';
+              // 키 정규화 맵 구성 (공백/언더스코어 제거, 소문자)
+              const normalizeKey = (k: string) => k?.toString().trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '');
+              const nk = new Map<string, any>(Object.entries(row).map(([k, v]) => [normalizeKey(k), v]));
+              const pick = (...keys: string[]) => {
+                for (const k of keys) {
+                  const raw = row[k];
+                  if (raw !== undefined && raw !== null && String(raw).trim() !== '') return String(raw);
+                  const alt = nk.get(normalizeKey(k));
+                  if (alt !== undefined && alt !== null && String(alt).trim() !== '') return String(alt);
+                }
+                return '';
+              };
+
+              const department = pick('dept', '발신부서', 'department');
               const deptColor = getDeptColor(department);
               
-              // 붙임파일 처리: att1~att5 컬럼에서 값 수집
+              // 날짜/제목/문서번호
+              const receiptDate = pick('rcv_date', 'rcvdate', '접수일', 'receiptdate');
+              const deadline = pick('due', '마감일', 'deadline');
+              const title = pick('subj', '제목', 'title');
+              const docNumber = pick('doc_no', 'docnumber', '생산문서번호', '문서번호');
+
+              // 첨부파일: att1~att5 + 붙임파일/붙임파일명
               const attachments: string[] = [];
-              ['att1', 'att2', 'att3', 'att4', 'att5', '붙임파일1', '붙임파일2', '붙임파일3', '붙임파일4', '붙임파일5'].forEach(key => {
-                const val = row[key];
-                if (val && val.trim()) {
-                  attachments.push(val.trim());
-                }
+              const combined = pick('붙임파일', '붙임파일명', 'attachments');
+              if (combined) {
+                combined
+                  .split(/[;,.|\n\t\r\f\u00B7/]+/)
+                  .map((a) => a.trim())
+                  .filter((a) => a.length > 0)
+                  .slice(0, 5)
+                  .forEach((a) => attachments.push(a));
+              }
+              ['att1', 'att2', 'att3', 'att4', 'att5', '붙임파일1', '붙임파일2', '붙임파일3', '붙임파일4', '붙임파일5'].forEach((k) => {
+                const v = pick(k);
+                if (v) attachments.push(v.trim());
               });
 
-              const receiptDate = row['rcv_date'] || row['접수일'] || '';
-              const deadline = row['due'] || row['마감일'] || '';
-              const title = row['subj'] || row['제목'] || '';
-              const docNumber = row['doc_no'] || row['생산문서번호'] || row['문서번호'] || '';
-
-              console.log(`파싱된 행 ${idx}:`, {
-                receiptDate,
-                deadline,
-                department,
-                title,
-                docNumber,
-                attachments
-              });
+              console.log(`파싱된 행 ${idx}:`, { receiptDate, deadline, department, title, docNumber, attachments });
 
               return {
                 id: `edufine-${idx}`,
@@ -173,14 +186,19 @@ const EdufineUpload = () => {
     if (!dateStr || dateStr === 'N/A' || dateStr.trim() === '') return null;
     
     try {
-      // "2025. 5. 2.(금)까지" 같은 형식에서 괄호와 텍스트 제거
+      // 괄호 및 한글 텍스트 제거 (예: "까지")
       let cleaned = dateStr.replace(/\([^)]*\)/g, '').replace(/까지/g, '').trim();
       
-      // 공백 제거하고 점을 하이픈으로 변경
-      cleaned = cleaned.replace(/\s+/g, '').replace(/\./g, '-');
+      // 공백 제거, 구분자 통일(. / -> -)
+      cleaned = cleaned.replace(/\s+/g, '').replace(/[./]/g, '-');
       
-      // "2025-4-22-" 형식에서 마지막 하이픈 제거
+      // 끝 하이픈 제거
       cleaned = cleaned.replace(/-+$/, '');
+
+      // 8자리 숫자 (YYYYMMDD) 처리
+      if (/^\d{8}$/.test(cleaned)) {
+        cleaned = `${cleaned.slice(0,4)}-${cleaned.slice(4,6)}-${cleaned.slice(6,8)}`;
+      }
       
       console.log("날짜 파싱:", dateStr, "->", cleaned);
       
@@ -190,7 +208,6 @@ const EdufineUpload = () => {
         const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         console.log("파싱된 날짜:", date);
         
-        // 유효한 날짜인지 확인
         if (!isNaN(date.getTime())) {
           return date;
         }
