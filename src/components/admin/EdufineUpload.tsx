@@ -183,41 +183,52 @@ const EdufineUpload = () => {
   };
 
   const parseKoreanDate = (dateStr: string): Date | null => {
-    if (!dateStr || dateStr === 'N/A' || dateStr.trim() === '') return null;
-    
-    try {
-      // 괄호 및 한글 텍스트 제거 (예: "까지")
-      let cleaned = dateStr.replace(/\([^)]*\)/g, '').replace(/까지/g, '').trim();
-      
-      // 공백 제거, 구분자 통일(. / -> -)
-      cleaned = cleaned.replace(/\s+/g, '').replace(/[./]/g, '-');
-      
-      // 끝 하이픈 제거
-      cleaned = cleaned.replace(/-+$/, '');
+    if (!dateStr) return null;
+    let s = String(dateStr).trim();
+    if (!s || s === 'N/A') return null;
 
-      // 8자리 숫자 (YYYYMMDD) 처리
-      if (/^\d{8}$/.test(cleaned)) {
-        cleaned = `${cleaned.slice(0,4)}-${cleaned.slice(4,6)}-${cleaned.slice(6,8)}`;
+    try {
+      // Remove parentheses and suffix words like '까지'
+      s = s.replace(/\([^)]*\)/g, '').replace(/까지|부터|~|to/gi, ' ').trim();
+      // Normalize Korean date terms and separators
+      s = s
+        .replace(/년|\.|\//g, '-')
+        .replace(/월/g, '-')
+        .replace(/일/g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      // Handle compact YYYYMMDD
+      const compact = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+      if (compact) {
+        const [, y, m, d] = compact;
+        const dt = new Date(Number(y), Number(m) - 1, Number(d));
+        return isNaN(dt.getTime()) ? null : dt;
       }
-      
-      console.log("날짜 파싱:", dateStr, "->", cleaned);
-      
-      const match = cleaned.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-      if (match) {
-        const [, year, month, day] = match;
-        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        console.log("파싱된 날짜:", date);
-        
-        if (!isNaN(date.getTime())) {
-          return date;
-        }
+
+      // Full date with year present
+      const full = s.match(/(\d{4})[-\s]?(\d{1,2})[-\s]?(\d{1,2})/);
+      if (full) {
+        const [, y, m, d] = full;
+        const dt = new Date(Number(y), Number(m) - 1, Number(d));
+        return isNaN(dt.getTime()) ? null : dt;
       }
-      
-      console.warn("날짜 매칭 실패:", cleaned);
-    } catch (error) {
-      console.error("Date parsing error:", error, dateStr);
+
+      // Without year: assume current year
+      const md = s.match(/(\d{1,2})[-\s](\d{1,2})/);
+      if (md) {
+        const year = new Date().getFullYear();
+        const [, m, d] = md;
+        const dt = new Date(Number(year), Number(m) - 1, Number(d));
+        return isNaN(dt.getTime()) ? null : dt;
+      }
+
+      return null;
+    } catch (e) {
+      console.error('parseKoreanDate error:', e, dateStr);
+      return null;
     }
-    return null;
   };
 
   const handleBatchUpload = async () => {
