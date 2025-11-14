@@ -98,10 +98,28 @@ export default {
             height: "0",
           },
         },
+        "sunrise-sunset": {
+          "0%": {
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+          },
+          "25%": {
+            backgroundColor: "rgba(255, 140, 0, 0.3)",
+          },
+          "50%": {
+            backgroundColor: "rgba(0, 0, 0, 0.2)",
+          },
+          "75%": {
+            backgroundColor: "rgba(255, 100, 0, 0.4)",
+          },
+          "100%": {
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "sunrise-sunset": "sunrise-sunset 20s ease-in-out infinite",
       },
     },
   },

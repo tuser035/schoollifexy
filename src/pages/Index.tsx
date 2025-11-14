@@ -17,7 +17,7 @@ const Index = () => {
           backgroundImage: `url(https://images.unsplash.com/photo-1635148040718-acf281233b8e)`,
         }}
       >
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 animate-sunrise-sunset" />
       </div>
 
       {/* Content */}
