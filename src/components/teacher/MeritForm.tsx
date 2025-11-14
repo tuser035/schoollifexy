@@ -93,6 +93,7 @@ const MeritForm = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedReason, setSelectedReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
   const [selectedScore, setSelectedScore] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -136,6 +137,7 @@ const MeritForm = () => {
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedReason("");
+    setCustomReason("");
     setSelectedScore(0);
   };
 
@@ -146,6 +148,7 @@ const MeritForm = () => {
       const reason = categoryData.reasons[idx];
       if (reason) {
         setSelectedReason(reason.reason);
+        setCustomReason(reason.reason);
         setSelectedScore(reason.score);
       }
     }
@@ -215,7 +218,7 @@ const MeritForm = () => {
           student_id: selectedStudent.student_id,
           teacher_id: user.id,
           category: selectedCategory,
-          reason: selectedReason,
+          reason: customReason || selectedReason,
           score: selectedScore,
           image_url: imageUrl,
         });
@@ -229,6 +232,7 @@ const MeritForm = () => {
       setSearchTerm("");
       setSelectedCategory("");
       setSelectedReason("");
+      setCustomReason("");
       setSelectedScore(0);
       handleRemoveImage();
     } catch (error: any) {
@@ -342,8 +346,8 @@ const MeritForm = () => {
               <Label>구체적인 사유 (선택사항)</Label>
               <Textarea
                 placeholder="구체적인 사유를 입력하세요..."
-                value={selectedReason}
-                onChange={(e) => setSelectedReason(e.target.value)}
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
                 rows={3}
               />
             </div>
