@@ -435,6 +435,7 @@ export type Database = {
         Returns: {
           category: string
           created_at: string
+          image_url: string
           reason: string
           score: number
           student_class: number
@@ -496,6 +497,7 @@ export type Database = {
         Returns: {
           category: string
           created_at: string
+          image_url: string
           reason: string
           score: number
           student_class: number
