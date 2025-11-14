@@ -148,7 +148,7 @@ const StudentDashboard = () => {
         </Card>
 
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="border-white border-4">
+          <Card className="border-merit-blue">
             <CardHeader className="bg-merit-blue-light">
               <CardTitle className="flex items-center text-merit-blue">
                 <Award className="w-5 h-5 mr-2" />
@@ -163,7 +163,7 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-white border-4">
+          <Card className="border-demerit-orange">
             <CardHeader className="bg-demerit-orange-light">
               <CardTitle className="flex items-center text-demerit-orange">
                 <AlertCircle className="w-5 h-5 mr-2" />
@@ -178,7 +178,7 @@ const StudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-white border-4">
+          <Card className="border-monthly-green">
             <CardHeader className="bg-monthly-green-light">
               <CardTitle className="flex items-center text-monthly-green">
                 <Star className="w-5 h-5 mr-2" />
