@@ -297,7 +297,13 @@ const EdufineUpload = () => {
 
       for (const event of parsedEvents) {
         try {
-          console.log('처리 중인 이벤트:', event);
+          console.log('처리 중인 이벤트:', {
+            title: event.title,
+            department: event.department,
+            colorId: event.colorId,
+            receiptDate: event.receiptDate,
+            deadline: event.deadline
+          });
           
           // 날짜 파싱 (접수일 우선, 없으면 마감일 사용)
           const receiptDate = parseKoreanDate(event.receiptDate) || parseKoreanDate(event.deadline);
@@ -326,7 +332,11 @@ const EdufineUpload = () => {
             colorId: event.colorId,
           };
 
-          console.log('전송할 이벤트 데이터:', eventData);
+          console.log('전송할 이벤트 데이터:', {
+            summary: eventData.summary,
+            colorId: eventData.colorId,
+            department: event.department
+          });
 
           const { data, error } = await supabase.functions.invoke('google-calendar', {
             body: {
@@ -563,7 +573,10 @@ const EdufineUpload = () => {
                       key={event.id}
                       className={`p-3 rounded ${deptColor.bg} ${deptColor.text}`}
                     >
-                      <div className="font-medium">[{event.department}] {event.title}</div>
+                      <div className="font-medium">
+                        [{event.department}] {event.title}
+                        <span className="text-xs ml-2 opacity-70">(색상ID: {event.colorId})</span>
+                      </div>
                       <div className="text-sm mt-1">
                         접수일: {event.receiptDate} | 마감일: {event.deadline}
                       </div>
