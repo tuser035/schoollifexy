@@ -5,7 +5,6 @@ import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import AdminLogin from "@/components/auth/AdminLogin";
 import heroImage from "@/assets/nature-hero.jpg";
-import logoImage from "@/assets/school-point-logo.png";
 
 const Index = () => {
   return (
@@ -26,7 +25,9 @@ const Index = () => {
           <div className="p-8">
             <div className="text-center mb-8">
               <div className="flex justify-center mb-6">
-                <img src={logoImage} alt="School Point Logo" className="h-24 w-24 rounded-full" />
+                <div className="h-24 w-24 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-2xl">SP</span>
+                </div>
               </div>
               <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 스쿨포인트.상점
