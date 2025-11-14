@@ -87,7 +87,9 @@ const DemeritForm = () => {
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedReason, setSelectedReason] = useState("");
+  const [selectedReasonIndex, setSelectedReasonIndex] = useState("");
+  const [basicReason, setBasicReason] = useState("");
+  const [additionalReason, setAdditionalReason] = useState("");
   const [selectedScore, setSelectedScore] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -130,17 +132,20 @@ const DemeritForm = () => {
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    setSelectedReason("");
+    setSelectedReasonIndex("");
+    setBasicReason("");
+    setAdditionalReason("");
     setSelectedScore(0);
   };
 
   const handleReasonChange = (reasonIndex: string) => {
+    setSelectedReasonIndex(reasonIndex);
     const categoryData = demeritCategories.find(c => c.category === selectedCategory);
     if (categoryData) {
       const idx = parseInt(reasonIndex);
       const reason = categoryData.reasons[idx];
       if (reason) {
-        setSelectedReason(reason.reason);
+        setBasicReason(reason.reason);
         setSelectedScore(reason.score);
       }
     }
@@ -168,7 +173,7 @@ const DemeritForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedStudent || !selectedCategory || !selectedReason) {
+    if (!selectedStudent || !selectedCategory || !basicReason) {
       toast.error("모든 항목을 선택해주세요");
       return;
     }
@@ -204,13 +209,17 @@ const DemeritForm = () => {
         imageUrl = publicUrl;
       }
 
+      const finalReason = additionalReason.trim() 
+        ? `${basicReason}\n${additionalReason.trim()}`
+        : basicReason;
+
       const { error } = await supabase
         .from("demerits")
         .insert({
           student_id: selectedStudent.student_id,
           teacher_id: user.id,
           category: selectedCategory,
-          reason: selectedReason,
+          reason: finalReason,
           score: selectedScore,
           image_url: imageUrl,
         });
@@ -223,7 +232,9 @@ const DemeritForm = () => {
       setSelectedStudent(null);
       setSearchTerm("");
       setSelectedCategory("");
-      setSelectedReason("");
+      setSelectedReasonIndex("");
+      setBasicReason("");
+      setAdditionalReason("");
       setSelectedScore(0);
       handleRemoveImage();
     } catch (error: any) {
@@ -318,7 +329,7 @@ const DemeritForm = () => {
         <>
           <div className="space-y-2">
             <Label>벌점 사유 (기본)</Label>
-            <Select value={selectedReason} onValueChange={handleReasonChange}>
+            <Select value={selectedReasonIndex} onValueChange={handleReasonChange}>
               <SelectTrigger>
                 <SelectValue placeholder="벌점 사유 선택" />
               </SelectTrigger>
@@ -332,16 +343,28 @@ const DemeritForm = () => {
             </Select>
           </div>
 
-          {selectedReason && (
-            <div className="space-y-2">
-              <Label>구체적인 사유 (선택사항)</Label>
-              <Textarea
-                placeholder="구체적인 사유를 입력하세요..."
-                value={selectedReason}
-                onChange={(e) => setSelectedReason(e.target.value)}
-                rows={3}
-              />
-            </div>
+          {selectedReasonIndex && (
+            <>
+              <div className="space-y-2">
+                <Label>벌점 사유 (기본)</Label>
+                <Input
+                  value={basicReason}
+                  onChange={(e) => setBasicReason(e.target.value)}
+                  placeholder="벌점 사유"
+                  readOnly={false}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>구체적인 사유 (선택사항)</Label>
+                <Textarea
+                  placeholder="기본 사유에 추가할 구체적인 내용을 입력하세요..."
+                  value={additionalReason}
+                  onChange={(e) => setAdditionalReason(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </>
           )}
         </>
       )}
@@ -425,7 +448,7 @@ const DemeritForm = () => {
       <Button 
         type="submit" 
         className="w-full bg-demerit-orange hover:bg-demerit-orange/90"
-        disabled={!selectedStudent || !selectedCategory || !selectedReason || isSubmitting}
+        disabled={!selectedStudent || !selectedCategory || !basicReason || isSubmitting}
       >
         {isSubmitting ? "부여 중..." : "벌점 부여"}
       </Button>
