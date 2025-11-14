@@ -116,28 +116,22 @@ const EdufineUpload = () => {
             
             const events: EdufineEvent[] = results.data.map((row: any, idx: number) => {
               // 한글/영문 컬럼명 모두 지원
-              const department = row['발신부서'] || row['dept'] || '';
+              const department = row['dept'] || row['발신부서'] || '';
               const deptColor = getDeptColor(department);
               
-              // 붙임파일명을 세미콜론이나 마침표로 분리
-              const attachmentStr = row['붙임파일명'] || row['att1'] || '';
-              const attachments = attachmentStr
-                .split(/[;.]/)
-                .map((a: string) => a.trim())
-                .filter((a: string) => a.length > 0)
-                .slice(0, 5); // 최대 5개까지
-              
-              // 추가 붙임파일들도 처리
-              [row['att2'], row['att3'], row['att4'], row['att5']].forEach(att => {
-                if (att && att.trim()) {
-                  attachments.push(att.trim());
+              // 붙임파일 처리: att1~att5 컬럼에서 값 수집
+              const attachments: string[] = [];
+              ['att1', 'att2', 'att3', 'att4', 'att5', '붙임파일1', '붙임파일2', '붙임파일3', '붙임파일4', '붙임파일5'].forEach(key => {
+                const val = row[key];
+                if (val && val.trim()) {
+                  attachments.push(val.trim());
                 }
               });
 
-              const receiptDate = row['접수일'] || row['rcv_date'] || '';
-              const deadline = row['마감일'] || row['due'] || '';
-              const title = row['제목'] || row['subj'] || '';
-              const docNumber = row['생산문서번호'] || row['문서번호'] || row['doc_no'] || '';
+              const receiptDate = row['rcv_date'] || row['접수일'] || '';
+              const deadline = row['due'] || row['마감일'] || '';
+              const title = row['subj'] || row['제목'] || '';
+              const docNumber = row['doc_no'] || row['생산문서번호'] || row['문서번호'] || '';
 
               console.log(`파싱된 행 ${idx}:`, {
                 receiptDate,
