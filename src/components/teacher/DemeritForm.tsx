@@ -344,27 +344,15 @@ const DemeritForm = () => {
           </div>
 
           {selectedReasonIndex && (
-            <>
-              <div className="space-y-2">
-                <Label>벌점 사유 (기본)</Label>
-                <Input
-                  value={basicReason}
-                  onChange={(e) => setBasicReason(e.target.value)}
-                  placeholder="벌점 사유"
-                  readOnly={false}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>구체적인 사유 (선택사항)</Label>
-                <Textarea
-                  placeholder="기본 사유에 추가할 구체적인 내용을 입력하세요..."
-                  value={additionalReason}
-                  onChange={(e) => setAdditionalReason(e.target.value)}
-                  rows={3}
-                />
-              </div>
-            </>
+            <div className="space-y-2">
+              <Label>구체적인 사유 (선택사항)</Label>
+              <Textarea
+                placeholder="기본 사유에 추가할 구체적인 내용을 입력하세요..."
+                value={additionalReason}
+                onChange={(e) => setAdditionalReason(e.target.value)}
+                rows={3}
+              />
+            </div>
           )}
         </>
       )}
