@@ -68,6 +68,11 @@ const DataInquiry = () => {
     }
   };
 
+  // 이메일 클릭 핸들러
+  const handleEmailClick = (email: string, name: string) => {
+    window.location.href = `mailto:${email}?subject=안녕하세요 ${name}님`;
+  };
+
   const exportToCSV = () => {
     if (data.length === 0) {
       toast.error("내보낼 데이터가 없습니다");
@@ -1170,8 +1175,10 @@ const DataInquiry = () => {
                         {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => {
                           const value = row[col]?.toString() || "-";
                           const isPhoneColumn = col === "전화번호" || col === "학부모전화1" || col === "학부모전화2";
+                          const isEmailColumn = col === "이메일" || col.toLowerCase().includes("email");
                           const isValidPhone = value !== "-" && value.trim() !== "";
-                          const studentName = row["이름"] || "";
+                          const isValidEmail = value !== "-" && value.trim() !== "" && value.includes("@");
+                          const studentName = row["이름"] || row["name"] || "";
                           
                           return (
                             <TableCell key={col} className="whitespace-nowrap">
@@ -1180,6 +1187,14 @@ const DataInquiry = () => {
                                   onClick={(e) => handlePhoneClick(value, studentName, e)}
                                   className="text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
                                   title={isMobileDevice() ? "문자 보내기" : "이름과 전화번호 복사"}
+                                >
+                                  {value}
+                                </button>
+                              ) : isEmailColumn && isValidEmail ? (
+                                <button
+                                  onClick={() => handleEmailClick(value, studentName)}
+                                  className="text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
+                                  title="이메일 보내기"
                                 >
                                   {value}
                                 </button>
