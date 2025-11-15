@@ -1715,30 +1715,10 @@ const DataInquiry = () => {
               className="max-w-xs"
               maxLength={100}
             />
-            {selectedTable === "teachers" && (
-              <>
-                <Input
-                  placeholder="부서로 검색"
-                  value={searchDepartment}
-                  onChange={(e) => setSearchDepartment(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
-                  className="max-w-xs"
-                  maxLength={100}
-                />
-                <Input
-                  placeholder="담당교과로 검색"
-                  value={searchSubject}
-                  onChange={(e) => setSearchSubject(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
-                  className="max-w-xs"
-                  maxLength={100}
-                />
-              </>
-            )}
             <Button onClick={handleQuery} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
-            {(searchTerm || searchDepartment || searchSubject) && (
+            {searchTerm && (
               <Button variant="outline" onClick={() => { 
                 setSearchTerm(""); 
                 setSearchDepartment(""); 
