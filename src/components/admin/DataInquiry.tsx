@@ -63,6 +63,9 @@ const DataInquiry = () => {
   const [isSavingGroup, setIsSavingGroup] = useState(false);
   const [selectedTeachers, setSelectedTeachers] = useState<Set<string>>(new Set());
   const [teacherGroups, setTeacherGroups] = useState<any[]>([]);
+  const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<any>(null);
+  const [isSavingTeacher, setIsSavingTeacher] = useState(false);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -923,6 +926,71 @@ const DataInquiry = () => {
       newSet.delete(id);
     }
     setSelectedIds(newSet);
+  };
+
+  // 교사 편집 다이얼로그 열기
+  const handleOpenTeacherEdit = (teacher: any) => {
+    setEditingTeacher({
+      email: teacher.이메일,
+      name: teacher.이름,
+      phone: teacher.전화번호,
+      grade: teacher.학년 === "-" ? null : teacher.학년,
+      class: teacher.반 === "-" ? null : teacher.반,
+      department: teacher.부서 === "-" ? "" : teacher.부서,
+      subject: teacher.담당교과 === "-" ? "" : teacher.담당교과,
+      isHomeroom: teacher.담임여부 === "담임"
+    });
+    setIsTeacherEditDialogOpen(true);
+  };
+
+  // 교사 정보 저장
+  const handleSaveTeacher = async () => {
+    if (!editingTeacher) return;
+
+    setIsSavingTeacher(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      const adminId = parsedUser.id;
+
+      // Set admin session
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: adminId
+      });
+
+      // 교사 정보 업데이트
+      const { error } = await supabase
+        .from('teachers')
+        .update({
+          name: editingTeacher.name,
+          call_t: editingTeacher.phone,
+          grade: editingTeacher.grade,
+          class: editingTeacher.class,
+          department: editingTeacher.department || null,
+          subject: editingTeacher.subject || null,
+          is_homeroom: editingTeacher.isHomeroom
+        })
+        .eq('teacher_email', editingTeacher.email);
+
+      if (error) throw error;
+
+      toast.success("교사 정보가 수정되었습니다");
+      setIsTeacherEditDialogOpen(false);
+      setEditingTeacher(null);
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error) {
+      console.error("Error updating teacher:", error);
+      toast.error("교사 정보 수정에 실패했습니다");
+    } finally {
+      setIsSavingTeacher(false);
+    }
   };
 
   const handleQuery = async () => {
@@ -1829,6 +1897,9 @@ const DataInquiry = () => {
                     {selectedTable === "monthly" && (
                       <TableHead className="whitespace-nowrap">상담기록</TableHead>
                     )}
+                    {selectedTable === "teachers" && (
+                      <TableHead className="whitespace-nowrap">편집</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1918,6 +1989,18 @@ const DataInquiry = () => {
                             ) : (
                               <span className="text-muted-foreground text-sm">-</span>
                             )}
+                          </TableCell>
+                        )}
+                        {selectedTable === "teachers" && (
+                          <TableCell className="whitespace-nowrap">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenTeacherEdit(row)}
+                            >
+                              <ClipboardEdit className="h-4 w-4 mr-1" />
+                              편집
+                            </Button>
                           </TableCell>
                         )}
                       </TableRow>
@@ -2044,6 +2127,105 @@ const DataInquiry = () => {
               disabled={isSavingCounseling}
             >
               {isSavingCounseling ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 교사 정보 편집 다이얼로그 */}
+      <Dialog open={isTeacherEditDialogOpen} onOpenChange={setIsTeacherEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>교사 정보 편집</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="teacher-name">이름 *</Label>
+              <Input
+                id="teacher-name"
+                value={editingTeacher?.name || ""}
+                onChange={(e) => setEditingTeacher({...editingTeacher, name: e.target.value})}
+                placeholder="교사 이름"
+                maxLength={50}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="teacher-phone">전화번호 *</Label>
+              <Input
+                id="teacher-phone"
+                value={editingTeacher?.phone || ""}
+                onChange={(e) => setEditingTeacher({...editingTeacher, phone: e.target.value})}
+                placeholder="010-0000-0000"
+                maxLength={20}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="teacher-grade">학년</Label>
+                <Input
+                  id="teacher-grade"
+                  type="number"
+                  value={editingTeacher?.grade || ""}
+                  onChange={(e) => setEditingTeacher({...editingTeacher, grade: e.target.value ? parseInt(e.target.value) : null})}
+                  placeholder="학년"
+                  min="1"
+                  max="3"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="teacher-class">반</Label>
+                <Input
+                  id="teacher-class"
+                  type="number"
+                  value={editingTeacher?.class || ""}
+                  onChange={(e) => setEditingTeacher({...editingTeacher, class: e.target.value ? parseInt(e.target.value) : null})}
+                  placeholder="반"
+                  min="1"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="teacher-department">부서</Label>
+              <Input
+                id="teacher-department"
+                value={editingTeacher?.department || ""}
+                onChange={(e) => setEditingTeacher({...editingTeacher, department: e.target.value})}
+                placeholder="부서명"
+                maxLength={100}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="teacher-subject">담당교과</Label>
+              <Input
+                id="teacher-subject"
+                value={editingTeacher?.subject || ""}
+                onChange={(e) => setEditingTeacher({...editingTeacher, subject: e.target.value})}
+                placeholder="담당교과"
+                maxLength={100}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="teacher-homeroom"
+                checked={editingTeacher?.isHomeroom || false}
+                onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isHomeroom: checked})}
+              />
+              <Label htmlFor="teacher-homeroom" className="cursor-pointer">담임교사</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsTeacherEditDialogOpen(false)}
+              disabled={isSavingTeacher}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSaveTeacher}
+              disabled={isSavingTeacher}
+            >
+              {isSavingTeacher ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>
