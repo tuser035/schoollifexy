@@ -41,6 +41,7 @@ export type Database = {
       career_counseling: {
         Row: {
           admin_id: string
+          attachment_url: string | null
           content: string
           counseling_date: string
           counselor_name: string
@@ -51,6 +52,7 @@ export type Database = {
         }
         Insert: {
           admin_id: string
+          attachment_url?: string | null
           content: string
           counseling_date?: string
           counselor_name: string
@@ -61,6 +63,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string
+          attachment_url?: string | null
           content?: string
           counseling_date?: string
           counselor_name?: string

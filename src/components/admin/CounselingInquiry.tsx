@@ -399,7 +399,7 @@ const CounselingInquiry = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>진로상담 기록 수정</DialogTitle>
+            <DialogTitle>상담 기록 수정</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
