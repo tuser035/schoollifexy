@@ -48,6 +48,8 @@ const DataInquiry = () => {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -73,8 +75,42 @@ const DataInquiry = () => {
     }
   };
 
+  // 템플릿 로드
+  const loadTemplates = async () => {
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      const { data, error } = await supabase
+        .from("email_templates")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error: any) {
+      console.error("템플릿 로드 실패:", error);
+    }
+  };
+
+  // 템플릿 선택 핸들러
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setEmailSubject(template.subject);
+      setEmailBody(template.body);
+    }
+  };
+
   // 이메일 클릭 핸들러
   const handleEmailClick = async (email: string, name: string, studentId?: string) => {
+    // 템플릿 로드
+    await loadTemplates();
+    
     // 현재 로그인한 사용자 정보 가져오기
     const userString = localStorage.getItem("auth_user");
     let senderInfo = "";
@@ -91,6 +127,7 @@ const DataInquiry = () => {
 
     // 이메일 작성 다이얼로그 열기
     setEmailRecipient({ email, name, studentId: studentId || "" });
+    setSelectedTemplateId("");
     setEmailSubject(`${name}님께 문의드립니다`);
     setEmailBody(
       `안녕하세요 ${name}님,\n\n` +
@@ -1431,9 +1468,24 @@ const DataInquiry = () => {
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>이메일 작성</DialogTitle>
+            <DialogTitle>이메일/메신저 작성</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div>
+              <Label>템플릿 선택</Label>
+              <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="템플릿을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>수신자</Label>
               <Input
