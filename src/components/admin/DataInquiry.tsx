@@ -1213,6 +1213,9 @@ const DataInquiry = () => {
           "담당교과": row.subject
         }));
 
+        // 전체 교사 인원수 알림
+        toast.success(`전체 교사 인원: ${result?.length || 0}명`);
+
       } else if (selectedTable === "homeroom") {
         let searchGrade: number | null = null;
         let searchClass: number | null = null;
