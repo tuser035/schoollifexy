@@ -532,6 +532,13 @@ const DataInquiry = () => {
 
       // 해당 그룹의 교사 이메일들을 선택 상태로 설정
       setSelectedTeachers(new Set(group.teacher_ids));
+      
+      // 현재 data에서 해당 그룹 교사들만 필터링
+      const filteredData = data.filter((row: any) => 
+        group.teacher_ids.includes(row["이메일"])
+      );
+      setData(filteredData);
+      
       toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${group.teacher_ids.length}명)`);
     } catch (error: any) {
       console.error("교사 그룹 불러오기 실패:", error);
