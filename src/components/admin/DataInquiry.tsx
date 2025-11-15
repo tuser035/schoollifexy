@@ -2284,11 +2284,11 @@ const DataInquiry = () => {
                               </Button>
                               <Button
                                 size="sm"
-                                variant="destructive"
+                                variant="ghost"
                                 onClick={() => handleDeleteTeacher(row["이름"], row["이메일"])}
+                                className="h-8 w-8 p-0 hover:bg-red-50"
                               >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                삭제
+                                <Trash2 className="h-4 w-4 text-red-400 hover:text-red-500" />
                               </Button>
                             </div>
                           </TableCell>
