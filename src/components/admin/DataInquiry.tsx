@@ -399,16 +399,32 @@ const DataInquiry = () => {
         let searchText: string | null = null;
 
         if (trimmedSearch) {
-          // 숫자인 경우 학년이나 반으로 검색
+          // 숫자인 경우 학년이나 반 또는 학번으로 검색
           if (!isNaN(Number(trimmedSearch))) {
             const searchNum = trimmedSearch;
             
+            // 세 자리 이상 숫자인 경우: 학번(student_id)으로 검색
+            if (searchNum.length >= 3) {
+              searchText = trimmedSearch;
+            }
             // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반
-            if (searchNum.length === 2) {
+            else if (searchNum.length === 2) {
               searchGrade = parseInt(searchNum[0]);
               searchClass = parseInt(searchNum[1]);
-            } else {
+            }
+            // 한 자리 숫자인 경우: 학년으로 검색 + 총 인원 표시
+            else {
               searchGrade = parseInt(trimmedSearch);
+              
+              // 학년 총 인원 조회 및 토스트 표시
+              const { count } = await supabase
+                .from('students')
+                .select('*', { count: 'exact', head: true })
+                .eq('grade', searchGrade);
+              
+              if (count !== null) {
+                toast.success(`${searchGrade}학년 총 인원: ${count}명`);
+              }
             }
           } else {
             // 문자인 경우 이름으로 검색
