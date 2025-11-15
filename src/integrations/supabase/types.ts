@@ -565,6 +565,8 @@ export type Database = {
           grade: number
           name: string
           number: number
+          parents_call1: string
+          parents_call2: string
           student_call: string
           student_id: string
         }[]

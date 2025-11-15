@@ -529,7 +529,9 @@ const DataInquiry = () => {
           "번호": row.number,
           "학과": row.dept_name,
           "전화번호": row.student_call,
-          "이메일": row.gmail
+          "이메일": row.gmail,
+          "학부모전화1": row.parents_call1,
+          "학부모전화2": row.parents_call2
         }));
 
       } else if (selectedTable === "teachers") {
