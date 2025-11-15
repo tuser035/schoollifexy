@@ -30,7 +30,7 @@ const tables: TableConfig[] = [
   {
     name: "교사",
     table: "teachers",
-    columns: "teacher_email, name, grade, class, dept_code, call_t, is_homeroom",
+    columns: "teacher_email, name, grade, class, dept_code, call_t, is_homeroom, department, subject",
     color: "border-teacher-blue",
   },
   {
