@@ -50,19 +50,20 @@ const DataInquiry = () => {
   };
 
   // 전화번호 클릭 핸들러
-  const handlePhoneClick = async (phoneNumber: string, e: React.MouseEvent) => {
+  const handlePhoneClick = async (phoneNumber: string, name: string, e: React.MouseEvent) => {
     e.preventDefault();
     
     if (isMobileDevice()) {
       // 모바일: 문자 앱 열기
       window.location.href = `sms:${phoneNumber}`;
     } else {
-      // PC: 클립보드에 복사
+      // PC: 클립보드에 이름과 전화번호 복사
       try {
-        await navigator.clipboard.writeText(phoneNumber);
-        toast.success(`전화번호가 복사되었습니다: ${phoneNumber}`);
+        const copyText = `${name}: ${phoneNumber}`;
+        await navigator.clipboard.writeText(copyText);
+        toast.success(`복사되었습니다: ${copyText}`);
       } catch (err) {
-        toast.error("전화번호 복사에 실패했습니다");
+        toast.error("복사에 실패했습니다");
       }
     }
   };
@@ -1170,14 +1171,15 @@ const DataInquiry = () => {
                           const value = row[col]?.toString() || "-";
                           const isPhoneColumn = col === "전화번호" || col === "학부모전화1" || col === "학부모전화2";
                           const isValidPhone = value !== "-" && value.trim() !== "";
+                          const studentName = row["이름"] || "";
                           
                           return (
                             <TableCell key={col} className="whitespace-nowrap">
                               {isPhoneColumn && isValidPhone ? (
                                 <button
-                                  onClick={(e) => handlePhoneClick(value, e)}
+                                  onClick={(e) => handlePhoneClick(value, studentName, e)}
                                   className="text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
-                                  title={isMobileDevice() ? "문자 보내기" : "전화번호 복사"}
+                                  title={isMobileDevice() ? "문자 보내기" : "이름과 전화번호 복사"}
                                 >
                                   {value}
                                 </button>
