@@ -1880,15 +1880,20 @@ const DataInquiry = () => {
               className="max-w-xs"
               maxLength={100}
             />
-            <Button onClick={handleQuery} disabled={isLoading}>
+            <Button onClick={() => {
+              // 메인 조회 버튼은 컬럼 필터(부서, 담당교과)를 초기화하고 검색어만 사용
+              setSearchDepartment("");
+              setSearchSubject("");
+              setTimeout(() => handleQuery(), 50);
+            }} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
-            {searchTerm && (
+            {(searchTerm || searchDepartment || searchSubject) && (
               <Button variant="outline" onClick={() => { 
                 setSearchTerm(""); 
                 setSearchDepartment(""); 
                 setSearchSubject(""); 
-                handleQuery(); 
+                setTimeout(() => handleQuery(), 50); 
               }}>
                 초기화
               </Button>
