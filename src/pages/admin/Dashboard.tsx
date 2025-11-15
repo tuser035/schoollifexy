@@ -19,6 +19,7 @@ import EdufineUpload from "@/components/admin/EdufineUpload";
 import EdufineDocumentStorage from "@/components/admin/EdufineDocumentStorage";
 import EdufineInquiry from "@/components/admin/EdufineInquiry";
 import { EmailHistory } from "@/components/admin/EmailHistory";
+import EmailTemplateManager from "@/components/admin/EmailTemplateManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -81,7 +82,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue={user.type === "teacher" ? "data" : "password"} className="w-full">
-          <TabsList className={`grid w-full mb-6 ${user.type === "teacher" ? "grid-cols-5" : "grid-cols-11"}`}>
+          <TabsList className={`grid w-full mb-6 ${user.type === "teacher" ? "grid-cols-5" : "grid-cols-12"}`}>
             {user.type === "admin" && (
               <>
                 <TabsTrigger value="password">
@@ -120,6 +121,12 @@ const AdminDashboard = () => {
               <FileText className="w-4 h-4 mr-2" />
               이메일
             </TabsTrigger>
+            {user.type === "admin" && (
+              <TabsTrigger value="email-templates">
+                <FileText className="w-4 h-4 mr-2" />
+                템플릿
+              </TabsTrigger>
+            )}
             {user.type === "admin" && (
               <>
                 <TabsTrigger value="storage">
@@ -179,6 +186,12 @@ const AdminDashboard = () => {
           <TabsContent value="email-history">
             <EmailHistory />
           </TabsContent>
+
+          {user.type === "admin" && (
+            <TabsContent value="email-templates">
+              <EmailTemplateManager />
+            </TabsContent>
+          )}
 
           {user.type === "admin" && (
             <>

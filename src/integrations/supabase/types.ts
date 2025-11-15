@@ -236,6 +236,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          admin_id: string
+          body: string
+          created_at: string
+          id: string
+          subject: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          body: string
+          created_at?: string
+          id?: string
+          subject: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          subject?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       merits: {
         Row: {
           category: string

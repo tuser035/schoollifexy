@@ -1,0 +1,262 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+interface EmailTemplate {
+  id: string;
+  title: string;
+  subject: string;
+  body: string;
+  created_at: string;
+}
+
+const EmailTemplateManager = () => {
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    subject: "",
+    body: "",
+  });
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      const { data, error } = await supabase
+        .from("email_templates")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error: any) {
+      toast.error("템플릿 로드 실패: " + error.message);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      if (editingTemplate) {
+        // Update existing template
+        const { error } = await supabase
+          .from("email_templates")
+          .update({
+            title: formData.title,
+            subject: formData.subject,
+            body: formData.body,
+          })
+          .eq("id", editingTemplate.id);
+
+        if (error) throw error;
+        toast.success("템플릿이 수정되었습니다");
+      } else {
+        // Create new template
+        const { error } = await supabase
+          .from("email_templates")
+          .insert({
+            title: formData.title,
+            subject: formData.subject,
+            body: formData.body,
+            admin_id: user.id,
+          });
+
+        if (error) throw error;
+        toast.success("템플릿이 생성되었습니다");
+      }
+
+      setIsOpen(false);
+      setEditingTemplate(null);
+      setFormData({ title: "", subject: "", body: "" });
+      loadTemplates();
+    } catch (error: any) {
+      toast.error("저장 실패: " + error.message);
+    }
+  };
+
+  const handleEdit = (template: EmailTemplate) => {
+    setEditingTemplate(template);
+    setFormData({
+      title: template.title,
+      subject: template.subject,
+      body: template.body,
+    });
+    setIsOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("정말로 이 템플릿을 삭제하시겠습니까?")) return;
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      const { error } = await supabase
+        .from("email_templates")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      toast.success("템플릿이 삭제되었습니다");
+      loadTemplates();
+    } catch (error: any) {
+      toast.error("삭제 실패: " + error.message);
+    }
+  };
+
+  const handleDialogClose = () => {
+    setIsOpen(false);
+    setEditingTemplate(null);
+    setFormData({ title: "", subject: "", body: "" });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>이메일 템플릿 관리</CardTitle>
+            <CardDescription>자주 사용하는 이메일 템플릿을 저장하고 관리합니다</CardDescription>
+          </div>
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => handleDialogClose()}>
+                <Plus className="w-4 h-4 mr-2" />
+                새 템플릿
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{editingTemplate ? "템플릿 수정" : "새 템플릿 만들기"}</DialogTitle>
+                <DialogDescription>
+                  이메일 템플릿의 제목, 제목, 본문을 입력하세요
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">템플릿 이름</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="예: 학부모 상담 안내"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="subject">이메일 제목</Label>
+                    <Input
+                      id="subject"
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      placeholder="예: [학부모 상담] 안내 말씀"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="body">이메일 본문</Label>
+                    <Textarea
+                      id="body"
+                      value={formData.body}
+                      onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+                      placeholder="이메일 본문을 입력하세요..."
+                      rows={10}
+                      required
+                    />
+                  </div>
+                </div>
+                <DialogFooter className="mt-6">
+                  <Button type="button" variant="outline" onClick={handleDialogClose}>
+                    취소
+                  </Button>
+                  <Button type="submit">
+                    {editingTemplate ? "수정" : "생성"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>템플릿 이름</TableHead>
+              <TableHead>이메일 제목</TableHead>
+              <TableHead>작성일</TableHead>
+              <TableHead className="text-right">작업</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {templates.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  등록된 템플릿이 없습니다
+                </TableCell>
+              </TableRow>
+            ) : (
+              templates.map((template) => (
+                <TableRow key={template.id}>
+                  <TableCell className="font-medium">{template.title}</TableCell>
+                  <TableCell>{template.subject}</TableCell>
+                  <TableCell>{new Date(template.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(template)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(template.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default EmailTemplateManager;
