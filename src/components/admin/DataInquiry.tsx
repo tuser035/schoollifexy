@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, ClipboardEdit } from "lucide-react";
+import { Download, ClipboardEdit, FileUp, Camera, X } from "lucide-react";
 
 type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "monthly" | "departments";
 
@@ -37,6 +37,10 @@ const DataInquiry = () => {
   const [monthlyRawData, setMonthlyRawData] = useState<any[]>([]);
   const [meritsRawData, setMeritsRawData] = useState<any[]>([]);
   const [demeritsRawData, setDemeritsRawData] = useState<any[]>([]);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const exportToCSV = () => {
     if (data.length === 0) {
@@ -152,7 +156,28 @@ const DataInquiry = () => {
     setCounselorName("");
     setCounselingDate(new Date().toISOString().split('T')[0]);
     setCounselingContent("");
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
     setIsCounselingDialogOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAttachmentFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setAttachmentPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
   const handleSaveCounseling = async () => {
@@ -191,6 +216,27 @@ const DataInquiry = () => {
         admin_id_input: parsedUser.id
       });
 
+      let attachmentUrl = null;
+
+      // 첨부 파일 업로드
+      if (attachmentFile) {
+        const fileExt = attachmentFile.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `counseling/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('evidence-photos')
+          .upload(filePath, attachmentFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('evidence-photos')
+          .getPublicUrl(filePath);
+
+        attachmentUrl = publicUrl;
+      }
+
       const { error } = await supabase
         .from("career_counseling")
         .insert({
@@ -198,13 +244,15 @@ const DataInquiry = () => {
           counselor_name: counselorName.trim(),
           counseling_date: counselingDate,
           content: counselingContent.trim(),
-          admin_id: parsedUser.id
+          admin_id: parsedUser.id,
+          attachment_url: attachmentUrl
         });
 
       if (error) throw error;
 
-      toast.success("진로상담 기록이 저장되었습니다");
+      toast.success("상담 기록이 저장되었습니다");
       setIsCounselingDialogOpen(false);
+      handleRemoveAttachment();
     } catch (error: any) {
       toast.error(error.message || "상담 기록 저장에 실패했습니다");
     } finally {
@@ -633,7 +681,7 @@ const DataInquiry = () => {
       <Dialog open={isCounselingDialogOpen} onOpenChange={setIsCounselingDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>진로상담 기록 - {selectedStudent?.학생}</DialogTitle>
+            <DialogTitle>상담 기록 - {selectedStudent?.학생}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -661,13 +709,74 @@ const DataInquiry = () => {
                 id="counseling-content"
                 value={counselingContent}
                 onChange={(e) => setCounselingContent(e.target.value)}
-                placeholder="진로상담 내용을 상세히 입력하세요"
+                placeholder="상담 내용을 상세히 입력하세요"
                 rows={8}
                 maxLength={2000}
               />
               <p className="text-sm text-muted-foreground">
                 {counselingContent.length} / 2000자
               </p>
+            </div>
+            <div className="space-y-2">
+              <Label>첨부 파일 (선택사항)</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <FileUp className="w-4 h-4 mr-2" />
+                  파일
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => cameraInputRef.current?.click()}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  카메라
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+              {attachmentPreview && (
+                <div className="relative mt-2 p-2 border rounded-lg">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-1 right-1"
+                    onClick={handleRemoveAttachment}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                  {attachmentFile?.type.startsWith('image/') ? (
+                    <img
+                      src={attachmentPreview}
+                      alt="첨부 파일 미리보기"
+                      className="max-w-full max-h-48 object-contain mx-auto"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-2 p-2">
+                      <FileUp className="w-6 h-6" />
+                      <span className="text-sm">{attachmentFile?.name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
