@@ -2007,7 +2007,7 @@ const DataInquiry = () => {
             <Input
               placeholder={
                 selectedTable === "students" ? "학생명, 학년, 학년반" :
-                selectedTable === "teachers" ? "교사명, 학년, 반으로 검색" :
+                selectedTable === "teachers" ? "교사명, 학년, 학년반" :
                 selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
                 selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly" 
                   ? "학생명, 교사명, 학년반, 학년반번호로 검색" :
