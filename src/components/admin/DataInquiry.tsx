@@ -739,7 +739,6 @@ const DataInquiry = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,.pdf,.doc,.docx"
                   onChange={handleFileChange}
                   className="hidden"
                 />
