@@ -70,6 +70,8 @@ const DataInquiry = () => {
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [searchDepartment, setSearchDepartment] = useState("");
   const [searchSubject, setSearchSubject] = useState("");
+  const [searchHomeroom, setSearchHomeroom] = useState("");
+  const [searchDeptName, setSearchDeptName] = useState("");
   const [filterPopoverOpen, setFilterPopoverOpen] = useState<Record<string, boolean>>({});
   const [isAddTeacherDialogOpen, setIsAddTeacherDialogOpen] = useState(false);
   const [newTeacherData, setNewTeacherData] = useState({
@@ -1199,7 +1201,7 @@ const DataInquiry = () => {
   };
 
   // 교사 전용 즉시 조회 헬퍼 (필터 클릭 시 1회 클릭 적용)
-  const queryTeachersImmediate = async (overrides?: { department?: string | null; subject?: string | null }) => {
+  const queryTeachersImmediate = async (overrides?: { department?: string | null; subject?: string | null; homeroom?: string | null; deptName?: string | null }) => {
     setIsLoading(true);
     try {
       const authUser = localStorage.getItem("auth_user");
@@ -1221,6 +1223,12 @@ const DataInquiry = () => {
       const subjVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "subject"))
         ? overrides.subject
         : (searchSubject.trim() || null);
+      const homeroomVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "homeroom"))
+        ? overrides.homeroom
+        : (searchHomeroom.trim() || null);
+      const deptNameVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "deptName"))
+        ? overrides.deptName
+        : (searchDeptName.trim() || null);
 
       const { data, error } = await supabase.rpc("admin_get_teachers", {
         admin_id_input: adminId,
@@ -1229,6 +1237,8 @@ const DataInquiry = () => {
         search_class: null,
         search_department: deptVal,
         search_subject: subjVal,
+        search_homeroom: homeroomVal,
+        search_dept_name: deptNameVal,
       });
       if (error) throw error;
 
@@ -1252,10 +1262,16 @@ const DataInquiry = () => {
         let q = supabase.from('teachers').select('*', { count: 'exact', head: true });
         if (deptVal) q = q.ilike('department', `%${deptVal}%`);
         if (subjVal) q = q.ilike('subject', `%${subjVal}%`);
+        if (homeroomVal === '담임') q = q.eq('is_homeroom', true);
+        if (homeroomVal === '-') q = q.or('is_homeroom.eq.false,is_homeroom.is.null');
         const { count: totalCount } = await q;
         
         // 필터가 적용된 경우와 전체 조회 구분
-        if (subjVal) {
+        if (homeroomVal) {
+          toast.success(`${homeroomVal} 교사: ${totalCount ?? result.length}명`);
+        } else if (deptNameVal) {
+          toast.success(`${deptNameVal} 교사: ${totalCount ?? result.length}명`);
+        } else if (subjVal) {
           toast.success(`${subjVal} 교사: ${totalCount ?? result.length}명`);
         } else if (deptVal) {
           toast.success(`${deptVal} 교사: ${totalCount ?? result.length}명`);
@@ -1990,7 +2006,7 @@ const DataInquiry = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 flex-wrap">
-            <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); setColumnFilters({}); setSearchDepartment(""); setSearchSubject(""); }}>
+            <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); setColumnFilters({}); setSearchDepartment(""); setSearchSubject(""); setSearchHomeroom(""); setSearchDeptName(""); }}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue />
               </SelectTrigger>
@@ -2024,6 +2040,8 @@ const DataInquiry = () => {
               setSearchTerm("");
               setSearchDepartment("");
               setSearchSubject("");
+              setSearchHomeroom("");
+              setSearchDeptName("");
               setColumnFilters({});
               
               // 교사 선택 상태 초기화
@@ -2033,7 +2051,7 @@ const DataInquiry = () => {
               
               // 교사 테이블인 경우 즉시 전체 조회
               if (selectedTable === "teachers") {
-                await queryTeachersImmediate({ department: null, subject: null });
+                await queryTeachersImmediate({ department: null, subject: null, homeroom: null, deptName: null });
               } else {
                 // state 업데이트 후 조회
                 setTimeout(() => handleQuery(), 150);
@@ -2041,11 +2059,13 @@ const DataInquiry = () => {
             }} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
-            {(searchTerm || searchDepartment || searchSubject || Object.keys(columnFilters).length > 0) && (
+            {(searchTerm || searchDepartment || searchSubject || searchHomeroom || searchDeptName || Object.keys(columnFilters).length > 0) && (
               <Button variant="outline" onClick={async () => { 
                 setSearchTerm(""); 
                 setSearchDepartment(""); 
                 setSearchSubject(""); 
+                setSearchHomeroom("");
+                setSearchDeptName("");
                 setColumnFilters({});
                 
                 // 교사 선택 상태 초기화
@@ -2055,7 +2075,7 @@ const DataInquiry = () => {
                 
                 // 교사 테이블인 경우 즉시 전체 조회 (state 업데이트 타이밍 문제 방지)
                 if (selectedTable === "teachers") {
-                  await queryTeachersImmediate({ department: null, subject: null });
+                  await queryTeachersImmediate({ department: null, subject: null, homeroom: null, deptName: null });
                 } else {
                   setTimeout(() => handleQuery(), 150); 
                 }
@@ -2293,20 +2313,35 @@ const DataInquiry = () => {
                                         delete newFilters[col];
                                         setColumnFilters(newFilters);
                                         
-                                        // 부서나 담당교과인 경우 서버 검색 조건도 초기화하고 즉시 재조회
+                                        // 서버 검색 조건 초기화하고 즉시 재조회
                                         if (col === "부서") {
                                           setSearchDepartment("");
                                           setSearchSubject("");
+                                          setSearchHomeroom("");
+                                          setSearchDeptName("");
                                           setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
-                                          await queryTeachersImmediate({ department: null, subject: null });
+                                          await queryTeachersImmediate({ department: null, subject: null, homeroom: null, deptName: null });
                                         } else if (col === "담당교과") {
                                           setSearchDepartment("");
                                           setSearchSubject("");
+                                          setSearchHomeroom("");
+                                          setSearchDeptName("");
                                           setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
-                                          await queryTeachersImmediate({ department: null, subject: null });
-                                        } else {
-                                          // 담임여부, 학과는 클라이언트 필터만 초기화
+                                          await queryTeachersImmediate({ department: null, subject: null, homeroom: null, deptName: null });
+                                        } else if (col === "담임여부") {
+                                          setSearchDepartment("");
+                                          setSearchSubject("");
+                                          setSearchHomeroom("");
+                                          setSearchDeptName("");
                                           setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                          await queryTeachersImmediate({ department: null, subject: null, homeroom: null, deptName: null });
+                                        } else if (col === "학과") {
+                                          setSearchDepartment("");
+                                          setSearchSubject("");
+                                          setSearchHomeroom("");
+                                          setSearchDeptName("");
+                                          setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                          await queryTeachersImmediate({ department: null, subject: null, homeroom: null, deptName: null });
                                         }
                                       }}
                                       className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${!columnFilters[col] ? 'bg-muted' : ''}`}
@@ -2325,16 +2360,31 @@ const DataInquiry = () => {
                                           if (col === "부서") {
                                             setSearchDepartment(value as string);
                                             setSearchSubject("");
+                                            setSearchHomeroom("");
+                                            setSearchDeptName("");
                                             setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
-                                            void queryTeachersImmediate({ department: value as string, subject: undefined });
+                                            void queryTeachersImmediate({ department: value as string, subject: undefined, homeroom: undefined, deptName: undefined });
                                           } else if (col === "담당교과") {
                                             setSearchSubject(value as string);
                                             setSearchDepartment("");
+                                            setSearchHomeroom("");
+                                            setSearchDeptName("");
                                             setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
-                                            void queryTeachersImmediate({ department: undefined, subject: value as string });
-                                          } else {
-                                            // 담임여부, 학과는 클라이언트 필터만 적용
+                                            void queryTeachersImmediate({ department: undefined, subject: value as string, homeroom: undefined, deptName: undefined });
+                                          } else if (col === "담임여부") {
+                                            setSearchHomeroom(value as string);
+                                            setSearchDepartment("");
+                                            setSearchSubject("");
+                                            setSearchDeptName("");
                                             setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                            void queryTeachersImmediate({ department: undefined, subject: undefined, homeroom: value as string, deptName: undefined });
+                                          } else if (col === "학과") {
+                                            setSearchDeptName(value as string);
+                                            setSearchDepartment("");
+                                            setSearchSubject("");
+                                            setSearchHomeroom("");
+                                            setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                            void queryTeachersImmediate({ department: undefined, subject: undefined, homeroom: undefined, deptName: value as string });
                                           }
                                         }}
                                         className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${columnFilters[col] === value ? 'bg-muted' : ''}`}
