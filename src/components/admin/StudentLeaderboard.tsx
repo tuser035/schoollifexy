@@ -46,8 +46,8 @@ const StudentLeaderboard = () => {
       }
 
       const parsedUser = JSON.parse(authUser);
-      if (parsedUser.type !== "admin" || !parsedUser.id) {
-        toast.error("관리자 권한이 필요합니다");
+      if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) {
+        toast.error("권한이 필요합니다");
         return;
       }
 
@@ -93,12 +93,18 @@ const StudentLeaderboard = () => {
       if (!authUser) return;
 
       const parsedUser = JSON.parse(authUser);
-      if (parsedUser.type !== "admin" || !parsedUser.id) return;
+      if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) return;
 
-      // 관리자 세션 설정
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: parsedUser.id,
-      });
+      // 관리자 또는 교사 세션 설정
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: parsedUser.id,
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: parsedUser.id,
+        });
+      }
 
       const currentYear = new Date().getFullYear();
       

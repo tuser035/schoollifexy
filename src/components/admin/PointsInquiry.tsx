@@ -30,16 +30,22 @@ const PointsInquiry = () => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
 
   useEffect(() => {
-    const setAdminSession = async () => {
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        await supabase.rpc("set_admin_session", {
-          admin_id_input: user.id,
-        });
+    const setUserSession = async () => {
+      const authUser = localStorage.getItem("auth_user");
+      if (authUser) {
+        const user = JSON.parse(authUser);
+        if (user.type === "admin") {
+          await supabase.rpc("set_admin_session", {
+            admin_id_input: user.id,
+          });
+        } else if (user.type === "teacher") {
+          await supabase.rpc("set_teacher_session", {
+            teacher_id_input: user.id,
+          });
+        }
       }
     };
-    setAdminSession();
+    setUserSession();
   }, []);
 
   const exportToCSV = () => {
@@ -89,8 +95,8 @@ const PointsInquiry = () => {
       }
       
       const parsedUser = JSON.parse(authUser);
-      if (parsedUser.type !== "admin" || !parsedUser.id) {
-        toast.error("관리자 권한이 필요합니다");
+      if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) {
+        toast.error("권한이 필요합니다");
         setIsLoading(false);
         return;
       }
@@ -130,8 +136,8 @@ const PointsInquiry = () => {
       }
       
       const parsedUser = JSON.parse(authUser);
-      if (parsedUser.type !== "admin" || !parsedUser.id) {
-        toast.error("관리자 권한이 필요합니다");
+      if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) {
+        toast.error("권한이 필요합니다");
         return;
       }
 

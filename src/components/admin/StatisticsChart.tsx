@@ -26,15 +26,21 @@ const StatisticsChart = () => {
       }
       
       const parsedUser = JSON.parse(authUser);
-      if (parsedUser.type !== "admin" || !parsedUser.id) {
-        toast.error("관리자 권한이 필요합니다");
+      if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) {
+        toast.error("권한이 필요합니다");
         return;
       }
 
-      // Set admin session for RLS
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: parsedUser.id
-      });
+      // Set admin or teacher session for RLS
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: parsedUser.id
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: parsedUser.id
+        });
+      }
 
       // 해당 학급의 학생 목록 가져오기
       const { data: students, error: studentsError } = await supabase
