@@ -703,10 +703,12 @@ export type Database = {
         Returns: {
           call_t: string
           class: number
+          department: string
           dept_name: string
           grade: number
           is_homeroom: boolean
           name: string
+          subject: string
           teacher_email: string
         }[]
       }
