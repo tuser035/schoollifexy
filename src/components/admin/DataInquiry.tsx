@@ -75,10 +75,10 @@ const DataInquiry = () => {
     name: "",
     call_t: "",
     teacher_email: "",
-    grade: "",
-    class: "",
+    grade: "none",
+    class: "none",
     is_homeroom: false,
-    dept_code: "",
+    dept_code: "none",
     department: "",
     subject: ""
   });
@@ -1092,9 +1092,9 @@ const DataInquiry = () => {
       };
 
       // 선택적 필드 추가
-      if (newTeacherData.grade) teacherInsertData.grade = parseInt(newTeacherData.grade);
-      if (newTeacherData.class) teacherInsertData.class = parseInt(newTeacherData.class);
-      if (newTeacherData.dept_code) teacherInsertData.dept_code = newTeacherData.dept_code;
+      if (newTeacherData.grade && newTeacherData.grade !== "none") teacherInsertData.grade = parseInt(newTeacherData.grade);
+      if (newTeacherData.class && newTeacherData.class !== "none") teacherInsertData.class = parseInt(newTeacherData.class);
+      if (newTeacherData.dept_code && newTeacherData.dept_code !== "none") teacherInsertData.dept_code = newTeacherData.dept_code;
       if (newTeacherData.department.trim()) teacherInsertData.department = newTeacherData.department.trim();
       if (newTeacherData.subject.trim()) teacherInsertData.subject = newTeacherData.subject.trim();
 
@@ -1112,10 +1112,10 @@ const DataInquiry = () => {
         name: "",
         call_t: "",
         teacher_email: "",
-        grade: "",
-        class: "",
+        grade: "none",
+        class: "none",
         is_homeroom: false,
-        dept_code: "",
+        dept_code: "none",
         department: "",
         subject: ""
       });
@@ -2791,7 +2791,7 @@ const DataInquiry = () => {
                     <SelectValue placeholder="학년 선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">선택안함</SelectItem>
+                    <SelectItem value="none">선택안함</SelectItem>
                     <SelectItem value="1">1학년</SelectItem>
                     <SelectItem value="2">2학년</SelectItem>
                     <SelectItem value="3">3학년</SelectItem>
@@ -2808,7 +2808,7 @@ const DataInquiry = () => {
                     <SelectValue placeholder="반 선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">선택안함</SelectItem>
+                    <SelectItem value="none">선택안함</SelectItem>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                       <SelectItem key={num} value={num.toString()}>{num}반</SelectItem>
                     ))}
@@ -2838,7 +2838,7 @@ const DataInquiry = () => {
                   <SelectValue placeholder="학과 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">선택안함</SelectItem>
+                  <SelectItem value="none">선택안함</SelectItem>
                   {departments.map((dept) => (
                     <SelectItem key={dept.id} value={dept.code}>
                       {dept.name}
