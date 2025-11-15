@@ -1134,7 +1134,7 @@ const DataInquiry = () => {
         throw error;
       }
 
-      // 교사 목록을 조회하여 전체 인원 확인
+      // 교사 목록을 조회하여 전체 인원 확인 및 테이블 업데이트
       const { data: teachersData } = await supabase.rpc("admin_get_teachers", {
         admin_id_input: user.id,
         search_text: null,
@@ -1145,6 +1145,22 @@ const DataInquiry = () => {
       });
 
       const totalTeachers = teachersData?.length || 0;
+      
+      // 테이블 데이터 즉시 업데이트
+      const result = teachersData?.map(row => ({
+        "이름": row.name,
+        "전화번호": row.call_t,
+        "이메일": row.teacher_email,
+        "학년": row.grade || "-",
+        "반": row.class || "-",
+        "담임여부": row.is_homeroom ? "담임" : "-",
+        "학과": row.dept_name,
+        "부서": row.department,
+        "담당교과": row.subject
+      })) || [];
+
+      setData(result);
+      setColumns(result[0] ? Object.keys(result[0]) : []);
       
       toast.success(`신규 교사가 추가되었습니다. 전체 교사 인원: ${totalTeachers}명`);
       setIsAddTeacherDialogOpen(false);
@@ -1161,9 +1177,6 @@ const DataInquiry = () => {
         department: "",
         subject: ""
       });
-
-      // 교사 목록 새로고침 (토스트 표시 안 함)
-      handleQuery({ showToast: false });
     } catch (error: any) {
       console.error("교사 추가 실패:", error);
       toast.error(error.message || "교사 추가에 실패했습니다");
