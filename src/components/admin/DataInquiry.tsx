@@ -1160,6 +1160,55 @@ const DataInquiry = () => {
     }
   };
 
+  // 교사 전용 즉시 조회 헬퍼 (필터 클릭 시 1회 클릭 적용)
+  const queryTeachersImmediate = async (overrides?: { department?: string | null; subject?: string | null }) => {
+    setIsLoading(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) throw new Error("관리자 인증이 필요합니다");
+      const parsedUser = JSON.parse(authUser);
+      const adminId = parsedUser.id;
+
+      // 세션 설정
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: adminId });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: adminId });
+      }
+
+      const { data, error } = await supabase.rpc("admin_get_teachers", {
+        admin_id_input: adminId,
+        search_text: null,
+        search_grade: null,
+        search_class: null,
+        search_department: overrides?.department ?? (searchDepartment.trim() || null),
+        search_subject: overrides?.subject ?? (searchSubject.trim() || null),
+      });
+      if (error) throw error;
+
+      const result = data?.map(row => ({
+        "이름": row.name,
+        "전화번호": row.call_t,
+        "이메일": row.teacher_email,
+        "학년": row.grade || "-",
+        "반": row.class || "-",
+        "담임여부": row.is_homeroom ? "담임" : "-",
+        "학과": row.dept_name,
+        "부서": row.department,
+        "담당교과": row.subject
+      })) || [];
+
+      setData(result);
+      setColumns(result[0] ? Object.keys(result[0]) : []);
+      toast.success(`전체 교사 인원: ${result.length}명`);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || "조회 실패");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleQuery = async () => {
     setIsLoading(true);
     
@@ -2142,8 +2191,11 @@ const DataInquiry = () => {
                                         // Popover 닫기
                                         setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                         
-                                        // 약간의 지연 후 조회 (state 업데이트 후)
-                                        setTimeout(() => handleQuery(), 100);
+                                        // 즉시 서버 조회
+                                        void queryTeachersImmediate({
+                                          department: col === "부서" ? null : undefined,
+                                          subject: col === "담당교과" ? null : undefined,
+                                        });
                                       }}
                                       className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${!columnFilters[col] ? 'bg-muted' : ''}`}
                                     >
@@ -2168,8 +2220,11 @@ const DataInquiry = () => {
                                           // Popover 닫기
                                           setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                           
-                                          // 약간의 지연 후 조회
-                                          setTimeout(() => handleQuery(), 100);
+                                          // 즉시 서버 조회
+                                          void queryTeachersImmediate({
+                                            department: col === "부서" ? (value as string) : undefined,
+                                            subject: col === "담당교과" ? (value as string) : undefined,
+                                          });
                                         }}
                                         className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${columnFilters[col] === value ? 'bg-muted' : ''}`}
                                       >
