@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, ClipboardEdit, FileUp, Camera, X, Send } from "lucide-react";
+import { Download, ClipboardEdit, FileUp, Camera, X, Send, Trash2, Users } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "monthly" | "departments";
@@ -1506,27 +1507,50 @@ const DataInquiry = () => {
               {selectedTable === "students" && (
                 <>
                   {console.log("드롭다운 렌더링 - 그룹 수:", studentGroups.length, studentGroups)}
-                  <Select onValueChange={handleLoadGroup}>
-                    <SelectTrigger className="w-[200px] bg-background">
-                      <SelectValue placeholder="저장된 그룹 불러오기" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-[200px] justify-start">
+                        <Users className="h-4 w-4 mr-2" />
+                        저장된 그룹 불러오기
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-2 bg-background" align="start">
                       {studentGroups.length === 0 ? (
-                        <div className="p-2 text-sm text-muted-foreground">
+                        <div className="p-2 text-sm text-muted-foreground text-center">
                           저장된 그룹이 없습니다
                         </div>
                       ) : (
-                        studentGroups.map((group) => {
-                          console.log("그룹 아이템:", group);
-                          return (
-                            <SelectItem key={group.id} value={group.id}>
-                              {group.group_name} ({group.student_ids.length}명)
-                            </SelectItem>
-                          );
-                        })
+                        <div className="space-y-1">
+                          {studentGroups.map((group) => (
+                            <div
+                              key={group.id}
+                              className="flex items-center justify-between p-2 hover:bg-muted rounded-md group"
+                            >
+                              <button
+                                onClick={() => {
+                                  handleLoadGroup(group.id);
+                                }}
+                                className="flex-1 text-left text-sm"
+                              >
+                                {group.group_name} ({group.student_ids.length}명)
+                              </button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteGroup(group.id, group.group_name);
+                                }}
+                                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
                       )}
-                    </SelectContent>
-                  </Select>
+                    </PopoverContent>
+                  </Popover>
                 </>
               )}
               {selectedTable === "students" && selectedStudents.size > 0 && (
