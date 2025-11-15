@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -24,6 +24,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   useSidebar,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
 
 const menuItems = (userType: "admin" | "teacher") => {
@@ -144,6 +145,11 @@ const AdminDashboard = () => {
 
         <div className="flex flex-1 w-full">
           <Sidebar collapsible="icon" className="border-r w-32 data-[state=collapsed]:w-14">
+            <SidebarHeader className="border-b p-2">
+              <SidebarTrigger className="ml-auto">
+                <ChevronLeft className="h-4 w-4" />
+              </SidebarTrigger>
+            </SidebarHeader>
             <SidebarContent className="overflow-y-auto">
               <SidebarGroup>
                 <SidebarGroupContent>
