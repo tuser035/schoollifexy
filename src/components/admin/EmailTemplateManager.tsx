@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import EmailSender from "./EmailSender";
 
 interface EmailTemplate {
   id: string;
@@ -273,6 +274,12 @@ const EmailTemplateManager = () => {
                   <TableCell>{template.subject}</TableCell>
                   <TableCell>{new Date(template.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
+                    {template.template_type === 'email' && (
+                      <EmailSender 
+                        templateId={template.id} 
+                        templateTitle={template.title}
+                      />
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
