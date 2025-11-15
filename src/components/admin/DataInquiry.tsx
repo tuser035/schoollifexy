@@ -70,6 +70,7 @@ const DataInquiry = () => {
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [searchDepartment, setSearchDepartment] = useState("");
   const [searchSubject, setSearchSubject] = useState("");
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState<Record<string, boolean>>({});
   const [isAddTeacherDialogOpen, setIsAddTeacherDialogOpen] = useState(false);
   const [newTeacherData, setNewTeacherData] = useState({
     name: "",
@@ -2106,7 +2107,10 @@ const DataInquiry = () => {
                         <div className="flex items-center gap-2">
                           <span>{col}</span>
                           {selectedTable === "teachers" && (col === "부서" || col === "담당교과") && (
-                            <Popover>
+                            <Popover 
+                              open={filterPopoverOpen[col] || false}
+                              onOpenChange={(open) => setFilterPopoverOpen({...filterPopoverOpen, [col]: open})}
+                            >
                               <PopoverTrigger asChild>
                                 <Button 
                                   variant="ghost" 
@@ -2135,6 +2139,9 @@ const DataInquiry = () => {
                                           setSearchSubject("");
                                         }
                                         
+                                        // Popover 닫기
+                                        setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                        
                                         // 약간의 지연 후 조회 (state 업데이트 후)
                                         setTimeout(() => handleQuery(), 100);
                                       }}
@@ -2157,6 +2164,9 @@ const DataInquiry = () => {
                                             setSearchSubject(value as string);
                                             setSearchDepartment("");
                                           }
+                                          
+                                          // Popover 닫기
+                                          setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                           
                                           // 약간의 지연 후 조회
                                           setTimeout(() => handleQuery(), 100);
