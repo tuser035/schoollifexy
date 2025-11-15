@@ -72,16 +72,20 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="password" className="w-full">
-          <TabsList className="grid w-full grid-cols-11 mb-6">
-            <TabsTrigger value="password">
-              <Key className="w-4 h-4 mr-2" />
-              비밀번호
-            </TabsTrigger>
-            <TabsTrigger value="upload">
-              <Upload className="w-4 h-4 mr-2" />
-              업로드
-            </TabsTrigger>
+        <Tabs defaultValue={user.type === "teacher" ? "data" : "password"} className="w-full">
+          <TabsList className={`grid w-full mb-6 ${user.type === "teacher" ? "grid-cols-4" : "grid-cols-11"}`}>
+            {user.type === "admin" && (
+              <>
+                <TabsTrigger value="password">
+                  <Key className="w-4 h-4 mr-2" />
+                  비밀번호
+                </TabsTrigger>
+                <TabsTrigger value="upload">
+                  <Upload className="w-4 h-4 mr-2" />
+                  업로드
+                </TabsTrigger>
+              </>
+            )}
             <TabsTrigger value="data">
               <Database className="w-4 h-4 mr-2" />
               데이터
@@ -90,10 +94,12 @@ const AdminDashboard = () => {
               <BarChart className="w-4 h-4 mr-2" />
               상점
             </TabsTrigger>
-            <TabsTrigger value="counseling">
-              <ClipboardCheck className="w-4 h-4 mr-2" />
-              상담
-            </TabsTrigger>
+            {user.type === "admin" && (
+              <TabsTrigger value="counseling">
+                <ClipboardCheck className="w-4 h-4 mr-2" />
+                상담
+              </TabsTrigger>
+            )}
             <TabsTrigger value="statistics">
               <TrendingUp className="w-4 h-4 mr-2" />
               통계
@@ -102,31 +108,39 @@ const AdminDashboard = () => {
               <Trophy className="w-4 h-4 mr-2" />
               순위
             </TabsTrigger>
-            <TabsTrigger value="storage">
-              <FolderOpen className="w-4 h-4 mr-2" />
-              파일
-            </TabsTrigger>
-            <TabsTrigger value="calendar">
-              <Calendar className="w-4 h-4 mr-2" />
-              업무
-            </TabsTrigger>
-            <TabsTrigger value="weekly-meeting">
-              <Calendar className="w-4 h-4 mr-2" />
-              회의
-            </TabsTrigger>
-            <TabsTrigger value="edufine">
-              <FileText className="w-4 h-4 mr-2" />
-              에듀파인
-            </TabsTrigger>
+            {user.type === "admin" && (
+              <>
+                <TabsTrigger value="storage">
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  파일
+                </TabsTrigger>
+                <TabsTrigger value="calendar">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  업무
+                </TabsTrigger>
+                <TabsTrigger value="weekly-meeting">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  회의
+                </TabsTrigger>
+                <TabsTrigger value="edufine">
+                  <FileText className="w-4 h-4 mr-2" />
+                  에듀파인
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
-          <TabsContent value="password">
-            <PasswordReset />
-          </TabsContent>
+          {user.type === "admin" && (
+            <>
+              <TabsContent value="password">
+                <PasswordReset />
+              </TabsContent>
 
-          <TabsContent value="upload">
-            <BulkUpload />
-          </TabsContent>
+              <TabsContent value="upload">
+                <BulkUpload />
+              </TabsContent>
+            </>
+          )}
 
           <TabsContent value="data">
             <DataInquiry />
@@ -136,9 +150,11 @@ const AdminDashboard = () => {
             <PointsInquiry />
           </TabsContent>
 
-          <TabsContent value="counseling">
-            <CounselingInquiry />
-          </TabsContent>
+          {user.type === "admin" && (
+            <TabsContent value="counseling">
+              <CounselingInquiry />
+            </TabsContent>
+          )}
 
           <TabsContent value="statistics">
             <StatisticsChart />
@@ -148,22 +164,26 @@ const AdminDashboard = () => {
             <StudentLeaderboard />
           </TabsContent>
 
-          <TabsContent value="storage" className="space-y-6">
-            <EdufineDocumentStorage />
-            <StorageManager />
-          </TabsContent>
+          {user.type === "admin" && (
+            <>
+              <TabsContent value="storage" className="space-y-6">
+                <EdufineDocumentStorage />
+                <StorageManager />
+              </TabsContent>
 
-          <TabsContent value="calendar" className="space-y-6">
-            <EdufineUpload />
-          </TabsContent>
+              <TabsContent value="calendar" className="space-y-6">
+                <EdufineUpload />
+              </TabsContent>
 
-          <TabsContent value="weekly-meeting" className="space-y-6">
-            <WeeklyMeetingUpload />
-          </TabsContent>
+              <TabsContent value="weekly-meeting" className="space-y-6">
+                <WeeklyMeetingUpload />
+              </TabsContent>
 
-          <TabsContent value="edufine">
-            <EdufineInquiry />
-          </TabsContent>
+              <TabsContent value="edufine">
+                <EdufineInquiry />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </main>
     </div>
