@@ -70,7 +70,34 @@ const DataInquiry = () => {
 
   // 이메일 클릭 핸들러
   const handleEmailClick = (email: string, name: string) => {
-    window.location.href = `mailto:${email}?subject=안녕하세요 ${name}님`;
+    // 현재 로그인한 사용자 정보 가져오기
+    const userString = localStorage.getItem("user");
+    let senderInfo = "";
+    
+    if (userString) {
+      try {
+        const user = JSON.parse(userString);
+        const userType = user.type === "teacher" ? "교사" : user.type === "admin" ? "관리자" : "사용자";
+        senderInfo = `발신자: ${user.name || user.email || "알 수 없음"} (${userType})`;
+      } catch (e) {
+        senderInfo = "발신자: 로그인 사용자";
+      }
+    }
+
+    // Gmail 작성 링크 생성
+    const subject = encodeURIComponent(`${name}님께 문의드립니다`);
+    const body = encodeURIComponent(
+      `안녕하세요 ${name}님,\n\n` +
+      `문의 내용을 입력해주세요.\n\n` +
+      `---\n` +
+      `${senderInfo}\n` +
+      `발신 시각: ${new Date().toLocaleString('ko-KR')}`
+    );
+    
+    window.open(
+      `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`,
+      '_blank'
+    );
   };
 
   const exportToCSV = () => {
