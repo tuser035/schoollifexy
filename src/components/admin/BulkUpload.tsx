@@ -24,7 +24,7 @@ const tables: TableConfig[] = [
   {
     name: "학생",
     table: "students",
-    columns: "student_id, dept_code, grade, class, number, name, gmail, student_call, parents_call1, parents_call2",
+    columns: "student_id, name, grade, class, number, dept_code, student_call, gmail, parents_call1, parents_call2",
     color: "border-student-orange",
   },
   {
@@ -229,6 +229,18 @@ const BulkUpload = () => {
       const records: any[] = [];
       // Resolve column indices by header (fallback to legacy positions)
       const idx = {
+        students: {
+          student_id: header.indexOf("student_id") !== -1 ? header.indexOf("student_id") : header.indexOf("학번"),
+          name: header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("이름"),
+          grade: header.indexOf("grade") !== -1 ? header.indexOf("grade") : header.indexOf("학년"),
+          class: header.indexOf("class") !== -1 ? header.indexOf("class") : header.indexOf("반"),
+          number: header.indexOf("number") !== -1 ? header.indexOf("number") : header.indexOf("번호"),
+          dept_code: header.indexOf("dept_code") !== -1 ? header.indexOf("dept_code") : header.indexOf("학과"),
+          student_call: header.indexOf("student_call") !== -1 ? header.indexOf("student_call") : header.indexOf("전화번호"),
+          gmail: header.indexOf("gmail") !== -1 ? header.indexOf("gmail") : header.indexOf("이메일"),
+          parents_call1: header.indexOf("parents_call1") !== -1 ? header.indexOf("parents_call1") : header.indexOf("학부모전화1"),
+          parents_call2: header.indexOf("parents_call2") !== -1 ? header.indexOf("parents_call2") : header.indexOf("학부모전화2"),
+        },
         homeroom: {
           teacher_email: header.indexOf("teacher_email"),
           grade: header.indexOf("grade"),
