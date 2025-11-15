@@ -2356,16 +2356,15 @@ const DataInquiry = () => {
                                       <button
                                         key={value}
                                         onClick={() => {
-                                          // 검색 조건 초기화하고 해당 컬럼 값으로 필터링
+                                          // 검색 조건 초기화
                                           setSearchTerm("");
-                                          const newFilters = { ...columnFilters, [col]: value };
-                                          setColumnFilters(newFilters);
                                           
                                           if (col === "부서") {
                                             setSearchDepartment(value as string);
                                             setSearchSubject("");
                                             setSearchHomeroom("");
                                             setSearchDeptName("");
+                                            setColumnFilters({}); // 서버 사이드 필터는 columnFilters 사용 안 함
                                             setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                             void queryTeachersImmediate({ department: value as string, subject: undefined, homeroom: undefined, deptName: undefined });
                                           } else if (col === "담당교과") {
@@ -2373,6 +2372,7 @@ const DataInquiry = () => {
                                             setSearchDepartment("");
                                             setSearchHomeroom("");
                                             setSearchDeptName("");
+                                            setColumnFilters({}); // 서버 사이드 필터는 columnFilters 사용 안 함
                                             setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                             void queryTeachersImmediate({ department: undefined, subject: value as string, homeroom: undefined, deptName: undefined });
                                           } else if (col === "담임여부") {
@@ -2380,6 +2380,7 @@ const DataInquiry = () => {
                                             setSearchDepartment("");
                                             setSearchSubject("");
                                             setSearchDeptName("");
+                                            setColumnFilters({}); // 서버 사이드 필터는 columnFilters 사용 안 함
                                             setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                             void queryTeachersImmediate({ department: undefined, subject: undefined, homeroom: value as string, deptName: undefined });
                                           } else if (col === "학과") {
@@ -2387,6 +2388,7 @@ const DataInquiry = () => {
                                             setSearchDepartment("");
                                             setSearchSubject("");
                                             setSearchHomeroom("");
+                                            setColumnFilters({}); // 서버 사이드 필터는 columnFilters 사용 안 함
                                             setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                             void queryTeachersImmediate({ department: undefined, subject: undefined, homeroom: undefined, deptName: value as string });
                                           }
