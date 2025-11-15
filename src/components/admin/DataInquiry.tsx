@@ -426,24 +426,23 @@ const DataInquiry = () => {
                   number,
                   student_call,
                   gmail,
-                  departments!inner(name)
+                  departments(name)
                 `)
-                .eq('student_id', trimmedSearch)
-                .single();
+                .eq('student_id', trimmedSearch);
 
-              if (queryError && queryError.code !== 'PGRST116') throw queryError;
+              if (queryError) throw queryError;
 
-              if (studentData) {
-                result = [{
-                  "학번": studentData.student_id,
-                  "이름": studentData.name,
-                  "학년": studentData.grade,
-                  "반": studentData.class,
-                  "번호": studentData.number,
-                  "학과": (studentData.departments as any)?.name || "",
-                  "전화번호": studentData.student_call,
-                  "이메일": studentData.gmail
-                }];
+              if (studentData && studentData.length > 0) {
+                result = studentData.map(student => ({
+                  "학번": student.student_id,
+                  "이름": student.name,
+                  "학년": student.grade,
+                  "반": student.class,
+                  "번호": student.number,
+                  "학과": (student.departments as any)?.name || "",
+                  "전화번호": student.student_call || "",
+                  "이메일": student.gmail || ""
+                }));
               } else {
                 result = [];
                 toast.info(`학번 ${trimmedSearch}인 학생을 찾을 수 없습니다`);
