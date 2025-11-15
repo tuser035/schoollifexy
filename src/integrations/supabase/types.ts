@@ -408,12 +408,14 @@ export type Database = {
           call_t: string
           class: number | null
           created_at: string | null
+          department: string | null
           dept_code: string | null
           grade: number | null
           id: string
           is_homeroom: boolean | null
           name: string
           password_hash: string
+          subject: string | null
           teacher_email: string
           updated_at: string | null
         }
@@ -421,12 +423,14 @@ export type Database = {
           call_t: string
           class?: number | null
           created_at?: string | null
+          department?: string | null
           dept_code?: string | null
           grade?: number | null
           id?: string
           is_homeroom?: boolean | null
           name: string
           password_hash?: string
+          subject?: string | null
           teacher_email: string
           updated_at?: string | null
         }
@@ -434,12 +438,14 @@ export type Database = {
           call_t?: string
           class?: number | null
           created_at?: string | null
+          department?: string | null
           dept_code?: string | null
           grade?: number | null
           id?: string
           is_homeroom?: boolean | null
           name?: string
           password_hash?: string
+          subject?: string | null
           teacher_email?: string
           updated_at?: string | null
         }
