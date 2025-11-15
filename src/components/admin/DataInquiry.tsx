@@ -1977,7 +1977,22 @@ const DataInquiry = () => {
                                     {Array.from(new Set(originalData.map(row => row[col]).filter(Boolean))).sort().map((value) => (
                                       <button
                                         key={value}
-                                        onClick={() => setColumnFilters({ ...columnFilters, [col]: value as string })}
+                                        onClick={() => {
+                                          // 검색 조건 초기화하고 해당 컬럼 값으로 서버 검색
+                                          setSearchTerm("");
+                                          setColumnFilters({ ...columnFilters, [col]: value as string });
+                                          
+                                          if (col === "부서") {
+                                            setSearchDepartment(value as string);
+                                            setSearchSubject("");
+                                          } else if (col === "담당교과") {
+                                            setSearchSubject(value as string);
+                                            setSearchDepartment("");
+                                          }
+                                          
+                                          // 약간의 지연 후 조회
+                                          setTimeout(() => handleQuery(), 100);
+                                        }}
                                         className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${columnFilters[col] === value ? 'bg-muted' : ''}`}
                                       >
                                         {value}
