@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +17,7 @@ interface EmailTemplate {
   title: string;
   subject: string;
   body: string;
+  template_type: 'email' | 'messenger';
   created_at: string;
 }
 
@@ -26,7 +29,9 @@ const EmailTemplateManager = () => {
     title: "",
     subject: "",
     body: "",
+    template_type: "email" as "email" | "messenger",
   });
+  const [filterType, setFilterType] = useState<'all' | 'email' | 'messenger'>('all');
 
   useEffect(() => {
     loadTemplates();
@@ -40,10 +45,16 @@ const EmailTemplateManager = () => {
       const user = JSON.parse(authUser);
       await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("email_templates")
         .select("*")
         .order("created_at", { ascending: false });
+
+      if (filterType !== 'all') {
+        query = query.eq('template_type', filterType);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setTemplates(data || []);
@@ -73,6 +84,7 @@ const EmailTemplateManager = () => {
             title: formData.title,
             subject: formData.subject,
             body: formData.body,
+            template_type: formData.template_type,
           })
           .eq("id", editingTemplate.id);
 
@@ -86,6 +98,7 @@ const EmailTemplateManager = () => {
             title: formData.title,
             subject: formData.subject,
             body: formData.body,
+            template_type: formData.template_type,
             admin_id: user.id,
           });
 
@@ -95,7 +108,7 @@ const EmailTemplateManager = () => {
 
       setIsOpen(false);
       setEditingTemplate(null);
-      setFormData({ title: "", subject: "", body: "" });
+      setFormData({ title: "", subject: "", body: "", template_type: "email" });
       loadTemplates();
     } catch (error: any) {
       toast.error("저장 실패: " + error.message);
@@ -108,6 +121,7 @@ const EmailTemplateManager = () => {
       title: template.title,
       subject: template.subject,
       body: template.body,
+      template_type: template.template_type,
     });
     setIsOpen(true);
   };
@@ -138,25 +152,38 @@ const EmailTemplateManager = () => {
   const handleDialogClose = () => {
     setIsOpen(false);
     setEditingTemplate(null);
-    setFormData({ title: "", subject: "", body: "" });
+    setFormData({ title: "", subject: "", body: "", template_type: "email" });
   };
+
+  // Reload templates when filter changes
+  useEffect(() => {
+    loadTemplates();
+  }, [filterType]);
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>이메일 템플릿 관리</CardTitle>
-            <CardDescription>자주 사용하는 이메일 템플릿을 저장하고 관리합니다</CardDescription>
+            <CardTitle>이메일/메신저 템플릿 관리</CardTitle>
+            <CardDescription>학부모 상담용 이메일 및 메신저 템플릿을 저장하고 관리합니다</CardDescription>
           </div>
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleDialogClose()}>
-                <Plus className="w-4 h-4 mr-2" />
-                새 템플릿
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+          <div className="flex items-center gap-4">
+            <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+              <TabsList>
+                <TabsTrigger value="all">전체</TabsTrigger>
+                <TabsTrigger value="email">이메일</TabsTrigger>
+                <TabsTrigger value="messenger">메신저</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => handleDialogClose()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  새 템플릿
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>{editingTemplate ? "템플릿 수정" : "새 템플릿 만들기"}</DialogTitle>
                 <DialogDescription>
@@ -165,6 +192,23 @@ const EmailTemplateManager = () => {
               </DialogHeader>
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="template_type">템플릿 유형</Label>
+                    <Select
+                      value={formData.template_type}
+                      onValueChange={(value: "email" | "messenger") => 
+                        setFormData({ ...formData, template_type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="email">이메일</SelectItem>
+                        <SelectItem value="messenger">메신저</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>
                     <Label htmlFor="title">템플릿 이름</Label>
                     <Input
@@ -206,16 +250,18 @@ const EmailTemplateManager = () => {
                   </Button>
                 </DialogFooter>
               </form>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>유형</TableHead>
               <TableHead>템플릿 이름</TableHead>
-              <TableHead>이메일 제목</TableHead>
+              <TableHead>제목</TableHead>
               <TableHead>작성일</TableHead>
               <TableHead className="text-right">작업</TableHead>
             </TableRow>
@@ -223,13 +269,18 @@ const EmailTemplateManager = () => {
           <TableBody>
             {templates.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                <TableCell colSpan={5} className="text-center text-muted-foreground">
                   등록된 템플릿이 없습니다
                 </TableCell>
               </TableRow>
             ) : (
               templates.map((template) => (
                 <TableRow key={template.id}>
+                  <TableCell>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                      {template.template_type === 'email' ? '이메일' : '메신저'}
+                    </span>
+                  </TableCell>
                   <TableCell className="font-medium">{template.title}</TableCell>
                   <TableCell>{template.subject}</TableCell>
                   <TableCell>{new Date(template.created_at).toLocaleDateString()}</TableCell>
