@@ -41,6 +41,8 @@ const DataInquiry = () => {
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const exportToCSV = () => {
     if (data.length === 0) {
@@ -277,6 +279,97 @@ const DataInquiry = () => {
     }
   };
 
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) {
+      toast.error("삭제할 항목을 선택해주세요");
+      return;
+    }
+
+    if (!confirm(`선택한 ${selectedIds.size}개 항목을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      
+      // Set session for RLS
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: parsedUser.id
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: parsedUser.id
+        });
+      }
+
+      const idsToDelete = Array.from(selectedIds);
+      let tableName = "";
+      
+      if (selectedTable === "merits") {
+        tableName = "merits";
+      } else if (selectedTable === "demerits") {
+        tableName = "demerits";
+      } else if (selectedTable === "monthly") {
+        tableName = "monthly";
+      }
+
+      if (!tableName) {
+        toast.error("이 테이블에서는 삭제할 수 없습니다");
+        return;
+      }
+
+      const { error } = await supabase
+        .from(tableName as "merits" | "demerits" | "monthly")
+        .delete()
+        .in('id', idsToDelete);
+
+      if (error) throw error;
+
+      toast.success(`${idsToDelete.length}개 항목이 삭제되었습니다`);
+      setSelectedIds(new Set());
+      handleQuery(); // 다시 조회
+    } catch (error: any) {
+      toast.error(error.message || "삭제에 실패했습니다");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const ids = new Set<string>();
+      if (selectedTable === "merits") {
+        meritsRawData.forEach((item: any) => item.id && ids.add(item.id));
+      } else if (selectedTable === "demerits") {
+        demeritsRawData.forEach((item: any) => item.id && ids.add(item.id));
+      } else if (selectedTable === "monthly") {
+        monthlyRawData.forEach((item: any) => item.id && ids.add(item.id));
+      }
+      setSelectedIds(ids);
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSet = new Set(selectedIds);
+    if (checked) {
+      newSet.add(id);
+    } else {
+      newSet.delete(id);
+    }
+    setSelectedIds(newSet);
+  };
+
   const handleQuery = async () => {
     setIsLoading(true);
     
@@ -467,16 +560,62 @@ const DataInquiry = () => {
           }
         }
 
-        const { data, error: queryError } = await supabase.rpc("admin_get_merits", {
-          admin_id_input: adminId,
-          search_text: searchText,
-          search_grade: searchGrade,
-          search_class: searchClass
-        });
+        let data;
+        let queryError;
+
+        // 교사 로그인 시 자신이 부여한 상점만 조회
+        if (parsedUser.type === "teacher") {
+          let query = supabase
+            .from("merits")
+            .select(`
+              id,
+              created_at,
+              category,
+              reason,
+              score,
+              image_url,
+              student_id,
+              students!inner(name, grade, class),
+              teachers(name)
+            `)
+            .eq('teacher_id', parsedUser.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          if (searchGrade) query = query.eq('students.grade', searchGrade);
+          if (searchClass) query = query.eq('students.class', searchClass);
+          if (searchText) {
+            query = query.or(`student_id.ilike.%${searchText}%,students.name.ilike.%${searchText}%`);
+          }
+
+          const response = await query;
+          data = response.data?.map((row: any) => ({
+            id: row.id,
+            created_at: row.created_at,
+            student_name: row.students?.name,
+            student_grade: row.students?.grade,
+            student_class: row.students?.class,
+            teacher_name: row.teachers?.name,
+            category: row.category,
+            reason: row.reason,
+            score: row.score,
+            image_url: row.image_url
+          }));
+          queryError = response.error;
+        } else {
+          const { data: rpcData, error } = await supabase.rpc("admin_get_merits", {
+            admin_id_input: adminId,
+            search_text: searchText,
+            search_grade: searchGrade,
+            search_class: searchClass
+          });
+          data = rpcData;
+          queryError = error;
+        }
 
         if (queryError) throw queryError;
 
-        // 원본 데이터 저장 (CSV용)
+        // 원본 데이터 저장 (CSV용 및 ID 포함)
         setMeritsRawData(data || []);
 
         result = data?.map((row: any) => ({
@@ -531,16 +670,62 @@ const DataInquiry = () => {
           }
         }
 
-        const { data, error: queryError } = await supabase.rpc("admin_get_demerits", {
-          admin_id_input: adminId,
-          search_text: searchText,
-          search_grade: searchGrade,
-          search_class: searchClass
-        });
+        let data;
+        let queryError;
+
+        // 교사 로그인 시 자신이 부여한 벌점만 조회
+        if (parsedUser.type === "teacher") {
+          let query = supabase
+            .from("demerits")
+            .select(`
+              id,
+              created_at,
+              category,
+              reason,
+              score,
+              image_url,
+              student_id,
+              students!inner(name, grade, class),
+              teachers(name)
+            `)
+            .eq('teacher_id', parsedUser.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          if (searchGrade) query = query.eq('students.grade', searchGrade);
+          if (searchClass) query = query.eq('students.class', searchClass);
+          if (searchText) {
+            query = query.or(`student_id.ilike.%${searchText}%,students.name.ilike.%${searchText}%`);
+          }
+
+          const response = await query;
+          data = response.data?.map((row: any) => ({
+            id: row.id,
+            created_at: row.created_at,
+            student_name: row.students?.name,
+            student_grade: row.students?.grade,
+            student_class: row.students?.class,
+            teacher_name: row.teachers?.name,
+            category: row.category,
+            reason: row.reason,
+            score: row.score,
+            image_url: row.image_url
+          }));
+          queryError = response.error;
+        } else {
+          const { data: rpcData, error } = await supabase.rpc("admin_get_demerits", {
+            admin_id_input: adminId,
+            search_text: searchText,
+            search_grade: searchGrade,
+            search_class: searchClass
+          });
+          data = rpcData;
+          queryError = error;
+        }
 
         if (queryError) throw queryError;
 
-        // 원본 데이터 저장 (CSV용)
+        // 원본 데이터 저장 (CSV용 및 ID 포함)
         setDemeritsRawData(data || []);
 
         result = data?.map((row: any) => ({
@@ -574,7 +759,7 @@ const DataInquiry = () => {
                 .eq('grade', searchGrade)
                 .eq('class', searchClass)
                 .eq('number', searchNumber)
-                .single();
+                .maybeSingle();
               
               if (studentData) {
                 targetStudentId = studentData.student_id;
@@ -595,12 +780,62 @@ const DataInquiry = () => {
           }
         }
 
-        const { data, error: queryError } = await supabase.rpc("admin_get_monthly", {
-          admin_id_input: adminId,
-          search_text: searchText,
-          search_grade: searchGrade,
-          search_class: searchClass
-        });
+        let data;
+        let queryError;
+
+        // 교사 로그인 시 자신이 추천한 이달의 학생만 조회
+        if (parsedUser.type === "teacher") {
+          let query = supabase
+            .from("monthly")
+            .select(`
+              id,
+              created_at,
+              year,
+              month,
+              category,
+              reason,
+              image_url,
+              student_id,
+              students!inner(name, grade, class),
+              teachers(name)
+            `)
+            .eq('teacher_id', parsedUser.id)
+            .order('year', { ascending: false })
+            .order('month', { ascending: false })
+            .limit(50);
+
+          if (searchGrade) query = query.eq('students.grade', searchGrade);
+          if (searchClass) query = query.eq('students.class', searchClass);
+          if (searchText) {
+            query = query.or(`student_id.ilike.%${searchText}%,students.name.ilike.%${searchText}%`);
+          }
+
+          const response = await query;
+          data = response.data?.map((row: any) => ({
+            id: row.id,
+            created_at: row.created_at,
+            year: row.year,
+            month: row.month,
+            student_id: row.student_id,
+            student_name: row.students?.name,
+            student_grade: row.students?.grade,
+            student_class: row.students?.class,
+            teacher_name: row.teachers?.name,
+            category: row.category,
+            reason: row.reason,
+            image_url: row.image_url
+          }));
+          queryError = response.error;
+        } else {
+          const { data: rpcData, error } = await supabase.rpc("admin_get_monthly", {
+            admin_id_input: adminId,
+            search_text: searchText,
+            search_grade: searchGrade,
+            search_class: searchClass
+          });
+          data = rpcData;
+          queryError = error;
+        }
 
         if (queryError) throw queryError;
 
@@ -611,7 +846,7 @@ const DataInquiry = () => {
         }
 
         // 각 학생의 상담 기록 첨부파일 조회 (모든 첨부파일)
-        const studentIds = [...new Set(filteredData?.map((row: any) => row.student_id) || [])];
+        const studentIds = [...new Set(filteredData?.map((row: any) => row.student_id) || [])] as string[];
         const counselingData: { [key: string]: string[] } = {};
         
         for (const studentId of studentIds) {
@@ -633,7 +868,7 @@ const DataInquiry = () => {
           counseling_attachments: counselingData[row.student_id] || []
         }));
 
-        // 원본 데이터 저장 (CSV용)
+        // 원본 데이터 저장 (CSV용 및 ID 포함)
         setMonthlyRawData(enrichedData || []);
 
         // 학생별로 그룹화하여 추천 횟수 누적
@@ -742,12 +977,23 @@ const DataInquiry = () => {
                 초기화
               </Button>
             )}
-            {data.length > 0 && (
+          {data.length > 0 && (
+            <>
               <Button variant="outline" onClick={exportToCSV}>
                 <Download className="h-4 w-4 mr-2" />
                 CSV 내보내기
               </Button>
-            )}
+              {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDeleteSelected}
+                  disabled={selectedIds.size === 0 || isDeleting}
+                >
+                  {isDeleting ? "삭제 중..." : `선택 삭제 (${selectedIds.size})`}
+                </Button>
+              )}
+            </>
+          )}
           </div>
 
           {data.length > 0 && (
@@ -755,6 +1001,20 @@ const DataInquiry = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
+                      <TableHead className="w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.size > 0 && selectedIds.size === (
+                            selectedTable === "merits" ? meritsRawData.length :
+                            selectedTable === "demerits" ? demeritsRawData.length :
+                            monthlyRawData.length
+                          )}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          className="cursor-pointer"
+                        />
+                      </TableHead>
+                    )}
                     {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
                       <TableHead key={col} className="whitespace-nowrap">
                         {col}
@@ -766,31 +1026,49 @@ const DataInquiry = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.map((row, idx) => (
-                    <TableRow key={idx}>
-                      {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
-                        <TableCell key={col} className="whitespace-nowrap">
-                          {row[col]?.toString() || "-"}
-                        </TableCell>
-                      ))}
-                      {selectedTable === "monthly" && (
-                        <TableCell className="whitespace-nowrap">
-                          {idx < 9 ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenCounselingDialog(row)}
-                            >
-                              <ClipboardEdit className="h-4 w-4 mr-1" />
-                              기록
-                            </Button>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
+                  {data.map((row, idx) => {
+                    const rawData = 
+                      selectedTable === "merits" ? meritsRawData[idx] :
+                      selectedTable === "demerits" ? demeritsRawData[idx] :
+                      selectedTable === "monthly" ? monthlyRawData[idx] :
+                      null;
+                    
+                    return (
+                      <TableRow key={idx}>
+                        {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && rawData?.id && (
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(rawData.id)}
+                              onChange={(e) => handleSelectOne(rawData.id, e.target.checked)}
+                              className="cursor-pointer"
+                            />
+                          </TableCell>
+                        )}
+                        {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
+                          <TableCell key={col} className="whitespace-nowrap">
+                            {row[col]?.toString() || "-"}
+                          </TableCell>
+                        ))}
+                        {selectedTable === "monthly" && (
+                          <TableCell className="whitespace-nowrap">
+                            {idx < 9 ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleOpenCounselingDialog(row)}
+                              >
+                                <ClipboardEdit className="h-4 w-4 mr-1" />
+                                기록
+                              </Button>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
