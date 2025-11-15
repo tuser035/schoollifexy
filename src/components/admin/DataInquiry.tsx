@@ -403,9 +403,60 @@ const DataInquiry = () => {
           if (!isNaN(Number(trimmedSearch))) {
             const searchNum = trimmedSearch;
             
-            // 세 자리 이상 숫자인 경우: 학번(student_id)으로 검색
+            // 세 자리 이상 숫자인 경우: 학번(student_id)으로 직접 검색
             if (searchNum.length >= 3) {
-              searchText = trimmedSearch;
+              // Set session for RLS
+              if (parsedUser.type === "admin") {
+                await supabase.rpc("set_admin_session", {
+                  admin_id_input: adminId
+                });
+              } else if (parsedUser.type === "teacher") {
+                await supabase.rpc("set_teacher_session", {
+                  teacher_id_input: adminId
+                });
+              }
+
+              const { data: studentData, error: queryError } = await supabase
+                .from('students')
+                .select(`
+                  student_id,
+                  name,
+                  grade,
+                  class,
+                  number,
+                  student_call,
+                  gmail,
+                  departments!inner(name)
+                `)
+                .eq('student_id', trimmedSearch)
+                .single();
+
+              if (queryError && queryError.code !== 'PGRST116') throw queryError;
+
+              if (studentData) {
+                result = [{
+                  "학번": studentData.student_id,
+                  "이름": studentData.name,
+                  "학년": studentData.grade,
+                  "반": studentData.class,
+                  "번호": studentData.number,
+                  "학과": (studentData.departments as any)?.name || "",
+                  "전화번호": studentData.student_call,
+                  "이메일": studentData.gmail
+                }];
+              } else {
+                result = [];
+                toast.info(`학번 ${trimmedSearch}인 학생을 찾을 수 없습니다`);
+              }
+              
+              setData(result || []);
+              if (result && result.length > 0) {
+                setColumns(Object.keys(result[0]));
+              } else {
+                setColumns([]);
+              }
+              setIsLoading(false);
+              return;
             }
             // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반
             else if (searchNum.length === 2) {
@@ -416,6 +467,17 @@ const DataInquiry = () => {
             else {
               searchGrade = parseInt(trimmedSearch);
               
+              // Set session for RLS
+              if (parsedUser.type === "admin") {
+                await supabase.rpc("set_admin_session", {
+                  admin_id_input: adminId
+                });
+              } else if (parsedUser.type === "teacher") {
+                await supabase.rpc("set_teacher_session", {
+                  teacher_id_input: adminId
+                });
+              }
+
               // 학년 총 인원 조회 및 토스트 표시
               const { count } = await supabase
                 .from('students')
