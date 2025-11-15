@@ -1963,6 +1963,12 @@ const DataInquiry = () => {
                                         const newFilters = { ...columnFilters };
                                         delete newFilters[col];
                                         setColumnFilters(newFilters);
+                                        // 검색 조건 초기화하고 전체 데이터 다시 조회
+                                        setSearchTerm("");
+                                        setSearchDepartment("");
+                                        setSearchSubject("");
+                                        // 약간의 지연 후 조회 (state 업데이트 후)
+                                        setTimeout(() => handleQuery(), 100);
                                       }}
                                       className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${!columnFilters[col] ? 'bg-muted' : ''}`}
                                     >
