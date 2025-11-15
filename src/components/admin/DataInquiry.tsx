@@ -2030,12 +2030,18 @@ const DataInquiry = () => {
               {isLoading ? "조회 중..." : "조회"}
             </Button>
             {(searchTerm || searchDepartment || searchSubject || Object.keys(columnFilters).length > 0) && (
-              <Button variant="outline" onClick={() => { 
+              <Button variant="outline" onClick={async () => { 
                 setSearchTerm(""); 
                 setSearchDepartment(""); 
                 setSearchSubject(""); 
                 setColumnFilters({});
-                setTimeout(() => handleQuery(), 100); 
+                
+                // 교사 테이블인 경우 즉시 전체 조회 (state 업데이트 타이밍 문제 방지)
+                if (selectedTable === "teachers") {
+                  await queryTeachersImmediate({ department: null, subject: null });
+                } else {
+                  setTimeout(() => handleQuery(), 150); 
+                }
               }}>
                 전체 초기화
               </Button>
