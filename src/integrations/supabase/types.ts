@@ -194,6 +194,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_history: {
+        Row: {
+          body: string
+          created_at: string | null
+          id: string
+          recipient_email: string
+          recipient_name: string
+          recipient_student_id: string | null
+          sender_id: string
+          sender_name: string
+          sender_type: string
+          sent_at: string
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          id?: string
+          recipient_email: string
+          recipient_name: string
+          recipient_student_id?: string | null
+          sender_id: string
+          sender_name: string
+          sender_type: string
+          sent_at?: string
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          id?: string
+          recipient_email?: string
+          recipient_name?: string
+          recipient_student_id?: string | null
+          sender_id?: string
+          sender_name?: string
+          sender_type?: string
+          sent_at?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       merits: {
         Row: {
           category: string
@@ -445,6 +487,24 @@ export type Database = {
           student_grade: number
           student_name: string
           teacher_name: string
+        }[]
+      }
+      admin_get_email_history: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+          search_text?: string
+        }
+        Returns: {
+          body: string
+          id: string
+          recipient_email: string
+          recipient_name: string
+          sender_name: string
+          sender_type: string
+          sent_at: string
+          subject: string
         }[]
       }
       admin_get_homeroom: {
