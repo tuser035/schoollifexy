@@ -66,6 +66,7 @@ const DataInquiry = () => {
   const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -1682,7 +1683,7 @@ const DataInquiry = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 flex-wrap">
-            <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); }}>
+            <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); setColumnFilters({}); }}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue />
               </SelectTrigger>
@@ -1735,6 +1736,15 @@ const DataInquiry = () => {
             {searchTerm && (
               <Button variant="outline" onClick={() => { setSearchTerm(""); handleQuery(); }}>
                 초기화
+              </Button>
+            )}
+            {Object.keys(columnFilters).length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => setColumnFilters({})}
+                className="text-xs"
+              >
+                필터 초기화 ({Object.keys(columnFilters).length})
               </Button>
             )}
           {data.length > 0 && (
@@ -1919,7 +1929,50 @@ const DataInquiry = () => {
                     )}
                     {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
                       <TableHead key={col} className="whitespace-nowrap">
-                        {col}
+                        <div className="flex items-center gap-2">
+                          <span>{col}</span>
+                          {selectedTable === "teachers" && (col === "부서" || col === "담당교과") && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0 hover:bg-muted"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                                  </svg>
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-2 bg-background border shadow-md z-50" align="start">
+                                <div className="space-y-2">
+                                  <div className="font-medium text-sm px-2">{col} 필터</div>
+                                  <div className="max-h-60 overflow-y-auto space-y-1">
+                                    <button
+                                      onClick={() => {
+                                        const newFilters = { ...columnFilters };
+                                        delete newFilters[col];
+                                        setColumnFilters(newFilters);
+                                      }}
+                                      className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${!columnFilters[col] ? 'bg-muted' : ''}`}
+                                    >
+                                      (전체)
+                                    </button>
+                                    {Array.from(new Set(data.map(row => row[col]).filter(Boolean))).sort().map((value) => (
+                                      <button
+                                        key={value}
+                                        onClick={() => setColumnFilters({ ...columnFilters, [col]: value as string })}
+                                        className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${columnFilters[col] === value ? 'bg-muted' : ''}`}
+                                      >
+                                        {value}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
                       </TableHead>
                     ))}
                     {selectedTable === "monthly" && (
@@ -1931,7 +1984,14 @@ const DataInquiry = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.map((row, idx) => {
+                  {data
+                    .filter(row => {
+                      // 컬럼 필터 적용
+                      return Object.entries(columnFilters).every(([col, filterValue]) => {
+                        return row[col] === filterValue;
+                      });
+                    })
+                    .map((row, idx) => {
                     const rawData = 
                       selectedTable === "merits" ? meritsRawData[idx] :
                       selectedTable === "demerits" ? demeritsRawData[idx] :
