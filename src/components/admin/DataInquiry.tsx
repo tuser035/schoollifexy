@@ -1207,13 +1207,21 @@ const DataInquiry = () => {
         await supabase.rpc("set_teacher_session", { teacher_id_input: adminId });
       }
 
+      // overrides에 명시적으로 전달된 값(null 포함)을 우선 사용하고, 없으면 현재 상태값 사용
+      const deptVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "department"))
+        ? overrides.department
+        : (searchDepartment.trim() || null);
+      const subjVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "subject"))
+        ? overrides.subject
+        : (searchSubject.trim() || null);
+
       const { data, error } = await supabase.rpc("admin_get_teachers", {
         admin_id_input: adminId,
         search_text: null,
         search_grade: null,
         search_class: null,
-        search_department: overrides?.department ?? (searchDepartment.trim() || null),
-        search_subject: overrides?.subject ?? (searchSubject.trim() || null),
+        search_department: deptVal,
+        search_subject: subjVal,
       });
       if (error) throw error;
 
@@ -1235,8 +1243,6 @@ const DataInquiry = () => {
       // 정확한 총 인원수 계산 및 토스트 메시지 표시
       try {
         let q = supabase.from('teachers').select('*', { count: 'exact', head: true });
-        const deptVal = overrides?.department ?? (searchDepartment.trim() || null);
-        const subjVal = overrides?.subject ?? (searchSubject.trim() || null);
         if (deptVal) q = q.ilike('department', `%${deptVal}%`);
         if (subjVal) q = q.ilike('subject', `%${subjVal}%`);
         const { count: totalCount } = await q;
