@@ -67,6 +67,7 @@ const DataInquiry = () => {
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [originalData, setOriginalData] = useState<any[]>([]);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -1654,6 +1655,7 @@ const DataInquiry = () => {
       if (result && result.length > 0) {
         setColumns(Object.keys(result[0]));
         setData(result);
+        setOriginalData(result);
         
         // 학생 테이블을 조회한 경우 그룹 목록도 로드
         if (selectedTable === "students") {
@@ -1666,6 +1668,7 @@ const DataInquiry = () => {
       } else {
         setColumns([]);
         setData([]);
+        setOriginalData([]);
         toast.info(trimmedSearch ? "검색 결과가 없습니다" : "데이터가 없습니다");
       }
     } catch (error: any) {
@@ -1958,7 +1961,7 @@ const DataInquiry = () => {
                                     >
                                       (전체)
                                     </button>
-                                    {Array.from(new Set(data.map(row => row[col]).filter(Boolean))).sort().map((value) => (
+                                    {Array.from(new Set(originalData.map(row => row[col]).filter(Boolean))).sort().map((value) => (
                                       <button
                                         key={value}
                                         onClick={() => setColumnFilters({ ...columnFilters, [col]: value as string })}
