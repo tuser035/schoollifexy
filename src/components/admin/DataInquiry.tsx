@@ -1134,7 +1134,19 @@ const DataInquiry = () => {
         throw error;
       }
 
-      toast.success("신규 교사가 추가되었습니다");
+      // 교사 목록을 조회하여 전체 인원 확인
+      const { data: teachersData } = await supabase.rpc("admin_get_teachers", {
+        admin_id_input: user.id,
+        search_text: null,
+        search_grade: null,
+        search_class: null,
+        search_department: null,
+        search_subject: null
+      });
+
+      const totalTeachers = teachersData?.length || 0;
+      
+      toast.success(`신규 교사가 추가되었습니다. 전체 교사 인원: ${totalTeachers}명`);
       setIsAddTeacherDialogOpen(false);
       
       // 폼 초기화
@@ -1150,8 +1162,8 @@ const DataInquiry = () => {
         subject: ""
       });
 
-      // 교사 목록 새로고침
-      handleQuery();
+      // 교사 목록 새로고침 (토스트 표시 안 함)
+      handleQuery({ showToast: false });
     } catch (error: any) {
       console.error("교사 추가 실패:", error);
       toast.error(error.message || "교사 추가에 실패했습니다");
@@ -1209,7 +1221,8 @@ const DataInquiry = () => {
     }
   };
 
-  const handleQuery = async () => {
+  const handleQuery = async (options?: { showToast?: boolean }) => {
+    const showToast = options?.showToast !== false; // 기본값은 true
     setIsLoading(true);
     
     try {
@@ -1436,8 +1449,10 @@ const DataInquiry = () => {
           "담당교과": row.subject
         }));
 
-        // 전체 교사 인원수 알림
-        toast.success(`전체 교사 인원: ${result?.length || 0}명`);
+        // 전체 교사 인원수 알림 (showToast가 true일 때만)
+        if (showToast) {
+          toast.success(`전체 교사 인원: ${result?.length || 0}명`);
+        }
 
       } else if (selectedTable === "homeroom") {
         let searchGrade: number | null = null;
