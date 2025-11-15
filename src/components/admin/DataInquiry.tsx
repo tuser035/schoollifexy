@@ -85,20 +85,40 @@ const DataInquiry = () => {
   const loadTemplates = async () => {
     try {
       const authUser = localStorage.getItem("auth_user");
-      if (!authUser) return;
+      if (!authUser) {
+        console.log("템플릿 로드: 사용자 인증 정보 없음");
+        return;
+      }
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      console.log("템플릿 로드 시작:", user.type, user.id);
+
+      // 사용자 타입에 따라 세션 설정
+      if (user.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
 
       const { data, error } = await supabase
         .from("email_templates")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("템플릿 조회 에러:", error);
+        throw error;
+      }
+      
+      console.log("템플릿 로드 완료:", data?.length || 0, "개");
       setTemplates(data || []);
+      
+      if (!data || data.length === 0) {
+        toast.info("등록된 템플릿이 없습니다. 템플릿 탭에서 템플릿을 먼저 생성해주세요.");
+      }
     } catch (error: any) {
       console.error("템플릿 로드 실패:", error);
+      toast.error("템플릿을 불러오는데 실패했습니다: " + error.message);
     }
   };
 
