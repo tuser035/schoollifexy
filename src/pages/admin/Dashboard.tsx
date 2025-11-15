@@ -67,7 +67,9 @@ const AdminDashboard = () => {
     }
     
     setUser(parsedUser);
-    setActiveTab(parsedUser.type === "teacher" ? "data" : "password");
+    // 기본 탭 설정
+    const defaultTab = parsedUser.type === "teacher" ? "data" : "password";
+    setActiveTab(defaultTab);
   }, [navigate]);
 
   const handleLogout = () => {
@@ -106,7 +108,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen w-full flex flex-col bg-background">
         <header className="border-b bg-card sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4 flex justify-between items-center">
