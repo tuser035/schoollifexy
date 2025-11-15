@@ -55,7 +55,14 @@ const AdminDashboard = () => {
             <h1 className="text-2xl font-bold text-foreground">
               {user.type === "admin" ? "관리자 대시보드" : "데이터 조회"}
             </h1>
-            <p className="text-muted-foreground">{user.email || user.name}</p>
+            <p className="text-muted-foreground">
+              {user.type === "admin" 
+                ? user.email 
+                : user.grade && user.class 
+                  ? `${user.name} (${user.grade}-${user.class})`
+                  : user.name
+              }
+            </p>
           </div>
           <div className="flex gap-2">
             {user.type === "teacher" && (
