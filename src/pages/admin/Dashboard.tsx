@@ -75,59 +75,61 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue={user.type === "teacher" ? "data" : "password"} className="w-full">
-          <TabsList className={`grid w-full mb-6 ${user.type === "teacher" ? "grid-cols-5" : "grid-cols-9"}`}>
+        <Tabs defaultValue={user.type === "teacher" ? "data" : "password"} className="w-full flex gap-6">
+          <TabsList className="flex flex-col h-fit w-48 p-2 gap-1">
             {user.type === "admin" && (
               <>
-                <TabsTrigger value="password">
+                <TabsTrigger value="password" className="w-full justify-start">
                   <Key className="w-4 h-4 mr-2" />
                   비밀번호
                 </TabsTrigger>
-                <TabsTrigger value="upload">
+                <TabsTrigger value="upload" className="w-full justify-start">
                   <Upload className="w-4 h-4 mr-2" />
                   업로드
                 </TabsTrigger>
               </>
             )}
-            <TabsTrigger value="data">
+            <TabsTrigger value="data" className="w-full justify-start">
               <Database className="w-4 h-4 mr-2" />
               데이터
             </TabsTrigger>
-            <TabsTrigger value="points">
+            <TabsTrigger value="points" className="w-full justify-start">
               <BarChart className="w-4 h-4 mr-2" />
               상점
             </TabsTrigger>
             {user.type === "admin" && (
-              <TabsTrigger value="counseling">
+              <TabsTrigger value="counseling" className="w-full justify-start">
                 <ClipboardCheck className="w-4 h-4 mr-2" />
                 상담
               </TabsTrigger>
             )}
-            <TabsTrigger value="statistics">
+            <TabsTrigger value="statistics" className="w-full justify-start">
               <TrendingUp className="w-4 h-4 mr-2" />
               통계
             </TabsTrigger>
-            <TabsTrigger value="leaderboard">
+            <TabsTrigger value="leaderboard" className="w-full justify-start">
               <Trophy className="w-4 h-4 mr-2" />
               순위
             </TabsTrigger>
-            <TabsTrigger value="email-history">
+            <TabsTrigger value="email-history" className="w-full justify-start">
               <FileText className="w-4 h-4 mr-2" />
               이메일
             </TabsTrigger>
             {user.type === "admin" && (
-              <TabsTrigger value="email-templates">
+              <TabsTrigger value="email-templates" className="w-full justify-start">
                 <FileText className="w-4 h-4 mr-2" />
                 템플릿
               </TabsTrigger>
             )}
             {user.type === "admin" && (
-              <TabsTrigger value="storage">
+              <TabsTrigger value="storage" className="w-full justify-start">
                 <FolderOpen className="w-4 h-4 mr-2" />
                 파일
               </TabsTrigger>
             )}
           </TabsList>
+          
+          <div className="flex-1">{/* 컨텐츠 래퍼 */}
 
           {user.type === "admin" && (
             <>
@@ -178,6 +180,7 @@ const AdminDashboard = () => {
               <StorageManager />
             </TabsContent>
           )}
+          </div>{/* 컨텐츠 래퍼 종료 */}
         </Tabs>
       </main>
     </div>
