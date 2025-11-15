@@ -500,16 +500,41 @@ const DataInquiry = () => {
         let searchText = null;
         let searchGrade = null;
         let searchClass = null;
+        let searchNumber = null;
+        let targetStudentId = null;
 
         if (trimmedSearch) {
           if (!isNaN(Number(trimmedSearch))) {
-            if (trimmedSearch.length === 2) {
+            // 3자리 이상 숫자: 학년반번호 (예: 386 -> 3학년 8반 6번)
+            if (trimmedSearch.length >= 3) {
               searchGrade = parseInt(trimmedSearch[0]);
               searchClass = parseInt(trimmedSearch[1]);
-            } else {
+              searchNumber = parseInt(trimmedSearch.substring(2));
+              
+              // 학년/반/번호로 학생 찾기
+              const { data: studentData } = await supabase
+                .from('students')
+                .select('student_id')
+                .eq('grade', searchGrade)
+                .eq('class', searchClass)
+                .eq('number', searchNumber)
+                .single();
+              
+              if (studentData) {
+                targetStudentId = studentData.student_id;
+              }
+            }
+            // 2자리 숫자: 학년반 (예: 38 -> 3학년 8반)
+            else if (trimmedSearch.length === 2) {
+              searchGrade = parseInt(trimmedSearch[0]);
+              searchClass = parseInt(trimmedSearch[1]);
+            }
+            // 1자리 숫자: 학년
+            else {
               searchGrade = parseInt(trimmedSearch);
             }
           } else {
+            // 문자인 경우 이름으로 검색
             searchText = trimmedSearch;
           }
         }
@@ -523,8 +548,14 @@ const DataInquiry = () => {
 
         if (queryError) throw queryError;
 
+        // 학년반번호로 검색한 경우 해당 학생만 필터링
+        let filteredData = data;
+        if (targetStudentId) {
+          filteredData = data?.filter((row: any) => row.student_id === targetStudentId);
+        }
+
         // 각 학생의 상담 기록 첨부파일 조회 (모든 첨부파일)
-        const studentIds = [...new Set(data?.map((row: any) => row.student_id) || [])];
+        const studentIds = [...new Set(filteredData?.map((row: any) => row.student_id) || [])];
         const counselingData: { [key: string]: string[] } = {};
         
         for (const studentId of studentIds) {
@@ -541,7 +572,7 @@ const DataInquiry = () => {
         }
 
         // 원본 데이터에 상담 첨부파일 추가
-        const enrichedData = data?.map((row: any) => ({
+        const enrichedData = filteredData?.map((row: any) => ({
           ...row,
           counseling_attachments: counselingData[row.student_id] || []
         }));
@@ -638,7 +669,7 @@ const DataInquiry = () => {
                 selectedTable === "teachers" ? "교사명, 학년, 반으로 검색" :
                 selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
                 selectedTable === "merits" || selectedTable === "demerits" ? "학생명, 교사명, 학년, 반으로 검색" :
-                selectedTable === "monthly" ? "학생명으로 검색" :
+                selectedTable === "monthly" ? "학생명 또는 학년반번호로 검색 (예: 386 → 3학년 8반 6번)" :
                 "검색"
               }
               value={searchTerm}
