@@ -1402,6 +1402,17 @@ const DataInquiry = () => {
         searchDept = searchDepartment.trim() || null;
         searchSubj = searchSubject.trim() || null;
 
+        // Set session for RLS
+        if (parsedUser.type === "admin") {
+          await supabase.rpc("set_admin_session", {
+            admin_id_input: adminId
+          });
+        } else if (parsedUser.type === "teacher") {
+          await supabase.rpc("set_teacher_session", {
+            teacher_id_input: adminId
+          });
+        }
+
         const { data, error: queryError } = await supabase.rpc("admin_get_teachers", {
           admin_id_input: adminId,
           search_text: searchText,
