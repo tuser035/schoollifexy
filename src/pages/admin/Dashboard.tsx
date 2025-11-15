@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
@@ -14,10 +13,45 @@ import StorageManager from "@/components/admin/StorageManager";
 import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
 import { EmailHistory } from "@/components/admin/EmailHistory";
 import EmailTemplateManager from "@/components/admin/EmailTemplateManager";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
+const menuItems = (userType: "admin" | "teacher") => {
+  const items = [
+    ...(userType === "admin" ? [
+      { value: "password", label: "비밀번호", icon: Key },
+      { value: "upload", label: "업로드", icon: Upload },
+    ] : []),
+    { value: "data", label: "데이터", icon: Database },
+    { value: "points", label: "상점", icon: BarChart },
+    ...(userType === "admin" ? [
+      { value: "counseling", label: "상담", icon: ClipboardCheck },
+    ] : []),
+    { value: "statistics", label: "통계", icon: TrendingUp },
+    { value: "leaderboard", label: "순위", icon: Trophy },
+    { value: "email-history", label: "이메일", icon: FileText },
+    ...(userType === "admin" ? [
+      { value: "email-templates", label: "템플릿", icon: FileText },
+      { value: "storage", label: "파일", icon: FolderOpen },
+    ] : []),
+  ];
+  return items;
+};
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("password");
 
   useEffect(() => {
     const authUser = localStorage.getItem("auth_user");
@@ -33,6 +67,7 @@ const AdminDashboard = () => {
     }
     
     setUser(parsedUser);
+    setActiveTab(parsedUser.type === "teacher" ? "data" : "password");
   }, [navigate]);
 
   const handleLogout = () => {
@@ -43,147 +78,101 @@ const AdminDashboard = () => {
     return null;
   }
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case "password":
+        return <PasswordReset />;
+      case "upload":
+        return <BulkUpload />;
+      case "data":
+        return <DataInquiry />;
+      case "points":
+        return <PointsInquiry />;
+      case "counseling":
+        return <CounselingInquiry />;
+      case "statistics":
+        return <StatisticsChart />;
+      case "leaderboard":
+        return <StudentLeaderboard />;
+      case "email-history":
+        return <EmailHistory />;
+      case "email-templates":
+        return <EmailTemplateManager />;
+      case "storage":
+        return <StorageManager />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {user.type === "admin" ? "관리자 대시보드" : "데이터 조회"}
-            </h1>
-            <p className="text-muted-foreground">
-              {user.type === "admin" 
-                ? user.email 
-                : user.grade && user.class 
-                  ? `${user.name} (${user.grade}-${user.class})`
-                  : user.name
-              }
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {user.type === "teacher" && (
-              <Button onClick={() => navigate("/teacher/dashboard")} variant="outline">
-                돌아가기
+    <SidebarProvider>
+      <div className="min-h-screen w-full flex flex-col bg-background">
+        <header className="border-b bg-card sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger />
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">
+                  {user.type === "admin" ? "관리자 대시보드" : "데이터 조회"}
+                </h1>
+                <p className="text-muted-foreground">
+                  {user.type === "admin" 
+                    ? user.email 
+                    : user.grade && user.class 
+                      ? `${user.name} (${user.grade}-${user.class})`
+                      : user.name
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {user.type === "teacher" && (
+                <Button onClick={() => navigate("/teacher/dashboard")} variant="outline">
+                  돌아가기
+                </Button>
+              )}
+              <Button onClick={handleLogout} variant="outline">
+                <LogOut className="w-4 h-4 mr-2" />
+                로그아웃
               </Button>
-            )}
-            <Button onClick={handleLogout} variant="outline">
-              <LogOut className="w-4 h-4 mr-2" />
-              로그아웃
-            </Button>
+            </div>
           </div>
+        </header>
+
+        <div className="flex flex-1 w-full">
+          <Sidebar collapsible="icon">
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {menuItems(user.type === "student" ? "teacher" : user.type).map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <SidebarMenuItem key={item.value}>
+                          <SidebarMenuButton
+                            onClick={() => setActiveTab(item.value)}
+                            isActive={activeTab === item.value}
+                            tooltip={item.label}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
+
+          <main className="flex-1 p-8">
+            {renderContent()}
+          </main>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue={user.type === "teacher" ? "data" : "password"} className="w-full flex gap-6">
-          <TabsList className="flex flex-col h-fit w-48 p-2 gap-1">
-            {user.type === "admin" && (
-              <>
-                <TabsTrigger value="password" className="w-full justify-start">
-                  <Key className="w-4 h-4 mr-2" />
-                  비밀번호
-                </TabsTrigger>
-                <TabsTrigger value="upload" className="w-full justify-start">
-                  <Upload className="w-4 h-4 mr-2" />
-                  업로드
-                </TabsTrigger>
-              </>
-            )}
-            <TabsTrigger value="data" className="w-full justify-start">
-              <Database className="w-4 h-4 mr-2" />
-              데이터
-            </TabsTrigger>
-            <TabsTrigger value="points" className="w-full justify-start">
-              <BarChart className="w-4 h-4 mr-2" />
-              상점
-            </TabsTrigger>
-            {user.type === "admin" && (
-              <TabsTrigger value="counseling" className="w-full justify-start">
-                <ClipboardCheck className="w-4 h-4 mr-2" />
-                상담
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="statistics" className="w-full justify-start">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              통계
-            </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="w-full justify-start">
-              <Trophy className="w-4 h-4 mr-2" />
-              순위
-            </TabsTrigger>
-            <TabsTrigger value="email-history" className="w-full justify-start">
-              <FileText className="w-4 h-4 mr-2" />
-              이메일
-            </TabsTrigger>
-            {user.type === "admin" && (
-              <TabsTrigger value="email-templates" className="w-full justify-start">
-                <FileText className="w-4 h-4 mr-2" />
-                템플릿
-              </TabsTrigger>
-            )}
-            {user.type === "admin" && (
-              <TabsTrigger value="storage" className="w-full justify-start">
-                <FolderOpen className="w-4 h-4 mr-2" />
-                파일
-              </TabsTrigger>
-            )}
-          </TabsList>
-          
-          <div className="flex-1">{/* 컨텐츠 래퍼 */}
-
-          {user.type === "admin" && (
-            <>
-              <TabsContent value="password">
-                <PasswordReset />
-              </TabsContent>
-
-              <TabsContent value="upload">
-                <BulkUpload />
-              </TabsContent>
-            </>
-          )}
-
-          <TabsContent value="data">
-            <DataInquiry />
-          </TabsContent>
-
-          <TabsContent value="points">
-            <PointsInquiry />
-          </TabsContent>
-
-          {user.type === "admin" && (
-            <TabsContent value="counseling">
-              <CounselingInquiry />
-            </TabsContent>
-          )}
-
-          <TabsContent value="statistics">
-            <StatisticsChart />
-          </TabsContent>
-
-          <TabsContent value="leaderboard">
-            <StudentLeaderboard />
-          </TabsContent>
-
-          <TabsContent value="email-history">
-            <EmailHistory />
-          </TabsContent>
-
-          {user.type === "admin" && (
-            <TabsContent value="email-templates">
-              <EmailTemplateManager />
-            </TabsContent>
-          )}
-
-          {user.type === "admin" && (
-            <TabsContent value="storage">
-              <StorageManager />
-            </TabsContent>
-          )}
-          </div>{/* 컨텐츠 래퍼 종료 */}
-        </Tabs>
-      </main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
