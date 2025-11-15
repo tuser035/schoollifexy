@@ -1011,6 +1011,41 @@ const DataInquiry = () => {
     }
   };
 
+  // 교사 삭제
+  const handleDeleteTeacher = async (teacherName: string, teacherEmail: string) => {
+    if (!confirm(`정말로 "${teacherName}" 교사를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      // 관리자 ID 가져오기
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      // 교사 삭제
+      const { error } = await supabase
+        .from("teachers")
+        .delete()
+        .eq("teacher_email", teacherEmail);
+
+      if (error) throw error;
+
+      toast.success(`"${teacherName}" 교사가 삭제되었습니다`);
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error: any) {
+      console.error("교사 삭제 실패:", error);
+      toast.error(error.message || "교사 삭제에 실패했습니다");
+    }
+  };
+
   // 학과 목록 로드
   const loadDepartments = async () => {
     try {
@@ -2202,14 +2237,24 @@ const DataInquiry = () => {
                         )}
                         {selectedTable === "teachers" && (
                           <TableCell className="whitespace-nowrap">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenTeacherEdit(row)}
-                            >
-                              <ClipboardEdit className="h-4 w-4 mr-1" />
-                              편집
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleOpenTeacherEdit(row)}
+                              >
+                                <ClipboardEdit className="h-4 w-4 mr-1" />
+                                편집
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteTeacher(row["이름"], row["이메일"])}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                삭제
+                              </Button>
+                            </div>
                           </TableCell>
                         )}
                       </TableRow>
