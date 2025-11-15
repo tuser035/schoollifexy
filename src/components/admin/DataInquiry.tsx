@@ -1963,7 +1963,7 @@ const DataInquiry = () => {
                                         onClick={() => {
                                           // 검색 조건 초기화하고 해당 컬럼 값으로 서버 검색
                                           setSearchTerm("");
-                                          setColumnFilters({ ...columnFilters, [col]: value as string });
+                                          setColumnFilters({}); // 클라이언트 필터 완전 초기화
                                           
                                           if (col === "부서") {
                                             setSearchDepartment(value as string);
