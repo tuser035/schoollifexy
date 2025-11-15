@@ -70,14 +70,18 @@ const DataInquiry = () => {
           imageDisplay = `=HYPERLINK("${row.image_url}","${fileName}")`;
         }
         
-        // 상담 첨부파일 하이퍼링크 생성
-        let counselingAttachment = "-";
-        if (row.counseling_attachment) {
-          const fileName = row.counseling_attachment.split('/').pop() || "첨부파일";
-          counselingAttachment = `=HYPERLINK("${row.counseling_attachment}","${fileName}")`;
+        // 상담 첨부파일 하이퍼링크 생성 (여러 개인 경우 모두 포함)
+        let counselingAttachments = "-";
+        if (row.counseling_attachments && row.counseling_attachments.length > 0) {
+          counselingAttachments = row.counseling_attachments
+            .map((url: string, idx: number) => {
+              const fileName = url.split('/').pop() || `첨부${idx + 1}`;
+              return `=HYPERLINK("${url}","${fileName}")`;
+            })
+            .join(" | ");
         }
         
-        return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageDisplay},${counselingAttachment}`;
+        return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageDisplay},"${counselingAttachments}"`;
       });
     } else if (selectedTable === "merits" && meritsRawData.length > 0) {
       csvHeader = "날짜,학생,교사,카테고리,사유,점수,증빙사진";
@@ -519,9 +523,9 @@ const DataInquiry = () => {
 
         if (queryError) throw queryError;
 
-        // 각 학생의 상담 기록 첨부파일 조회
+        // 각 학생의 상담 기록 첨부파일 조회 (모든 첨부파일)
         const studentIds = [...new Set(data?.map((row: any) => row.student_id) || [])];
-        const counselingData: { [key: string]: string } = {};
+        const counselingData: { [key: string]: string[] } = {};
         
         for (const studentId of studentIds) {
           const { data: counselingRecords } = await supabase
@@ -529,18 +533,17 @@ const DataInquiry = () => {
             .select('attachment_url')
             .eq('student_id', studentId)
             .not('attachment_url', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(1);
+            .order('created_at', { ascending: false });
           
           if (counselingRecords && counselingRecords.length > 0) {
-            counselingData[studentId] = counselingRecords[0].attachment_url;
+            counselingData[studentId] = counselingRecords.map(r => r.attachment_url);
           }
         }
 
         // 원본 데이터에 상담 첨부파일 추가
         const enrichedData = data?.map((row: any) => ({
           ...row,
-          counseling_attachment: counselingData[row.student_id] || null
+          counseling_attachments: counselingData[row.student_id] || []
         }));
 
         // 원본 데이터 저장 (CSV용)
