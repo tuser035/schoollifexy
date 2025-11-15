@@ -669,7 +669,7 @@ const DataInquiry = () => {
                 selectedTable === "teachers" ? "교사명, 학년, 반으로 검색" :
                 selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
                 selectedTable === "merits" || selectedTable === "demerits" ? "학생명, 교사명, 학년, 반으로 검색" :
-                selectedTable === "monthly" ? "학생명 또는 학년반번호로 검색 (예: 386 → 3학년 8반 6번)" :
+                selectedTable === "monthly" ? "이름, 학년반번호 (예: 홍길동 또는 386)" :
                 "검색"
               }
               value={searchTerm}
