@@ -2265,26 +2265,19 @@ const DataInquiry = () => {
                                   <div className="font-medium text-sm px-2">{col} 필터</div>
                                   <div className="max-h-60 overflow-y-auto space-y-1">
                                     <button
-                                      onClick={() => {
-                                        const newFilters = { ...columnFilters };
-                                        delete newFilters[col];
-                                        setColumnFilters(newFilters);
-                                        
-                                        // 해당 컬럼의 서버 검색 조건만 초기화
-                                        if (col === "부서") {
-                                          setSearchDepartment("");
-                                        } else if (col === "담당교과") {
-                                          setSearchSubject("");
-                                        }
+                                      onClick={async () => {
+                                        // 모든 클라이언트 필터 초기화
+                                        setColumnFilters({});
+
+                                        // 서버 검색 조건도 완전 초기화
+                                        setSearchDepartment("");
+                                        setSearchSubject("");
                                         
                                         // Popover 닫기
                                         setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                         
-                                        // 즉시 서버 조회
-                                        void queryTeachersImmediate({
-                                          department: col === "부서" ? null : undefined,
-                                          subject: col === "담당교과" ? null : undefined,
-                                        });
+                                        // 즉시 전체 재조회 (한 번 클릭으로 전체 리스트 확정)
+                                        await queryTeachersImmediate({ department: null, subject: null });
                                       }}
                                       className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${!columnFilters[col] ? 'bg-muted' : ''}`}
                                     >
