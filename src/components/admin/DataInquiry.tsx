@@ -1969,13 +1969,20 @@ const DataInquiry = () => {
               className="max-w-xs"
               maxLength={100}
             />
-            <Button onClick={() => {
-              // 항상 컬럼 필터 초기화 후 조회
+            <Button onClick={async () => {
+              // 항상 필터 초기화
+              setSearchTerm("");
               setSearchDepartment("");
               setSearchSubject("");
               setColumnFilters({});
-              // state 업데이트 후 조회
-              setTimeout(() => handleQuery(), 150);
+              
+              // 교사 테이블인 경우 즉시 전체 조회
+              if (selectedTable === "teachers") {
+                await queryTeachersImmediate({ department: null, subject: null });
+              } else {
+                // state 업데이트 후 조회
+                setTimeout(() => handleQuery(), 150);
+              }
             }} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
