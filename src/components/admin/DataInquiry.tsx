@@ -1162,7 +1162,13 @@ const DataInquiry = () => {
       setData(result);
       setColumns(result[0] ? Object.keys(result[0]) : []);
       
-      toast.success(`신규 교사가 추가되었습니다. 전체 교사 인원: ${totalTeachers}명`);
+      let totalCount = totalTeachers;
+      try {
+        const { count } = await supabase.from('teachers').select('*', { count: 'exact', head: true });
+        if (typeof count === 'number') totalCount = count;
+      } catch {}
+      
+      toast.success(`신규 교사가 추가되었습니다. 전체 교사 인원: ${totalCount}명`);
       setIsAddTeacherDialogOpen(false);
       
       // 폼 초기화
@@ -1225,7 +1231,18 @@ const DataInquiry = () => {
 
       setData(result);
       setColumns(result[0] ? Object.keys(result[0]) : []);
-      toast.success(`전체 교사 인원: ${result.length}명`);
+      // 정확한 총 인원수 계산 (LIMIT 영향 방지)
+      try {
+        let q = supabase.from('teachers').select('*', { count: 'exact', head: true });
+        const deptVal = overrides?.department ?? (searchDepartment.trim() || null);
+        const subjVal = overrides?.subject ?? (searchSubject.trim() || null);
+        if (deptVal) q = q.ilike('department', `%${deptVal}%`);
+        if (subjVal) q = q.ilike('subject', `%${subjVal}%`);
+        const { count: totalCount } = await q;
+        toast.success(`전체 교사 인원: ${totalCount ?? result.length}명`);
+      } catch {
+        toast.success(`전체 교사 인원: ${result.length}명`);
+      }
     } catch (e: any) {
       console.error(e);
       toast.error(e.message || "조회 실패");
@@ -1464,7 +1481,18 @@ const DataInquiry = () => {
 
         // 전체 교사 인원수 알림 (showToast가 true일 때만)
         if (showToast) {
-          toast.success(`전체 교사 인원: ${result?.length || 0}명`);
+          try {
+            let q = supabase.from('teachers').select('*', { count: 'exact', head: true });
+            if (searchText) q = q.or(`name.ilike.%${searchText}%,call_t.ilike.%${searchText}%`);
+            if (searchGrade !== null) q = q.eq('grade', searchGrade);
+            if (searchClass !== null) q = q.eq('class', searchClass);
+            if (searchDept) q = q.ilike('department', `%${searchDept}%`);
+            if (searchSubj) q = q.ilike('subject', `%${searchSubj}%`);
+            const { count: totalCount } = await q;
+            toast.success(`전체 교사 인원: ${totalCount ?? result?.length ?? 0}명`);
+          } catch {
+            toast.success(`전체 교사 인원: ${result?.length ?? 0}명`);
+          }
         }
 
       } else if (selectedTable === "homeroom") {
