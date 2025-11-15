@@ -143,57 +143,6 @@ export type Database = {
         }
         Relationships: []
       }
-      edufine_documents: {
-        Row: {
-          admin_id: string
-          att1: string | null
-          att2: string | null
-          att3: string | null
-          att4: string | null
-          att5: string | null
-          created_at: string | null
-          dept: string | null
-          doc_no: string | null
-          due: string | null
-          file_url: string | null
-          id: string
-          rcv_date: string | null
-          subj: string | null
-        }
-        Insert: {
-          admin_id: string
-          att1?: string | null
-          att2?: string | null
-          att3?: string | null
-          att4?: string | null
-          att5?: string | null
-          created_at?: string | null
-          dept?: string | null
-          doc_no?: string | null
-          due?: string | null
-          file_url?: string | null
-          id?: string
-          rcv_date?: string | null
-          subj?: string | null
-        }
-        Update: {
-          admin_id?: string
-          att1?: string | null
-          att2?: string | null
-          att3?: string | null
-          att4?: string | null
-          att5?: string | null
-          created_at?: string | null
-          dept?: string | null
-          doc_no?: string | null
-          due?: string | null
-          file_url?: string | null
-          id?: string
-          rcv_date?: string | null
-          subj?: string | null
-        }
-        Relationships: []
-      }
       email_history: {
         Row: {
           body: string
