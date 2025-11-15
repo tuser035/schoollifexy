@@ -1161,6 +1161,8 @@ const DataInquiry = () => {
         let searchGrade: number | null = null;
         let searchClass: number | null = null;
         let searchText: string | null = null;
+        let searchDepartment: string | null = null;
+        let searchSubject: string | null = null;
 
         if (trimmedSearch) {
           // 숫자인 경우 학년이나 반으로 검색
@@ -1180,11 +1182,19 @@ const DataInquiry = () => {
           }
         }
 
+        // teacherDepartment와 teacherSubject를 searchDepartment, searchSubject로 매핑
+        const tempDept = (window as any).teacherDepartment?.trim();
+        const tempSubj = (window as any).teacherSubject?.trim();
+        searchDepartment = tempDept || null;
+        searchSubject = tempSubj || null;
+
         const { data, error: queryError } = await supabase.rpc("admin_get_teachers", {
           admin_id_input: adminId,
           search_text: searchText,
           search_grade: searchGrade,
-          search_class: searchClass
+          search_class: searchClass,
+          search_department: searchDepartment,
+          search_subject: searchSubject
         });
 
         if (queryError) throw queryError;
@@ -1701,6 +1711,24 @@ const DataInquiry = () => {
               className="max-w-xs"
               maxLength={100}
             />
+            {selectedTable === "teachers" && (
+              <>
+                <Input
+                  placeholder="부서로 검색"
+                  onChange={(e) => (window as any).teacherDepartment = e.target.value}
+                  onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
+                  className="max-w-xs"
+                  maxLength={100}
+                />
+                <Input
+                  placeholder="담당교과로 검색"
+                  onChange={(e) => (window as any).teacherSubject = e.target.value}
+                  onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
+                  className="max-w-xs"
+                  maxLength={100}
+                />
+              </>
+            )}
             <Button onClick={handleQuery} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
