@@ -43,18 +43,11 @@ const EmailTemplateManager = () => {
       if (!authUser) return;
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
-      let query = supabase
-        .from("email_templates")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (filterType !== 'all') {
-        query = query.eq('template_type', filterType);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc("admin_get_email_templates", {
+        admin_id_input: user.id,
+        filter_type: filterType === 'all' ? null : filterType,
+      });
 
       if (error) throw error;
       setTemplates(data || []);
