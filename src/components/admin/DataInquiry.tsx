@@ -1816,7 +1816,7 @@ const DataInquiry = () => {
                   {console.log("교사 드롭다운 렌더링 - 그룹 수:", teacherGroups.length, teacherGroups)}
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[200px] justify-start">
+                      <Button variant="outline" className="w-[230px] justify-start">
                         <Users className="h-4 w-4 mr-2" />
                         저장된 교사 그룹 불러오기
                       </Button>
