@@ -43,6 +43,11 @@ const DataInquiry = () => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState({ email: "", name: "", studentId: "" });
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -73,11 +78,10 @@ const DataInquiry = () => {
     // 현재 로그인한 사용자 정보 가져오기
     const userString = localStorage.getItem("auth_user");
     let senderInfo = "";
-    let user: any = null;
     
     if (userString) {
       try {
-        user = JSON.parse(userString);
+        const user = JSON.parse(userString);
         const userType = user.type === "teacher" ? "교사" : user.type === "admin" ? "관리자" : "사용자";
         senderInfo = `발신자: ${user.name || user.email || "알 수 없음"} (${userType})`;
       } catch (e) {
@@ -85,44 +89,65 @@ const DataInquiry = () => {
       }
     }
 
-    // Gmail 작성 링크 생성
-    const subject = `${name}님께 문의드립니다`;
-    const body = 
+    // 이메일 작성 다이얼로그 열기
+    setEmailRecipient({ email, name, studentId: studentId || "" });
+    setEmailSubject(`${name}님께 문의드립니다`);
+    setEmailBody(
       `안녕하세요 ${name}님,\n\n` +
       `문의 내용을 입력해주세요.\n\n` +
       `---\n` +
       `${senderInfo}\n` +
-      `발신 시각: ${new Date().toLocaleString('ko-KR')}`;
-    
-    // 이메일 발송 이력 저장
-    if (user) {
-      try {
-        // Set session based on user type
-        if (user.type === "admin") {
-          await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-        } else if (user.type === "teacher") {
-          await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
-        }
-
-        await supabase.from("email_history").insert({
-          sender_id: user.id,
-          sender_type: user.type,
-          sender_name: user.name || user.email || "알 수 없음",
-          recipient_email: email,
-          recipient_name: name,
-          recipient_student_id: studentId || null,
-          subject: subject,
-          body: body,
-        });
-      } catch (error) {
-        console.error("이메일 이력 저장 실패:", error);
-      }
-    }
-    
-    window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
-      '_blank'
+      `발신 시각: ${new Date().toLocaleString('ko-KR')}`
     );
+    setIsEmailDialogOpen(true);
+  };
+
+  // 이메일 발송 핸들러
+  const handleSendEmail = async () => {
+    setIsSendingEmail(true);
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) {
+        throw new Error("로그인이 필요합니다");
+      }
+
+      const user = JSON.parse(userString);
+
+      // Set session based on user type
+      if (user.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      // 이메일 발송 이력 저장
+      await supabase.from("email_history").insert({
+        sender_id: user.id,
+        sender_type: user.type,
+        sender_name: user.name || user.email || "알 수 없음",
+        recipient_email: emailRecipient.email,
+        recipient_name: emailRecipient.name,
+        recipient_student_id: emailRecipient.studentId || null,
+        subject: emailSubject,
+        body: emailBody,
+      });
+
+      // Gmail 작성 창 열기
+      window.open(
+        `https://mail.google.com/mail/?view=cm&fs=1&to=${emailRecipient.email}&su=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`,
+        '_blank'
+      );
+
+      toast.success("이메일 작성 창이 열렸습니다");
+      setIsEmailDialogOpen(false);
+      setEmailSubject("");
+      setEmailBody("");
+    } catch (error: any) {
+      console.error("이메일 발송 실패:", error);
+      toast.error(error.message || "이메일 발송에 실패했습니다");
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   const exportToCSV = () => {
@@ -1397,6 +1422,57 @@ const DataInquiry = () => {
               disabled={isSavingCounseling}
             >
               {isSavingCounseling ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 이메일 작성 다이얼로그 */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>이메일 작성</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>수신자</Label>
+              <Input
+                value={`${emailRecipient.name} (${emailRecipient.email})`}
+                disabled
+              />
+            </div>
+            <div>
+              <Label>제목</Label>
+              <Input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="이메일 제목"
+              />
+            </div>
+            <div>
+              <Label>내용</Label>
+              <Textarea
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+                placeholder="이메일 내용을 입력하세요"
+                rows={12}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEmailDialogOpen(false)}
+              disabled={isSendingEmail}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={isSendingEmail || !emailSubject.trim() || !emailBody.trim()}
+            >
+              {isSendingEmail ? "발송 중..." : "발송"}
             </Button>
           </DialogFooter>
         </DialogContent>
