@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, Calendar, FileText } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -12,12 +12,6 @@ import CounselingInquiry from "@/components/admin/CounselingInquiry";
 import StatisticsChart from "@/components/admin/StatisticsChart";
 import StorageManager from "@/components/admin/StorageManager";
 import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
-import GoogleCalendar from "@/components/admin/GoogleCalendar";
-import PDFScheduleUpload from "@/components/admin/PDFScheduleUpload";
-import WeeklyMeetingUpload from "@/components/admin/WeeklyMeetingUpload";
-import EdufineUpload from "@/components/admin/EdufineUpload";
-import EdufineDocumentStorage from "@/components/admin/EdufineDocumentStorage";
-import EdufineInquiry from "@/components/admin/EdufineInquiry";
 import { EmailHistory } from "@/components/admin/EmailHistory";
 import EmailTemplateManager from "@/components/admin/EmailTemplateManager";
 
@@ -82,7 +76,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue={user.type === "teacher" ? "data" : "password"} className="w-full">
-          <TabsList className={`grid w-full mb-6 ${user.type === "teacher" ? "grid-cols-5" : "grid-cols-12"}`}>
+          <TabsList className={`grid w-full mb-6 ${user.type === "teacher" ? "grid-cols-5" : "grid-cols-9"}`}>
             {user.type === "admin" && (
               <>
                 <TabsTrigger value="password">
@@ -128,24 +122,10 @@ const AdminDashboard = () => {
               </TabsTrigger>
             )}
             {user.type === "admin" && (
-              <>
-                <TabsTrigger value="storage">
-                  <FolderOpen className="w-4 h-4 mr-2" />
-                  파일
-                </TabsTrigger>
-                <TabsTrigger value="calendar">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  업무
-                </TabsTrigger>
-                <TabsTrigger value="weekly-meeting">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  회의
-                </TabsTrigger>
-                <TabsTrigger value="edufine">
-                  <FileText className="w-4 h-4 mr-2" />
-                  에듀파인
-                </TabsTrigger>
-              </>
+              <TabsTrigger value="storage">
+                <FolderOpen className="w-4 h-4 mr-2" />
+                파일
+              </TabsTrigger>
             )}
           </TabsList>
 
@@ -194,24 +174,9 @@ const AdminDashboard = () => {
           )}
 
           {user.type === "admin" && (
-            <>
-              <TabsContent value="storage" className="space-y-6">
-                <EdufineDocumentStorage />
-                <StorageManager />
-              </TabsContent>
-
-              <TabsContent value="calendar" className="space-y-6">
-                <EdufineUpload />
-              </TabsContent>
-
-              <TabsContent value="weekly-meeting" className="space-y-6">
-                <WeeklyMeetingUpload />
-              </TabsContent>
-
-              <TabsContent value="edufine">
-                <EdufineInquiry />
-              </TabsContent>
-            </>
+            <TabsContent value="storage">
+              <StorageManager />
+            </TabsContent>
           )}
         </Tabs>
       </main>
