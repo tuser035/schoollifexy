@@ -2026,6 +2026,11 @@ const DataInquiry = () => {
               setSearchSubject("");
               setColumnFilters({});
               
+              // 교사 선택 상태 초기화
+              if (selectedTable === "teachers") {
+                setSelectedTeachers(new Set());
+              }
+              
               // 교사 테이블인 경우 즉시 전체 조회
               if (selectedTable === "teachers") {
                 await queryTeachersImmediate({ department: null, subject: null });
@@ -2042,6 +2047,11 @@ const DataInquiry = () => {
                 setSearchDepartment(""); 
                 setSearchSubject(""); 
                 setColumnFilters({});
+                
+                // 교사 선택 상태 초기화
+                if (selectedTable === "teachers") {
+                  setSelectedTeachers(new Set());
+                }
                 
                 // 교사 테이블인 경우 즉시 전체 조회 (state 업데이트 타이밍 문제 방지)
                 if (selectedTable === "teachers") {
