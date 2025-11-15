@@ -44,6 +44,29 @@ const DataInquiry = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // 모바일 기기 감지 함수
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  // 전화번호 클릭 핸들러
+  const handlePhoneClick = async (phoneNumber: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (isMobileDevice()) {
+      // 모바일: 문자 앱 열기
+      window.location.href = `sms:${phoneNumber}`;
+    } else {
+      // PC: 클립보드에 복사
+      try {
+        await navigator.clipboard.writeText(phoneNumber);
+        toast.success(`전화번호가 복사되었습니다: ${phoneNumber}`);
+      } catch (err) {
+        toast.error("전화번호 복사에 실패했습니다");
+      }
+    }
+  };
+
   const exportToCSV = () => {
     if (data.length === 0) {
       toast.error("내보낼 데이터가 없습니다");
@@ -1151,13 +1174,13 @@ const DataInquiry = () => {
                           return (
                             <TableCell key={col} className="whitespace-nowrap">
                               {isPhoneColumn && isValidPhone ? (
-                                <a 
-                                  href={`sms:${value}`}
-                                  className="text-primary hover:underline cursor-pointer"
-                                  title="문자 보내기"
+                                <button
+                                  onClick={(e) => handlePhoneClick(value, e)}
+                                  className="text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
+                                  title={isMobileDevice() ? "문자 보내기" : "전화번호 복사"}
                                 >
                                   {value}
-                                </a>
+                                </button>
                               ) : (
                                 value
                               )}
