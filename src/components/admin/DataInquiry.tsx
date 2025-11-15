@@ -1143,11 +1143,27 @@ const DataInquiry = () => {
                             />
                           </TableCell>
                         )}
-                        {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
-                          <TableCell key={col} className="whitespace-nowrap">
-                            {row[col]?.toString() || "-"}
-                          </TableCell>
-                        ))}
+                        {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => {
+                          const value = row[col]?.toString() || "-";
+                          const isPhoneColumn = col === "전화번호" || col === "학부모전화1" || col === "학부모전화2";
+                          const isValidPhone = value !== "-" && value.trim() !== "";
+                          
+                          return (
+                            <TableCell key={col} className="whitespace-nowrap">
+                              {isPhoneColumn && isValidPhone ? (
+                                <a 
+                                  href={`sms:${value}`}
+                                  className="text-primary hover:underline cursor-pointer"
+                                  title="문자 보내기"
+                                >
+                                  {value}
+                                </a>
+                              ) : (
+                                value
+                              )}
+                            </TableCell>
+                          );
+                        })}
                         {selectedTable === "monthly" && (
                           <TableCell className="whitespace-nowrap">
                             {idx < 9 ? (
