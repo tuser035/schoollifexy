@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, ClipboardEdit, FileUp, Camera, X } from "lucide-react";
+import { Download, ClipboardEdit, FileUp, Camera, X, Send } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "monthly" | "departments";
 
@@ -50,6 +51,11 @@ const DataInquiry = () => {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const [isBulkEmailDialogOpen, setIsBulkEmailDialogOpen] = useState(false);
+  const [bulkEmailSubject, setBulkEmailSubject] = useState("");
+  const [bulkEmailBody, setBulkEmailBody] = useState("");
+  const [isSendingBulkEmail, setIsSendingBulkEmail] = useState(false);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -184,6 +190,119 @@ const DataInquiry = () => {
       toast.error(error.message || "이메일 발송에 실패했습니다");
     } finally {
       setIsSendingEmail(false);
+    }
+  };
+
+  // 학생 선택/해제 핸들러
+  const handleToggleStudent = (studentId: string, checked: boolean) => {
+    const newSet = new Set(selectedStudents);
+    if (checked) {
+      newSet.add(studentId);
+    } else {
+      newSet.delete(studentId);
+    }
+    setSelectedStudents(newSet);
+  };
+
+  // 전체 선택/해제
+  const handleToggleAllStudents = (checked: boolean) => {
+    if (checked && selectedTable === "students") {
+      const allStudentIds = new Set(data.map((row: any) => row.학번));
+      setSelectedStudents(allStudentIds);
+    } else {
+      setSelectedStudents(new Set());
+    }
+  };
+
+  // 일괄 발송 다이얼로그 열기
+  const handleOpenBulkEmailDialog = async () => {
+    if (selectedStudents.size === 0) {
+      toast.error("학생을 선택해주세요");
+      return;
+    }
+
+    // 템플릿 로드
+    await loadTemplates();
+    
+    setSelectedTemplateId("");
+    setBulkEmailSubject("학부모님께 안내 드립니다");
+    setBulkEmailBody("안녕하세요 학부모님,\n\n내용을 입력해주세요.\n\n감사합니다.");
+    setIsBulkEmailDialogOpen(true);
+  };
+
+  // 일괄 발송용 템플릿 선택
+  const handleBulkTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setBulkEmailSubject(template.subject);
+      setBulkEmailBody(template.body);
+    }
+  };
+
+  // 일괄 이메일 발송
+  const handleSendBulkEmail = async () => {
+    setIsSendingBulkEmail(true);
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) {
+        throw new Error("로그인이 필요합니다");
+      }
+
+      const user = JSON.parse(userString);
+
+      // Set session based on user type
+      if (user.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const selectedStudentIds = Array.from(selectedStudents);
+      const studentsToEmail = data.filter((row: any) => 
+        selectedStudentIds.includes(row.학번)
+      );
+
+      // 이메일 발송 이력 일괄 저장
+      const emailHistoryRecords = studentsToEmail
+        .filter((student: any) => student.이메일 && student.이메일 !== '-')
+        .map((student: any) => ({
+          sender_id: user.id,
+          sender_type: user.type,
+          sender_name: user.name || user.email || "알 수 없음",
+          recipient_email: student.이메일,
+          recipient_name: student.이름,
+          recipient_student_id: student.학번,
+          subject: bulkEmailSubject,
+          body: bulkEmailBody,
+        }));
+
+      if (emailHistoryRecords.length === 0) {
+        toast.error("선택한 학생 중 이메일 정보가 있는 학생이 없습니다");
+        return;
+      }
+
+      await supabase.from("email_history").insert(emailHistoryRecords);
+
+      // 이메일 주소 목록 생성
+      const emailAddresses = emailHistoryRecords.map(r => r.recipient_email).join(',');
+
+      // Gmail 작성 창 열기
+      window.open(
+        `https://mail.google.com/mail/?view=cm&fs=1&bcc=${emailAddresses}&su=${encodeURIComponent(bulkEmailSubject)}&body=${encodeURIComponent(bulkEmailBody)}`,
+        '_blank'
+      );
+
+      toast.success(`${emailHistoryRecords.length}명에게 이메일 작성 창이 열렸습니다`);
+      setIsBulkEmailDialogOpen(false);
+      setSelectedStudents(new Set());
+      setBulkEmailSubject("");
+      setBulkEmailBody("");
+    } catch (error: any) {
+      console.error("일괄 이메일 발송 실패:", error);
+      toast.error(error.message || "일괄 이메일 발송에 실패했습니다");
+    } finally {
+      setIsSendingBulkEmail(false);
     }
   };
 
@@ -1224,6 +1343,14 @@ const DataInquiry = () => {
                 <Download className="h-4 w-4 mr-2" />
                 CSV 내보내기
               </Button>
+              {selectedTable === "students" && selectedStudents.size > 0 && (
+                <Button 
+                  variant="default" 
+                  onClick={handleOpenBulkEmailDialog}
+                >
+                  일괄 메시지 발송 ({selectedStudents.size})
+                </Button>
+              )}
               {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
                 <Button 
                   variant="destructive" 
@@ -1242,6 +1369,16 @@ const DataInquiry = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {selectedTable === "students" && (
+                      <TableHead className="w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedStudents.size > 0 && selectedStudents.size === data.length}
+                          onChange={(e) => handleToggleAllStudents(e.target.checked)}
+                          className="cursor-pointer"
+                        />
+                      </TableHead>
+                    )}
                     {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
                       <TableHead className="w-12">
                         <input
@@ -1276,6 +1413,16 @@ const DataInquiry = () => {
                     
                     return (
                       <TableRow key={idx}>
+                        {selectedTable === "students" && row["학번"] && (
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedStudents.has(row["학번"])}
+                              onChange={(e) => handleToggleStudent(row["학번"], e.target.checked)}
+                              className="cursor-pointer"
+                            />
+                          </TableCell>
+                        )}
                         {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && rawData?.id && (
                           <TableCell>
                             <input
@@ -1525,6 +1672,74 @@ const DataInquiry = () => {
               disabled={isSendingEmail || !emailSubject.trim() || !emailBody.trim()}
             >
               {isSendingEmail ? "발송 중..." : "발송"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 일괄 메시지 발송 다이얼로그 */}
+      <Dialog open={isBulkEmailDialogOpen} onOpenChange={setIsBulkEmailDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>일괄 메시지 발송</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>템플릿 선택</Label>
+              <Select value={selectedTemplateId} onValueChange={handleBulkTemplateSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="템플릿을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>수신자 ({selectedStudents.size}명)</Label>
+              <div className="text-sm text-muted-foreground max-h-24 overflow-y-auto p-2 border rounded">
+                {Array.from(selectedStudents).map((studentId) => {
+                  const student = data.find((row: any) => row.학번 === studentId);
+                  return student ? `${student.이름} (${studentId})` : studentId;
+                }).join(', ')}
+              </div>
+            </div>
+            <div>
+              <Label>제목</Label>
+              <Input
+                value={bulkEmailSubject}
+                onChange={(e) => setBulkEmailSubject(e.target.value)}
+                placeholder="이메일 제목"
+              />
+            </div>
+            <div>
+              <Label>내용</Label>
+              <Textarea
+                value={bulkEmailBody}
+                onChange={(e) => setBulkEmailBody(e.target.value)}
+                placeholder="이메일 내용을 입력하세요"
+                rows={12}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkEmailDialogOpen(false)}
+              disabled={isSendingBulkEmail}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSendBulkEmail}
+              disabled={isSendingBulkEmail || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}
+            >
+              {isSendingBulkEmail ? "발송 중..." : "일괄 발송"}
             </Button>
           </DialogFooter>
         </DialogContent>
