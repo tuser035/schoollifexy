@@ -1062,6 +1062,22 @@ const DataInquiry = () => {
     }
   };
 
+  // 전화번호 포맷팅 함수
+  const formatPhoneNumber = (value: string) => {
+    // 숫자만 추출
+    const numbers = value.replace(/[^\d]/g, '');
+    
+    // 길이에 따라 포맷팅
+    if (numbers.length <= 3) {
+      return numbers;
+    } else if (numbers.length <= 7) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    } else if (numbers.length <= 11) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+    }
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  };
+
   // 신규 교사 추가
   const handleAddTeacher = async () => {
     try {
@@ -1081,7 +1097,22 @@ const DataInquiry = () => {
       }
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      
+      // 먼저 관리자 권한 확인
+      if (user.type !== "admin") {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
+      // 세션 설정
+      const { error: sessionError } = await supabase.rpc("set_admin_session", { 
+        admin_id_input: user.id 
+      });
+
+      if (sessionError) {
+        console.error("세션 설정 오류:", sessionError);
+        throw new Error("관리자 세션 설정에 실패했습니다");
+      }
 
       // 교사 데이터 준비
       const teacherInsertData: any = {
@@ -1102,7 +1133,10 @@ const DataInquiry = () => {
         .from("teachers")
         .insert([teacherInsertData]);
 
-      if (error) throw error;
+      if (error) {
+        console.error("교사 추가 오류:", error);
+        throw error;
+      }
 
       toast.success("신규 교사가 추가되었습니다");
       setIsAddTeacherDialogOpen(false);
@@ -2761,9 +2795,12 @@ const DataInquiry = () => {
                 <Input
                   id="teacher-phone"
                   value={newTeacherData.call_t}
-                  onChange={(e) => setNewTeacherData({ ...newTeacherData, call_t: e.target.value })}
+                  onChange={(e) => {
+                    const formatted = formatPhoneNumber(e.target.value);
+                    setNewTeacherData({ ...newTeacherData, call_t: formatted });
+                  }}
                   placeholder="010-XXXX-XXXX"
-                  maxLength={20}
+                  maxLength={13}
                 />
               </div>
             </div>
