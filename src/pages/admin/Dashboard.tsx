@@ -141,7 +141,7 @@ const AdminDashboard = () => {
         </header>
 
         <div className="flex flex-1 w-full">
-          <Sidebar collapsible="icon" className="border-r">
+          <Sidebar collapsible="icon" className="border-r w-32 data-[state=collapsed]:w-14">
             <SidebarContent className="overflow-y-auto">
               <SidebarGroup>
                 <SidebarGroupContent>
@@ -154,10 +154,10 @@ const AdminDashboard = () => {
                             onClick={() => setActiveTab(item.value)}
                             isActive={activeTab === item.value}
                             tooltip={item.label}
-                            className="w-full"
+                            className="w-full text-xs"
                           >
-                            <Icon className="h-4 w-4" />
-                            <span>{item.label}</span>
+                            <Icon className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{item.label}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
