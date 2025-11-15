@@ -1231,7 +1231,8 @@ const DataInquiry = () => {
 
       setData(result);
       setColumns(result[0] ? Object.keys(result[0]) : []);
-      // 정확한 총 인원수 계산 (LIMIT 영향 방지)
+      setOriginalData(result); // 담당교과 필터 목록 업데이트를 위해 originalData 설정
+      // 정확한 총 인원수 계산 및 토스트 메시지 표시
       try {
         let q = supabase.from('teachers').select('*', { count: 'exact', head: true });
         const deptVal = overrides?.department ?? (searchDepartment.trim() || null);
@@ -1239,7 +1240,15 @@ const DataInquiry = () => {
         if (deptVal) q = q.ilike('department', `%${deptVal}%`);
         if (subjVal) q = q.ilike('subject', `%${subjVal}%`);
         const { count: totalCount } = await q;
-        toast.success(`전체 교사 인원: ${totalCount ?? result.length}명`);
+        
+        // 필터가 적용된 경우와 전체 조회 구분
+        if (subjVal) {
+          toast.success(`${subjVal} 교사: ${totalCount ?? result.length}명`);
+        } else if (deptVal) {
+          toast.success(`${deptVal} 교사: ${totalCount ?? result.length}명`);
+        } else {
+          toast.success(`전체 교사 인원: ${totalCount ?? result.length}명`);
+        }
       } catch {
         toast.success(`전체 교사 인원: ${result.length}명`);
       }
