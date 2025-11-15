@@ -1624,12 +1624,18 @@ const DataInquiry = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="템플릿을 선택하세요" />
                 </SelectTrigger>
-                <SelectContent>
-                  {templates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="bg-background z-50">
+                  {templates.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      등록된 템플릿이 없습니다
+                    </div>
+                  ) : (
+                    templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -1690,12 +1696,18 @@ const DataInquiry = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="템플릿을 선택하세요" />
                 </SelectTrigger>
-                <SelectContent>
-                  {templates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="bg-background z-50">
+                  {templates.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      등록된 템플릿이 없습니다
+                    </div>
+                  ) : (
+                    templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
