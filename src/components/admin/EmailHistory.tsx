@@ -34,7 +34,7 @@ export const EmailHistory = () => {
   const loadHistory = async () => {
     setLoading(true);
     try {
-      const userString = localStorage.getItem("user");
+      const userString = localStorage.getItem("auth_user");
       if (!userString) {
         throw new Error("로그인이 필요합니다");
       }

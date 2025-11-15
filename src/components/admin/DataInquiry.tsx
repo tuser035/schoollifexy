@@ -71,7 +71,7 @@ const DataInquiry = () => {
   // 이메일 클릭 핸들러
   const handleEmailClick = async (email: string, name: string, studentId?: string) => {
     // 현재 로그인한 사용자 정보 가져오기
-    const userString = localStorage.getItem("user");
+    const userString = localStorage.getItem("auth_user");
     let senderInfo = "";
     let user: any = null;
     
