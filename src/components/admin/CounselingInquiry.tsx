@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Pencil, Trash2 } from "lucide-react";
+import { FileText, Pencil, Trash2, Download } from "lucide-react";
 
 interface CounselingRecord {
   id: string;
@@ -208,11 +208,46 @@ const CounselingInquiry = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (records.length === 0) {
+      toast.error("내보낼 데이터가 없습니다");
+      return;
+    }
+
+    const headers = ["상담일자", "상담사", "상담내용", "등록일시"];
+    const csvData = records.map(record => [
+      record.counseling_date,
+      record.counselor_name,
+      `"${record.content.replace(/"/g, '""')}"`,
+      new Date(record.created_at).toLocaleString("ko-KR")
+    ]);
+
+    const csvContent = [
+      `학생정보: ${studentName} (${studentId})`,
+      "",
+      headers.join(","),
+      ...csvData.map(row => row.join(","))
+    ].join("\n");
+
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `상담기록_${studentName}_${studentId}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("CSV 파일로 내보냈습니다");
+  };
+
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>진로상담 기록 조회</CardTitle>
+          <CardTitle>상담 기록 조회</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -226,6 +261,12 @@ const CounselingInquiry = () => {
             <Button onClick={handleQuery} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
+            {records.length > 0 && (
+              <Button onClick={handleExportCSV} variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                CSV 내보내기
+              </Button>
+            )}
             {searchInput && (
               <Button 
                 variant="outline" 
