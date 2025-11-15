@@ -207,6 +207,14 @@ const BulkUpload = () => {
       const deptNameToCode = new Map(
         departments?.map(d => [d.name?.trim(), d.code]) || []
       );
+      
+      // Add additional alias mappings for common variations
+      deptNameToCode.set('글로벌경영', 'g');
+      deptNameToCode.set('관광서비스', 't');
+      deptNameToCode.set('스포츠마케팅', 's');
+      deptNameToCode.set('유튜브창업', 'y');
+      deptNameToCode.set('IT융합정보', 'i');
+      
       const validDeptCodes = new Set(
         departments?.map(d => d.code) || []
       );
