@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -40,7 +40,7 @@ const menuItems = (userType: "admin" | "teacher") => {
     ] : []),
     { value: "statistics", label: "통계", icon: TrendingUp },
     { value: "leaderboard", label: "순위", icon: Trophy },
-    { value: "email-history", label: "이메일", icon: FileText },
+    { value: "email-history", label: "이메일", icon: Mail },
     ...(userType === "admin" ? [
       { value: "email-templates", label: "템플릿", icon: FileText },
       { value: "storage", label: "파일", icon: FolderOpen },
