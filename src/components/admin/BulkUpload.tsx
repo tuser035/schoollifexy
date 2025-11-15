@@ -265,7 +265,8 @@ const BulkUpload = () => {
           let record: any = {};
           
           if (table === "students") {
-            const deptInput = values[1]?.trim() || null;
+            const sIdx = idx.students;
+            const deptInput = sIdx.dept_code !== -1 ? values[sIdx.dept_code]?.trim() : null;
             let deptCode = null;
             
             if (deptInput) {
@@ -279,16 +280,16 @@ const BulkUpload = () => {
             }
             
             record = {
-              student_id: values[0],
+              student_id: sIdx.student_id !== -1 ? values[sIdx.student_id] : values[0],
+              name: sIdx.name !== -1 ? values[sIdx.name] : values[1],
+              grade: sIdx.grade !== -1 ? parseInt(values[sIdx.grade]) : parseInt(values[2]),
+              class: sIdx.class !== -1 ? parseInt(values[sIdx.class]) : parseInt(values[3]),
+              number: sIdx.number !== -1 ? parseInt(values[sIdx.number]) : parseInt(values[4]),
               dept_code: deptCode,
-              grade: parseInt(values[2]),
-              class: parseInt(values[3]),
-              number: parseInt(values[4]),
-              name: values[5],
-              gmail: values[6] || null,
-              student_call: values[7] || null,
-              parents_call1: values[8] || null,
-              parents_call2: values[9] || null,
+              student_call: sIdx.student_call !== -1 ? (values[sIdx.student_call] || null) : (values[6] || null),
+              gmail: sIdx.gmail !== -1 ? (values[sIdx.gmail] || null) : (values[7] || null),
+              parents_call1: sIdx.parents_call1 !== -1 ? (values[sIdx.parents_call1] || null) : (values[8] || null),
+              parents_call2: sIdx.parents_call2 !== -1 ? (values[sIdx.parents_call2] || null) : (values[9] || null),
             };
           } else if (table === "teachers") {
             record = {
