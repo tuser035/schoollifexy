@@ -1881,21 +1881,24 @@ const DataInquiry = () => {
               maxLength={100}
             />
             <Button onClick={() => {
-              // 메인 조회 버튼은 컬럼 필터(부서, 담당교과)를 초기화하고 검색어만 사용
+              // 항상 컬럼 필터 초기화 후 조회
               setSearchDepartment("");
               setSearchSubject("");
-              setTimeout(() => handleQuery(), 50);
+              setColumnFilters({});
+              // state 업데이트 후 조회
+              setTimeout(() => handleQuery(), 150);
             }} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
-            {(searchTerm || searchDepartment || searchSubject) && (
+            {(searchTerm || searchDepartment || searchSubject || Object.keys(columnFilters).length > 0) && (
               <Button variant="outline" onClick={() => { 
                 setSearchTerm(""); 
                 setSearchDepartment(""); 
                 setSearchSubject(""); 
-                setTimeout(() => handleQuery(), 50); 
+                setColumnFilters({});
+                setTimeout(() => handleQuery(), 100); 
               }}>
-                초기화
+                전체 초기화
               </Button>
             )}
             {Object.keys(columnFilters).length > 0 && (
