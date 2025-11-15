@@ -1870,9 +1870,20 @@ const DataInquiry = () => {
                 onClick={() => setColumnFilters({})}
                 className="text-xs"
               >
-                필터 초기화 ({Object.keys(columnFilters).length})
-              </Button>
-            )}
+              필터 초기화 ({Object.keys(columnFilters).length})
+            </Button>
+          )}
+          {selectedTable === "teachers" && (
+            <Button 
+              variant="default"
+              onClick={() => {
+                loadDepartments();
+                setIsAddTeacherDialogOpen(true);
+              }}
+            >
+              신규 교사 추가
+            </Button>
+          )}
           {data.length > 0 && (
             <>
               <Button variant="outline" onClick={exportToCSV}>
@@ -1991,15 +2002,6 @@ const DataInquiry = () => {
                       )}
                     </PopoverContent>
                   </Popover>
-                  <Button 
-                    variant="default"
-                    onClick={() => {
-                      loadDepartments();
-                      setIsAddTeacherDialogOpen(true);
-                    }}
-                  >
-                    신규 교사 추가
-                  </Button>
                 </>
               )}
               {selectedTable === "teachers" && selectedTeachers.size > 0 && (
