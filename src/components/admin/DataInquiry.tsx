@@ -67,6 +67,7 @@ const DataInquiry = () => {
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [originalData, setOriginalData] = useState<any[]>([]);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
