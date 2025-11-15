@@ -18,6 +18,7 @@ import WeeklyMeetingUpload from "@/components/admin/WeeklyMeetingUpload";
 import EdufineUpload from "@/components/admin/EdufineUpload";
 import EdufineDocumentStorage from "@/components/admin/EdufineDocumentStorage";
 import EdufineInquiry from "@/components/admin/EdufineInquiry";
+import { EmailHistory } from "@/components/admin/EmailHistory";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -133,6 +134,10 @@ const AdminDashboard = () => {
                   <FileText className="w-4 h-4 mr-2" />
                   에듀파인
                 </TabsTrigger>
+                <TabsTrigger value="email-history">
+                  <FileText className="w-4 h-4 mr-2" />
+                  이메일
+                </TabsTrigger>
               </>
             )}
           </TabsList>
@@ -188,6 +193,10 @@ const AdminDashboard = () => {
 
               <TabsContent value="edufine">
                 <EdufineInquiry />
+              </TabsContent>
+
+              <TabsContent value="email-history">
+                <EmailHistory />
               </TabsContent>
             </>
           )}

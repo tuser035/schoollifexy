@@ -69,14 +69,15 @@ const DataInquiry = () => {
   };
 
   // 이메일 클릭 핸들러
-  const handleEmailClick = (email: string, name: string) => {
+  const handleEmailClick = async (email: string, name: string, studentId?: string) => {
     // 현재 로그인한 사용자 정보 가져오기
     const userString = localStorage.getItem("user");
     let senderInfo = "";
+    let user: any = null;
     
     if (userString) {
       try {
-        const user = JSON.parse(userString);
+        user = JSON.parse(userString);
         const userType = user.type === "teacher" ? "교사" : user.type === "admin" ? "관리자" : "사용자";
         senderInfo = `발신자: ${user.name || user.email || "알 수 없음"} (${userType})`;
       } catch (e) {
@@ -85,17 +86,41 @@ const DataInquiry = () => {
     }
 
     // Gmail 작성 링크 생성
-    const subject = encodeURIComponent(`${name}님께 문의드립니다`);
-    const body = encodeURIComponent(
+    const subject = `${name}님께 문의드립니다`;
+    const body = 
       `안녕하세요 ${name}님,\n\n` +
       `문의 내용을 입력해주세요.\n\n` +
       `---\n` +
       `${senderInfo}\n` +
-      `발신 시각: ${new Date().toLocaleString('ko-KR')}`
-    );
+      `발신 시각: ${new Date().toLocaleString('ko-KR')}`;
+    
+    // 이메일 발송 이력 저장
+    if (user) {
+      try {
+        // Set session based on user type
+        if (user.type === "admin") {
+          await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+        } else if (user.type === "teacher") {
+          await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+        }
+
+        await supabase.from("email_history").insert({
+          sender_id: user.id,
+          sender_type: user.type,
+          sender_name: user.name || user.email || "알 수 없음",
+          recipient_email: email,
+          recipient_name: name,
+          recipient_student_id: studentId || null,
+          subject: subject,
+          body: body,
+        });
+      } catch (error) {
+        console.error("이메일 이력 저장 실패:", error);
+      }
+    }
     
     window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`,
+      `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
       '_blank'
     );
   };
@@ -1206,6 +1231,7 @@ const DataInquiry = () => {
                           const isValidPhone = value !== "-" && value.trim() !== "";
                           const isValidEmail = value !== "-" && value.trim() !== "" && value.includes("@");
                           const studentName = row["이름"] || row["name"] || "";
+                          const studentId = row["학번"] || row["student_id"] || undefined;
                           
                           return (
                             <TableCell key={col} className="whitespace-nowrap">
@@ -1219,7 +1245,7 @@ const DataInquiry = () => {
                                 </button>
                               ) : isEmailColumn && isValidEmail ? (
                                 <button
-                                  onClick={() => handleEmailClick(value, studentName)}
+                                  onClick={() => handleEmailClick(value, studentName, studentId)}
                                   className="text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
                                   title="이메일 보내기"
                                 >
