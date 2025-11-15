@@ -1104,34 +1104,19 @@ const DataInquiry = () => {
         return;
       }
 
-      // 세션 설정
-      const { error: sessionError } = await supabase.rpc("set_admin_session", { 
-        admin_id_input: user.id 
+      // 데이터베이스 함수를 사용하여 교사 추가 (RLS 자동 처리)
+      const { data, error } = await supabase.rpc("admin_insert_teacher", {
+        admin_id_input: user.id,
+        name_input: newTeacherData.name.trim(),
+        call_t_input: newTeacherData.call_t.trim(),
+        teacher_email_input: newTeacherData.teacher_email.trim(),
+        grade_input: newTeacherData.grade && newTeacherData.grade !== "none" ? parseInt(newTeacherData.grade) : null,
+        class_input: newTeacherData.class && newTeacherData.class !== "none" ? parseInt(newTeacherData.class) : null,
+        is_homeroom_input: newTeacherData.is_homeroom,
+        dept_code_input: newTeacherData.dept_code && newTeacherData.dept_code !== "none" ? newTeacherData.dept_code : null,
+        department_input: newTeacherData.department.trim() || null,
+        subject_input: newTeacherData.subject.trim() || null
       });
-
-      if (sessionError) {
-        console.error("세션 설정 오류:", sessionError);
-        throw new Error("관리자 세션 설정에 실패했습니다");
-      }
-
-      // 교사 데이터 준비
-      const teacherInsertData: any = {
-        name: newTeacherData.name.trim(),
-        call_t: newTeacherData.call_t.trim(),
-        teacher_email: newTeacherData.teacher_email.trim(),
-        is_homeroom: newTeacherData.is_homeroom
-      };
-
-      // 선택적 필드 추가
-      if (newTeacherData.grade && newTeacherData.grade !== "none") teacherInsertData.grade = parseInt(newTeacherData.grade);
-      if (newTeacherData.class && newTeacherData.class !== "none") teacherInsertData.class = parseInt(newTeacherData.class);
-      if (newTeacherData.dept_code && newTeacherData.dept_code !== "none") teacherInsertData.dept_code = newTeacherData.dept_code;
-      if (newTeacherData.department.trim()) teacherInsertData.department = newTeacherData.department.trim();
-      if (newTeacherData.subject.trim()) teacherInsertData.subject = newTeacherData.subject.trim();
-
-      const { error } = await supabase
-        .from("teachers")
-        .insert([teacherInsertData]);
 
       if (error) {
         console.error("교사 추가 오류:", error);
