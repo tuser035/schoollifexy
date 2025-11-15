@@ -266,12 +266,20 @@ const DataInquiry = () => {
       const selectedStudentIds = Array.from(selectedStudents);
       const studentsToEmail = data
         .filter((row: any) => selectedStudentIds.includes(row.학번))
-        .filter((student: any) => student.이메일 && student.이메일 !== '-' && student.이메일.includes('@'))
-        .map((student: any) => ({
-          studentId: student.학번,
-          name: student.이름,
-          email: student.이메일,
-        }));
+        .map((student: any) => {
+          const email = student.이메일 || student.gmail;
+          return {
+            studentId: student.학번,
+            name: student.이름,
+            email: email,
+            hasValidEmail: email && email !== '-' && email.trim() !== '' && email.includes('@')
+          };
+        })
+        .filter((student: any) => student.hasValidEmail)
+        .map(({ studentId, name, email }) => ({ studentId, name, email }));
+
+      console.log("선택된 학생 수:", selectedStudentIds.length);
+      console.log("유효한 이메일을 가진 학생:", studentsToEmail);
 
       if (studentsToEmail.length === 0) {
         toast.error("선택한 학생 중 유효한 이메일이 있는 학생이 없습니다");
