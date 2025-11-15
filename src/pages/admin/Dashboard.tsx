@@ -141,11 +141,11 @@ const AdminDashboard = () => {
         </header>
 
         <div className="flex flex-1 w-full">
-          <Sidebar collapsible="icon">
-            <SidebarContent>
+          <Sidebar collapsible="icon" className="border-r">
+            <SidebarContent className="overflow-y-auto">
               <SidebarGroup>
                 <SidebarGroupContent>
-                  <SidebarMenu>
+                  <SidebarMenu className="gap-1">
                     {menuItems(user.type === "student" ? "teacher" : user.type).map((item) => {
                       const Icon = item.icon;
                       return (
@@ -154,6 +154,7 @@ const AdminDashboard = () => {
                             onClick={() => setActiveTab(item.value)}
                             isActive={activeTab === item.value}
                             tooltip={item.label}
+                            className="w-full"
                           >
                             <Icon className="h-4 w-4" />
                             <span>{item.label}</span>
