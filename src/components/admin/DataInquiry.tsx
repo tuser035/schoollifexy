@@ -2267,7 +2267,7 @@ const DataInquiry = () => {
                       <TableHead key={col} className="whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span>{col}</span>
-                          {selectedTable === "teachers" && (col === "부서" || col === "담당교과") && (
+                          {selectedTable === "teachers" && (col === "부서" || col === "담당교과" || col === "담임여부" || col === "학과") && (
                             <Popover 
                               open={filterPopoverOpen[col] || false}
                               onOpenChange={(open) => setFilterPopoverOpen({...filterPopoverOpen, [col]: open})}
@@ -2289,18 +2289,25 @@ const DataInquiry = () => {
                                   <div className="max-h-60 overflow-y-auto space-y-1">
                                     <button
                                       onClick={async () => {
-                                        // 모든 클라이언트 필터 초기화
-                                        setColumnFilters({});
-
-                                        // 서버 검색 조건도 완전 초기화
-                                        setSearchDepartment("");
-                                        setSearchSubject("");
+                                        const newFilters = { ...columnFilters };
+                                        delete newFilters[col];
+                                        setColumnFilters(newFilters);
                                         
-                                        // Popover 닫기
-                                        setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
-                                        
-                                        // 즉시 전체 재조회 (한 번 클릭으로 전체 리스트 확정)
-                                        await queryTeachersImmediate({ department: null, subject: null });
+                                        // 부서나 담당교과인 경우 서버 검색 조건도 초기화하고 즉시 재조회
+                                        if (col === "부서") {
+                                          setSearchDepartment("");
+                                          setSearchSubject("");
+                                          setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                          await queryTeachersImmediate({ department: null, subject: null });
+                                        } else if (col === "담당교과") {
+                                          setSearchDepartment("");
+                                          setSearchSubject("");
+                                          setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                          await queryTeachersImmediate({ department: null, subject: null });
+                                        } else {
+                                          // 담임여부, 학과는 클라이언트 필터만 초기화
+                                          setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                        }
                                       }}
                                       className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${!columnFilters[col] ? 'bg-muted' : ''}`}
                                     >
@@ -2310,26 +2317,25 @@ const DataInquiry = () => {
                                       <button
                                         key={value}
                                         onClick={() => {
-                                          // 검색 조건 초기화하고 해당 컬럼 값으로 서버 검색
+                                          // 검색 조건 초기화하고 해당 컬럼 값으로 필터링
                                           setSearchTerm("");
-                                          setColumnFilters({}); // 클라이언트 필터 완전 초기화
+                                          const newFilters = { ...columnFilters, [col]: value };
+                                          setColumnFilters(newFilters);
                                           
                                           if (col === "부서") {
                                             setSearchDepartment(value as string);
                                             setSearchSubject("");
+                                            setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                            void queryTeachersImmediate({ department: value as string, subject: undefined });
                                           } else if (col === "담당교과") {
                                             setSearchSubject(value as string);
                                             setSearchDepartment("");
+                                            setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
+                                            void queryTeachersImmediate({ department: undefined, subject: value as string });
+                                          } else {
+                                            // 담임여부, 학과는 클라이언트 필터만 적용
+                                            setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
                                           }
-                                          
-                                          // Popover 닫기
-                                          setFilterPopoverOpen({...filterPopoverOpen, [col]: false});
-                                          
-                                          // 즉시 서버 조회
-                                          void queryTeachersImmediate({
-                                            department: col === "부서" ? (value as string) : undefined,
-                                            subject: col === "담당교과" ? (value as string) : undefined,
-                                          });
                                         }}
                                         className={`w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted ${columnFilters[col] === value ? 'bg-muted' : ''}`}
                                       >
