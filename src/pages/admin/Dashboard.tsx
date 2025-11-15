@@ -81,7 +81,7 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue={user.type === "teacher" ? "data" : "password"} className="w-full">
-          <TabsList className={`grid w-full mb-6 ${user.type === "teacher" ? "grid-cols-4" : "grid-cols-11"}`}>
+          <TabsList className={`grid w-full mb-6 ${user.type === "teacher" ? "grid-cols-5" : "grid-cols-11"}`}>
             {user.type === "admin" && (
               <>
                 <TabsTrigger value="password">
@@ -116,6 +116,10 @@ const AdminDashboard = () => {
               <Trophy className="w-4 h-4 mr-2" />
               순위
             </TabsTrigger>
+            <TabsTrigger value="email-history">
+              <FileText className="w-4 h-4 mr-2" />
+              이메일
+            </TabsTrigger>
             {user.type === "admin" && (
               <>
                 <TabsTrigger value="storage">
@@ -133,10 +137,6 @@ const AdminDashboard = () => {
                 <TabsTrigger value="edufine">
                   <FileText className="w-4 h-4 mr-2" />
                   에듀파인
-                </TabsTrigger>
-                <TabsTrigger value="email-history">
-                  <FileText className="w-4 h-4 mr-2" />
-                  이메일
                 </TabsTrigger>
               </>
             )}
@@ -176,6 +176,10 @@ const AdminDashboard = () => {
             <StudentLeaderboard />
           </TabsContent>
 
+          <TabsContent value="email-history">
+            <EmailHistory />
+          </TabsContent>
+
           {user.type === "admin" && (
             <>
               <TabsContent value="storage" className="space-y-6">
@@ -193,10 +197,6 @@ const AdminDashboard = () => {
 
               <TabsContent value="edufine">
                 <EdufineInquiry />
-              </TabsContent>
-
-              <TabsContent value="email-history">
-                <EmailHistory />
               </TabsContent>
             </>
           )}
