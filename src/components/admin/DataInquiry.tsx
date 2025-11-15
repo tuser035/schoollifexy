@@ -56,6 +56,10 @@ const DataInquiry = () => {
   const [bulkEmailSubject, setBulkEmailSubject] = useState("");
   const [bulkEmailBody, setBulkEmailBody] = useState("");
   const [isSendingBulkEmail, setIsSendingBulkEmail] = useState(false);
+  const [studentGroups, setStudentGroups] = useState<any[]>([]);
+  const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [isSavingGroup, setIsSavingGroup] = useState(false);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -78,6 +82,35 @@ const DataInquiry = () => {
       } catch (err) {
         toast.error("복사에 실패했습니다");
       }
+    }
+  };
+
+  // 학생 그룹 로드
+  const loadStudentGroups = async () => {
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) return;
+
+      const user = JSON.parse(userString);
+
+      // Set session for RLS
+      if (user.role === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.role === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const { data, error } = await supabase
+        .from("student_groups")
+        .select("*")
+        .eq("admin_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setStudentGroups(data || []);
+    } catch (error: any) {
+      console.error("그룹 로드 실패:", error);
     }
   };
 
@@ -249,6 +282,96 @@ const DataInquiry = () => {
     if (template) {
       setBulkEmailSubject(template.subject);
       setBulkEmailBody(template.body);
+    }
+  };
+
+  // 그룹 저장
+  const handleSaveGroup = async () => {
+    if (!newGroupName.trim()) {
+      toast.error("그룹명을 입력해주세요");
+      return;
+    }
+
+    if (selectedStudents.size === 0) {
+      toast.error("학생을 선택해주세요");
+      return;
+    }
+
+    setIsSavingGroup(true);
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) throw new Error("로그인이 필요합니다");
+
+      const user = JSON.parse(userString);
+
+      // Set session for RLS
+      if (user.role === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.role === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const { error } = await supabase.from("student_groups").insert({
+        admin_id: user.id,
+        group_name: newGroupName,
+        student_ids: Array.from(selectedStudents),
+      });
+
+      if (error) throw error;
+
+      toast.success(`"${newGroupName}" 그룹이 저장되었습니다`);
+      setIsGroupDialogOpen(false);
+      setNewGroupName("");
+      loadStudentGroups();
+    } catch (error: any) {
+      console.error("그룹 저장 실패:", error);
+      toast.error("그룹 저장에 실패했습니다");
+    } finally {
+      setIsSavingGroup(false);
+    }
+  };
+
+  // 그룹 불러오기
+  const handleLoadGroup = async (groupId: string) => {
+    try {
+      const group = studentGroups.find((g) => g.id === groupId);
+      if (!group) return;
+
+      // 해당 그룹의 학생 ID들을 선택 상태로 설정
+      setSelectedStudents(new Set(group.student_ids));
+      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${group.student_ids.length}명)`);
+    } catch (error: any) {
+      console.error("그룹 불러오기 실패:", error);
+      toast.error("그룹 불러오기에 실패했습니다");
+    }
+  };
+
+  // 그룹 삭제
+  const handleDeleteGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?`)) return;
+
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) throw new Error("로그인이 필요합니다");
+
+      const user = JSON.parse(userString);
+
+      // Set session for RLS
+      if (user.role === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.role === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const { error } = await supabase.from("student_groups").delete().eq("id", groupId);
+
+      if (error) throw error;
+
+      toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
+      loadStudentGroups();
+    } catch (error: any) {
+      console.error("그룹 삭제 실패:", error);
+      toast.error("그룹 삭제에 실패했습니다");
     }
   };
 
@@ -1289,6 +1412,11 @@ const DataInquiry = () => {
       if (result && result.length > 0) {
         setColumns(Object.keys(result[0]));
         setData(result);
+        
+        // 학생 테이블을 조회한 경우 그룹 목록도 로드
+        if (selectedTable === "students") {
+          loadStudentGroups();
+        }
       } else {
         setColumns([]);
         setData([]);
@@ -1353,12 +1481,34 @@ const DataInquiry = () => {
                 CSV 내보내기
               </Button>
               {selectedTable === "students" && selectedStudents.size > 0 && (
-                <Button 
-                  variant="default" 
-                  onClick={handleOpenBulkEmailDialog}
-                >
-                  일괄 메시지 발송 ({selectedStudents.size})
-                </Button>
+                <>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsGroupDialogOpen(true)}
+                  >
+                    그룹 저장 ({selectedStudents.size})
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    onClick={handleOpenBulkEmailDialog}
+                  >
+                    일괄 메시지 발송 ({selectedStudents.size})
+                  </Button>
+                </>
+              )}
+              {selectedTable === "students" && studentGroups.length > 0 && (
+                <Select onValueChange={handleLoadGroup}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="저장된 그룹 불러오기" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {studentGroups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.group_name} ({group.student_ids.length}명)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
               {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
                 <Button 
@@ -1761,6 +1911,77 @@ const DataInquiry = () => {
               disabled={isSendingBulkEmail || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}
             >
               {isSendingBulkEmail ? "발송 중..." : "일괄 발송"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 그룹 저장 다이얼로그 */}
+      <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
+        <DialogContent className="bg-background max-w-md">
+          <DialogHeader>
+            <DialogTitle>학생 그룹 저장</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>그룹명</Label>
+              <Input
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="예: 로봇 동아리, 축구부"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isSavingGroup) {
+                    handleSaveGroup();
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <Label>선택된 학생 ({selectedStudents.size}명)</Label>
+              <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto p-2 border rounded">
+                {Array.from(selectedStudents).map((studentId) => {
+                  const student = data.find((row: any) => row.학번 === studentId);
+                  return student ? `${student.이름} (${studentId})` : studentId;
+                }).join(', ')}
+              </div>
+            </div>
+            {studentGroups.length > 0 && (
+              <div>
+                <Label>기존 그룹 목록</Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto p-2 border rounded">
+                  {studentGroups.map((group) => (
+                    <div key={group.id} className="flex items-center justify-between text-sm">
+                      <span>{group.group_name} ({group.student_ids.length}명)</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteGroup(group.id, group.group_name)}
+                        className="h-6 px-2"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsGroupDialogOpen(false);
+                setNewGroupName("");
+              }}
+              disabled={isSavingGroup}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSaveGroup}
+              disabled={isSavingGroup || !newGroupName.trim()}
+            >
+              {isSavingGroup ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>

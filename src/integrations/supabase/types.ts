@@ -317,6 +317,33 @@ export type Database = {
           },
         ]
       }
+      student_groups: {
+        Row: {
+          admin_id: string
+          created_at: string | null
+          group_name: string
+          id: string
+          student_ids: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string | null
+          group_name: string
+          id?: string
+          student_ids: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string | null
+          group_name?: string
+          id?: string
+          student_ids?: string[]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           class: number
