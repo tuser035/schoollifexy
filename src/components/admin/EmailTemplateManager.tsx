@@ -74,33 +74,29 @@ const EmailTemplateManager = () => {
       }
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
       if (editingTemplate) {
-        // Update existing template
-        const { error } = await supabase
-          .from("email_templates")
-          .update({
-            title: formData.title,
-            subject: formData.subject,
-            body: formData.body,
-            template_type: formData.template_type,
-          })
-          .eq("id", editingTemplate.id);
+        // Update existing template using RPC
+        const { error } = await supabase.rpc("admin_update_email_template", {
+          admin_id_input: user.id,
+          template_id_input: editingTemplate.id,
+          title_input: formData.title,
+          subject_input: formData.subject,
+          body_input: formData.body,
+          template_type_input: formData.template_type,
+        });
 
         if (error) throw error;
         toast.success("템플릿이 수정되었습니다");
       } else {
-        // Create new template
-        const { error } = await supabase
-          .from("email_templates")
-          .insert({
-            title: formData.title,
-            subject: formData.subject,
-            body: formData.body,
-            template_type: formData.template_type,
-            admin_id: user.id,
-          });
+        // Create new template using RPC
+        const { error } = await supabase.rpc("admin_insert_email_template", {
+          admin_id_input: user.id,
+          title_input: formData.title,
+          subject_input: formData.subject,
+          body_input: formData.body,
+          template_type_input: formData.template_type,
+        });
 
         if (error) throw error;
         toast.success("템플릿이 생성되었습니다");
@@ -134,12 +130,11 @@ const EmailTemplateManager = () => {
       if (!authUser) return;
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
-      const { error } = await supabase
-        .from("email_templates")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.rpc("admin_delete_email_template", {
+        admin_id_input: user.id,
+        template_id_input: id,
+      });
 
       if (error) throw error;
       toast.success("템플릿이 삭제되었습니다");

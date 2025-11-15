@@ -431,6 +431,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_email_template: {
+        Args: { admin_id_input: string; template_id_input: string }
+        Returns: boolean
+      }
       admin_get_counseling_records: {
         Args: { admin_id_input: string; student_id_input: string }
         Returns: {
@@ -645,6 +649,27 @@ export type Database = {
           name: string
           teacher_email: string
         }[]
+      }
+      admin_insert_email_template: {
+        Args: {
+          admin_id_input: string
+          body_input: string
+          subject_input: string
+          template_type_input: string
+          title_input: string
+        }
+        Returns: string
+      }
+      admin_update_email_template: {
+        Args: {
+          admin_id_input: string
+          body_input: string
+          subject_input: string
+          template_id_input: string
+          template_type_input: string
+          title_input: string
+        }
+        Returns: boolean
       }
       insert_monthly_recommendation: {
         Args: {
