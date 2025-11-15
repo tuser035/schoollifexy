@@ -243,6 +243,7 @@ export type Database = {
           created_at: string
           id: string
           subject: string
+          template_type: Database["public"]["Enums"]["template_type"]
           title: string
           updated_at: string
         }
@@ -252,6 +253,7 @@ export type Database = {
           created_at?: string
           id?: string
           subject: string
+          template_type?: Database["public"]["Enums"]["template_type"]
           title: string
           updated_at?: string
         }
@@ -261,6 +263,7 @@ export type Database = {
           created_at?: string
           id?: string
           subject?: string
+          template_type?: Database["public"]["Enums"]["template_type"]
           title?: string
           updated_at?: string
         }
@@ -728,7 +731,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      template_type: "email" | "messenger"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -855,6 +858,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      template_type: ["email", "messenger"],
+    },
   },
 } as const
