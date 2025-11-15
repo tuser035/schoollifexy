@@ -25,8 +25,8 @@ interface EmailHistoryRecord {
 export const EmailHistory = () => {
   const [history, setHistory] = useState<EmailHistoryRecord[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [selectedGrade, setSelectedGrade] = useState<string>("");
-  const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedGrade, setSelectedGrade] = useState<string>("all");
+  const [selectedClass, setSelectedClass] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<EmailHistoryRecord | null>(null);
   const { toast } = useToast();
@@ -51,8 +51,8 @@ export const EmailHistory = () => {
       const { data, error } = await supabase.rpc("admin_get_email_history", {
         admin_id_input: user.id,
         search_text: searchText || null,
-        search_grade: selectedGrade ? parseInt(selectedGrade) : null,
-        search_class: selectedClass ? parseInt(selectedClass) : null,
+        search_grade: selectedGrade && selectedGrade !== "all" ? parseInt(selectedGrade) : null,
+        search_class: selectedClass && selectedClass !== "all" ? parseInt(selectedClass) : null,
       });
 
       if (error) throw error;
@@ -78,8 +78,8 @@ export const EmailHistory = () => {
 
   const handleReset = () => {
     setSearchText("");
-    setSelectedGrade("");
-    setSelectedClass("");
+    setSelectedGrade("all");
+    setSelectedClass("all");
     setTimeout(() => loadHistory(), 100);
   };
 
@@ -108,7 +108,7 @@ export const EmailHistory = () => {
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
                   <SelectItem value="1">1학년</SelectItem>
                   <SelectItem value="2">2학년</SelectItem>
                   <SelectItem value="3">3학년</SelectItem>
@@ -122,7 +122,7 @@ export const EmailHistory = () => {
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
                   {Array.from({ length: 9 }, (_, i) => i + 1).map((num) => (
                     <SelectItem key={num} value={num.toString()}>
                       {num}반
