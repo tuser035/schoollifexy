@@ -89,14 +89,18 @@ const DataInquiry = () => {
   const loadStudentGroups = async () => {
     try {
       const userString = localStorage.getItem("auth_user");
-      if (!userString) return;
+      if (!userString) {
+        console.log("그룹 로드: 사용자 정보 없음");
+        return;
+      }
 
       const user = JSON.parse(userString);
+      console.log("그룹 로드 시작:", user.type, user.id);
 
       // Set session for RLS
-      if (user.role === "admin") {
+      if (user.type === "admin") {
         await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-      } else if (user.role === "teacher") {
+      } else if (user.type === "teacher") {
         await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
       }
 
@@ -106,11 +110,16 @@ const DataInquiry = () => {
         .eq("admin_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("그룹 조회 에러:", error);
+        throw error;
+      }
 
+      console.log("그룹 로드 완료:", data?.length || 0, "개", data);
       setStudentGroups(data || []);
     } catch (error: any) {
       console.error("그룹 로드 실패:", error);
+      toast.error("그룹 목록을 불러오는데 실패했습니다");
     }
   };
 
@@ -303,29 +312,43 @@ const DataInquiry = () => {
       if (!userString) throw new Error("로그인이 필요합니다");
 
       const user = JSON.parse(userString);
+      console.log("그룹 저장 시작:", newGroupName, "학생 수:", selectedStudents.size);
 
       // Set session for RLS
-      if (user.role === "admin") {
+      if (user.type === "admin") {
         await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-      } else if (user.role === "teacher") {
+      } else if (user.type === "teacher") {
         await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
       }
 
-      const { error } = await supabase.from("student_groups").insert({
+      const groupData = {
         admin_id: user.id,
         group_name: newGroupName,
         student_ids: Array.from(selectedStudents),
-      });
+      };
+      
+      console.log("저장할 그룹 데이터:", groupData);
 
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from("student_groups")
+        .insert(groupData)
+        .select();
 
+      if (error) {
+        console.error("그룹 저장 에러:", error);
+        throw error;
+      }
+
+      console.log("그룹 저장 완료:", data);
       toast.success(`"${newGroupName}" 그룹이 저장되었습니다`);
       setIsGroupDialogOpen(false);
       setNewGroupName("");
-      loadStudentGroups();
+      
+      // 그룹 목록 다시 로드
+      await loadStudentGroups();
     } catch (error: any) {
       console.error("그룹 저장 실패:", error);
-      toast.error("그룹 저장에 실패했습니다");
+      toast.error(error.message || "그룹 저장에 실패했습니다");
     } finally {
       setIsSavingGroup(false);
     }
