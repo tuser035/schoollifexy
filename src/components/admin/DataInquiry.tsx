@@ -422,13 +422,38 @@ const DataInquiry = () => {
         let searchText = null;
         let searchGrade = null;
         let searchClass = null;
+        let searchNumber = null;
+        let targetStudentId = null;
 
         if (trimmedSearch) {
           if (!isNaN(Number(trimmedSearch))) {
-            if (trimmedSearch.length === 2) {
+            // 3자리 이상 숫자: 학년반번호 (예: 386 -> 3학년 8반 6번)
+            if (trimmedSearch.length >= 3) {
               searchGrade = parseInt(trimmedSearch[0]);
               searchClass = parseInt(trimmedSearch[1]);
-            } else {
+              searchNumber = parseInt(trimmedSearch.substring(2));
+              
+              // 학년/반/번호로 학생 찾기
+              const { data: studentData } = await supabase
+                .from('students')
+                .select('student_id')
+                .eq('grade', searchGrade)
+                .eq('class', searchClass)
+                .eq('number', searchNumber)
+                .maybeSingle();
+              
+              if (studentData) {
+                targetStudentId = studentData.student_id;
+                searchText = studentData.student_id; // student_id로 검색
+              }
+            }
+            // 2자리 숫자: 학년반 (예: 38 -> 3학년 8반)
+            else if (trimmedSearch.length === 2) {
+              searchGrade = parseInt(trimmedSearch[0]);
+              searchClass = parseInt(trimmedSearch[1]);
+            }
+            // 1자리 숫자: 학년
+            else {
               searchGrade = parseInt(trimmedSearch);
             }
           } else {
@@ -461,13 +486,38 @@ const DataInquiry = () => {
         let searchText = null;
         let searchGrade = null;
         let searchClass = null;
+        let searchNumber = null;
+        let targetStudentId = null;
 
         if (trimmedSearch) {
           if (!isNaN(Number(trimmedSearch))) {
-            if (trimmedSearch.length === 2) {
+            // 3자리 이상 숫자: 학년반번호 (예: 386 -> 3학년 8반 6번)
+            if (trimmedSearch.length >= 3) {
               searchGrade = parseInt(trimmedSearch[0]);
               searchClass = parseInt(trimmedSearch[1]);
-            } else {
+              searchNumber = parseInt(trimmedSearch.substring(2));
+              
+              // 학년/반/번호로 학생 찾기
+              const { data: studentData } = await supabase
+                .from('students')
+                .select('student_id')
+                .eq('grade', searchGrade)
+                .eq('class', searchClass)
+                .eq('number', searchNumber)
+                .maybeSingle();
+              
+              if (studentData) {
+                targetStudentId = studentData.student_id;
+                searchText = studentData.student_id; // student_id로 검색
+              }
+            }
+            // 2자리 숫자: 학년반 (예: 38 -> 3학년 8반)
+            else if (trimmedSearch.length === 2) {
+              searchGrade = parseInt(trimmedSearch[0]);
+              searchClass = parseInt(trimmedSearch[1]);
+            }
+            // 1자리 숫자: 학년
+            else {
               searchGrade = parseInt(trimmedSearch);
             }
           } else {
@@ -668,8 +718,8 @@ const DataInquiry = () => {
                 selectedTable === "students" ? "학생명, 학년, 반으로 검색" :
                 selectedTable === "teachers" ? "교사명, 학년, 반으로 검색" :
                 selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
-                selectedTable === "merits" || selectedTable === "demerits" ? "학생명, 교사명, 학년, 반으로 검색" :
-                selectedTable === "monthly" ? "이름, 학년반번호 (예: 홍길동 또는 386)" :
+                selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly" 
+                  ? "학생명, 교사명, 학년반, 학년반번호로 검색 (예: 홍길동, 38, 386)" :
                 "검색"
               }
               value={searchTerm}
