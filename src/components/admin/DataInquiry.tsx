@@ -1480,6 +1480,26 @@ const DataInquiry = () => {
                 <Download className="h-4 w-4 mr-2" />
                 CSV 내보내기
               </Button>
+              {selectedTable === "students" && (
+                <Select onValueChange={handleLoadGroup}>
+                  <SelectTrigger className="w-[200px] bg-background">
+                    <SelectValue placeholder="저장된 그룹 불러오기" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {studentGroups.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        저장된 그룹이 없습니다
+                      </div>
+                    ) : (
+                      studentGroups.map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          {group.group_name} ({group.student_ids.length}명)
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
               {selectedTable === "students" && selectedStudents.size > 0 && (
                 <>
                   <Button 
@@ -1495,20 +1515,6 @@ const DataInquiry = () => {
                     일괄 메시지 발송 ({selectedStudents.size})
                   </Button>
                 </>
-              )}
-              {selectedTable === "students" && studentGroups.length > 0 && (
-                <Select onValueChange={handleLoadGroup}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="저장된 그룹 불러오기" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {studentGroups.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        {group.group_name} ({group.student_ids.length}명)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               )}
               {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
                 <Button 
