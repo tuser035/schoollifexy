@@ -61,6 +61,8 @@ const DataInquiry = () => {
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [isSavingGroup, setIsSavingGroup] = useState(false);
+  const [selectedTeachers, setSelectedTeachers] = useState<Set<string>>(new Set());
+  const [teacherGroups, setTeacherGroups] = useState<any[]>([]);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -96,7 +98,7 @@ const DataInquiry = () => {
       }
 
       const user = JSON.parse(userString);
-      console.log("그룹 로드 시작:", user.type, user.id);
+      console.log("학생 그룹 로드 시작:", user.type, user.id);
 
       // Set session for RLS
       if (user.type === "admin") {
@@ -112,15 +114,53 @@ const DataInquiry = () => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("그룹 조회 에러:", error);
+        console.error("학생 그룹 조회 에러:", error);
         throw error;
       }
 
-      console.log("그룹 로드 완료:", data?.length || 0, "개", data);
+      console.log("학생 그룹 로드 완료:", data?.length || 0, "개", data);
       setStudentGroups(data || []);
     } catch (error: any) {
-      console.error("그룹 로드 실패:", error);
-      toast.error("그룹 목록을 불러오는데 실패했습니다");
+      console.error("학생 그룹 로드 실패:", error);
+      toast.error("학생 그룹 목록을 불러오는데 실패했습니다");
+    }
+  };
+
+  // 교사 그룹 로드
+  const loadTeacherGroups = async () => {
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) {
+        console.log("교사 그룹 로드: 사용자 정보 없음");
+        return;
+      }
+
+      const user = JSON.parse(userString);
+      console.log("교사 그룹 로드 시작:", user.type, user.id);
+
+      // Set session for RLS
+      if (user.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const { data, error } = await supabase
+        .from("teacher_groups")
+        .select("*")
+        .eq("admin_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("교사 그룹 조회 에러:", error);
+        throw error;
+      }
+
+      console.log("교사 그룹 로드 완료:", data?.length || 0, "개", data);
+      setTeacherGroups(data || []);
+    } catch (error: any) {
+      console.error("교사 그룹 로드 실패:", error);
+      toast.error("교사 그룹 목록을 불러오는데 실패했습니다");
     }
   };
 
@@ -269,6 +309,27 @@ const DataInquiry = () => {
     }
   };
 
+  // 교사 선택/해제 핸들러
+  const handleToggleTeacher = (teacherEmail: string, checked: boolean) => {
+    const newSet = new Set(selectedTeachers);
+    if (checked) {
+      newSet.add(teacherEmail);
+    } else {
+      newSet.delete(teacherEmail);
+    }
+    setSelectedTeachers(newSet);
+  };
+
+  // 교사 전체 선택/해제
+  const handleToggleAllTeachers = (checked: boolean) => {
+    if (checked && selectedTable === "teachers") {
+      const allTeacherEmails = new Set(data.map((row: any) => row.이메일));
+      setSelectedTeachers(allTeacherEmails);
+    } else {
+      setSelectedTeachers(new Set());
+    }
+  };
+
   // 일괄 발송 다이얼로그 열기
   const handleOpenBulkEmailDialog = async () => {
     if (selectedStudents.size === 0) {
@@ -302,8 +363,16 @@ const DataInquiry = () => {
       return;
     }
 
-    if (selectedStudents.size === 0) {
+    const isStudentTable = selectedTable === "students";
+    const isTeacherTable = selectedTable === "teachers";
+
+    if (isStudentTable && selectedStudents.size === 0) {
       toast.error("학생을 선택해주세요");
+      return;
+    }
+
+    if (isTeacherTable && selectedTeachers.size === 0) {
+      toast.error("교사를 선택해주세요");
       return;
     }
 
@@ -313,7 +382,8 @@ const DataInquiry = () => {
       if (!userString) throw new Error("로그인이 필요합니다");
 
       const user = JSON.parse(userString);
-      console.log("그룹 저장 시작:", newGroupName, "학생 수:", selectedStudents.size);
+      console.log("그룹 저장 시작:", newGroupName, 
+        isStudentTable ? `학생 수: ${selectedStudents.size}` : `교사 수: ${selectedTeachers.size}`);
 
       // Set session for RLS
       if (user.type === "admin") {
@@ -322,31 +392,54 @@ const DataInquiry = () => {
         await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
       }
 
-      const groupData = {
-        admin_id: user.id,
-        group_name: newGroupName,
-        student_ids: Array.from(selectedStudents),
-      };
-      
-      console.log("저장할 그룹 데이터:", groupData);
+      if (isStudentTable) {
+        const groupData = {
+          admin_id: user.id,
+          group_name: newGroupName,
+          student_ids: Array.from(selectedStudents),
+        };
+        
+        console.log("저장할 학생 그룹 데이터:", groupData);
 
-      const { data, error } = await supabase
-        .from("student_groups")
-        .insert(groupData)
-        .select();
+        const { data, error } = await supabase
+          .from("student_groups")
+          .insert(groupData)
+          .select();
 
-      if (error) {
-        console.error("그룹 저장 에러:", error);
-        throw error;
+        if (error) {
+          console.error("학생 그룹 저장 에러:", error);
+          throw error;
+        }
+
+        console.log("학생 그룹 저장 완료:", data);
+        toast.success(`"${newGroupName}" 학생 그룹이 저장되었습니다`);
+        await loadStudentGroups();
+      } else if (isTeacherTable) {
+        const groupData = {
+          admin_id: user.id,
+          group_name: newGroupName,
+          teacher_ids: Array.from(selectedTeachers),
+        };
+        
+        console.log("저장할 교사 그룹 데이터:", groupData);
+
+        const { data, error } = await supabase
+          .from("teacher_groups")
+          .insert(groupData)
+          .select();
+
+        if (error) {
+          console.error("교사 그룹 저장 에러:", error);
+          throw error;
+        }
+
+        console.log("교사 그룹 저장 완료:", data);
+        toast.success(`"${newGroupName}" 교사 그룹이 저장되었습니다`);
+        await loadTeacherGroups();
       }
 
-      console.log("그룹 저장 완료:", data);
-      toast.success(`"${newGroupName}" 그룹이 저장되었습니다`);
       setIsGroupDialogOpen(false);
       setNewGroupName("");
-      
-      // 그룹 목록 다시 로드
-      await loadStudentGroups();
     } catch (error: any) {
       console.error("그룹 저장 실패:", error);
       toast.error(error.message || "그룹 저장에 실패했습니다");
@@ -381,9 +474,9 @@ const DataInquiry = () => {
       const user = JSON.parse(userString);
 
       // Set session for RLS
-      if (user.role === "admin") {
+      if (user.type === "admin") {
         await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-      } else if (user.role === "teacher") {
+      } else if (user.type === "teacher") {
         await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
       }
 
@@ -396,6 +489,50 @@ const DataInquiry = () => {
     } catch (error: any) {
       console.error("그룹 삭제 실패:", error);
       toast.error("그룹 삭제에 실패했습니다");
+    }
+  };
+
+  // 교사 그룹 불러오기
+  const handleLoadTeacherGroup = async (groupId: string) => {
+    try {
+      const group = teacherGroups.find((g) => g.id === groupId);
+      if (!group) return;
+
+      // 해당 그룹의 교사 이메일들을 선택 상태로 설정
+      setSelectedTeachers(new Set(group.teacher_ids));
+      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${group.teacher_ids.length}명)`);
+    } catch (error: any) {
+      console.error("교사 그룹 불러오기 실패:", error);
+      toast.error("교사 그룹 불러오기에 실패했습니다");
+    }
+  };
+
+  // 교사 그룹 삭제
+  const handleDeleteTeacherGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?`)) return;
+
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) throw new Error("로그인이 필요합니다");
+
+      const user = JSON.parse(userString);
+
+      // Set session for RLS
+      if (user.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const { error } = await supabase.from("teacher_groups").delete().eq("id", groupId);
+
+      if (error) throw error;
+
+      toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
+      loadTeacherGroups();
+    } catch (error: any) {
+      console.error("교사 그룹 삭제 실패:", error);
+      toast.error("교사 그룹 삭제에 실패했습니다");
     }
   };
 
@@ -1441,6 +1578,10 @@ const DataInquiry = () => {
         if (selectedTable === "students") {
           loadStudentGroups();
         }
+        // 교사 테이블을 조회한 경우 그룹 목록도 로드
+        if (selectedTable === "teachers") {
+          loadTeacherGroups();
+        }
       } else {
         setColumns([]);
         setData([]);
@@ -1569,6 +1710,63 @@ const DataInquiry = () => {
                   </Button>
                 </>
               )}
+              {selectedTable === "teachers" && (
+                <>
+                  {console.log("교사 드롭다운 렌더링 - 그룹 수:", teacherGroups.length, teacherGroups)}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-[200px] justify-start">
+                        <Users className="h-4 w-4 mr-2" />
+                        저장된 교사 그룹 불러오기
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-2 bg-background" align="start">
+                      {teacherGroups.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          저장된 그룹이 없습니다
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {teacherGroups.map((group) => (
+                            <div
+                              key={group.id}
+                              className="flex items-center justify-between p-2 hover:bg-muted rounded-md group"
+                            >
+                              <button
+                                onClick={() => {
+                                  handleLoadTeacherGroup(group.id);
+                                }}
+                                className="flex-1 text-left text-sm"
+                              >
+                                {group.group_name} ({group.teacher_ids.length}명)
+                              </button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTeacherGroup(group.id, group.group_name);
+                                }}
+                                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </>
+              )}
+              {selectedTable === "teachers" && selectedTeachers.size > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsGroupDialogOpen(true)}
+                >
+                  그룹 저장 ({selectedTeachers.size})
+                </Button>
+              )}
               {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
                 <Button 
                   variant="destructive" 
@@ -1593,6 +1791,16 @@ const DataInquiry = () => {
                           type="checkbox"
                           checked={selectedStudents.size > 0 && selectedStudents.size === data.length}
                           onChange={(e) => handleToggleAllStudents(e.target.checked)}
+                          className="cursor-pointer"
+                        />
+                      </TableHead>
+                    )}
+                    {selectedTable === "teachers" && (
+                      <TableHead className="w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedTeachers.size > 0 && selectedTeachers.size === data.length}
+                          onChange={(e) => handleToggleAllTeachers(e.target.checked)}
                           className="cursor-pointer"
                         />
                       </TableHead>
@@ -1637,6 +1845,16 @@ const DataInquiry = () => {
                               type="checkbox"
                               checked={selectedStudents.has(row["학번"])}
                               onChange={(e) => handleToggleStudent(row["학번"], e.target.checked)}
+                              className="cursor-pointer"
+                            />
+                          </TableCell>
+                        )}
+                        {selectedTable === "teachers" && row["이메일"] && (
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedTeachers.has(row["이메일"])}
+                              onChange={(e) => handleToggleTeacher(row["이메일"], e.target.checked)}
                               className="cursor-pointer"
                             />
                           </TableCell>
@@ -1979,7 +2197,9 @@ const DataInquiry = () => {
       <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
         <DialogContent className="bg-background max-w-md">
           <DialogHeader>
-            <DialogTitle>학생 그룹 저장</DialogTitle>
+            <DialogTitle>
+              {selectedTable === "students" ? "학생 그룹 저장" : "교사 그룹 저장"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -1987,7 +2207,7 @@ const DataInquiry = () => {
               <Input
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="예: 로봇 동아리, 축구부"
+                placeholder={selectedTable === "students" ? "예: 로봇 동아리, 축구부" : "예: 교무부, 수학과"}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !isSavingGroup) {
                     handleSaveGroup();
@@ -1995,18 +2215,30 @@ const DataInquiry = () => {
                 }}
               />
             </div>
-            <div>
-              <Label>선택된 학생 ({selectedStudents.size}명)</Label>
-              <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto p-2 border rounded">
-                {Array.from(selectedStudents).map((studentId) => {
-                  const student = data.find((row: any) => row.학번 === studentId);
-                  return student ? `${student.이름} (${studentId})` : studentId;
-                }).join(', ')}
-              </div>
-            </div>
-            {studentGroups.length > 0 && (
+            {selectedTable === "students" ? (
               <div>
-                <Label>기존 그룹 목록</Label>
+                <Label>선택된 학생 ({selectedStudents.size}명)</Label>
+                <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto p-2 border rounded">
+                  {Array.from(selectedStudents).map((studentId) => {
+                    const student = data.find((row: any) => row.학번 === studentId);
+                    return student ? `${student.이름} (${studentId})` : studentId;
+                  }).join(', ')}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Label>선택된 교사 ({selectedTeachers.size}명)</Label>
+                <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto p-2 border rounded">
+                  {Array.from(selectedTeachers).map((teacherEmail) => {
+                    const teacher = data.find((row: any) => row.이메일 === teacherEmail);
+                    return teacher ? `${teacher.이름} (${teacherEmail})` : teacherEmail;
+                  }).join(', ')}
+                </div>
+              </div>
+            )}
+            {selectedTable === "students" && studentGroups.length > 0 && (
+              <div>
+                <Label>기존 학생 그룹 목록</Label>
                 <div className="space-y-2 max-h-40 overflow-y-auto p-2 border rounded">
                   {studentGroups.map((group) => (
                     <div key={group.id} className="flex items-center justify-between text-sm">
@@ -2015,6 +2247,26 @@ const DataInquiry = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteGroup(group.id, group.group_name)}
+                        className="h-6 px-2"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selectedTable === "teachers" && teacherGroups.length > 0 && (
+              <div>
+                <Label>기존 교사 그룹 목록</Label>
+                <div className="space-y-2 max-h-40 overflow-y-auto p-2 border rounded">
+                  {teacherGroups.map((group) => (
+                    <div key={group.id} className="flex items-center justify-between text-sm">
+                      <span>{group.group_name} ({group.teacher_ids.length}명)</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteTeacherGroup(group.id, group.group_name)}
                         className="h-6 px-2"
                       >
                         <X className="h-3 w-3" />
