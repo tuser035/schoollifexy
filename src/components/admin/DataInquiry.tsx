@@ -1128,7 +1128,9 @@ const DataInquiry = () => {
           "학년": row.grade || "-",
           "반": row.class || "-",
           "담임여부": row.is_homeroom ? "담임" : "-",
-          "학과": row.dept_name
+          "학과": row.dept_name,
+          "부서": row.department,
+          "담당교과": row.subject
         }));
 
       } else if (selectedTable === "homeroom") {
