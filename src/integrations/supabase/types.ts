@@ -403,6 +403,33 @@ export type Database = {
           },
         ]
       }
+      teacher_groups: {
+        Row: {
+          admin_id: string
+          created_at: string | null
+          group_name: string
+          id: string
+          teacher_ids: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string | null
+          group_name: string
+          id?: string
+          teacher_ids: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string | null
+          group_name?: string
+          id?: string
+          teacher_ids?: string[]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       teachers: {
         Row: {
           call_t: string
