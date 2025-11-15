@@ -196,20 +196,24 @@ const BulkUpload = () => {
       // Pre-fetch all departments for dept_code validation
       const { data: departments } = await supabase
         .from('departments')
-        .select('code');
+        .select('code, name');
       
       // Create map with normalized (trimmed and lowercase) emails as keys
       const teacherMap = new Map(
         teachers?.map(t => [t.teacher_email?.trim().toLowerCase(), t.id]) || []
       );
       
-      // Create set of valid department codes
+      // Create map: dept name → code, and set of valid codes
+      const deptNameToCode = new Map(
+        departments?.map(d => [d.name?.trim(), d.code]) || []
+      );
       const validDeptCodes = new Set(
         departments?.map(d => d.code) || []
       );
       
       console.log('Available teacher emails:', Array.from(teacherMap.keys()));
       console.log('Valid department codes:', Array.from(validDeptCodes));
+      console.log('Department name mapping:', Array.from(deptNameToCode.entries()));
 
       // Parse header to support flexible column order
       const header = lines[0].split(",").map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
@@ -241,10 +245,22 @@ const BulkUpload = () => {
           let record: any = {};
           
           if (table === "students") {
-            const deptCode = values[1]?.trim() || null;
+            const deptInput = values[1]?.trim() || null;
+            let deptCode = null;
+            
+            if (deptInput) {
+              // Check if it's already a valid code
+              if (validDeptCodes.has(deptInput)) {
+                deptCode = deptInput;
+              } else if (deptNameToCode.has(deptInput)) {
+                // Convert name to code
+                deptCode = deptNameToCode.get(deptInput);
+              }
+            }
+            
             record = {
               student_id: values[0],
-              dept_code: (deptCode && validDeptCodes.has(deptCode)) ? deptCode : null,
+              dept_code: deptCode,
               grade: parseInt(values[2]),
               class: parseInt(values[3]),
               number: parseInt(values[4]),
