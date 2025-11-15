@@ -48,10 +48,15 @@ const TeacherDashboard = () => {
               {user.isHomeroom && user.grade && user.class && ` (${user.grade}-${user.class})`}
             </p>
           </div>
-          <Button onClick={handleLogout} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" />
-            로그아웃
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/admin/dashboard")} variant="outline">
+              데이터 조회
+            </Button>
+            <Button onClick={handleLogout} variant="outline">
+              <LogOut className="w-4 h-4 mr-2" />
+              로그아웃
+            </Button>
+          </div>
         </div>
       </header>
 

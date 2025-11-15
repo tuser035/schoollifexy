@@ -31,7 +31,7 @@ const AdminDashboard = () => {
     }
     
     const parsedUser = JSON.parse(authUser);
-    if (parsedUser.type !== "admin") {
+    if (parsedUser.type !== "admin" && parsedUser.type !== "teacher") {
       navigate("/");
       return;
     }
@@ -52,13 +52,22 @@ const AdminDashboard = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">관리자 대시보드</h1>
-            <p className="text-muted-foreground">{user.email}</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              {user.type === "admin" ? "관리자 대시보드" : "데이터 조회"}
+            </h1>
+            <p className="text-muted-foreground">{user.email || user.name}</p>
           </div>
-          <Button onClick={handleLogout} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" />
-            로그아웃
-          </Button>
+          <div className="flex gap-2">
+            {user.type === "teacher" && (
+              <Button onClick={() => navigate("/teacher/dashboard")} variant="outline">
+                돌아가기
+              </Button>
+            )}
+            <Button onClick={handleLogout} variant="outline">
+              <LogOut className="w-4 h-4 mr-2" />
+              로그아웃
+            </Button>
+          </div>
         </div>
       </header>
 
