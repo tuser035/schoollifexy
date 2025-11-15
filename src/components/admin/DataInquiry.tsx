@@ -491,6 +491,25 @@ const DataInquiry = () => {
             // 문자인 경우 이름으로 검색
             searchText = trimmedSearch;
           }
+        } else {
+          // 검색어가 없을 때: 전교생 조회 + 총 인원 표시
+          if (parsedUser.type === "admin") {
+            await supabase.rpc("set_admin_session", {
+              admin_id_input: adminId
+            });
+          } else if (parsedUser.type === "teacher") {
+            await supabase.rpc("set_teacher_session", {
+              teacher_id_input: adminId
+            });
+          }
+
+          const { count } = await supabase
+            .from('students')
+            .select('*', { count: 'exact', head: true });
+          
+          if (count !== null) {
+            toast.success(`전교생 총 인원: ${count}명`);
+          }
         }
 
         const { data, error: queryError } = await supabase.rpc("admin_get_students", {
