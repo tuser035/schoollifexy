@@ -459,8 +459,18 @@ const DataInquiry = () => {
         await loadTeacherGroups();
       }
 
+      // 그룹 저장 후 상태 초기화
       setIsGroupDialogOpen(false);
       setNewGroupName("");
+      setSelectedStudents(new Set());
+      setSelectedTeachers(new Set());
+      setColumnFilters({});
+      setSearchTerm("");
+      setSearchDepartment("");
+      setSearchSubject("");
+      
+      // 전체 목록 다시 조회
+      await handleQuery();
     } catch (error: any) {
       console.error("그룹 저장 실패:", error);
       toast.error(error.message || "그룹 저장에 실패했습니다");
