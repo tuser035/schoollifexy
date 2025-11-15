@@ -1074,6 +1074,7 @@ const DataInquiry = () => {
               }
               
               setData(result || []);
+              setOriginalData(result || []);
               if (result && result.length > 0) {
                 setColumns(Object.keys(result[0]));
               } else {
@@ -1655,6 +1656,7 @@ const DataInquiry = () => {
       if (result && result.length > 0) {
         setColumns(Object.keys(result[0]));
         setData(result);
+        setOriginalData(result);
         
         // 학생 테이블을 조회한 경우 그룹 목록도 로드
         if (selectedTable === "students") {
@@ -1667,6 +1669,7 @@ const DataInquiry = () => {
       } else {
         setColumns([]);
         setData([]);
+        setOriginalData([]);
         toast.info(trimmedSearch ? "검색 결과가 없습니다" : "데이터가 없습니다");
       }
     } catch (error: any) {
