@@ -193,12 +193,23 @@ const BulkUpload = () => {
         .from('students')
         .select('student_id, grade, class');
       
+      // Pre-fetch all departments for dept_code validation
+      const { data: departments } = await supabase
+        .from('departments')
+        .select('code');
+      
       // Create map with normalized (trimmed and lowercase) emails as keys
       const teacherMap = new Map(
         teachers?.map(t => [t.teacher_email?.trim().toLowerCase(), t.id]) || []
       );
       
+      // Create set of valid department codes
+      const validDeptCodes = new Set(
+        departments?.map(d => d.code) || []
+      );
+      
       console.log('Available teacher emails:', Array.from(teacherMap.keys()));
+      console.log('Valid department codes:', Array.from(validDeptCodes));
 
       // Parse header to support flexible column order
       const header = lines[0].split(",").map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase());
@@ -230,9 +241,10 @@ const BulkUpload = () => {
           let record: any = {};
           
           if (table === "students") {
+            const deptCode = values[1]?.trim() || null;
             record = {
               student_id: values[0],
-              dept_code: values[1] || null,
+              dept_code: (deptCode && validDeptCodes.has(deptCode)) ? deptCode : null,
               grade: parseInt(values[2]),
               class: parseInt(values[3]),
               number: parseInt(values[4]),
