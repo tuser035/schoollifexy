@@ -68,6 +68,8 @@ const DataInquiry = () => {
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [originalData, setOriginalData] = useState<any[]>([]);
+  const [searchDepartment, setSearchDepartment] = useState("");
+  const [searchSubject, setSearchSubject] = useState("");
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -1163,8 +1165,8 @@ const DataInquiry = () => {
         let searchGrade: number | null = null;
         let searchClass: number | null = null;
         let searchText: string | null = null;
-        let searchDepartment: string | null = null;
-        let searchSubject: string | null = null;
+        let searchDept: string | null = null;
+        let searchSubj: string | null = null;
 
         if (trimmedSearch) {
           // 숫자인 경우 학년이나 반으로 검색
@@ -1184,19 +1186,17 @@ const DataInquiry = () => {
           }
         }
 
-        // teacherDepartment와 teacherSubject를 searchDepartment, searchSubject로 매핑
-        const tempDept = (window as any).teacherDepartment?.trim();
-        const tempSubj = (window as any).teacherSubject?.trim();
-        searchDepartment = tempDept || null;
-        searchSubject = tempSubj || null;
+        // state의 값 사용
+        searchDept = searchDepartment.trim() || null;
+        searchSubj = searchSubject.trim() || null;
 
         const { data, error: queryError } = await supabase.rpc("admin_get_teachers", {
           admin_id_input: adminId,
           search_text: searchText,
           search_grade: searchGrade,
           search_class: searchClass,
-          search_department: searchDepartment,
-          search_subject: searchSubject
+          search_department: searchDept,
+          search_subject: searchSubj
         });
 
         if (queryError) throw queryError;
@@ -1686,7 +1686,7 @@ const DataInquiry = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 flex-wrap">
-            <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); setColumnFilters({}); }}>
+            <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); setColumnFilters({}); setSearchDepartment(""); setSearchSubject(""); }}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue />
               </SelectTrigger>
@@ -1719,14 +1719,16 @@ const DataInquiry = () => {
               <>
                 <Input
                   placeholder="부서로 검색"
-                  onChange={(e) => (window as any).teacherDepartment = e.target.value}
+                  value={searchDepartment}
+                  onChange={(e) => setSearchDepartment(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
                   className="max-w-xs"
                   maxLength={100}
                 />
                 <Input
                   placeholder="담당교과로 검색"
-                  onChange={(e) => (window as any).teacherSubject = e.target.value}
+                  value={searchSubject}
+                  onChange={(e) => setSearchSubject(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
                   className="max-w-xs"
                   maxLength={100}
@@ -1736,8 +1738,13 @@ const DataInquiry = () => {
             <Button onClick={handleQuery} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
-            {searchTerm && (
-              <Button variant="outline" onClick={() => { setSearchTerm(""); handleQuery(); }}>
+            {(searchTerm || searchDepartment || searchSubject) && (
+              <Button variant="outline" onClick={() => { 
+                setSearchTerm(""); 
+                setSearchDepartment(""); 
+                setSearchSubject(""); 
+                handleQuery(); 
+              }}>
                 초기화
               </Button>
             )}
