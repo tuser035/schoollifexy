@@ -53,7 +53,7 @@ const DataInquiry = () => {
 
     // 이달의 학생 테이블의 경우 상세 내역 포함
     if (selectedTable === "monthly" && monthlyRawData.length > 0) {
-      csvHeader = "날짜,학생,학번,추천교사,구분,사유,증빙사진";
+      csvHeader = "날짜,학생,학번,추천교사,구분,사유,증빙사진,상담첨부파일";
       csvRows = monthlyRawData.map(row => {
         const date = new Date(row.created_at).toLocaleDateString('ko-KR');
         const studentName = row.student_name || "-";
@@ -70,7 +70,14 @@ const DataInquiry = () => {
           imageDisplay = `=HYPERLINK("${row.image_url}","${fileName}")`;
         }
         
-        return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageDisplay}`;
+        // 상담 첨부파일 하이퍼링크 생성
+        let counselingAttachment = "-";
+        if (row.counseling_attachment) {
+          const fileName = row.counseling_attachment.split('/').pop() || "첨부파일";
+          counselingAttachment = `=HYPERLINK("${row.counseling_attachment}","${fileName}")`;
+        }
+        
+        return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageDisplay},${counselingAttachment}`;
       });
     } else if (selectedTable === "merits" && meritsRawData.length > 0) {
       csvHeader = "날짜,학생,교사,카테고리,사유,점수,증빙사진";
@@ -512,11 +519,35 @@ const DataInquiry = () => {
 
         if (queryError) throw queryError;
 
+        // 각 학생의 상담 기록 첨부파일 조회
+        const studentIds = [...new Set(data?.map((row: any) => row.student_id) || [])];
+        const counselingData: { [key: string]: string } = {};
+        
+        for (const studentId of studentIds) {
+          const { data: counselingRecords } = await supabase
+            .from('career_counseling')
+            .select('attachment_url')
+            .eq('student_id', studentId)
+            .not('attachment_url', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (counselingRecords && counselingRecords.length > 0) {
+            counselingData[studentId] = counselingRecords[0].attachment_url;
+          }
+        }
+
+        // 원본 데이터에 상담 첨부파일 추가
+        const enrichedData = data?.map((row: any) => ({
+          ...row,
+          counseling_attachment: counselingData[row.student_id] || null
+        }));
+
         // 원본 데이터 저장 (CSV용)
-        setMonthlyRawData(data || []);
+        setMonthlyRawData(enrichedData || []);
 
         // 학생별로 그룹화하여 추천 횟수 누적
-        const groupedData = data?.reduce((acc: any, row: any) => {
+        const groupedData = enrichedData?.reduce((acc: any, row: any) => {
           const studentKey = row.student_name;
           if (!acc[studentKey]) {
             acc[studentKey] = {
