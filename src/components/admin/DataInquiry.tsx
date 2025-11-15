@@ -1504,24 +1504,30 @@ const DataInquiry = () => {
                 CSV 내보내기
               </Button>
               {selectedTable === "students" && (
-                <Select onValueChange={handleLoadGroup}>
-                  <SelectTrigger className="w-[200px] bg-background">
-                    <SelectValue placeholder="저장된 그룹 불러오기" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    {studentGroups.length === 0 ? (
-                      <div className="p-2 text-sm text-muted-foreground">
-                        저장된 그룹이 없습니다
-                      </div>
-                    ) : (
-                      studentGroups.map((group) => (
-                        <SelectItem key={group.id} value={group.id}>
-                          {group.group_name} ({group.student_ids.length}명)
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                <>
+                  {console.log("드롭다운 렌더링 - 그룹 수:", studentGroups.length, studentGroups)}
+                  <Select onValueChange={handleLoadGroup}>
+                    <SelectTrigger className="w-[200px] bg-background">
+                      <SelectValue placeholder="저장된 그룹 불러오기" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {studentGroups.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground">
+                          저장된 그룹이 없습니다
+                        </div>
+                      ) : (
+                        studentGroups.map((group) => {
+                          console.log("그룹 아이템:", group);
+                          return (
+                            <SelectItem key={group.id} value={group.id}>
+                              {group.group_name} ({group.student_ids.length}명)
+                            </SelectItem>
+                          );
+                        })
+                      )}
+                    </SelectContent>
+                  </Select>
+                </>
               )}
               {selectedTable === "students" && selectedStudents.size > 0 && (
                 <>
