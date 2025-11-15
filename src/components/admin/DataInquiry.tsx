@@ -263,49 +263,38 @@ const DataInquiry = () => {
 
       const user = JSON.parse(userString);
 
-      // Set session based on user type
-      if (user.type === "admin") {
-        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-      } else if (user.type === "teacher") {
-        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
-      }
-
       const selectedStudentIds = Array.from(selectedStudents);
-      const studentsToEmail = data.filter((row: any) => 
-        selectedStudentIds.includes(row.학번)
-      );
-
-      // 이메일 발송 이력 일괄 저장
-      const emailHistoryRecords = studentsToEmail
-        .filter((student: any) => student.이메일 && student.이메일 !== '-')
+      const studentsToEmail = data
+        .filter((row: any) => selectedStudentIds.includes(row.학번))
+        .filter((student: any) => student.이메일 && student.이메일 !== '-' && student.이메일.includes('@'))
         .map((student: any) => ({
-          sender_id: user.id,
-          sender_type: user.type,
-          sender_name: user.name || user.email || "알 수 없음",
-          recipient_email: student.이메일,
-          recipient_name: student.이름,
-          recipient_student_id: student.학번,
-          subject: bulkEmailSubject,
-          body: bulkEmailBody,
+          studentId: student.학번,
+          name: student.이름,
+          email: student.이메일,
         }));
 
-      if (emailHistoryRecords.length === 0) {
-        toast.error("선택한 학생 중 이메일 정보가 있는 학생이 없습니다");
+      if (studentsToEmail.length === 0) {
+        toast.error("선택한 학생 중 유효한 이메일이 있는 학생이 없습니다");
         return;
       }
 
-      await supabase.from("email_history").insert(emailHistoryRecords);
+      // Resend를 통한 자동 발송
+      const { data: result, error } = await supabase.functions.invoke("send-bulk-email", {
+        body: {
+          adminId: user.id,
+          subject: bulkEmailSubject,
+          body: bulkEmailBody,
+          students: studentsToEmail,
+        },
+      });
 
-      // 이메일 주소 목록 생성
-      const emailAddresses = emailHistoryRecords.map(r => r.recipient_email).join(',');
+      if (error) throw error;
 
-      // Gmail 작성 창 열기
-      window.open(
-        `https://mail.google.com/mail/?view=cm&fs=1&bcc=${emailAddresses}&su=${encodeURIComponent(bulkEmailSubject)}&body=${encodeURIComponent(bulkEmailBody)}`,
-        '_blank'
+      toast.success(
+        `이메일 발송 완료!\n성공: ${result.totalSent}건, 실패: ${result.totalFailed}건`,
+        { duration: 5000 }
       );
-
-      toast.success(`${emailHistoryRecords.length}명에게 이메일 작성 창이 열렸습니다`);
+      
       setIsBulkEmailDialogOpen(false);
       setSelectedStudents(new Set());
       setBulkEmailSubject("");
