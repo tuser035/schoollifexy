@@ -489,6 +489,22 @@ export type Database = {
           subject: string
         }[]
       }
+      admin_get_email_templates: {
+        Args: {
+          admin_id_input: string
+          filter_type?: Database["public"]["Enums"]["template_type"]
+        }
+        Returns: {
+          admin_id: string
+          body: string
+          created_at: string
+          id: string
+          subject: string
+          template_type: Database["public"]["Enums"]["template_type"]
+          title: string
+          updated_at: string
+        }[]
+      }
       admin_get_homeroom: {
         Args: {
           admin_id_input: string

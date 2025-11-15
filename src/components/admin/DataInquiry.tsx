@@ -93,24 +93,16 @@ const DataInquiry = () => {
       const user = JSON.parse(authUser);
       console.log("템플릿 로드 시작:", user.type, user.id);
 
-      // 사용자 타입에 따라 세션 설정
-      if (user.type === "admin") {
-        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-      } else if (user.type === "teacher") {
-        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
-      }
-
+      // RPC 함수를 통해 템플릿 조회
       const { data, error } = await supabase
-        .from("email_templates")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .rpc("admin_get_email_templates", { admin_id_input: user.id });
 
       if (error) {
         console.error("템플릿 조회 에러:", error);
         throw error;
       }
       
-      console.log("템플릿 로드 완료:", data?.length || 0, "개");
+      console.log("템플릿 로드 완료:", data?.length || 0, "개", data);
       setTemplates(data || []);
       
       if (!data || data.length === 0) {
