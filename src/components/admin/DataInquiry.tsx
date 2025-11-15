@@ -2127,10 +2127,14 @@ const DataInquiry = () => {
                                         const newFilters = { ...columnFilters };
                                         delete newFilters[col];
                                         setColumnFilters(newFilters);
-                                        // 검색 조건 초기화하고 전체 데이터 다시 조회
-                                        setSearchTerm("");
-                                        setSearchDepartment("");
-                                        setSearchSubject("");
+                                        
+                                        // 해당 컬럼의 서버 검색 조건만 초기화
+                                        if (col === "부서") {
+                                          setSearchDepartment("");
+                                        } else if (col === "담당교과") {
+                                          setSearchSubject("");
+                                        }
+                                        
                                         // 약간의 지연 후 조회 (state 업데이트 후)
                                         setTimeout(() => handleQuery(), 100);
                                       }}
