@@ -71,6 +71,7 @@ const DataInquiry = () => {
   const [isSavingStudent, setIsSavingStudent] = useState(false);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const [isPhotoUploadDialogOpen, setIsPhotoUploadDialogOpen] = useState(false);
+  const [isTeacherPhotoUploadDialogOpen, setIsTeacherPhotoUploadDialogOpen] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState<{ [key: string]: boolean }>({});
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [originalData, setOriginalData] = useState<any[]>([]);
@@ -2410,15 +2411,25 @@ const DataInquiry = () => {
             </Button>
           )}
           {selectedTable === "teachers" && (
-            <Button 
-              variant="default"
-              onClick={() => {
-                loadDepartments();
-                setIsAddTeacherDialogOpen(true);
-              }}
-            >
-              신규 교사 추가
-            </Button>
+            <>
+              <Button 
+                variant="default"
+                onClick={() => {
+                  loadDepartments();
+                  setIsAddTeacherDialogOpen(true);
+                }}
+              >
+                신규 교사 추가
+              </Button>
+              {data.length > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsTeacherPhotoUploadDialogOpen(true)}
+                >
+                  교사증명사진 업로드
+                </Button>
+              )}
+            </>
           )}
           {selectedTable === "students" && (
             <>
@@ -4093,6 +4104,167 @@ const DataInquiry = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsPhotoUploadDialogOpen(false)}>
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 교사 증명사진 업로드 다이얼로그 */}
+      <Dialog open={isTeacherPhotoUploadDialogOpen} onOpenChange={setIsTeacherPhotoUploadDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>교사 증명사진 업로드</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              {data.map((teacher: any) => (
+                <div key={teacher['전화번호']} className="border p-4 rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0">
+                      {teacher['증명사진'] ? (
+                        <img 
+                          src={`${teacher['증명사진']}?t=${Date.now()}`} 
+                          alt={teacher['이름']} 
+                          className="w-24 h-32 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-24 h-32 bg-muted rounded flex items-center justify-center text-muted-foreground text-sm">
+                          사진 없음
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{teacher['이름']}</div>
+                      <div className="text-sm text-muted-foreground">전화번호: {teacher['전화번호']}</div>
+                      <div className="text-sm text-muted-foreground">이메일: {teacher['이메일']}</div>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id={`teacher-photo-${teacher['전화번호']}`}
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        console.log('파일 선택:', { 
+                          전화번호: teacher['전화번호'], 
+                          이름: teacher['이름'],
+                          file: file?.name,
+                          fileSize: file?.size,
+                          fileType: file?.type
+                        });
+
+                        if (!file) {
+                          console.warn('파일이 선택되지 않음');
+                          try { (e.currentTarget as HTMLInputElement).value = ''; } catch {}
+                          return;
+                        }
+
+                        if (!file.type.startsWith('image/')) {
+                          toast.error('이미지 파일만 업로드 가능합니다');
+                          try { (e.currentTarget as HTMLInputElement).value = ''; } catch {}
+                          return;
+                        }
+
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error('파일 크기는 5MB 이하여야 합니다');
+                          try { (e.currentTarget as HTMLInputElement).value = ''; } catch {}
+                          return;
+                        }
+
+                        setUploadingPhotos(prev => ({ ...prev, [teacher['전화번호']]: true }));
+                        console.log('업로드 시작:', teacher['전화번호']);
+
+                        try {
+                          const authUser = localStorage.getItem('auth_user');
+                          if (!authUser) throw new Error('관리자 인증이 필요합니다');
+                          
+                          const user = JSON.parse(authUser);
+                          if (!user.id) throw new Error('관리자 ID를 찾을 수 없습니다');
+
+                          console.log('관리자 인증 완료:', user.id);
+
+                          await supabase.rpc('set_admin_session', { 
+                            admin_id_input: user.id 
+                          });
+
+                          console.log('세션 설정 완료');
+
+                          const oldPath = teacher['증명사진'] ? teacher['증명사진'].split('/').pop() : null;
+
+                          console.log('Base64 변환 시작');
+                          const toBase64 = (file: File) =>
+                            new Promise<string>((resolve, reject) => {
+                              const reader = new FileReader();
+                              reader.onload = () => resolve(reader.result as string);
+                              reader.onerror = reject;
+                              reader.readAsDataURL(file);
+                            });
+
+                          const imageBase64 = await toBase64(file);
+                          console.log('Base64 변환 완료, 길이:', imageBase64.length);
+
+                          console.log('Edge Function 호출 시작');
+                          const { data: fnData, error: fnError } = await supabase.functions.invoke('upload-photo', {
+                            body: {
+                              admin_id: user.id,
+                              target_type: 'teacher',
+                              target_id: teacher['전화번호'],
+                              filename: file.name,
+                              content_type: file.type,
+                              image_base64: imageBase64,
+                              old_path: oldPath,
+                            },
+                          });
+
+                          console.log('Edge Function 응답:', { fnData, fnError });
+
+                          if (fnError) {
+                            console.error('Edge Function 에러:', fnError);
+                            throw fnError;
+                          }
+                          if (!fnData?.ok) {
+                            console.error('업로드 실패:', fnData?.error);
+                            throw new Error(fnData?.error || '업로드 실패');
+                          }
+
+                          console.log('업로드 성공, URL:', fnData.publicUrl);
+
+                          setData(prevData => 
+                            prevData.map(item => 
+                              item['전화번호'] === teacher['전화번호'] 
+                                ? { ...item, '증명사진': `${fnData.publicUrl}?t=${Date.now()}` }
+                                : item
+                            )
+                          );
+
+                          toast.success('사진이 업로드되었습니다');
+                          
+                          setTimeout(() => handleQuery(), 500);
+                        } catch (error: any) {
+                          console.error('업로드 에러 (전화번호: ' + teacher['전화번호'] + '):', error);
+                          toast.error(error.message || '업로드에 실패했습니다');
+                        } finally {
+                          setUploadingPhotos(prev => ({ ...prev, [teacher['전화번호']]: false }));
+                          try { (e.currentTarget as HTMLInputElement).value = ''; } catch {}
+                          console.log('업로드 완료 (finally):', teacher['전화번호']);
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => document.getElementById(`teacher-photo-${teacher['전화번호']}`)?.click()}
+                      disabled={uploadingPhotos[teacher['전화번호']]}
+                    >
+                      {uploadingPhotos[teacher['전화번호']] ? '업로드 중...' : '사진 선택'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTeacherPhotoUploadDialogOpen(false)}>
               닫기
             </Button>
           </DialogFooter>
