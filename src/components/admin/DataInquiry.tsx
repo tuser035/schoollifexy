@@ -1824,6 +1824,7 @@ const DataInquiry = () => {
         if (queryError) throw queryError;
 
         result = data?.map(row => ({
+          "증명사진": row.photo_url,
           "이름": row.name,
           "전화번호": row.call_t,
           "이메일": row.teacher_email,
