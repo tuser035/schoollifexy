@@ -692,6 +692,7 @@ export type Database = {
           number: number
           parents_call1: string
           parents_call2: string
+          photo_url: string
           student_call: string
           student_id: string
         }[]

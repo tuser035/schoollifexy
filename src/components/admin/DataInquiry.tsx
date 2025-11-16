@@ -1755,6 +1755,7 @@ const DataInquiry = () => {
         if (queryError) throw queryError;
 
         result = data?.map(row => ({
+          "증명사진": row.photo_url,
           "학번": row.student_id,
           "이름": row.name,
           "학년": row.grade,
@@ -2789,16 +2790,41 @@ const DataInquiry = () => {
                         )}
                         {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => {
                           const value = row[col]?.toString() || "-";
+                          const isPhotoColumn = col === "증명사진";
                           const isPhoneColumn = col === "전화번호" || col === "학부모전화1" || col === "학부모전화2";
                           const isEmailColumn = col === "이메일" || col.toLowerCase().includes("email");
                           const isValidPhone = value !== "-" && value.trim() !== "";
                           const isValidEmail = value !== "-" && value.trim() !== "" && value.includes("@");
                           const studentName = row["이름"] || row["name"] || "";
                           const studentId = row["학번"] || row["student_id"] || undefined;
+                          const studentGrade = row["학년"] || "";
+                          const studentClass = row["반"] || "";
+                          const studentNumber = row["번호"] || "";
                           
                           return (
                             <TableCell key={col} className="whitespace-nowrap">
-                              {isPhoneColumn && isValidPhone ? (
+                              {isPhotoColumn ? (
+                                <div className="flex flex-col items-center gap-2 py-2">
+                                  {value && value !== "-" && value !== "null" ? (
+                                    <img 
+                                      src={value} 
+                                      alt={`${studentName} 증명사진`}
+                                      className="w-24 h-32 object-cover rounded border"
+                                      onError={(e) => {
+                                        e.currentTarget.src = "/placeholder.svg";
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-24 h-32 bg-muted rounded border flex items-center justify-center text-muted-foreground text-sm">
+                                      사진 없음
+                                    </div>
+                                  )}
+                                  <div className="text-center">
+                                    <div className="text-sm font-semibold">{studentGrade}-{studentClass}-{studentNumber}</div>
+                                    <div className="text-sm">{studentName}</div>
+                                  </div>
+                                </div>
+                              ) : isPhoneColumn && isValidPhone ? (
                                 <button
                                   onClick={(e) => handlePhoneClick(value, studentName, e)}
                                   className="text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
