@@ -69,6 +69,7 @@ const DataInquiry = () => {
   const [isStudentEditDialogOpen, setIsStudentEditDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [isSavingStudent, setIsSavingStudent] = useState(false);
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [searchDepartment, setSearchDepartment] = useState("");
@@ -2418,15 +2419,25 @@ const DataInquiry = () => {
             </Button>
           )}
           {selectedTable === "students" && (
-            <Button 
-              variant="default"
-              onClick={() => {
-                loadDepartments();
-                setIsAddStudentDialogOpen(true);
-              }}
-            >
-              신규 학생 추가
-            </Button>
+            <>
+              <Button 
+                variant="default"
+                onClick={() => {
+                  loadDepartments();
+                  setIsAddStudentDialogOpen(true);
+                }}
+              >
+                신규 학생 추가
+              </Button>
+              {data.length > 0 && (
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsPrintDialogOpen(true)}
+                >
+                  사진 출력
+                </Button>
+              )}
+            </>
           )}
           {data.length > 0 && (
             <>
@@ -3897,6 +3908,104 @@ const DataInquiry = () => {
               {isAddingStudent ? "추가 중..." : "추가"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 사진 출력 다이얼로그 */}
+      <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-auto p-0">
+          <div className="print-container">
+            <div className="no-print p-4 border-b flex justify-between items-center">
+              <DialogTitle>학생 증명사진 출력</DialogTitle>
+              <Button onClick={() => window.print()}>
+                인쇄
+              </Button>
+            </div>
+            <div className="p-8 print-page">
+              <style>{`
+                @media print {
+                  .no-print {
+                    display: none !important;
+                  }
+                  .print-page {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                  }
+                  .print-container {
+                    width: 210mm !important;
+                    min-height: 297mm !important;
+                  }
+                  body {
+                    print-color-adjust: exact;
+                    -webkit-print-color-adjust: exact;
+                  }
+                  @page {
+                    size: A4;
+                    margin: 10mm;
+                  }
+                }
+                .photo-grid {
+                  display: grid;
+                  grid-template-columns: repeat(4, 1fr);
+                  gap: 20px;
+                  width: 100%;
+                }
+                .photo-item {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  page-break-inside: avoid;
+                  break-inside: avoid;
+                }
+                .photo-box {
+                  width: 120px;
+                  height: 160px;
+                  border: 1px solid #ddd;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  overflow: hidden;
+                  background: #f5f5f5;
+                  margin-bottom: 8px;
+                }
+                .photo-box img {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                }
+                .photo-label {
+                  text-align: center;
+                  font-size: 12px;
+                  font-weight: 500;
+                  line-height: 1.3;
+                }
+              `}</style>
+              <div className="photo-grid">
+                {data.map((student: any, index: number) => (
+                  <div key={index} className="photo-item">
+                    <div className="photo-box">
+                      {student['증명사진'] ? (
+                        <img 
+                          src={student['증명사진']} 
+                          alt={student['성명']}
+                          onError={(e) => {
+                            e.currentTarget.src = '';
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="text-muted-foreground text-xs">사진 없음</div>
+                      )}
+                    </div>
+                    <div className="photo-label">
+                      <div>{student['학년']}학년 {student['반']}반 {student['번호']}번</div>
+                      <div>{student['성명']}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
