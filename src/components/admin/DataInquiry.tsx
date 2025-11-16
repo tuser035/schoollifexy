@@ -4016,10 +4016,21 @@ const DataInquiry = () => {
                           });
 
                           if (fnError) throw fnError;
+                          if (!fnData?.ok) throw new Error(fnData?.error || '업로드 실패');
+
+                          // 즉시 UI 업데이트 (로컬 상태)
+                          setData(prevData => 
+                            prevData.map(item => 
+                              item['학번'] === student['학번'] 
+                                ? { ...item, '증명사진': fnData.publicUrl }
+                                : item
+                            )
+                          );
 
                           toast.success('사진이 업로드되었습니다');
-                          // 데이터 새로고침
-                          handleQuery();
+                          
+                          // 백그라운드에서 데이터 새로고침
+                          setTimeout(() => handleQuery(), 500);
                         } catch (error: any) {
                           console.error('Upload error:', error);
                           toast.error(error.message || '업로드에 실패했습니다');

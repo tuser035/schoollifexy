@@ -22,8 +22,11 @@ Deno.serve(async (req) => {
 
   try {
     const { admin_id, student_id, filename, image_base64, content_type, old_path } = await req.json()
+    
+    console.log('Upload request:', { admin_id, student_id, filename })
 
     if (!admin_id || !student_id || !filename || !image_base64) {
+      console.error('Missing required fields')
       return new Response(JSON.stringify({ ok: false, error: 'Missing required fields' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -37,7 +40,10 @@ Deno.serve(async (req) => {
       .eq('id', admin_id)
       .maybeSingle()
 
+    console.log('Admin verification:', { admin, adminError })
+
     if (adminError || !admin) {
+      console.error('Unauthorized:', adminError)
       return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -66,7 +72,10 @@ Deno.serve(async (req) => {
         upsert: true,
       })
 
+    console.log('Upload result:', { uploadError })
+
     if (uploadError) {
+      console.error('Upload error:', uploadError)
       return new Response(JSON.stringify({ ok: false, error: uploadError.message }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -78,14 +87,19 @@ Deno.serve(async (req) => {
       .getPublicUrl(path)
 
     const publicUrl = publicUrlData.publicUrl
+    console.log('Public URL:', publicUrl)
 
     // Update students table with new photo URL
-    const { error: updateError } = await supabase
+    const { data: updateData, error: updateError } = await supabase
       .from('students')
       .update({ photo_url: publicUrl })
       .eq('student_id', student_id)
+      .select()
+
+    console.log('Update result:', { updateData, updateError })
 
     if (updateError) {
+      console.error('Update error:', updateError)
       return new Response(JSON.stringify({ ok: false, error: updateError.message }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
