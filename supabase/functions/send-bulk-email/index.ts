@@ -87,16 +87,38 @@ const handler = async (req: Request): Promise<Response> => {
         // 무료 플랜에서는 테스트 이메일로만 발송
         const emailResponse = await resend.emails.send({
           from: "School Point <onboarding@resend.dev>",
+          replyTo: "gb25tr04@sc.gyo6.net",
           to: [testEmail],
-          subject: `[테스트] ${subject} - ${student.name}님께`,
+          subject: `[테스트] ${subject}`,
           html: `
-            <div style="background-color: #f0f0f0; padding: 10px; margin-bottom: 20px; border-left: 4px solid #ff9800;">
-              <strong>⚠️ 테스트 모드</strong><br/>
-              실제 수신자: ${student.name} (${student.email})<br/>
-              무료 플랜 제한으로 schoollifexy@gmail.com으로 발송됩니다.
+            <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <div style="background-color: #fff3cd; padding: 15px; margin-bottom: 20px; border-left: 4px solid #ffc107; border-radius: 4px;">
+                <strong>📧 테스트 발송</strong><br/>
+                <span style="color: #856404;">실제 수신자: ${student.name} (${student.email})</span>
+              </div>
+              
+              <div style="background-color: #ffffff; padding: 20px;">
+                ${body}
+              </div>
+              
+              <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
+                <p style="margin: 0 0 10px 0;"><strong>School Point 학생 관리 시스템</strong></p>
+                <p style="margin: 0 0 5px 0;">이 메일은 귀하가 등록한 학생 정보를 기반으로 발송되었습니다.</p>
+                <p style="margin: 0 0 5px 0;">문의사항: gb25tr04@sc.gyo6.net</p>
+                <p style="margin: 0;">수신을 원하지 않으시면 학교에 연락해 주세요.</p>
+              </div>
             </div>
-            ${body}
           `,
+          text: `
+[테스트 발송]
+실제 수신자: ${student.name} (${student.email})
+
+${body.replace(/<[^>]*>/g, '')}
+
+---
+School Point 학생 관리 시스템
+문의: gb25tr04@sc.gyo6.net
+          `.trim(),
         });
 
         console.log(`Email sent to ${student.name}:`, emailResponse);
