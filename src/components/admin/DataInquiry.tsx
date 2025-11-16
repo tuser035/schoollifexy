@@ -3917,9 +3917,14 @@ const DataInquiry = () => {
           <div className="print-container">
             <div className="no-print p-4 border-b flex justify-between items-center">
               <DialogTitle>학생 증명사진 출력</DialogTitle>
-              <Button onClick={() => window.print()}>
-                인쇄
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => window.print()}>
+                  인쇄
+                </Button>
+                <Button variant="outline" onClick={() => setIsPrintDialogOpen(false)}>
+                  닫기
+                </Button>
+              </div>
             </div>
             <div className="p-8 print-page">
               <style>{`
