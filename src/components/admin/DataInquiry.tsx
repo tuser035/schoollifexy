@@ -70,6 +70,7 @@ const DataInquiry = () => {
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [isSavingStudent, setIsSavingStudent] = useState(false);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const [isTeacherPrintDialogOpen, setIsTeacherPrintDialogOpen] = useState(false);
   const [isPhotoUploadDialogOpen, setIsPhotoUploadDialogOpen] = useState(false);
   const [isTeacherPhotoUploadDialogOpen, setIsTeacherPhotoUploadDialogOpen] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState<{ [key: string]: boolean }>({});
@@ -2423,12 +2424,20 @@ const DataInquiry = () => {
                 신규 교사 추가
               </Button>
               {data.length > 0 && (
-                <Button 
-                  variant="outline"
-                  onClick={() => setIsTeacherPhotoUploadDialogOpen(true)}
-                >
-                  교사증명사진 업로드
-                </Button>
+                <>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsTeacherPrintDialogOpen(true)}
+                  >
+                    사진 출력
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsTeacherPhotoUploadDialogOpen(true)}
+                  >
+                    교사증명사진 업로드
+                  </Button>
+                </>
               )}
             </>
           )}
@@ -4365,6 +4374,109 @@ const DataInquiry = () => {
                     </div>
                     <div className="photo-label">
                       <div>{student['이름']}({student['번호']})</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 교사 사진 출력 다이얼로그 */}
+      <Dialog open={isTeacherPrintDialogOpen} onOpenChange={setIsTeacherPrintDialogOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-auto p-0">
+          <div className="print-container">
+            <div className="no-print p-4 border-b flex justify-between items-center">
+              <DialogTitle>교사 증명사진 출력</DialogTitle>
+              <div className="flex gap-2">
+                <Button onClick={() => window.print()}>
+                  인쇄
+                </Button>
+                <Button variant="outline" onClick={() => setIsTeacherPrintDialogOpen(false)}>
+                  닫기
+                </Button>
+              </div>
+            </div>
+            <div className="p-8 print-page">
+              <style>{`
+                @media print {
+                  .no-print {
+                    display: none !important;
+                  }
+                  .print-page {
+                    padding: 0 !important;
+                    margin: 0 !important;
+                  }
+                  .print-container {
+                    width: 210mm !important;
+                    min-height: 297mm !important;
+                  }
+                  body {
+                    print-color-adjust: exact;
+                    -webkit-print-color-adjust: exact;
+                  }
+                  @page {
+                    size: A4;
+                    margin: 10mm;
+                  }
+                }
+                .photo-grid {
+                  display: grid;
+                  grid-template-columns: repeat(4, 1fr);
+                  gap: 20px;
+                  width: 100%;
+                }
+                .photo-item {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  page-break-inside: avoid;
+                  break-inside: avoid;
+                }
+                .photo-box {
+                  width: 120px;
+                  height: 160px;
+                  border: 1px solid #ddd;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  overflow: hidden;
+                  background: #f5f5f5;
+                  margin-bottom: 8px;
+                }
+                .photo-box img {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                }
+                .photo-label {
+                  text-align: center;
+                  font-size: 11px;
+                  font-weight: 500;
+                  line-height: 1.3;
+                }
+              `}</style>
+              <div className="photo-grid">
+                {data.map((teacher: any, index: number) => (
+                  <div key={index} className="photo-item">
+                    <div className="photo-box">
+                      {teacher['증명사진'] ? (
+                        <img 
+                          src={teacher['증명사진']} 
+                          alt={teacher['이름']}
+                          onError={(e) => {
+                            e.currentTarget.src = '';
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="text-muted-foreground text-xs">사진 없음</div>
+                      )}
+                    </div>
+                    <div className="photo-label">
+                      <div>{teacher['이름']}</div>
+                      <div className="text-xs text-muted-foreground">{teacher['담당교과'] || teacher['부서'] || ''}</div>
                     </div>
                   </div>
                 ))}
