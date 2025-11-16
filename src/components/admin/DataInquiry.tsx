@@ -1326,23 +1326,21 @@ const DataInquiry = () => {
       }
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-
-      // 학생 추가
-      const { error } = await supabase
-        .from("students")
-        .insert({
-          student_id: newStudentData.student_id.trim(),
-          name: newStudentData.name.trim(),
-          grade: parseInt(newStudentData.grade),
-          class: parseInt(newStudentData.class),
-          number: parseInt(newStudentData.number),
-          dept_code: newStudentData.dept_code && newStudentData.dept_code !== "none" ? newStudentData.dept_code : null,
-          student_call: newStudentData.student_call.trim() || null,
-          gmail: newStudentData.gmail.trim() || null,
-          parents_call1: newStudentData.parents_call1.trim() || null,
-          parents_call2: newStudentData.parents_call2.trim() || null,
-        });
+      
+      // 데이터베이스 함수를 사용하여 학생 추가 (RLS 자동 처리)
+      const { data, error } = await supabase.rpc("admin_insert_student", {
+        admin_id_input: user.id,
+        student_id_input: newStudentData.student_id.trim(),
+        name_input: newStudentData.name.trim(),
+        grade_input: parseInt(newStudentData.grade),
+        class_input: parseInt(newStudentData.class),
+        number_input: parseInt(newStudentData.number),
+        dept_code_input: newStudentData.dept_code && newStudentData.dept_code !== "none" ? newStudentData.dept_code : null,
+        student_call_input: newStudentData.student_call.trim() || null,
+        gmail_input: newStudentData.gmail.trim() || null,
+        parents_call1_input: newStudentData.parents_call1.trim() || null,
+        parents_call2_input: newStudentData.parents_call2.trim() || null
+      });
 
       if (error) {
         console.error("학생 추가 오류:", error);
