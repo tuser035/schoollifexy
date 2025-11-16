@@ -74,6 +74,9 @@ const handler = async (req: Request): Promise<Response> => {
     const sendResults = [];
     const emailHistoryRecords = [];
 
+    // Resend 무료 플랜: schoollifexy@gmail.com으로만 발송 가능
+    const testEmail = "schoollifexy@gmail.com";
+
     for (const student of students) {
       if (!student.email || !student.email.includes("@")) {
         console.log(`Student ${student.name} has no valid email, skipping`);
@@ -81,11 +84,19 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       try {
+        // 무료 플랜에서는 테스트 이메일로만 발송
         const emailResponse = await resend.emails.send({
           from: "School Point <onboarding@resend.dev>",
-          to: [student.email],
-          subject: subject,
-          html: body,
+          to: [testEmail],
+          subject: `[테스트] ${subject} - ${student.name}님께`,
+          html: `
+            <div style="background-color: #f0f0f0; padding: 10px; margin-bottom: 20px; border-left: 4px solid #ff9800;">
+              <strong>⚠️ 테스트 모드</strong><br/>
+              실제 수신자: ${student.name} (${student.email})<br/>
+              무료 플랜 제한으로 schoollifexy@gmail.com으로 발송됩니다.
+            </div>
+            ${body}
+          `,
         });
 
         console.log(`Email sent to ${student.name}:`, emailResponse);
