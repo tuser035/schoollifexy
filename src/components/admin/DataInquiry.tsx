@@ -1306,6 +1306,26 @@ const DataInquiry = () => {
     }
   };
 
+  // 학번 입력 시 자동으로 학년, 반, 번호 채우기
+  const handleStudentIdChange = (value: string) => {
+    setNewStudentData(prev => ({ ...prev, student_id: value }));
+    
+    // 학번이 2자리 이상일 때만 자동 채우기
+    if (value.length >= 2) {
+      const grade = value.charAt(0); // 첫째 자리: 학년
+      const classNum = value.charAt(1); // 둘째 자리: 반
+      const number = value.slice(2); // 나머지: 번호
+      
+      setNewStudentData(prev => ({
+        ...prev,
+        student_id: value,
+        grade: grade,
+        class: classNum,
+        number: number
+      }));
+    }
+  };
+
   // 신규 학생 추가
   const handleAddStudent = async () => {
     try {
@@ -3526,8 +3546,8 @@ const DataInquiry = () => {
                 <Input
                   id="student-id"
                   value={newStudentData.student_id}
-                  onChange={(e) => setNewStudentData({...newStudentData, student_id: e.target.value})}
-                  placeholder="예: 20240101"
+                  onChange={(e) => handleStudentIdChange(e.target.value)}
+                  placeholder="예: 11512 (학년+반+번호)"
                   maxLength={20}
                 />
               </div>
