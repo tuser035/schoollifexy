@@ -90,6 +90,20 @@ const DataInquiry = () => {
   });
   const [departments, setDepartments] = useState<any[]>([]);
   const [isAddingTeacher, setIsAddingTeacher] = useState(false);
+  const [isAddStudentDialogOpen, setIsAddStudentDialogOpen] = useState(false);
+  const [newStudentData, setNewStudentData] = useState({
+    student_id: "",
+    name: "",
+    grade: "1",
+    class: "1",
+    number: "",
+    dept_code: "none",
+    student_call: "",
+    gmail: "",
+    parents_call1: "",
+    parents_call2: ""
+  });
+  const [isAddingStudent, setIsAddingStudent] = useState(false);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -1292,6 +1306,76 @@ const DataInquiry = () => {
     }
   };
 
+  // 신규 학생 추가
+  const handleAddStudent = async () => {
+    try {
+      setIsAddingStudent(true);
+
+      // 필수 입력 확인
+      if (!newStudentData.student_id.trim() || !newStudentData.name.trim() || 
+          !newStudentData.grade || !newStudentData.class || !newStudentData.number) {
+        toast.error("학번, 이름, 학년, 반, 번호는 필수 입력 항목입니다");
+        return;
+      }
+
+      // 관리자 ID 가져오기
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      // 학생 추가
+      const { error } = await supabase
+        .from("students")
+        .insert({
+          student_id: newStudentData.student_id.trim(),
+          name: newStudentData.name.trim(),
+          grade: parseInt(newStudentData.grade),
+          class: parseInt(newStudentData.class),
+          number: parseInt(newStudentData.number),
+          dept_code: newStudentData.dept_code && newStudentData.dept_code !== "none" ? newStudentData.dept_code : null,
+          student_call: newStudentData.student_call.trim() || null,
+          gmail: newStudentData.gmail.trim() || null,
+          parents_call1: newStudentData.parents_call1.trim() || null,
+          parents_call2: newStudentData.parents_call2.trim() || null,
+        });
+
+      if (error) {
+        console.error("학생 추가 오류:", error);
+        throw error;
+      }
+
+      toast.success("신규 학생이 추가되었습니다");
+      setIsAddStudentDialogOpen(false);
+      
+      // 폼 초기화
+      setNewStudentData({
+        student_id: "",
+        name: "",
+        grade: "1",
+        class: "1",
+        number: "",
+        dept_code: "none",
+        student_call: "",
+        gmail: "",
+        parents_call1: "",
+        parents_call2: ""
+      });
+
+      // 목록 새로고침
+      handleQuery();
+    } catch (error: any) {
+      console.error("학생 추가 실패:", error);
+      toast.error(error.message || "학생 추가에 실패했습니다");
+    } finally {
+      setIsAddingStudent(false);
+    }
+  };
+
   // 교사 전용 즉시 조회 헬퍼 (필터 클릭 시 1회 클릭 적용)
   const queryTeachersImmediate = async (overrides?: { department?: string | null; subject?: string | null; homeroom?: string | null; deptName?: string | null }) => {
     setIsLoading(true);
@@ -2197,6 +2281,17 @@ const DataInquiry = () => {
               }}
             >
               신규 교사 추가
+            </Button>
+          )}
+          {selectedTable === "students" && (
+            <Button 
+              variant="default"
+              onClick={() => {
+                loadDepartments();
+                setIsAddStudentDialogOpen(true);
+              }}
+            >
+              신규 학생 추가
             </Button>
           )}
           {data.length > 0 && (
@@ -3397,6 +3492,170 @@ const DataInquiry = () => {
               disabled={isAddingTeacher || !newTeacherData.name.trim() || !newTeacherData.call_t.trim() || !newTeacherData.teacher_email.trim()}
             >
               {isAddingTeacher ? "추가 중..." : "추가"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 신규 학생 추가 Dialog */}
+      <Dialog open={isAddStudentDialogOpen} onOpenChange={setIsAddStudentDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>신규 학생 추가</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="student-id">학번 *</Label>
+                <Input
+                  id="student-id"
+                  value={newStudentData.student_id}
+                  onChange={(e) => setNewStudentData({...newStudentData, student_id: e.target.value})}
+                  placeholder="예: 20240101"
+                  maxLength={20}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="student-name">이름 *</Label>
+                <Input
+                  id="student-name"
+                  value={newStudentData.name}
+                  onChange={(e) => setNewStudentData({...newStudentData, name: e.target.value})}
+                  placeholder="학생 이름"
+                  maxLength={50}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="student-grade">학년 *</Label>
+                <Select
+                  value={newStudentData.grade}
+                  onValueChange={(value) => setNewStudentData({...newStudentData, grade: value})}
+                >
+                  <SelectTrigger id="student-grade">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1학년</SelectItem>
+                    <SelectItem value="2">2학년</SelectItem>
+                    <SelectItem value="3">3학년</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="student-class">반 *</Label>
+                <Select
+                  value={newStudentData.class}
+                  onValueChange={(value) => setNewStudentData({...newStudentData, class: value})}
+                >
+                  <SelectTrigger id="student-class">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>{num}반</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="student-number">번호 *</Label>
+                <Input
+                  id="student-number"
+                  type="number"
+                  value={newStudentData.number}
+                  onChange={(e) => setNewStudentData({...newStudentData, number: e.target.value})}
+                  placeholder="번호"
+                  min="1"
+                  max="99"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="student-dept">학과</Label>
+              <Select
+                value={newStudentData.dept_code}
+                onValueChange={(value) => setNewStudentData({...newStudentData, dept_code: value})}
+              >
+                <SelectTrigger id="student-dept">
+                  <SelectValue placeholder="학과 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안 함</SelectItem>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.code} value={dept.code}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="student-phone">학생 전화번호</Label>
+              <Input
+                id="student-phone"
+                value={newStudentData.student_call}
+                onChange={(e) => setNewStudentData({...newStudentData, student_call: formatPhoneNumber(e.target.value)})}
+                placeholder="010-0000-0000"
+                maxLength={13}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="student-email">이메일</Label>
+              <Input
+                id="student-email"
+                type="email"
+                value={newStudentData.gmail}
+                onChange={(e) => setNewStudentData({...newStudentData, gmail: e.target.value})}
+                placeholder="student@example.com"
+                maxLength={100}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="student-parent1">학부모 전화번호 1</Label>
+              <Input
+                id="student-parent1"
+                value={newStudentData.parents_call1}
+                onChange={(e) => setNewStudentData({...newStudentData, parents_call1: formatPhoneNumber(e.target.value)})}
+                placeholder="010-0000-0000"
+                maxLength={13}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="student-parent2">학부모 전화번호 2</Label>
+              <Input
+                id="student-parent2"
+                value={newStudentData.parents_call2}
+                onChange={(e) => setNewStudentData({...newStudentData, parents_call2: formatPhoneNumber(e.target.value)})}
+                placeholder="010-0000-0000"
+                maxLength={13}
+              />
+            </div>
+
+            <div className="text-sm text-muted-foreground">
+              * 표시는 필수 입력 항목입니다. 초기 비밀번호는 '12345678'로 설정됩니다.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddStudentDialogOpen(false)}
+              disabled={isAddingStudent}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleAddStudent}
+              disabled={isAddingStudent || !newStudentData.student_id.trim() || !newStudentData.name.trim() || !newStudentData.number}
+            >
+              {isAddingStudent ? "추가 중..." : "추가"}
             </Button>
           </DialogFooter>
         </DialogContent>
