@@ -3992,7 +3992,7 @@ const DataInquiry = () => {
                       {student['증명사진'] ? (
                         <img 
                           src={student['증명사진']} 
-                          alt={student['성명']}
+                          alt={student['이름']}
                           onError={(e) => {
                             e.currentTarget.src = '';
                             e.currentTarget.style.display = 'none';
@@ -4003,7 +4003,7 @@ const DataInquiry = () => {
                       )}
                     </div>
                     <div className="photo-label">
-                      <div>{student['성명']}({student['번호']})</div>
+                      <div>{student['이름']}({student['번호']})</div>
                     </div>
                   </div>
                 ))}
