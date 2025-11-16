@@ -746,6 +746,22 @@ export type Database = {
         }
         Returns: string
       }
+      admin_insert_student: {
+        Args: {
+          admin_id_input: string
+          class_input: number
+          dept_code_input?: string
+          gmail_input?: string
+          grade_input: number
+          name_input: string
+          number_input: number
+          parents_call1_input?: string
+          parents_call2_input?: string
+          student_call_input?: string
+          student_id_input: string
+        }
+        Returns: string
+      }
       admin_insert_teacher: {
         Args: {
           admin_id_input: string
