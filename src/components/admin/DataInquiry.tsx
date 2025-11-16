@@ -3991,39 +3991,33 @@ const DataInquiry = () => {
                           const fileName = `${student['학번']}.${fileExt}`;
                           const filePath = `${fileName}`;
 
-                          // 기존 파일이 있으면 삭제
-                          if (student['증명사진']) {
-                            const oldPath = student['증명사진'].split('/').pop();
-                            await supabase.storage
-                              .from('student-photos')
-                              .remove([oldPath]);
-                          }
+                          // 엣지 함수로 업로드 처리 (RLS 우회, 보안 검증 포함)
+                          const oldPath = student['증명사진'] ? student['증명사진'].split('/').pop() : null;
 
-                          // 파일 업로드
-                          const { error: uploadError } = await supabase.storage
-                            .from('student-photos')
-                            .upload(filePath, file, {
-                              cacheControl: '3600',
-                              upsert: true
+                          const toBase64 = (file: File) =>
+                            new Promise<string>((resolve, reject) => {
+                              const reader = new FileReader();
+                              reader.onload = () => resolve(reader.result as string);
+                              reader.onerror = reject;
+                              reader.readAsDataURL(file);
                             });
 
-                          if (uploadError) throw uploadError;
+                          const imageBase64 = await toBase64(file);
 
-                          // public URL 가져오기
-                          const { data: { publicUrl } } = supabase.storage
-                            .from('student-photos')
-                            .getPublicUrl(filePath);
+                          const { data: fnData, error: fnError } = await supabase.functions.invoke('upload-student-photo', {
+                            body: {
+                              admin_id: user.id,
+                              student_id: student['학번'],
+                              filename: file.name,
+                              content_type: file.type,
+                              image_base64: imageBase64,
+                              old_path: oldPath,
+                            },
+                          });
 
-                          // students 테이블 업데이트
-                          const { error: updateError } = await supabase
-                            .from('students')
-                            .update({ photo_url: publicUrl })
-                            .eq('student_id', student['학번']);
-
-                          if (updateError) throw updateError;
+                          if (fnError) throw fnError;
 
                           toast.success('사진이 업로드되었습니다');
-
                           // 데이터 새로고침
                           handleQuery();
                         } catch (error: any) {
