@@ -6,3 +6,7 @@ verify_jwt = false
 [functions.upload-student-photo]
 verify_jwt = false
 
+[functions.upload-photo]
+verify_jwt = false
+
+

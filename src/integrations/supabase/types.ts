@@ -445,6 +445,7 @@ export type Database = {
           is_homeroom: boolean | null
           name: string
           password_hash: string
+          photo_url: string | null
           subject: string | null
           teacher_email: string
           updated_at: string | null
@@ -460,6 +461,7 @@ export type Database = {
           is_homeroom?: boolean | null
           name: string
           password_hash?: string
+          photo_url?: string | null
           subject?: string | null
           teacher_email: string
           updated_at?: string | null
@@ -475,6 +477,7 @@ export type Database = {
           is_homeroom?: boolean | null
           name?: string
           password_hash?: string
+          photo_url?: string | null
           subject?: string | null
           teacher_email?: string
           updated_at?: string | null
