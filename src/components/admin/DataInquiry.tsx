@@ -3964,7 +3964,23 @@ const DataInquiry = () => {
                       className="hidden"
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
-                        if (!file) return;
+                        console.log('파일 선택:', { 
+                          학번: student['학번'], 
+                          이름: student['이름'],
+                          file: file?.name,
+                          fileSize: file?.size,
+                          fileType: file?.type
+                        });
+
+                        if (!file) {
+                          console.warn('파일이 선택되지 않음');
+                          return;
+                        }
+
+                        if (!file.type.startsWith('image/')) {
+                          toast.error('이미지 파일만 업로드 가능합니다');
+                          return;
+                        }
 
                         // 파일 크기 체크 (5MB)
                         if (file.size > 5 * 1024 * 1024) {
@@ -3973,6 +3989,7 @@ const DataInquiry = () => {
                         }
 
                         setUploadingPhotos(prev => ({ ...prev, [student['학번']]: true }));
+                        console.log('업로드 시작:', student['학번']);
 
                         try {
                           const authUser = localStorage.getItem('auth_user');
@@ -3981,10 +3998,14 @@ const DataInquiry = () => {
                           const user = JSON.parse(authUser);
                           if (!user.id) throw new Error('관리자 ID를 찾을 수 없습니다');
 
+                          console.log('관리자 인증 완료:', user.id);
+
                           // 관리자 세션 설정
                           await supabase.rpc('set_admin_session', { 
                             admin_id_input: user.id 
                           });
+
+                          console.log('세션 설정 완료');
 
                           // 파일명: 학번.확장자
                           const fileExt = file.name.split('.').pop();
@@ -3994,6 +4015,7 @@ const DataInquiry = () => {
                           // 엣지 함수로 업로드 처리 (RLS 우회, 보안 검증 포함)
                           const oldPath = student['증명사진'] ? student['증명사진'].split('/').pop() : null;
 
+                          console.log('Base64 변환 시작');
                           const toBase64 = (file: File) =>
                             new Promise<string>((resolve, reject) => {
                               const reader = new FileReader();
@@ -4003,7 +4025,9 @@ const DataInquiry = () => {
                             });
 
                           const imageBase64 = await toBase64(file);
+                          console.log('Base64 변환 완료, 길이:', imageBase64.length);
 
+                          console.log('Edge Function 호출 시작');
                           const { data: fnData, error: fnError } = await supabase.functions.invoke('upload-student-photo', {
                             body: {
                               admin_id: user.id,
@@ -4015,8 +4039,18 @@ const DataInquiry = () => {
                             },
                           });
 
-                          if (fnError) throw fnError;
-                          if (!fnData?.ok) throw new Error(fnData?.error || '업로드 실패');
+                          console.log('Edge Function 응답:', { fnData, fnError });
+
+                          if (fnError) {
+                            console.error('Edge Function 에러:', fnError);
+                            throw fnError;
+                          }
+                          if (!fnData?.ok) {
+                            console.error('업로드 실패:', fnData?.error);
+                            throw new Error(fnData?.error || '업로드 실패');
+                          }
+
+                          console.log('업로드 성공, URL:', fnData.publicUrl);
 
                           // 즉시 UI 업데이트 (로컬 상태)
                           setData(prevData => 
@@ -4032,10 +4066,11 @@ const DataInquiry = () => {
                           // 백그라운드에서 데이터 새로고침
                           setTimeout(() => handleQuery(), 500);
                         } catch (error: any) {
-                          console.error('Upload error:', error);
+                          console.error('업로드 에러 (학번: ' + student['학번'] + '):', error);
                           toast.error(error.message || '업로드에 실패했습니다');
                         } finally {
                           setUploadingPhotos(prev => ({ ...prev, [student['학번']]: false }));
+                          console.log('업로드 완료 (finally):', student['학번']);
                         }
                       }}
                     />
