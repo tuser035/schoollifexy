@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -208,6 +208,15 @@ const DataInquiry = () => {
       toast.error("교사 그룹 목록을 불러오는데 실패했습니다");
     }
   };
+
+  // selectedTable이 변경될 때 그룹 로드
+  useEffect(() => {
+    if (selectedTable === "students") {
+      loadStudentGroups();
+    } else if (selectedTable === "teachers") {
+      loadTeacherGroups();
+    }
+  }, [selectedTable]);
 
   // 템플릿 로드
   const loadTemplates = async () => {
@@ -2491,7 +2500,6 @@ const DataInquiry = () => {
               )}
               {selectedTable === "teachers" && (
                 <>
-                  {console.log("교사 드롭다운 렌더링 - 그룹 수:", teacherGroups.length, teacherGroups)}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-[230px] justify-start">
