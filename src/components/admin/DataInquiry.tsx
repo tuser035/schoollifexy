@@ -2435,7 +2435,6 @@ const DataInquiry = () => {
               </Button>
               {selectedTable === "students" && (
                 <>
-                  {console.log("드롭다운 렌더링 - 그룹 수:", studentGroups.length, studentGroups)}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-[200px] justify-start">
