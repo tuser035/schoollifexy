@@ -66,6 +66,9 @@ const DataInquiry = () => {
   const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
+  const [isStudentEditDialogOpen, setIsStudentEditDialogOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<any>(null);
+  const [isSavingStudent, setIsSavingStudent] = useState(false);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [searchDepartment, setSearchDepartment] = useState("");
@@ -1063,6 +1066,95 @@ const DataInquiry = () => {
     } catch (error: any) {
       console.error("교사 삭제 실패:", error);
       toast.error(error.message || "교사 삭제에 실패했습니다");
+    }
+  };
+
+  // 학생 편집 열기
+  const handleOpenStudentEdit = (student: any) => {
+    setEditingStudent({
+      studentId: student.학번,
+      name: student.이름,
+      grade: student.학년,
+      class: student.반,
+      number: student.번호,
+      deptName: student.학과,
+      phone: student.학생전화 === "-" ? "" : student.학생전화,
+      email: student.이메일 === "-" ? "" : student.이메일,
+      parentPhone1: student.학부모전화1 === "-" ? "" : student.학부모전화1,
+      parentPhone2: student.학부모전화2 === "-" ? "" : student.학부모전화2,
+    });
+    setIsStudentEditDialogOpen(true);
+  };
+
+  // 학생 정보 저장
+  const handleSaveStudent = async () => {
+    if (!editingStudent) return;
+
+    setIsSavingStudent(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) throw new Error("관리자 인증이 필요합니다");
+
+      const parsedUser = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: parsedUser.id });
+
+      const { error } = await supabase
+        .from("students")
+        .update({
+          name: editingStudent.name,
+          student_call: editingStudent.phone || null,
+          gmail: editingStudent.email || null,
+          parents_call1: editingStudent.parentPhone1 || null,
+          parents_call2: editingStudent.parentPhone2 || null,
+        })
+        .eq('student_id', editingStudent.studentId);
+
+      if (error) throw error;
+
+      toast.success("학생 정보가 수정되었습니다");
+      setIsStudentEditDialogOpen(false);
+      setEditingStudent(null);
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error) {
+      console.error("Error updating student:", error);
+      toast.error("학생 정보 수정에 실패했습니다");
+    } finally {
+      setIsSavingStudent(false);
+    }
+  };
+
+  // 학생 삭제
+  const handleDeleteStudent = async (studentName: string, studentId: string) => {
+    if (!confirm(`정말로 "${studentName}" 학생을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      const { error } = await supabase
+        .from("students")
+        .delete()
+        .eq("student_id", studentId);
+
+      if (error) throw error;
+
+      toast.success(`"${studentName}" 학생이 삭제되었습니다`);
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error: any) {
+      console.error("학생 삭제 실패:", error);
+      toast.error(error.message || "학생 삭제에 실패했습니다");
     }
   };
 
@@ -2409,7 +2501,7 @@ const DataInquiry = () => {
                     {selectedTable === "monthly" && (
                       <TableHead className="whitespace-nowrap">상담기록</TableHead>
                     )}
-                    {selectedTable === "teachers" && (
+                    {(selectedTable === "teachers" || selectedTable === "students") && (
                       <TableHead className="whitespace-nowrap">편집</TableHead>
                     )}
                   </TableRow>
@@ -2525,6 +2617,28 @@ const DataInquiry = () => {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleDeleteTeacher(row["이름"], row["이메일"])}
+                                className="h-8 w-8 p-0 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-400 hover:text-red-500" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                        {selectedTable === "students" && (
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleOpenStudentEdit(row)}
+                              >
+                                <ClipboardEdit className="h-4 w-4 mr-1" />
+                                편집
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteStudent(row["이름"], row["학번"])}
                                 className="h-8 w-8 p-0 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4 text-red-400 hover:text-red-500" />
@@ -2755,6 +2869,126 @@ const DataInquiry = () => {
               disabled={isSavingTeacher}
             >
               {isSavingTeacher ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 학생 정보 편집 다이얼로그 */}
+      <Dialog open={isStudentEditDialogOpen} onOpenChange={setIsStudentEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>학생 정보 편집</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="student-id">학번 *</Label>
+              <Input
+                id="student-id"
+                value={editingStudent?.studentId || ""}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="student-name">이름 *</Label>
+              <Input
+                id="student-name"
+                value={editingStudent?.name || ""}
+                onChange={(e) => setEditingStudent({...editingStudent, name: e.target.value})}
+                placeholder="학생 이름"
+                maxLength={50}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>학년</Label>
+                <Input
+                  value={editingStudent?.grade || ""}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>반</Label>
+                <Input
+                  value={editingStudent?.class || ""}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>번호</Label>
+                <Input
+                  value={editingStudent?.number || ""}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>학과</Label>
+              <Input
+                value={editingStudent?.deptName || "-"}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="student-phone">학생 전화번호</Label>
+              <Input
+                id="student-phone"
+                value={editingStudent?.phone || ""}
+                onChange={(e) => setEditingStudent({...editingStudent, phone: e.target.value})}
+                placeholder="010-1234-5678"
+                maxLength={20}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="student-email">이메일</Label>
+              <Input
+                id="student-email"
+                type="email"
+                value={editingStudent?.email || ""}
+                onChange={(e) => setEditingStudent({...editingStudent, email: e.target.value})}
+                placeholder="student@example.com"
+                maxLength={100}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="student-parent1">학부모 전화번호 1</Label>
+              <Input
+                id="student-parent1"
+                value={editingStudent?.parentPhone1 || ""}
+                onChange={(e) => setEditingStudent({...editingStudent, parentPhone1: e.target.value})}
+                placeholder="010-1234-5678"
+                maxLength={20}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="student-parent2">학부모 전화번호 2</Label>
+              <Input
+                id="student-parent2"
+                value={editingStudent?.parentPhone2 || ""}
+                onChange={(e) => setEditingStudent({...editingStudent, parentPhone2: e.target.value})}
+                placeholder="010-1234-5678"
+                maxLength={20}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsStudentEditDialogOpen(false)}
+              disabled={isSavingStudent}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSaveStudent}
+              disabled={isSavingStudent}
+            >
+              {isSavingStudent ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>
