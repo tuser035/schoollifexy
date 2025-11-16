@@ -70,6 +70,8 @@ const DataInquiry = () => {
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [isSavingStudent, setIsSavingStudent] = useState(false);
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const [isPhotoUploadDialogOpen, setIsPhotoUploadDialogOpen] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState<{ [key: string]: boolean }>({});
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [searchDepartment, setSearchDepartment] = useState("");
@@ -2430,12 +2432,20 @@ const DataInquiry = () => {
                 신규 학생 추가
               </Button>
               {data.length > 0 && (
-                <Button 
-                  variant="outline"
-                  onClick={() => setIsPrintDialogOpen(true)}
-                >
-                  사진 출력
-                </Button>
+                <>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsPrintDialogOpen(true)}
+                  >
+                    사진 출력
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsPhotoUploadDialogOpen(true)}
+                  >
+                    학생증명사진 업로드
+                  </Button>
+                </>
               )}
             </>
           )}
@@ -3906,6 +3916,131 @@ const DataInquiry = () => {
               disabled={isAddingStudent || !newStudentData.student_id.trim() || !newStudentData.name.trim() || !newStudentData.number}
             >
               {isAddingStudent ? "추가 중..." : "추가"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 학생 증명사진 업로드 다이얼로그 */}
+      <Dialog open={isPhotoUploadDialogOpen} onOpenChange={setIsPhotoUploadDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>학생 증명사진 업로드</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              {data.map((student: any, index: number) => (
+                <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
+                  <div className="w-24 h-32 border rounded overflow-hidden bg-muted flex-shrink-0">
+                    {student['증명사진'] ? (
+                      <img 
+                        src={student['증명사진']} 
+                        alt={student['이름']}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '';
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                        사진 없음
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">
+                      {student['학년']}학년 {student['반']}반 {student['번호']}번 {student['이름']}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      학번: {student['학번']}
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id={`photo-${student['학번']}`}
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        // 파일 크기 체크 (5MB)
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error('파일 크기는 5MB 이하여야 합니다');
+                          return;
+                        }
+
+                        setUploadingPhotos(prev => ({ ...prev, [student['학번']]: true }));
+
+                        try {
+                          const adminId = localStorage.getItem('adminId');
+                          if (!adminId) throw new Error('관리자 인증이 필요합니다');
+
+                          // 파일명: 학번.확장자
+                          const fileExt = file.name.split('.').pop();
+                          const fileName = `${student['학번']}.${fileExt}`;
+                          const filePath = `${fileName}`;
+
+                          // 기존 파일이 있으면 삭제
+                          if (student['증명사진']) {
+                            const oldPath = student['증명사진'].split('/').pop();
+                            await supabase.storage
+                              .from('student-photos')
+                              .remove([oldPath]);
+                          }
+
+                          // 파일 업로드
+                          const { error: uploadError } = await supabase.storage
+                            .from('student-photos')
+                            .upload(filePath, file, {
+                              cacheControl: '3600',
+                              upsert: true
+                            });
+
+                          if (uploadError) throw uploadError;
+
+                          // public URL 가져오기
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('student-photos')
+                            .getPublicUrl(filePath);
+
+                          // students 테이블 업데이트
+                          const { error: updateError } = await supabase
+                            .from('students')
+                            .update({ photo_url: publicUrl })
+                            .eq('student_id', student['학번']);
+
+                          if (updateError) throw updateError;
+
+                          toast.success('사진이 업로드되었습니다');
+
+                          // 데이터 새로고침
+                          handleQuery();
+                        } catch (error: any) {
+                          console.error('Upload error:', error);
+                          toast.error(error.message || '업로드에 실패했습니다');
+                        } finally {
+                          setUploadingPhotos(prev => ({ ...prev, [student['학번']]: false }));
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => document.getElementById(`photo-${student['학번']}`)?.click()}
+                      disabled={uploadingPhotos[student['학번']]}
+                    >
+                      {uploadingPhotos[student['학번']] ? '업로드 중...' : '사진 선택'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPhotoUploadDialogOpen(false)}>
+              닫기
             </Button>
           </DialogFooter>
         </DialogContent>
