@@ -3975,12 +3975,15 @@ const DataInquiry = () => {
                         setUploadingPhotos(prev => ({ ...prev, [student['학번']]: true }));
 
                         try {
-                          const adminId = localStorage.getItem('adminId');
-                          if (!adminId) throw new Error('관리자 인증이 필요합니다');
+                          const authUser = localStorage.getItem('auth_user');
+                          if (!authUser) throw new Error('관리자 인증이 필요합니다');
+                          
+                          const user = JSON.parse(authUser);
+                          if (!user.id) throw new Error('관리자 ID를 찾을 수 없습니다');
 
                           // 관리자 세션 설정
                           await supabase.rpc('set_admin_session', { 
-                            admin_id_input: adminId 
+                            admin_id_input: user.id 
                           });
 
                           // 파일명: 학번.확장자
