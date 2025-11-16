@@ -104,6 +104,10 @@ const DataInquiry = () => {
     parents_call2: ""
   });
   const [isAddingStudent, setIsAddingStudent] = useState(false);
+  const [isBulkTeacherEmailDialogOpen, setIsBulkTeacherEmailDialogOpen] = useState(false);
+  const [bulkTeacherEmailSubject, setBulkTeacherEmailSubject] = useState("");
+  const [bulkTeacherEmailBody, setBulkTeacherEmailBody] = useState("");
+  const [isSendingBulkTeacherEmail, setIsSendingBulkTeacherEmail] = useState(false);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -655,6 +659,90 @@ const DataInquiry = () => {
     } finally {
       setIsSendingBulkEmail(false);
     }
+  };
+
+  // 교사 일괄 이메일 템플릿 선택
+  const handleBulkTeacherTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setBulkTeacherEmailSubject(template.subject);
+      setBulkTeacherEmailBody(template.body);
+    }
+  };
+
+  // 교사 일괄 이메일 발송
+  const handleSendBulkTeacherEmail = async () => {
+    setIsSendingBulkTeacherEmail(true);
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) {
+        throw new Error("로그인이 필요합니다");
+      }
+
+      const user = JSON.parse(userString);
+
+      const selectedTeacherEmails = Array.from(selectedTeachers);
+      const teachersToEmail = data
+        .filter((row: any) => selectedTeacherEmails.includes(row.이메일))
+        .map((teacher: any) => {
+          const email = teacher.이메일;
+          return {
+            studentId: email, // 교사는 이메일로 구분
+            name: teacher.이름,
+            email: email,
+            hasValidEmail: email && email !== '-' && email.trim() !== '' && email.includes('@')
+          };
+        })
+        .filter((teacher: any) => teacher.hasValidEmail)
+        .map(({ studentId, name, email }) => ({ studentId, name, email }));
+
+      console.log("선택된 교사 수:", selectedTeacherEmails.length);
+      console.log("유효한 이메일을 가진 교사:", teachersToEmail);
+
+      if (teachersToEmail.length === 0) {
+        toast.error("선택한 교사 중 유효한 이메일이 있는 교사가 없습니다");
+        return;
+      }
+
+      // Resend를 통한 자동 발송
+      const { data: result, error } = await supabase.functions.invoke("send-bulk-email", {
+        body: {
+          adminId: user.id,
+          subject: bulkTeacherEmailSubject,
+          body: bulkTeacherEmailBody,
+          students: teachersToEmail, // API는 students 필드를 사용하지만 교사도 처리 가능
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(
+        `이메일 발송 완료!\n성공: ${result.totalSent}건, 실패: ${result.totalFailed}건`,
+        { duration: 5000 }
+      );
+      
+      setIsBulkTeacherEmailDialogOpen(false);
+      setSelectedTeachers(new Set());
+      setBulkTeacherEmailSubject("");
+      setBulkTeacherEmailBody("");
+    } catch (error: any) {
+      console.error("교사 일괄 이메일 발송 실패:", error);
+      toast.error(error.message || "교사 일괄 이메일 발송에 실패했습니다");
+    } finally {
+      setIsSendingBulkTeacherEmail(false);
+    }
+  };
+
+  // 교사 일괄 이메일 다이얼로그 열기
+  const handleOpenBulkTeacherEmailDialog = async () => {
+    if (selectedTeachers.size === 0) {
+      toast.error("교사를 선택해주세요");
+      return;
+    }
+
+    await loadTemplates();
+    setIsBulkTeacherEmailDialogOpen(true);
   };
 
   const exportToCSV = () => {
@@ -2451,12 +2539,20 @@ const DataInquiry = () => {
                 </>
               )}
               {selectedTable === "teachers" && selectedTeachers.size > 0 && (
-                <Button 
-                  variant="outline"
-                  onClick={() => setIsGroupDialogOpen(true)}
-                >
-                  그룹 저장 ({selectedTeachers.size})
-                </Button>
+                <>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsGroupDialogOpen(true)}
+                  >
+                    그룹 저장 ({selectedTeachers.size})
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    onClick={handleOpenBulkTeacherEmailDialog}
+                  >
+                    일괄 메시지 발송 ({selectedTeachers.size})
+                  </Button>
+                </>
               )}
               {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
                 <Button 
@@ -3266,6 +3362,80 @@ const DataInquiry = () => {
               disabled={isSendingBulkEmail || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}
             >
               {isSendingBulkEmail ? "발송 중..." : "일괄 발송"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 교사 일괄 메시지 발송 다이얼로그 */}
+      <Dialog open={isBulkTeacherEmailDialogOpen} onOpenChange={setIsBulkTeacherEmailDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>교사 일괄 메시지 발송</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>템플릿 선택</Label>
+              <Select value={selectedTemplateId} onValueChange={handleBulkTeacherTemplateSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="템플릿을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  {templates.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      등록된 템플릿이 없습니다
+                    </div>
+                  ) : (
+                    templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>수신자 ({selectedTeachers.size}명)</Label>
+              <div className="text-sm text-muted-foreground max-h-24 overflow-y-auto p-2 border rounded">
+                {Array.from(selectedTeachers).map((teacherEmail) => {
+                  const teacher = data.find((row: any) => row.이메일 === teacherEmail);
+                  return teacher ? `${teacher.이름} (${teacherEmail})` : teacherEmail;
+                }).join(', ')}
+              </div>
+            </div>
+            <div>
+              <Label>제목</Label>
+              <Input
+                value={bulkTeacherEmailSubject}
+                onChange={(e) => setBulkTeacherEmailSubject(e.target.value)}
+                placeholder="이메일 제목"
+              />
+            </div>
+            <div>
+              <Label>내용</Label>
+              <Textarea
+                value={bulkTeacherEmailBody}
+                onChange={(e) => setBulkTeacherEmailBody(e.target.value)}
+                placeholder="이메일 내용을 입력하세요"
+                rows={12}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkTeacherEmailDialogOpen(false)}
+              disabled={isSendingBulkTeacherEmail}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSendBulkTeacherEmail}
+              disabled={isSendingBulkTeacherEmail || !bulkTeacherEmailSubject.trim() || !bulkTeacherEmailBody.trim()}
+            >
+              {isSendingBulkTeacherEmail ? "발송 중..." : "일괄 발송"}
             </Button>
           </DialogFooter>
         </DialogContent>
