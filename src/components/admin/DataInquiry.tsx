@@ -2949,6 +2949,51 @@ const DataInquiry = () => {
               </Table>
             </div>
           )}
+
+          {/* 학생 사진 그리드 */}
+          {selectedTable === "students" && data.length > 0 && (
+            <div className="mt-8 p-6 border rounded-lg bg-card">
+              <h3 className="text-lg font-semibold mb-4">
+                {data.length > 0 && data[0]["학년"] && data[0]["반"] && (
+                  <span>{data[0]["학년"]}학년 {data[0]["반"]}반 학생 사진</span>
+                )}
+              </h3>
+              <div className="grid grid-cols-6 gap-4">
+                {data.map((row, idx) => {
+                  const photoUrl = row["증명사진"];
+                  const studentName = row["이름"];
+                  const studentGrade = row["학년"];
+                  const studentClass = row["반"];
+                  const studentNumber = row["번호"];
+                  
+                  return (
+                    <div key={idx} className="flex flex-col items-center border rounded-lg p-3 hover:shadow-md transition-shadow">
+                      {photoUrl && photoUrl !== "-" && photoUrl !== "null" ? (
+                        <img 
+                          src={photoUrl} 
+                          alt={`${studentName} 증명사진`}
+                          className="w-full aspect-[3/4] object-cover rounded border"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.svg";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full aspect-[3/4] bg-muted rounded border flex items-center justify-center text-muted-foreground text-xs">
+                          사진 없음
+                        </div>
+                      )}
+                      <div className="text-center mt-2">
+                        <div className="text-xs font-semibold text-muted-foreground">
+                          {studentGrade}-{studentClass}-{studentNumber}
+                        </div>
+                        <div className="text-sm font-medium mt-1">{studentName}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
