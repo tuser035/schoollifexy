@@ -743,6 +743,30 @@ export type Database = {
               teacher_email: string
             }[]
           }
+        | {
+            Args: {
+              admin_id_input: string
+              search_class?: number
+              search_department?: string
+              search_dept_name?: string
+              search_grade?: number
+              search_homeroom?: string
+              search_subject?: string
+              search_text?: string
+            }
+            Returns: {
+              call_t: string
+              class: number
+              department: string
+              dept_name: string
+              grade: number
+              is_homeroom: boolean
+              name: string
+              photo_url: string
+              subject: string
+              teacher_email: string
+            }[]
+          }
       admin_insert_email_template: {
         Args: {
           admin_id_input: string
