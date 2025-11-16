@@ -3978,6 +3978,11 @@ const DataInquiry = () => {
                           const adminId = localStorage.getItem('adminId');
                           if (!adminId) throw new Error('관리자 인증이 필요합니다');
 
+                          // 관리자 세션 설정
+                          await supabase.rpc('set_admin_session', { 
+                            admin_id_input: adminId 
+                          });
+
                           // 파일명: 학번.확장자
                           const fileExt = file.name.split('.').pop();
                           const fileName = `${student['학번']}.${fileExt}`;
