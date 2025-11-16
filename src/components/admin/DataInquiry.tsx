@@ -69,6 +69,8 @@ const DataInquiry = () => {
   const [isStudentEditDialogOpen, setIsStudentEditDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [isSavingStudent, setIsSavingStudent] = useState(false);
+  const [isPhotoGridOpen, setIsPhotoGridOpen] = useState(false);
+  const [photoGridData, setPhotoGridData] = useState<any[]>([]);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [searchDepartment, setSearchDepartment] = useState("");
@@ -1198,6 +1200,32 @@ const DataInquiry = () => {
   };
 
   // 학생 정보 저장
+  // 사진 출력 뷰 열기
+  const handleOpenPhotoGrid = () => {
+    if (data.length === 0) {
+      toast.error("먼저 학생 데이터를 조회해주세요");
+      return;
+    }
+    
+    // 현재 필터링된 데이터를 사진 그리드용으로 변환
+    const gridData = data.map(row => ({
+      photo_url: row["증명사진"],
+      name: row["이름"],
+      grade: row["학년"],
+      class: row["반"],
+      number: row["번호"],
+      student_id: row["학번"]
+    }));
+    
+    setPhotoGridData(gridData);
+    setIsPhotoGridOpen(true);
+  };
+
+  // 인쇄 핸들러
+  const handlePrintPhotoGrid = () => {
+    window.print();
+  };
+
   const handleSaveStudent = async () => {
     if (!editingStudent) return;
 
@@ -2497,6 +2525,14 @@ const DataInquiry = () => {
                     일괄 메시지 발송 ({selectedStudents.size})
                   </Button>
                 </>
+              )}
+              {selectedTable === "students" && data.length > 0 && (
+                <Button 
+                  variant="secondary" 
+                  onClick={handleOpenPhotoGrid}
+                >
+                  사진 출력
+                </Button>
               )}
               {selectedTable === "teachers" && (
                 <>
@@ -3897,6 +3933,86 @@ const DataInquiry = () => {
               {isAddingStudent ? "추가 중..." : "추가"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 사진 출력 Dialog */}
+      <Dialog open={isPhotoGridOpen} onOpenChange={setIsPhotoGridOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto print:max-w-full print:max-h-full">
+          <DialogHeader className="print:hidden">
+            <DialogTitle>학생 증명사진 출력</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex justify-end gap-2 print:hidden">
+              <Button onClick={handlePrintPhotoGrid}>
+                인쇄하기
+              </Button>
+              <Button variant="outline" onClick={() => setIsPhotoGridOpen(false)}>
+                닫기
+              </Button>
+            </div>
+            
+            {/* A4 용지 출력용 스타일 */}
+            <style>{`
+              @media print {
+                @page {
+                  size: A4;
+                  margin: 10mm;
+                }
+                body * {
+                  visibility: hidden;
+                }
+                .print-area, .print-area * {
+                  visibility: visible;
+                }
+                .print-area {
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  width: 100%;
+                }
+              }
+            `}</style>
+            
+            <div className="print-area">
+              {/* 학년-반 정보 표시 */}
+              {photoGridData.length > 0 && (
+                <div className="text-center mb-6 print:mb-4">
+                  <h2 className="text-2xl font-bold print:text-xl">
+                    {photoGridData[0].grade}학년 {photoGridData[0].class}반 학생 명단
+                  </h2>
+                </div>
+              )}
+              
+              {/* 사진 그리드 */}
+              <div className="grid grid-cols-5 gap-4 print:gap-2 print:grid-cols-6">
+                {photoGridData.map((student, idx) => (
+                  <div key={idx} className="flex flex-col items-center border rounded p-2 print:p-1">
+                    {student.photo_url && student.photo_url !== "-" && student.photo_url !== "null" ? (
+                      <img 
+                        src={student.photo_url} 
+                        alt={`${student.name} 증명사진`}
+                        className="w-full aspect-[3/4] object-cover rounded border print:border-gray-400"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full aspect-[3/4] bg-muted rounded border flex items-center justify-center text-muted-foreground text-xs print:border-gray-400">
+                        사진 없음
+                      </div>
+                    )}
+                    <div className="text-center mt-1 print:mt-0.5">
+                      <div className="text-xs font-semibold print:text-[10px]">
+                        {student.grade}-{student.class}-{student.number}
+                      </div>
+                      <div className="text-xs print:text-[10px]">{student.name}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
