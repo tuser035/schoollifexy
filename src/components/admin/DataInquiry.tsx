@@ -1318,6 +1318,22 @@ const DataInquiry = () => {
         return;
       }
 
+      // 학번 형식 검증: 학년(1자리) + 반(1자리) + 번호
+      const studentId = newStudentData.student_id.trim();
+      const expectedPrefix = `${newStudentData.grade}${newStudentData.class}`;
+      const expectedStudentId = `${expectedPrefix}${newStudentData.number}`;
+      
+      if (studentId !== expectedStudentId) {
+        toast.error(`학번은 "${expectedStudentId}" 형식이어야 합니다 (학년${newStudentData.grade} + 반${newStudentData.class} + 번호${newStudentData.number})`);
+        return;
+      }
+
+      // 학번이 숫자로만 이루어져 있는지 확인
+      if (!/^\d+$/.test(studentId)) {
+        toast.error("학번은 숫자만 입력 가능합니다");
+        return;
+      }
+
       // 관리자 ID 가져오기
       const authUser = localStorage.getItem("auth_user");
       if (!authUser) {
@@ -1331,7 +1347,7 @@ const DataInquiry = () => {
       const { data: existingStudent, error: checkError } = await supabase
         .from("students")
         .select("student_id")
-        .eq("student_id", newStudentData.student_id.trim())
+        .eq("student_id", studentId)
         .single();
 
       if (existingStudent) {
@@ -1348,7 +1364,7 @@ const DataInquiry = () => {
       // 데이터베이스 함수를 사용하여 학생 추가 (RLS 자동 처리)
       const { data, error } = await supabase.rpc("admin_insert_student", {
         admin_id_input: user.id,
-        student_id_input: newStudentData.student_id.trim(),
+        student_id_input: studentId,
         name_input: newStudentData.name.trim(),
         grade_input: parseInt(newStudentData.grade),
         class_input: parseInt(newStudentData.class),
