@@ -3974,17 +3974,20 @@ const DataInquiry = () => {
 
                         if (!file) {
                           console.warn('파일이 선택되지 않음');
+                          try { (e.currentTarget as HTMLInputElement).value = ''; } catch {}
                           return;
                         }
 
                         if (!file.type.startsWith('image/')) {
                           toast.error('이미지 파일만 업로드 가능합니다');
+                          try { (e.currentTarget as HTMLInputElement).value = ''; } catch {}
                           return;
                         }
 
                         // 파일 크기 체크 (5MB)
                         if (file.size > 5 * 1024 * 1024) {
                           toast.error('파일 크기는 5MB 이하여야 합니다');
+                          try { (e.currentTarget as HTMLInputElement).value = ''; } catch {}
                           return;
                         }
 
@@ -4056,7 +4059,7 @@ const DataInquiry = () => {
                           setData(prevData => 
                             prevData.map(item => 
                               item['학번'] === student['학번'] 
-                                ? { ...item, '증명사진': fnData.publicUrl }
+                                ? { ...item, '증명사진': `${fnData.publicUrl}?t=${Date.now()}` }
                                 : item
                             )
                           );
@@ -4070,6 +4073,8 @@ const DataInquiry = () => {
                           toast.error(error.message || '업로드에 실패했습니다');
                         } finally {
                           setUploadingPhotos(prev => ({ ...prev, [student['학번']]: false }));
+                          // 같은 파일 재선택 시 onChange가 다시 트리거되도록 value 초기화
+                          try { (e.currentTarget as HTMLInputElement).value = ''; } catch {}
                           console.log('업로드 완료 (finally):', student['학번']);
                         }
                       }}
