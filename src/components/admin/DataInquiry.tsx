@@ -4003,7 +4003,6 @@ const DataInquiry = () => {
                       )}
                     </div>
                     <div className="photo-label">
-                      <div>{student['학년']}학년 {student['반']}반</div>
                       <div>{student['성명']}({student['번호']})</div>
                     </div>
                   </div>
