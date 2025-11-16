@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import AdminLogin from "@/components/auth/AdminLogin";
-import { School } from "lucide-react";
+import { School, BookOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const backgroundImages = [
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4", // 산 풍경
@@ -18,6 +20,7 @@ const backgroundImages = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -61,6 +64,15 @@ const Index = () => {
               <p className="text-2xl font-semibold bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
                 SchoolPoint.Store
               </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/manual")}
+                className="mt-4"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                사용자 매뉴얼
+              </Button>
             </div>
 
             <Tabs defaultValue="teacher" className="w-full">
