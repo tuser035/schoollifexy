@@ -99,6 +99,7 @@ const MeritForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -159,10 +160,15 @@ const MeritForm = () => {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageLoading(true);
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
+        setImageLoading(false);
+        if (selectedScore > 0) {
+          toast.success(`${selectedScore}점 부여 됩니다`);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -171,6 +177,7 @@ const MeritForm = () => {
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview(null);
+    setImageLoading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
@@ -441,9 +448,9 @@ const MeritForm = () => {
       <Button 
         type="submit" 
         className="w-full bg-merit-blue hover:bg-merit-blue/90"
-        disabled={!selectedStudent || !selectedCategory || !basicReason || isSubmitting}
+        disabled={!selectedStudent || !selectedCategory || !basicReason || isSubmitting || imageLoading}
       >
-        {isSubmitting ? "부여 중..." : "상점 부여"}
+        {isSubmitting ? "부여 중..." : imageLoading ? "사진 로딩 중..." : "상점 부여"}
       </Button>
     </form>
   );
