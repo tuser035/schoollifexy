@@ -1327,6 +1327,24 @@ const DataInquiry = () => {
 
       const user = JSON.parse(authUser);
       
+      // 학번 중복 체크
+      const { data: existingStudent, error: checkError } = await supabase
+        .from("students")
+        .select("student_id")
+        .eq("student_id", newStudentData.student_id.trim())
+        .single();
+
+      if (existingStudent) {
+        toast.error("이미 존재하는 학번입니다");
+        return;
+      }
+
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116은 "no rows returned" 에러로, 중복이 없다는 의미
+        console.error("학번 확인 오류:", checkError);
+        throw checkError;
+      }
+      
       // 데이터베이스 함수를 사용하여 학생 추가 (RLS 자동 처리)
       const { data, error } = await supabase.rpc("admin_insert_student", {
         admin_id_input: user.id,
