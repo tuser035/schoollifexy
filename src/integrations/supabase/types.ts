@@ -357,6 +357,7 @@ export type Database = {
           parents_call1: string | null
           parents_call2: string | null
           password_hash: string
+          photo_url: string | null
           student_call: string | null
           student_id: string
           updated_at: string | null
@@ -373,6 +374,7 @@ export type Database = {
           parents_call1?: string | null
           parents_call2?: string | null
           password_hash?: string
+          photo_url?: string | null
           student_call?: string | null
           student_id: string
           updated_at?: string | null
@@ -389,6 +391,7 @@ export type Database = {
           parents_call1?: string | null
           parents_call2?: string | null
           password_hash?: string
+          photo_url?: string | null
           student_call?: string | null
           student_id?: string
           updated_at?: string | null
