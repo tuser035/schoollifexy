@@ -2482,11 +2482,6 @@ const DataInquiry = () => {
         setData(result);
         setOriginalData(result);
         
-        // 검색 시 선택 초기화: 최근 검색 결과만 대상으로 그룹 저장되도록
-        setSelectedStudents(new Set());
-        setSelectedTeachers(new Set());
-        setSelectedIds(new Set());
-        
         // 학생 테이블을 조회한 경우 그룹 목록도 로드
         if (selectedTable === "students") {
           loadStudentGroups();
