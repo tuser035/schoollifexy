@@ -112,14 +112,14 @@ const AdminDashboard = () => {
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen w-full flex flex-col bg-background">
         <header className="border-b bg-card sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <div className="flex items-center gap-4">
+          <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 flex justify-between items-center">
+            <div className="flex items-center gap-2 sm:gap-4">
               <SidebarTrigger />
               <div>
-                <h1 className="text-2xl font-bold text-foreground">
+                <h1 className="text-lg sm:text-2xl font-bold text-foreground">
                   {user.type === "admin" ? "관리자 대시보드" : "데이터 조회"}
                 </h1>
-                <p className="text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {user.type === "admin" 
                     ? user.email 
                     : user.grade && user.class 
@@ -129,22 +129,22 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
               {user.type === "teacher" && (
-                <Button onClick={() => navigate("/teacher/dashboard")} variant="outline">
+                <Button onClick={() => navigate("/teacher/dashboard")} variant="outline" size="sm">
                   돌아가기
                 </Button>
               )}
-              <Button onClick={handleLogout} variant="outline">
-                <LogOut className="w-4 h-4 mr-2" />
-                로그아웃
+              <Button onClick={handleLogout} variant="outline" size="sm">
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">로그아웃</span>
               </Button>
             </div>
           </div>
         </header>
 
         <div className="flex flex-1 w-full">
-          <Sidebar collapsible="icon" className="border-r w-32 data-[state=collapsed]:w-14">
+          <Sidebar collapsible="icon" className="border-r w-32 data-[state=collapsed]:w-14 landscape:w-48">
             <SidebarHeader className="border-b p-2">
               <SidebarTrigger className="ml-auto">
                 <ChevronLeft className="h-4 w-4" />
@@ -176,7 +176,7 @@ const AdminDashboard = () => {
             </SidebarContent>
           </Sidebar>
 
-          <main className="flex-1 p-8">
+          <main className="flex-1 p-2 sm:p-4 md:p-8 overflow-auto">
             {renderContent()}
           </main>
         </div>
