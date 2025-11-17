@@ -1792,9 +1792,9 @@ const DataInquiry = () => {
     const showToast = options?.showToast !== false; // 기본값은 true
     setIsLoading(true);
     
-    // 새로운 조회 시 선택 해제
-    setSelectedStudents(new Set());
-    setSelectedTeachers(new Set());
+    // 선택 유지: 검색/조회 시 기존 선택을 유지하여 누적되도록 함
+    // setSelectedStudents(new Set());
+    // setSelectedTeachers(new Set());
     
     try {
       // 관리자 ID 가져오기
@@ -2549,10 +2549,10 @@ const DataInquiry = () => {
               setSearchDeptName("");
               setColumnFilters({});
               
-              // 교사 선택 상태 초기화
-              if (selectedTable === "teachers") {
-                setSelectedTeachers(new Set());
-              }
+              // 선택 유지 (누적을 위해 초기화하지 않음)
+              // if (selectedTable === "teachers") {
+              //   setSelectedTeachers(new Set());
+              // }
               
               // 교사 테이블인 경우 즉시 전체 조회
               if (selectedTable === "teachers") {
@@ -2573,10 +2573,10 @@ const DataInquiry = () => {
                 setSearchDeptName("");
                 setColumnFilters({});
                 
-                // 교사 선택 상태 초기화
-                if (selectedTable === "teachers") {
-                  setSelectedTeachers(new Set());
-                }
+                // 선택 유지 (누적을 위해 초기화하지 않음)
+                // if (selectedTable === "teachers") {
+                //   setSelectedTeachers(new Set());
+                // }
                 
                 // 교사 테이블인 경우 즉시 전체 조회 (state 업데이트 타이밍 문제 방지)
                 if (selectedTable === "teachers") {
