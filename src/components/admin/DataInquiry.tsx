@@ -624,7 +624,7 @@ const DataInquiry = () => {
       const user = JSON.parse(userString);
 
       const selectedStudentIds = Array.from(selectedStudents);
-      const studentsToEmail = data
+      const allSelectedStudents = data
         .filter((row: any) => selectedStudentIds.includes(row.학번))
         .map((student: any) => {
           const email = student.이메일 || student.gmail;
@@ -634,16 +634,31 @@ const DataInquiry = () => {
             email: email,
             hasValidEmail: email && email !== '-' && email.trim() !== '' && email.includes('@')
           };
-        })
+        });
+      
+      const studentsToEmail = allSelectedStudents
         .filter((student: any) => student.hasValidEmail)
         .map(({ studentId, name, email }) => ({ studentId, name, email }));
+      
+      const studentsWithoutEmail = allSelectedStudents
+        .filter((student: any) => !student.hasValidEmail);
 
       console.log("선택된 학생 수:", selectedStudentIds.length);
       console.log("유효한 이메일을 가진 학생:", studentsToEmail);
+      console.log("이메일 없는 학생:", studentsWithoutEmail);
 
       if (studentsToEmail.length === 0) {
         toast.error("선택한 학생 중 유효한 이메일이 있는 학생이 없습니다");
         return;
+      }
+
+      // 이메일 없는 학생이 있으면 경고
+      if (studentsWithoutEmail.length > 0) {
+        const skippedNames = studentsWithoutEmail.map(s => s.name).join(", ");
+        toast.warning(
+          `${studentsWithoutEmail.length}명은 유효한 이메일이 없어 제외됩니다\n(${skippedNames})`,
+          { duration: 5000 }
+        );
       }
 
       // Resend를 통한 자동 발송
