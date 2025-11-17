@@ -62,6 +62,7 @@ const DataInquiry = () => {
   const [newGroupName, setNewGroupName] = useState("");
   const [isSavingGroup, setIsSavingGroup] = useState(false);
   const [selectedTeachers, setSelectedTeachers] = useState<Set<string>>(new Set());
+  const [selectedTeacherNames, setSelectedTeacherNames] = useState<Map<string, string>>(new Map()); // 이메일 -> 이름 매핑
   const [teacherGroups, setTeacherGroups] = useState<any[]>([]);
   const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
@@ -371,21 +372,41 @@ const DataInquiry = () => {
   // 교사 선택/해제 핸들러
   const handleToggleTeacher = (teacherEmail: string, checked: boolean) => {
     const newSet = new Set(selectedTeachers);
+    const newNames = new Map(selectedTeacherNames);
+    
     if (checked) {
       newSet.add(teacherEmail);
+      // 현재 data에서 교사 이름 찾아서 저장
+      const teacher = data.find((row: any) => row.이메일 === teacherEmail);
+      if (teacher) {
+        newNames.set(teacherEmail, teacher.이름);
+      }
     } else {
       newSet.delete(teacherEmail);
+      newNames.delete(teacherEmail);
     }
+    
     setSelectedTeachers(newSet);
+    setSelectedTeacherNames(newNames);
   };
 
   // 교사 전체 선택/해제
   const handleToggleAllTeachers = (checked: boolean) => {
     if (checked && selectedTable === "teachers") {
       const allTeacherEmails = new Set(data.map((row: any) => row.이메일));
+      const newNames = new Map(selectedTeacherNames);
+      
+      data.forEach((row: any) => {
+        if (row.이메일) {
+          newNames.set(row.이메일, row.이름);
+        }
+      });
+      
       setSelectedTeachers(allTeacherEmails);
+      setSelectedTeacherNames(newNames);
     } else {
       setSelectedTeachers(new Set());
+      setSelectedTeacherNames(new Map());
     }
   };
 
@@ -547,6 +568,7 @@ const DataInquiry = () => {
       setNewGroupName("");
       setSelectedStudents(new Set());
       setSelectedTeachers(new Set());
+      setSelectedTeacherNames(new Map());
       setColumnFilters({});
       setSearchTerm("");
       setSearchDepartment("");
@@ -702,7 +724,17 @@ const DataInquiry = () => {
       })) || [];
 
       setData(formattedData);
+      
+      // 이름 매핑도 함께 저장
+      const nameMap = new Map<string, string>();
+      teachersData?.forEach(row => {
+        if (row.teacher_email && row.name) {
+          nameMap.set(row.teacher_email, row.name);
+        }
+      });
+      
       setSelectedTeachers(new Set(group.teacher_ids));
+      setSelectedTeacherNames(nameMap);
       toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${group.teacher_ids.length}명)`);
     } catch (error: any) {
       console.error("교사 그룹 불러오기 실패:", error);
@@ -919,6 +951,7 @@ const DataInquiry = () => {
       
       setIsBulkTeacherEmailDialogOpen(false);
       setSelectedTeachers(new Set());
+      setSelectedTeacherNames(new Map());
       setBulkTeacherEmailSubject("");
       setBulkTeacherEmailBody("");
     } catch (error: any) {
@@ -2779,13 +2812,13 @@ const DataInquiry = () => {
                     variant="outline"
                     onClick={openGroupDialog}
                   >
-                    그룹 저장(1)
+                    그룹 저장({selectedTeachers.size})
                   </Button>
                   <Button 
                     variant="default" 
                     onClick={handleOpenBulkTeacherEmailDialog}
                   >
-                    일괄 메시지 발송(1)
+                    일괄 메시지 발송({selectedTeachers.size})
                   </Button>
                 </>
               )}
@@ -3741,8 +3774,8 @@ const DataInquiry = () => {
                 <Label>선택된 교사 ({selectedTeachers.size}명)</Label>
                 <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto p-2 border rounded">
                   {Array.from(selectedTeachers).map((teacherEmail) => {
-                    const teacher = data.find((row: any) => row.이메일 === teacherEmail);
-                    return teacher ? `${teacher.이름} (${teacherEmail})` : teacherEmail;
+                    const name = selectedTeacherNames.get(teacherEmail) || '이름 없음';
+                    return `${name} (${teacherEmail})`;
                   }).join(', ')}
                 </div>
               </div>
