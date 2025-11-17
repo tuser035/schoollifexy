@@ -2,25 +2,61 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, BookOpen, Users, GraduationCap, ShieldCheck, HelpCircle, Mail } from "lucide-react";
+import { ArrowLeft, BookOpen, Users, GraduationCap, ShieldCheck, HelpCircle, Mail, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import html2pdf from "html2pdf.js";
 
 const Manual = () => {
   const navigate = useNavigate();
+
+  const handleDownloadPDF = async () => {
+    try {
+      toast.info("PDF 생성 중...", { description: "잠시만 기다려주세요." });
+      
+      const element = document.getElementById('manual-content');
+      if (!element) {
+        toast.error("매뉴얼 콘텐츠를 찾을 수 없습니다.");
+        return;
+      }
+
+      const opt = {
+        margin: 10,
+        filename: `스쿨포인트상점_사용자매뉴얼_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+      toast.success("PDF 다운로드 완료!", { description: "매뉴얼이 저장되었습니다." });
+    } catch (error) {
+      console.error("PDF 생성 오류:", error);
+      toast.error("PDF 생성 실패", { description: "다시 시도해주세요." });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-orange-50 to-green-50">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            뒤로 가기
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              뒤로 가기
+            </Button>
+            <Button
+              onClick={handleDownloadPDF}
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              PDF 다운로드
+            </Button>
+          </div>
           
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="w-10 h-10 text-primary" />
@@ -31,8 +67,9 @@ const Manual = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
+        <div id="manual-content">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="overview">개요</TabsTrigger>
             <TabsTrigger value="login">로그인</TabsTrigger>
             <TabsTrigger value="student">학생용</TabsTrigger>
@@ -1048,6 +1085,7 @@ const Manual = () => {
             </Card>
           </TabsContent>
         </Tabs>
+        </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
