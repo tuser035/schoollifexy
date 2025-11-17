@@ -883,6 +883,24 @@ const DataInquiry = () => {
 
       const user = JSON.parse(userString);
 
+      // 세션 설정
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: user.id
+      });
+
+      // 선택된 교사 이메일 목록
+      const selectedTeacherEmails = Array.from(selectedTeachers);
+      
+      // 데이터베이스에서 최신 교사 정보 조회
+      const { data: latestTeachers, error: fetchError } = await supabase
+        .from('teachers')
+        .select('teacher_email, name')
+        .in('teacher_email', selectedTeacherEmails);
+
+      if (fetchError) throw fetchError;
+
+      console.log("DB에서 조회한 최신 교사 정보:", latestTeachers);
+
       // 유효한 이메일 도메인
       const validDomains = ['sc.gyo6.net', 'gmail.com'];
       
@@ -894,18 +912,15 @@ const DataInquiry = () => {
         return validDomains.includes(domain);
       };
 
-      const selectedTeacherEmails = Array.from(selectedTeachers);
-      const allSelectedTeachers = data
-        .filter((row: any) => selectedTeacherEmails.includes(row.이메일))
-        .map((teacher: any) => {
-          const email = teacher.이메일;
-          return {
-            studentId: email, // 교사는 이메일로 구분
-            name: teacher.이름,
-            email: email,
-            hasValidEmail: isValidEmail(email)
-          };
-        });
+      const allSelectedTeachers = (latestTeachers || []).map((teacher: any) => {
+        const email = teacher.teacher_email;
+        return {
+          studentId: email, // 교사는 이메일로 구분
+          name: teacher.name,
+          email: email,
+          hasValidEmail: isValidEmail(email)
+        };
+      });
       
       const teachersToEmail = allSelectedTeachers
         .filter((teacher: any) => teacher.hasValidEmail)
