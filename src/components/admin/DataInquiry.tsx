@@ -114,8 +114,8 @@ const DataInquiry = () => {
   const [bulkTeacherEmailSubject, setBulkTeacherEmailSubject] = useState("");
   const [bulkTeacherEmailBody, setBulkTeacherEmailBody] = useState("");
   const [isSendingBulkTeacherEmail, setIsSendingBulkTeacherEmail] = useState(false);
-  const [bulkTeacherAttachmentFile, setBulkTeacherAttachmentFile] = useState<File | null>(null);
-  const [bulkTeacherAttachmentPreview, setBulkTeacherAttachmentPreview] = useState<string | null>(null);
+  const [bulkTeacherAttachmentFiles, setBulkTeacherAttachmentFiles] = useState<File[]>([]);
+  const [bulkTeacherAttachmentPreviews, setBulkTeacherAttachmentPreviews] = useState<{file: File, preview: string}[]>([]);
   const bulkTeacherFileInputRef = useRef<HTMLInputElement>(null);
   const bulkTeacherCameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -882,20 +882,36 @@ const DataInquiry = () => {
 
   // 교사 일괄 이메일 발송
   const handleBulkTeacherFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setBulkTeacherAttachmentFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setBulkTeacherAttachmentPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
+      const newPreviews: {file: File, preview: string}[] = [];
+      
+      newFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          newPreviews.push({file, preview: reader.result as string});
+          if (newPreviews.length === newFiles.length) {
+            setBulkTeacherAttachmentFiles(prev => [...prev, ...newFiles]);
+            setBulkTeacherAttachmentPreviews(prev => [...prev, ...newPreviews]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+      
+      // Reset input
+      if (e.target) e.target.value = "";
     }
   };
 
-  const handleRemoveBulkTeacherAttachment = () => {
-    setBulkTeacherAttachmentFile(null);
-    setBulkTeacherAttachmentPreview(null);
+  const handleRemoveBulkTeacherAttachment = (index: number) => {
+    setBulkTeacherAttachmentFiles(prev => prev.filter((_, i) => i !== index));
+    setBulkTeacherAttachmentPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearAllBulkTeacherAttachments = () => {
+    setBulkTeacherAttachmentFiles([]);
+    setBulkTeacherAttachmentPreviews([]);
     if (bulkTeacherFileInputRef.current) bulkTeacherFileInputRef.current.value = "";
     if (bulkTeacherCameraInputRef.current) bulkTeacherCameraInputRef.current.value = "";
   };
@@ -915,24 +931,29 @@ const DataInquiry = () => {
         admin_id_input: user.id
       });
 
-      // 첨부파일 업로드
-      let attachmentUrl = null;
-      if (bulkTeacherAttachmentFile) {
-        const fileExt = bulkTeacherAttachmentFile.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `teacher-attachments/${fileName}`;
+      // 여러 첨부파일 업로드
+      const attachmentUrls: string[] = [];
+      if (bulkTeacherAttachmentFiles.length > 0) {
+        for (const file of bulkTeacherAttachmentFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `teacher-attachments/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('counseling-attachments')
-          .upload(filePath, bulkTeacherAttachmentFile);
+          const { error: uploadError } = await supabase.storage
+            .from('counseling-attachments')
+            .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error(`파일 업로드 실패: ${file.name}`, uploadError);
+            continue;
+          }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('counseling-attachments')
-          .getPublicUrl(filePath);
+          const { data: { publicUrl } } = supabase.storage
+            .from('counseling-attachments')
+            .getPublicUrl(filePath);
 
-        attachmentUrl = publicUrl;
+          attachmentUrls.push(publicUrl);
+        }
       }
 
       // 선택된 교사 이메일 목록
@@ -994,10 +1015,14 @@ const DataInquiry = () => {
         );
       }
 
-      // 첨부파일 URL이 있으면 이메일 본문에 추가
+      // 첨부파일 URL들이 있으면 이메일 본문에 추가
       let emailBody = bulkTeacherEmailBody;
-      if (attachmentUrl) {
-        emailBody += `\n\n[첨부파일 다운로드]\n${attachmentUrl}`;
+      if (attachmentUrls.length > 0) {
+        emailBody += `\n\n[첨부파일 다운로드]`;
+        attachmentUrls.forEach((url, index) => {
+          const fileName = bulkTeacherAttachmentFiles[index]?.name || `첨부파일${index + 1}`;
+          emailBody += `\n${index + 1}. ${fileName}: ${url}`;
+        });
       }
 
       // Resend를 통한 자동 발송
@@ -1022,7 +1047,7 @@ const DataInquiry = () => {
       setSelectedTeacherNames(new Map());
       setBulkTeacherEmailSubject("");
       setBulkTeacherEmailBody("");
-      handleRemoveBulkTeacherAttachment();
+      handleClearAllBulkTeacherAttachments();
     } catch (error: any) {
       console.error("교사 일괄 이메일 발송 실패:", error);
       toast.error(error.message || "교사 일괄 이메일 발송에 실패했습니다");
@@ -3798,7 +3823,7 @@ const DataInquiry = () => {
               />
             </div>
             <div>
-              <Label>첨부파일</Label>
+              <Label>첨부파일 ({bulkTeacherAttachmentFiles.length}개)</Label>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -3816,9 +3841,20 @@ const DataInquiry = () => {
                   <Camera className="w-4 h-4 mr-2" />
                   카메라
                 </Button>
+                {bulkTeacherAttachmentFiles.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleClearAllBulkTeacherAttachments}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    전체 삭제
+                  </Button>
+                )}
                 <input
                   ref={bulkTeacherFileInputRef}
                   type="file"
+                  multiple
                   onChange={handleBulkTeacherFileChange}
                   className="hidden"
                 />
@@ -3831,28 +3867,43 @@ const DataInquiry = () => {
                   className="hidden"
                 />
               </div>
-              {bulkTeacherAttachmentPreview && (
-                <div className="relative mt-2 p-2 border rounded-lg">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-1 right-1"
-                    onClick={handleRemoveBulkTeacherAttachment}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                  {bulkTeacherAttachmentFile?.type.startsWith('image/') ? (
-                    <img
-                      src={bulkTeacherAttachmentPreview}
-                      alt="첨부 파일 미리보기"
-                      className="max-w-full max-h-48 object-contain mx-auto"
-                    />
-                  ) : (
-                    <div className="text-sm text-muted-foreground p-2">
-                      {bulkTeacherAttachmentFile?.name}
+              {bulkTeacherAttachmentPreviews.length > 0 && (
+                <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
+                  {bulkTeacherAttachmentPreviews.map((item, index) => (
+                    <div key={index} className="relative p-2 border rounded-lg">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-1 right-1 z-10"
+                        onClick={() => handleRemoveBulkTeacherAttachment(index)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                      {item.file.type.startsWith('image/') ? (
+                        <div className="space-y-1">
+                          <img
+                            src={item.preview}
+                            alt={`첨부 파일 ${index + 1}`}
+                            className="max-w-full max-h-32 object-contain mx-auto"
+                          />
+                          <div className="text-xs text-muted-foreground text-center truncate">
+                            {item.file.name} ({(item.file.size / 1024).toFixed(1)}KB)
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 p-2">
+                          <FileUp className="w-4 h-4 text-muted-foreground" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm truncate">{item.file.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {(item.file.size / 1024).toFixed(1)}KB
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
