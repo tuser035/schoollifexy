@@ -114,6 +114,10 @@ const DataInquiry = () => {
   const [bulkTeacherEmailSubject, setBulkTeacherEmailSubject] = useState("");
   const [bulkTeacherEmailBody, setBulkTeacherEmailBody] = useState("");
   const [isSendingBulkTeacherEmail, setIsSendingBulkTeacherEmail] = useState(false);
+  const [bulkTeacherAttachmentFile, setBulkTeacherAttachmentFile] = useState<File | null>(null);
+  const [bulkTeacherAttachmentPreview, setBulkTeacherAttachmentPreview] = useState<string | null>(null);
+  const bulkTeacherFileInputRef = useRef<HTMLInputElement>(null);
+  const bulkTeacherCameraInputRef = useRef<HTMLInputElement>(null);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -877,6 +881,25 @@ const DataInquiry = () => {
   };
 
   // 교사 일괄 이메일 발송
+  const handleBulkTeacherFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBulkTeacherAttachmentFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setBulkTeacherAttachmentPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveBulkTeacherAttachment = () => {
+    setBulkTeacherAttachmentFile(null);
+    setBulkTeacherAttachmentPreview(null);
+    if (bulkTeacherFileInputRef.current) bulkTeacherFileInputRef.current.value = "";
+    if (bulkTeacherCameraInputRef.current) bulkTeacherCameraInputRef.current.value = "";
+  };
+
   const handleSendBulkTeacherEmail = async () => {
     setIsSendingBulkTeacherEmail(true);
     try {
@@ -891,6 +914,26 @@ const DataInquiry = () => {
       await supabase.rpc("set_admin_session", {
         admin_id_input: user.id
       });
+
+      // 첨부파일 업로드
+      let attachmentUrl = null;
+      if (bulkTeacherAttachmentFile) {
+        const fileExt = bulkTeacherAttachmentFile.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `teacher-attachments/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('counseling-attachments')
+          .upload(filePath, bulkTeacherAttachmentFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('counseling-attachments')
+          .getPublicUrl(filePath);
+
+        attachmentUrl = publicUrl;
+      }
 
       // 선택된 교사 이메일 목록
       const selectedTeacherEmails = Array.from(selectedTeachers);
@@ -951,12 +994,18 @@ const DataInquiry = () => {
         );
       }
 
+      // 첨부파일 URL이 있으면 이메일 본문에 추가
+      let emailBody = bulkTeacherEmailBody;
+      if (attachmentUrl) {
+        emailBody += `\n\n[첨부파일 다운로드]\n${attachmentUrl}`;
+      }
+
       // Resend를 통한 자동 발송
       const { data: result, error } = await supabase.functions.invoke("send-bulk-email", {
         body: {
           adminId: user.id,
           subject: bulkTeacherEmailSubject,
-          body: bulkTeacherEmailBody,
+          body: emailBody,
           students: teachersToEmail, // API는 students 필드를 사용하지만 교사도 처리 가능
         },
       });
@@ -973,6 +1022,7 @@ const DataInquiry = () => {
       setSelectedTeacherNames(new Map());
       setBulkTeacherEmailSubject("");
       setBulkTeacherEmailBody("");
+      handleRemoveBulkTeacherAttachment();
     } catch (error: any) {
       console.error("교사 일괄 이메일 발송 실패:", error);
       toast.error(error.message || "교사 일괄 이메일 발송에 실패했습니다");
@@ -3694,7 +3744,7 @@ const DataInquiry = () => {
 
       {/* 교사 일괄 메시지 발송 다이얼로그 */}
       <Dialog open={isBulkTeacherEmailDialogOpen} onOpenChange={setIsBulkTeacherEmailDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>교사 일괄 메시지 발송</DialogTitle>
           </DialogHeader>
@@ -3743,9 +3793,68 @@ const DataInquiry = () => {
                 value={bulkTeacherEmailBody}
                 onChange={(e) => setBulkTeacherEmailBody(e.target.value)}
                 placeholder="이메일 내용을 입력하세요"
-                rows={12}
+                rows={8}
                 className="resize-none"
               />
+            </div>
+            <div>
+              <Label>첨부파일</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => bulkTeacherFileInputRef.current?.click()}
+                >
+                  <FileUp className="w-4 h-4 mr-2" />
+                  파일 첨부
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => bulkTeacherCameraInputRef.current?.click()}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  카메라
+                </Button>
+                <input
+                  ref={bulkTeacherFileInputRef}
+                  type="file"
+                  onChange={handleBulkTeacherFileChange}
+                  className="hidden"
+                />
+                <input
+                  ref={bulkTeacherCameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleBulkTeacherFileChange}
+                  className="hidden"
+                />
+              </div>
+              {bulkTeacherAttachmentPreview && (
+                <div className="relative mt-2 p-2 border rounded-lg">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-1 right-1"
+                    onClick={handleRemoveBulkTeacherAttachment}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                  {bulkTeacherAttachmentFile?.type.startsWith('image/') ? (
+                    <img
+                      src={bulkTeacherAttachmentPreview}
+                      alt="첨부 파일 미리보기"
+                      className="max-w-full max-h-48 object-contain mx-auto"
+                    />
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2">
+                      {bulkTeacherAttachmentFile?.name}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
