@@ -74,9 +74,6 @@ const handler = async (req: Request): Promise<Response> => {
     const sendResults = [];
     const emailHistoryRecords = [];
 
-    // Resend 무료 플랜: schoollifexy@gmail.com으로만 발송 가능
-    const testEmail = "schoollifexy@gmail.com";
-
     for (const student of students) {
       if (!student.email || !student.email.includes("@")) {
         console.log(`Student ${student.name} has no valid email, skipping`);
@@ -84,19 +81,14 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       try {
-        // 무료 플랜에서는 테스트 이메일로만 발송
+        // 실제 학생 이메일로 발송
         const emailResponse = await resend.emails.send({
           from: "School Point <onboarding@resend.dev>",
           replyTo: "gb25tr04@sc.gyo6.net",
-          to: [testEmail],
-          subject: `[테스트] ${subject}`,
+          to: [student.email],
+          subject: subject,
           html: `
             <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <div style="background-color: #fff3cd; padding: 15px; margin-bottom: 20px; border-left: 4px solid #ffc107; border-radius: 4px;">
-                <strong>📧 테스트 발송</strong><br/>
-                <span style="color: #856404;">실제 수신자: ${student.name} (${student.email})</span>
-              </div>
-              
               <div style="background-color: #ffffff; padding: 20px;">
                 <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${body}</div>
               </div>
@@ -110,9 +102,6 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           `,
           text: `
-[테스트 발송]
-실제 수신자: ${student.name} (${student.email})
-
 ${body.replace(/<[^>]*>/g, '')}
 
 ---
