@@ -192,19 +192,31 @@ const DataInquiry = () => {
       const userString = localStorage.getItem("auth_user");
       if (!userString) {
         console.log("교사 그룹 로드: 사용자 정보 없음");
+        setTeacherGroups([]);
         return;
       }
 
       const user = JSON.parse(userString);
       console.log("교사 그룹 로드 시작:", user.type, user.id);
 
-      // Set session for RLS
+      // Set session for RLS - 먼저 세션 설정
       if (user.type === "admin") {
-        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+        const { error: sessionError } = await supabase.rpc("set_admin_session", { 
+          admin_id_input: user.id 
+        });
+        if (sessionError) {
+          console.error("Admin 세션 설정 실패:", sessionError);
+        }
       } else if (user.type === "teacher") {
-        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+        const { error: sessionError } = await supabase.rpc("set_teacher_session", { 
+          teacher_id_input: user.id 
+        });
+        if (sessionError) {
+          console.error("Teacher 세션 설정 실패:", sessionError);
+        }
       }
 
+      console.log("교사 그룹 조회 중...");
       const { data, error } = await supabase
         .from("teacher_groups")
         .select("*")
@@ -213,14 +225,20 @@ const DataInquiry = () => {
 
       if (error) {
         console.error("교사 그룹 조회 에러:", error);
+        console.error("에러 상세:", JSON.stringify(error, null, 2));
         throw error;
       }
 
       console.log("교사 그룹 로드 완료:", data?.length || 0, "개", data);
       setTeacherGroups(data || []);
+      
+      if (!data || data.length === 0) {
+        console.warn("저장된 교사 그룹이 없습니다. admin_id:", user.id);
+      }
     } catch (error: any) {
       console.error("교사 그룹 로드 실패:", error);
-      toast.error("교사 그룹 목록을 불러오는데 실패했습니다");
+      setTeacherGroups([]);
+      toast.error(`교사 그룹 목록 조회 실패: ${error.message || '알 수 없는 오류'}`);
     }
   };
 
