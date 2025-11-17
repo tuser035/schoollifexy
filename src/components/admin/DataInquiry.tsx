@@ -1302,6 +1302,7 @@ const DataInquiry = () => {
   // 교사 편집 다이얼로그 열기
   const handleOpenTeacherEdit = (teacher: any) => {
     setEditingTeacher({
+      originalEmail: teacher.이메일, // 원래 이메일 저장
       email: teacher.이메일,
       name: teacher.이름,
       phone: teacher.전화번호,
@@ -1340,13 +1341,14 @@ const DataInquiry = () => {
         .update({
           name: editingTeacher.name,
           call_t: editingTeacher.phone,
+          teacher_email: editingTeacher.email, // 이메일도 업데이트
           grade: editingTeacher.grade,
           class: editingTeacher.class,
           department: editingTeacher.department || null,
           subject: editingTeacher.subject || null,
           is_homeroom: editingTeacher.isHomeroom
         })
-        .eq('teacher_email', editingTeacher.email);
+        .eq('teacher_email', editingTeacher.originalEmail); // 원래 이메일로 찾기
 
       if (error) throw error;
 
