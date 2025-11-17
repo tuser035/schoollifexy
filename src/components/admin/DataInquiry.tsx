@@ -554,7 +554,7 @@ const DataInquiry = () => {
       if (error) throw error;
 
       toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
-      loadStudentGroups();
+      await loadStudentGroups();
     } catch (error: any) {
       console.error("그룹 삭제 실패:", error);
       toast.error("그룹 삭제에 실패했습니다");
@@ -605,7 +605,7 @@ const DataInquiry = () => {
       if (error) throw error;
 
       toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
-      loadTeacherGroups();
+      await loadTeacherGroups();
     } catch (error: any) {
       console.error("교사 그룹 삭제 실패:", error);
       toast.error("교사 그룹 삭제에 실패했습니다");
@@ -1610,6 +1610,10 @@ const DataInquiry = () => {
   const handleQuery = async (options?: { showToast?: boolean }) => {
     const showToast = options?.showToast !== false; // 기본값은 true
     setIsLoading(true);
+    
+    // 새로운 조회 시 선택 해제
+    setSelectedStudents(new Set());
+    setSelectedTeachers(new Set());
     
     try {
       // 관리자 ID 가져오기
