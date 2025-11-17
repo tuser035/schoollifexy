@@ -3322,6 +3322,17 @@ const DataInquiry = () => {
                 maxLength={20}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="teacher-email">이메일</Label>
+              <Input
+                id="teacher-email"
+                type="email"
+                value={editingTeacher?.email || ""}
+                onChange={(e) => setEditingTeacher({...editingTeacher, email: e.target.value})}
+                placeholder="teacher@school.com"
+                maxLength={100}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="teacher-grade">학년</Label>
