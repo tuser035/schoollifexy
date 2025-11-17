@@ -1194,7 +1194,7 @@ const Manual = () => {
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>스쿨포인트.상점 v1.0</p>
+          <p>스쿨라이프.KR v1.0</p>
           <p className="mt-1">
             이 매뉴얼은 시스템의 기본 사용법을 안내합니다. 추가 문의사항은 관리자에게 연락하세요.
           </p>
