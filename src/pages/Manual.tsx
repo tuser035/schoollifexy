@@ -2,13 +2,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, BookOpen, Users, GraduationCap, ShieldCheck, HelpCircle, Mail, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, BookOpen, Users, GraduationCap, ShieldCheck, HelpCircle, Mail, Download, Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import html2pdf from "html2pdf.js";
+import { useState, useEffect } from "react";
 
 const Manual = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const results: string[] = [];
+      
+      // 각 탭의 키워드 매핑
+      const tabKeywords: Record<string, string[]> = {
+        overview: ['시스템', '개요', '목적', '기능', '학생', '교사', '관리자', '특징'],
+        login: ['로그인', '비밀번호', '학번', '전화번호', '이메일', '문제', '해결'],
+        student: ['학생', '대시보드', '상점', '벌점', '순위', '리더보드', '포인트', '추천'],
+        teacher: ['교사', '상점', '벌점', '부여', '월별', '추천', '데이터', '조회', '메시지', '발송', '첨부파일'],
+        admin: ['관리자', '데이터', '조회', '일괄', '업로드', '이메일', '템플릿', '진로상담', '통계', '차트', '리더보드', '비밀번호', '재설정', '파일', '저장소', '첨부파일', 'ZIP'],
+        faq: ['FAQ', '자주', '질문', '비밀번호', '수정', '삭제', '포인트', '추천', '업로드', '학번', '실시간', '접근'],
+        contact: ['문의', '지원', '학생', '교사', '관리자', '로그인', '성능', '사진', '저장', '오류']
+      };
+
+      // 검색어와 일치하는 탭 찾기
+      Object.entries(tabKeywords).forEach(([tab, keywords]) => {
+        if (keywords.some(keyword => keyword.includes(query) || query.includes(keyword))) {
+          results.push(tab);
+        }
+      });
+
+      setSearchResults(results);
+      
+      // 검색 결과가 있으면 첫 번째 결과로 이동
+      if (results.length > 0) {
+        setActiveTab(results[0]);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+  };
 
   const handleDownloadPDF = async () => {
     try {
@@ -65,10 +109,71 @@ const Manual = () => {
               <p className="text-muted-foreground">스쿨포인트.상점 시스템 사용 가이드</p>
             </div>
           </div>
+
+          {/* Search Bar */}
+          <div className="relative max-w-xl">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="매뉴얼 검색... (예: 상점, 벌점, 이메일, 첨부파일 등)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearSearch}
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Search Results */}
+          {searchQuery && searchResults.length > 0 && (
+            <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+              <p className="text-sm font-medium mb-2">검색 결과 ({searchResults.length}개 섹션)</p>
+              <div className="flex flex-wrap gap-2">
+                {searchResults.map((tab) => {
+                  const tabNames: Record<string, string> = {
+                    overview: '개요',
+                    login: '로그인',
+                    student: '학생용',
+                    teacher: '교사용',
+                    admin: '관리자용',
+                    faq: 'FAQ',
+                    contact: '문의'
+                  };
+                  return (
+                    <Button
+                      key={tab}
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setActiveTab(tab)}
+                      className="text-xs"
+                    >
+                      {tabNames[tab]}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {searchQuery && searchResults.length === 0 && (
+            <div className="mt-4 p-4 bg-muted/50 border border-border rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                "<strong>{searchQuery}</strong>" 에 대한 검색 결과가 없습니다.
+              </p>
+            </div>
+          )}
         </div>
 
         <div id="manual-content">
-          <Tabs defaultValue="overview" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="overview">개요</TabsTrigger>
             <TabsTrigger value="login">로그인</TabsTrigger>
