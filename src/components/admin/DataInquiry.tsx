@@ -484,27 +484,62 @@ const DataInquiry = () => {
         toast.success(`"${newGroupName}" 학생 그룹이 저장되었습니다`);
         await loadStudentGroups();
       } else if (isTeacherTable) {
-        const groupData = {
-          admin_id: user.id,
-          group_name: newGroupName,
-          teacher_ids: Array.from(selectedTeachers),
-        };
-        
-        console.log("저장할 교사 그룹 데이터:", groupData);
-
-        const { data, error } = await supabase
-          .from("teacher_groups")
-          .insert(groupData)
-          .select();
-
-        if (error) {
-          console.error("교사 그룹 저장 에러:", error);
-          throw error;
+        const selectedIds = Array.from(selectedTeachers);
+        if (selectedIds.length === 0) {
+          toast.error("교사를 선택해주세요");
+          return;
         }
 
-        console.log("교사 그룹 저장 완료:", data);
-        toast.success(`"${newGroupName}" 교사 그룹이 저장되었습니다`);
-        await loadTeacherGroups();
+        try {
+          // 동일한 그룹명이 이미 있는지 확인
+          const { data: existingGroups, error: fetchError } = await supabase
+            .from("teacher_groups")
+            .select("*")
+            .eq("admin_id", user.id)
+            .eq("group_name", newGroupName)
+            .limit(1);
+
+          if (fetchError) throw fetchError;
+
+          if (existingGroups && existingGroups.length > 0) {
+            const existing = existingGroups[0];
+            const merged = Array.from(new Set([...(existing.teacher_ids || []), ...selectedIds]));
+
+            const { data: updated, error: updateError } = await supabase
+              .from("teacher_groups")
+              .update({ teacher_ids: merged })
+              .eq("id", existing.id)
+              .select();
+
+            if (updateError) throw updateError;
+
+            console.log("교사 그룹 업데이트 완료:", updated);
+            toast.success(`"${newGroupName}" 교사 그룹에 ${selectedIds.length}명 추가되었습니다 (총 ${merged.length}명)`);
+          } else {
+            const groupData = {
+              admin_id: user.id,
+              group_name: newGroupName,
+              teacher_ids: selectedIds,
+            };
+
+            console.log("저장할 교사 그룹 데이터:", groupData);
+
+            const { data, error } = await supabase
+              .from("teacher_groups")
+              .insert(groupData)
+              .select();
+
+            if (error) throw error;
+
+            console.log("교사 그룹 저장 완료:", data);
+            toast.success(`"${newGroupName}" 교사 그룹이 저장되었습니다`);
+          }
+
+          await loadTeacherGroups();
+        } catch (err) {
+          console.error("교사 그룹 저장/업데이트 에러:", err);
+          throw err;
+        }
       }
 
       // 그룹 저장 후 상태 초기화
@@ -2744,13 +2779,13 @@ const DataInquiry = () => {
                     variant="outline"
                     onClick={openGroupDialog}
                   >
-                    그룹 저장({selectedTeachers.size})
+                    그룹 저장(1)
                   </Button>
                   <Button 
                     variant="default" 
                     onClick={handleOpenBulkTeacherEmailDialog}
                   >
-                    일괄 메시지 발송({selectedTeachers.size})
+                    일괄 메시지 발송(1)
                   </Button>
                 </>
               )}
