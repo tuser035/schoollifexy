@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Download, ClipboardEdit, FileUp, Camera, X, Send, Trash2, Users } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import JSZip from "jszip";
 
 type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "monthly" | "departments";
 
@@ -1017,12 +1018,69 @@ const DataInquiry = () => {
 
       // 첨부파일 URL들이 있으면 이메일 본문에 추가
       let emailBody = bulkTeacherEmailBody;
+      
       if (attachmentUrls.length > 0) {
-        emailBody += `\n\n[첨부파일 다운로드]`;
-        attachmentUrls.forEach((url, index) => {
-          const fileName = bulkTeacherAttachmentFiles[index]?.name || `첨부파일${index + 1}`;
-          emailBody += `\n${index + 1}. ${fileName}: ${url}`;
-        });
+        // 여러 파일이면 ZIP으로 압축
+        if (attachmentUrls.length > 1) {
+          try {
+            const zip = new JSZip();
+            
+            // 모든 파일을 다운로드하여 ZIP에 추가
+            for (let i = 0; i < bulkTeacherAttachmentFiles.length; i++) {
+              const file = bulkTeacherAttachmentFiles[i];
+              zip.file(file.name, file);
+            }
+            
+            // ZIP 파일 생성
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            
+            // 현재 날짜와 그룹명으로 파일명 생성
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            // 선택된 교사들의 이름으로 그룹명 생성 (최대 3명까지 표시)
+            const teacherNamesList = Array.from(selectedTeacherNames.values()).slice(0, 3);
+            const groupName = teacherNamesList.length > 0 
+              ? teacherNamesList.join(',') + (selectedTeacherNames.size > 3 ? '외' : '')
+              : "교사그룹";
+            const zipFileName = `${dateStr}-${groupName}.zip`;
+            const zipFilePath = `teacher-attachments/${Date.now()}_${zipFileName}`;
+            
+            // ZIP 파일 업로드
+            const { error: zipUploadError } = await supabase.storage
+              .from('counseling-attachments')
+              .upload(zipFilePath, zipBlob, {
+                contentType: 'application/zip'
+              });
+            
+            if (!zipUploadError) {
+              const { data: { publicUrl } } = supabase.storage
+                .from('counseling-attachments')
+                .getPublicUrl(zipFilePath);
+              
+              emailBody += `\n\n[첨부파일 다운로드]\n<a href="${publicUrl}" download="${zipFileName}">${zipFileName}</a>`;
+            } else {
+              console.error("ZIP 업로드 실패:", zipUploadError);
+              // ZIP 실패시 개별 파일 링크 제공
+              emailBody += `\n\n[첨부파일 다운로드]`;
+              attachmentUrls.forEach((url, index) => {
+                const fileName = bulkTeacherAttachmentFiles[index]?.name || `첨부파일${index + 1}`;
+                emailBody += `\n${index + 1}. <a href="${url}" download="${fileName}">${fileName}</a>`;
+              });
+            }
+          } catch (zipError) {
+            console.error("ZIP 생성 실패:", zipError);
+            // ZIP 실패시 개별 파일 링크 제공
+            emailBody += `\n\n[첨부파일 다운로드]`;
+            attachmentUrls.forEach((url, index) => {
+              const fileName = bulkTeacherAttachmentFiles[index]?.name || `첨부파일${index + 1}`;
+              emailBody += `\n${index + 1}. <a href="${url}" download="${fileName}">${fileName}</a>`;
+            });
+          }
+        } else {
+          // 단일 파일이면 그냥 링크 제공
+          const fileName = bulkTeacherAttachmentFiles[0]?.name || '첨부파일';
+          emailBody += `\n\n[첨부파일 다운로드]\n<a href="${attachmentUrls[0]}" download="${fileName}">${fileName}</a>`;
+        }
       }
 
       // Resend를 통한 자동 발송
