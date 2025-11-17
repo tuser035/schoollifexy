@@ -106,7 +106,7 @@ const Manual = () => {
             <BookOpen className="w-10 h-10 text-primary" />
             <div>
               <h1 className="text-4xl font-bold">사용자 매뉴얼</h1>
-              <p className="text-muted-foreground">스쿨포인트.상점 시스템 사용 가이드</p>
+              <p className="text-muted-foreground">스쿨라이프.KR 시스템 사용 가이드</p>
             </div>
           </div>
 
@@ -192,13 +192,13 @@ const Manual = () => {
                   <BookOpen className="w-5 h-5" />
                   시스템 개요
                 </CardTitle>
-                <CardDescription>스쿨포인트.상점 상벌점 관리 시스템 소개</CardDescription>
+                <CardDescription>스쿨라이프.KR 상벌점 관리 시스템 소개</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
                   <h3 className="text-xl font-semibold mb-3">시스템 목적</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    스쿨포인트.상점은 학교 내 학생들의 긍정적인 행동을 장려하고 부정적인 행동을 관리하기 위한
+                    스쿨라이프.KR은 학교 내 학생들의 긍정적인 행동을 장려하고 부정적인 행동을 관리하기 위한
                     종합 상벌점 관리 시스템입니다. 교사는 학생의 행동을 실시간으로 기록하고, 학생은 자신의
                     상벌점을 확인하며, 관리자는 전체 시스템을 효율적으로 운영할 수 있습니다.
                   </p>
@@ -1035,7 +1035,7 @@ const Manual = () => {
                   <div className="p-4 border rounded-lg">
                     <h4 className="font-semibold mb-2">Q10. 모바일에서도 사용할 수 있나요?</h4>
                     <p className="text-sm text-muted-foreground">
-                      A. 네, 스쿨포인트.상점은 반응형 디자인으로 PC, 태블릿, 스마트폰 모두에서 사용할 수 있습니다. 
+                      A. 네, 스쿨라이프.KR은 반응형 디자인으로 PC, 태블릿, 스마트폰 모두에서 사용할 수 있습니다. 
                       모바일 브라우저(Chrome, Safari 등)로 접속하면 됩니다.
                     </p>
                   </div>
