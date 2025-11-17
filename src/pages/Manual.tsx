@@ -475,16 +475,44 @@ const Manual = () => {
                 <Separator />
 
                 <div>
-                  <h3 className="text-xl font-semibold mb-3">데이터 조회</h3>
+                  <h3 className="text-xl font-semibold mb-3">데이터 조회 및 일괄 메시지 발송</h3>
                   <p className="text-muted-foreground mb-4">
                     교사 대시보드 하단의 <strong>"데이터 조회"</strong> 버튼을 클릭하면 관리자와 유사한 조회 기능을 사용할 수 있습니다.
                   </p>
-                  <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                  
+                  <h4 className="font-semibold mb-2 mt-4">조회 기능</h4>
+                  <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
                     <li>학생 목록 및 상세 정보</li>
                     <li>상벌점 내역 검색</li>
                     <li>월별 추천 목록</li>
                     <li>리더보드</li>
                   </ul>
+
+                  <h4 className="font-semibold mb-2 mt-4">일괄 메시지 발송</h4>
+                  <p className="text-muted-foreground mb-2">
+                    학생 조회 화면에서 그룹을 선택하여 여러 학생에게 동시에 메시지를 발송할 수 있습니다.
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-4">
+                    <li><strong>"저장된 그룹 불러오기"</strong>를 클릭하여 미리 저장된 학생 그룹을 선택하거나, 학생 목록에서 개별 선택</li>
+                    <li><strong>제목</strong>과 <strong>내용</strong>을 작성합니다.</li>
+                    <li><strong>첨부파일 추가</strong> (선택사항):
+                      <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
+                        <li>"파일 선택" 버튼으로 컴퓨터에서 파일 선택</li>
+                        <li>"카메라" 버튼으로 사진 촬영 후 첨부</li>
+                        <li><strong>여러 개의 파일을 첨부할 수 있습니다</strong></li>
+                        <li>첨부파일이 3개 이상인 경우 자동으로 ZIP 파일로 압축되어 발송됩니다</li>
+                        <li>ZIP 파일명: 년-월-일-그룹명.zip 형식으로 자동 생성</li>
+                        <li>개별 파일 삭제 또는 "전체 삭제" 가능</li>
+                      </ul>
+                    </li>
+                    <li><strong>"일괄메시지 발송"</strong> 버튼을 클릭하여 전송</li>
+                  </ol>
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>💡 유용한 기능:</strong> 다중 첨부파일 기능으로 여러 자료를 한 번에 발송할 수 있으며, 
+                      자동 ZIP 압축으로 수신자가 편리하게 다운로드할 수 있습니다.
+                    </p>
+                  </div>
                 </div>
 
                 <Separator />
@@ -542,14 +570,35 @@ const Manual = () => {
                     학생, 교사, 상벌점, 월별 추천 등 모든 데이터를 조회하고 관리할 수 있습니다.
                   </p>
                   
-                  <h4 className="font-semibold mb-2 mt-4">학생 관리</h4>
+                  <h4 className="font-semibold mb-2 mt-4">학생 관리 및 일괄 메시지</h4>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
                     <li>학생 목록 조회 (학년/반 필터링)</li>
                     <li>학생 상세 정보 확인 (연락처, 학과 등)</li>
                     <li>학생 추가 (개별 또는 일괄)</li>
                     <li>학생 정보 수정</li>
                     <li>학생별 상벌점 내역 상세 조회</li>
+                    <li><strong>일괄 메시지 발송</strong> - 다중 첨부파일 지원</li>
                   </ul>
+                  
+                  <div className="p-4 border-l-4 border-primary bg-primary/5 rounded mb-4">
+                    <h5 className="font-semibold mb-2">📧 일괄 메시지 발송 (다중 첨부파일)</h5>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      학생 조회 화면에서 그룹을 선택하여 여러 학생에게 동시에 메시지를 발송할 수 있습니다.
+                    </p>
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li><strong>"저장된 그룹 불러오기"</strong>로 학생 그룹 선택 또는 개별 선택</li>
+                      <li>제목과 내용 작성</li>
+                      <li><strong>첨부파일 추가:</strong>
+                        <ul className="list-disc list-inside ml-6 mt-1 space-y-1">
+                          <li>여러 개의 파일을 첨부 가능 (파일 선택/카메라)</li>
+                          <li>3개 이상 첨부 시 자동 ZIP 압축</li>
+                          <li>ZIP 파일명: 년-월-일-그룹명.zip</li>
+                          <li>이메일 본문에 다운로드 링크 포함</li>
+                        </ul>
+                      </li>
+                      <li>"일괄메시지 발송" 버튼 클릭</li>
+                    </ol>
+                  </div>
 
                   <h4 className="font-semibold mb-2 mt-4">교사 관리</h4>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground mb-4">
@@ -604,7 +653,7 @@ const Manual = () => {
                     <li>템플릿 수정 및 삭제</li>
                   </ul>
 
-                  <h4 className="font-semibold mb-2 mt-4">이메일 발송</h4>
+                  <h4 className="font-semibold mb-2 mt-4">이메일 발송 (첨부파일 지원)</h4>
                   <ol className="list-decimal list-inside space-y-2 text-muted-foreground mb-4">
                     <li>템플릿 선택 또는 직접 작성</li>
                     <li>수신자 선택:
@@ -612,11 +661,26 @@ const Manual = () => {
                         <li>전체 학생</li>
                         <li>특정 학년</li>
                         <li>특정 반</li>
-                        <li>개별 학생</li>
+                        <li>개별 학생 (데이터 조회에서)</li>
+                      </ul>
+                    </li>
+                    <li><strong>첨부파일 추가 (선택사항):</strong>
+                      <ul className="list-disc list-inside ml-6 mt-2">
+                        <li>파일 선택 또는 카메라로 사진 촬영</li>
+                        <li><strong>여러 개의 파일 첨부 가능</strong></li>
+                        <li>3개 이상 첨부 시 자동으로 ZIP으로 압축</li>
+                        <li>ZIP 파일명: 년-월-일-그룹명.zip</li>
+                        <li>개별 파일 삭제 또는 전체 삭제 가능</li>
                       </ul>
                     </li>
                     <li>발송 버튼 클릭</li>
                   </ol>
+                  <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800">
+                      <strong>📎 첨부파일 팁:</strong> 여러 자료를 보낼 때는 다중 첨부 기능을 활용하세요. 
+                      시스템이 자동으로 ZIP 파일로 묶어서 발송하므로 수신자가 편리하게 다운로드할 수 있습니다.
+                    </p>
+                  </div>
 
                   <h4 className="font-semibold mb-2 mt-4">발송 내역</h4>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
