@@ -1868,7 +1868,9 @@ const DataInquiry = () => {
         search_grade: null,
         search_class: null,
         search_department: null,
-        search_subject: null
+        search_subject: null,
+        search_dept_name: null,
+        search_homeroom: null
       });
 
       const totalTeachers = teachersData?.length || 0;
@@ -2341,7 +2343,9 @@ const DataInquiry = () => {
           search_grade: searchGrade,
           search_class: searchClass,
           search_department: searchDept,
-          search_subject: searchSubj
+          search_subject: searchSubj,
+          search_dept_name: null,
+          search_homeroom: null
         });
 
         if (queryError) throw queryError;
