@@ -3623,98 +3623,15 @@ const DataInquiry = () => {
 
       {/* 교사 정보 편집 다이얼로그 */}
       <Dialog open={isTeacherEditDialogOpen} onOpenChange={setIsTeacherEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0">
+          <DialogHeader className="shrink-0 pb-4">
             <DialogTitle>교사 정보 편집</DialogTitle>
             <DialogDescription>교사의 정보를 수정할 수 있습니다.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="teacher-name">이름 *</Label>
-              <Input
-                id="teacher-name"
-                value={editingTeacher?.name || ""}
-                onChange={(e) => setEditingTeacher({...editingTeacher, name: e.target.value})}
-                placeholder="교사 이름"
-                maxLength={50}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacher-phone">전화번호 *</Label>
-              <Input
-                id="teacher-phone"
-                value={editingTeacher?.phone || ""}
-                onChange={(e) => setEditingTeacher({...editingTeacher, phone: e.target.value})}
-                placeholder="010-0000-0000"
-                maxLength={20}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacher-email">이메일</Label>
-              <Input
-                id="teacher-email"
-                type="email"
-                value={editingTeacher?.email || ""}
-                onChange={(e) => setEditingTeacher({...editingTeacher, email: e.target.value})}
-                placeholder="teacher@school.com"
-                maxLength={100}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="teacher-grade">학년</Label>
-                <Input
-                  id="teacher-grade"
-                  type="number"
-                  value={editingTeacher?.grade || ""}
-                  onChange={(e) => setEditingTeacher({...editingTeacher, grade: e.target.value ? parseInt(e.target.value) : null})}
-                  placeholder="학년"
-                  min="1"
-                  max="3"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="teacher-class">반</Label>
-                <Input
-                  id="teacher-class"
-                  type="number"
-                  value={editingTeacher?.class || ""}
-                  onChange={(e) => setEditingTeacher({...editingTeacher, class: e.target.value ? parseInt(e.target.value) : null})}
-                  placeholder="반"
-                  min="1"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacher-department">부서</Label>
-              <Input
-                id="teacher-department"
-                value={editingTeacher?.department || ""}
-                onChange={(e) => setEditingTeacher({...editingTeacher, department: e.target.value})}
-                placeholder="부서명"
-                maxLength={100}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacher-subject">담당교과</Label>
-              <Input
-                id="teacher-subject"
-                value={editingTeacher?.subject || ""}
-                onChange={(e) => setEditingTeacher({...editingTeacher, subject: e.target.value})}
-                placeholder="담당교과"
-                maxLength={100}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="teacher-homeroom"
-                checked={editingTeacher?.isHomeroom || false}
-                onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isHomeroom: checked})}
-              />
-              <Label htmlFor="teacher-homeroom" className="cursor-pointer">담임교사</Label>
-            </div>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 px-1">
+...
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0 pt-4">
             <Button
               variant="outline"
               onClick={() => setIsTeacherEditDialogOpen(false)}
@@ -3734,180 +3651,15 @@ const DataInquiry = () => {
 
       {/* 학생 정보 편집 다이얼로그 */}
       <Dialog open={isStudentEditDialogOpen} onOpenChange={setIsStudentEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0">
+          <DialogHeader className="shrink-0 pb-4">
             <DialogTitle>학생 정보 편집</DialogTitle>
             <DialogDescription>학생의 정보를 수정할 수 있습니다.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="student-id">학번 *</Label>
-              <Input
-                id="student-id"
-                value={editingStudent?.studentId || ""}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="student-name">이름 *</Label>
-              <Input
-                id="student-name"
-                value={editingStudent?.name || ""}
-                onChange={(e) => setEditingStudent({...editingStudent, name: e.target.value})}
-                placeholder="학생 이름"
-                maxLength={50}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>학년</Label>
-                <Input
-                  value={editingStudent?.grade || ""}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>반</Label>
-                <Input
-                  value={editingStudent?.class || ""}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>번호</Label>
-                <Input
-                  value={editingStudent?.number || ""}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>학과</Label>
-              <Input
-                value={editingStudent?.deptName || "-"}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="student-phone">학생 전화번호</Label>
-              <Input
-                id="student-phone"
-                value={editingStudent?.phone || ""}
-                onChange={(e) => setEditingStudent({...editingStudent, phone: e.target.value})}
-                placeholder="010-1234-5678"
-                maxLength={20}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="student-email">이메일</Label>
-              <Input
-                id="student-email"
-                type="email"
-                value={editingStudent?.email || ""}
-                onChange={(e) => setEditingStudent({...editingStudent, email: e.target.value})}
-                placeholder="student@example.com"
-                maxLength={100}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="student-parent1">학부모 전화번호 1</Label>
-              <Input
-                id="student-parent1"
-                value={editingStudent?.parentPhone1 || ""}
-                onChange={(e) => setEditingStudent({...editingStudent, parentPhone1: e.target.value})}
-                placeholder="010-1234-5678"
-                maxLength={20}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="student-parent2">학부모 전화번호 2</Label>
-              <Input
-                id="student-parent2"
-                value={editingStudent?.parentPhone2 || ""}
-                onChange={(e) => setEditingStudent({...editingStudent, parentPhone2: e.target.value})}
-                placeholder="010-1234-5678"
-                maxLength={20}
-              />
-            </div>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 px-1">
+...
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsStudentEditDialogOpen(false)}
-              disabled={isSavingStudent}
-            >
-              취소
-            </Button>
-            <Button
-              onClick={handleSaveStudent}
-              disabled={isSavingStudent}
-            >
-              {isSavingStudent ? "저장 중..." : "저장"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 이메일 작성 다이얼로그 */}
-      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>이메일/메신저 작성</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>템플릿 선택</Label>
-              <Select value={selectedTemplateId} onValueChange={handleTemplateSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="템플릿을 선택하세요" />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {templates.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      등록된 템플릿이 없습니다
-                    </div>
-                  ) : (
-                    templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>수신자</Label>
-              <Input
-                value={`${emailRecipient.name} (${emailRecipient.email})`}
-                disabled
-              />
-            </div>
-            <div>
-              <Label>제목</Label>
-              <Input
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                placeholder="이메일 제목"
-              />
-            </div>
-            <div>
-              <Label>내용</Label>
-              <Textarea
-                value={emailBody}
-                onChange={(e) => setEmailBody(e.target.value)}
-                placeholder="이메일 내용을 입력하세요"
-                rows={12}
-                className="resize-none"
-              />
-            </div>
-          </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0 pt-4">
             <Button
               variant="outline"
               onClick={() => setIsEmailDialogOpen(false)}

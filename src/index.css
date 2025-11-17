@@ -212,3 +212,20 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* 모바일 다이얼로그 스크롤 최적화 */
+@layer utilities {
+  /* 모바일 터치 스크롤 개선 */
+  .overflow-y-auto,
+  [class*="overflow-y-auto"] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  /* 모바일에서 다이얼로그 높이 최적화 */
+  @media (max-width: 768px) {
+    [role="dialog"] {
+      max-height: 90vh !important;
+    }
+  }
+}
