@@ -725,17 +725,21 @@ const DataInquiry = () => {
 
       setData(formattedData);
       
-      // 이름 매핑도 함께 저장
+      // 이름 매핑과 최신 이메일 매핑 저장
       const nameMap = new Map<string, string>();
+      const latestEmails = new Set<string>();
+      
       teachersData?.forEach(row => {
         if (row.teacher_email && row.name) {
           nameMap.set(row.teacher_email, row.name);
+          latestEmails.add(row.teacher_email); // DB에서 조회한 최신 이메일
         }
       });
       
-      setSelectedTeachers(new Set(group.teacher_ids));
+      // 최신 이메일로 selectedTeachers 업데이트
+      setSelectedTeachers(latestEmails);
       setSelectedTeacherNames(nameMap);
-      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${group.teacher_ids.length}명)`);
+      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${latestEmails.size}명)`);
     } catch (error: any) {
       console.error("교사 그룹 불러오기 실패:", error);
       toast.error("교사 그룹 불러오기에 실패했습니다");
