@@ -2734,13 +2734,13 @@ const DataInquiry = () => {
                     variant="outline"
                     onClick={() => setIsGroupDialogOpen(true)}
                   >
-                    그룹 저장(1)
+                    그룹 저장({teacherGroups.length + 1})
                   </Button>
                   <Button 
                     variant="default" 
                     onClick={handleOpenBulkTeacherEmailDialog}
                   >
-                    일괄 메시지 발송(1)
+                    일괄 메시지 발송({teacherGroups.length + 1})
                   </Button>
                 </>
               )}
