@@ -153,11 +153,6 @@ All colors MUST be HSL.
       padding-bottom: 0.5rem !important;
     }
 
-    /* 사이드바 너비 조정 */
-    [data-sidebar] {
-      max-width: 200px;
-    }
-
     /* 메인 컨텐츠 패딩 줄이기 */
     main {
       padding: 0.5rem !important;
@@ -171,19 +166,6 @@ All colors MUST be HSL.
     /* 버튼 크기 조정 */
     button {
       padding: 0.375rem 0.75rem !important;
-    }
-  }
-
-  /* 아주 작은 화면 (모바일 세로) */
-  @media (max-width: 640px) and (orientation: portrait) {
-    /* 사이드바 자동 접기 */
-    [data-sidebar] {
-      transform: translateX(-100%);
-      position: fixed;
-    }
-
-    [data-sidebar][data-state="expanded"] {
-      transform: translateX(0);
     }
   }
 }
