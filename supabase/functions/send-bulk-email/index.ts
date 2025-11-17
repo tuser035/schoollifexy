@@ -98,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <div style="background-color: #ffffff; padding: 20px;">
-                ${body}
+                <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${body}</div>
               </div>
               
               <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
