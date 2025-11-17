@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import AdminLogin from "@/components/auth/AdminLogin";
 import { School } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import manualIcon from "@/assets/manual-icon.png";
 
 const backgroundImages = [
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4", // 산 풍경
@@ -62,15 +60,17 @@ const Index = () => {
               <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
                 스쿨라이프.KR
               </h1>
-              <p className="text-2xl font-semibold bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
-                SchoolLife.KR
+              <p className="text-2xl font-semibold">
+                <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
+                  SchoolLife.
+                </span>
+                <span 
+                  onClick={() => navigate("/manual")}
+                  className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent cursor-pointer hover:opacity-70 transition-opacity underline decoration-2"
+                >
+                  KR
+                </span>
               </p>
-              <img 
-                src={manualIcon}
-                alt="사용자 매뉴얼"
-                onClick={() => navigate("/manual")}
-                className="mt-4 mx-auto cursor-pointer hover:opacity-80 transition-opacity w-32 h-auto"
-              />
             </div>
 
             <Tabs defaultValue="teacher" className="w-full">
