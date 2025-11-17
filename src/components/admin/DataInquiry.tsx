@@ -2142,6 +2142,14 @@ const DataInquiry = () => {
       }
       
       const adminId = parsedUser.id;
+
+      // Set session for RLS (ensure policies recognize current user)
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: adminId });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: adminId });
+      }
+
       const trimmedSearch = searchTerm.trim().slice(0, 100);
       let result;
 
