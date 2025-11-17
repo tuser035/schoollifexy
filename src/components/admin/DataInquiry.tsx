@@ -58,6 +58,10 @@ const DataInquiry = () => {
   const [bulkEmailSubject, setBulkEmailSubject] = useState("");
   const [bulkEmailBody, setBulkEmailBody] = useState("");
   const [isSendingBulkEmail, setIsSendingBulkEmail] = useState(false);
+  const [bulkStudentAttachmentFiles, setBulkStudentAttachmentFiles] = useState<File[]>([]);
+  const [bulkStudentAttachmentPreviews, setBulkStudentAttachmentPreviews] = useState<{file: File, preview: string}[]>([]);
+  const bulkStudentFileInputRef = useRef<HTMLInputElement>(null);
+  const bulkStudentCameraInputRef = useRef<HTMLInputElement>(null);
   const [studentGroups, setStudentGroups] = useState<any[]>([]);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
@@ -782,6 +786,49 @@ const DataInquiry = () => {
     }
   };
 
+  // 학생 일괄 메시지 첨부파일 핸들러
+  const handleBulkStudentAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const newFiles: File[] = [];
+    const newPreviews: {file: File, preview: string}[] = [];
+
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          newPreviews.push({file, preview: reader.result as string});
+          if (newPreviews.length === newFiles.length) {
+            setBulkStudentAttachmentFiles(prev => [...prev, ...newFiles]);
+            setBulkStudentAttachmentPreviews(prev => [...prev, ...newPreviews]);
+          }
+        };
+        reader.readAsDataURL(file);
+        newFiles.push(file);
+      } else {
+        newFiles.push(file);
+        newPreviews.push({file, preview: ''});
+      }
+    }
+
+    if (newFiles.filter(f => !f.type.startsWith('image/')).length > 0) {
+      setBulkStudentAttachmentFiles(prev => [...prev, ...newFiles.filter(f => !f.type.startsWith('image/'))]);
+    }
+  };
+
+  const handleRemoveBulkStudentAttachment = (index: number) => {
+    setBulkStudentAttachmentFiles(prev => prev.filter((_, i) => i !== index));
+    setBulkStudentAttachmentPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearAllBulkStudentAttachments = () => {
+    setBulkStudentAttachmentFiles([]);
+    setBulkStudentAttachmentPreviews([]);
+    if (bulkStudentFileInputRef.current) bulkStudentFileInputRef.current.value = "";
+    if (bulkStudentCameraInputRef.current) bulkStudentCameraInputRef.current.value = "";
+  };
+
   // 일괄 이메일 발송
   const handleSendBulkEmail = async () => {
     setIsSendingBulkEmail(true);
@@ -792,6 +839,32 @@ const DataInquiry = () => {
       }
 
       const user = JSON.parse(userString);
+
+      // 여러 첨부파일 업로드
+      const attachmentUrls: string[] = [];
+      if (bulkStudentAttachmentFiles.length > 0) {
+        for (const file of bulkStudentAttachmentFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `student-attachments/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('counseling-attachments')
+            .upload(filePath, file);
+
+          if (uploadError) {
+            console.error("파일 업로드 실패:", uploadError);
+            toast.error(`파일 업로드 실패: ${file.name}`);
+            continue;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('counseling-attachments')
+            .getPublicUrl(filePath);
+          
+          attachmentUrls.push(publicUrl);
+        }
+      }
 
       // 유효한 이메일 도메인
       const validDomains = ['sc.gyo6.net', 'gmail.com'];
@@ -833,6 +906,73 @@ const DataInquiry = () => {
         return;
       }
 
+      // 첨부파일 URL들이 있으면 이메일 본문에 추가
+      let emailBody = bulkEmailBody;
+      
+      if (attachmentUrls.length > 0) {
+        // 여러 파일이면 ZIP으로 압축
+        if (attachmentUrls.length > 1) {
+          try {
+            const zip = new JSZip();
+            
+            // 모든 파일을 다운로드하여 ZIP에 추가
+            for (let i = 0; i < bulkStudentAttachmentFiles.length; i++) {
+              const file = bulkStudentAttachmentFiles[i];
+              zip.file(file.name, file);
+            }
+            
+            // ZIP 파일 생성
+            const zipBlob = await zip.generateAsync({ type: "blob" });
+            
+            // 현재 날짜와 그룹명으로 파일명 생성
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            // 선택된 학생들의 이름으로 그룹명 생성 (최대 3명까지 표시)
+            const studentNamesList = studentsToEmail.slice(0, 3).map((s: any) => s.name);
+            const groupName = studentNamesList.length > 0 
+              ? studentNamesList.join(',') + (studentsToEmail.length > 3 ? '외' : '')
+              : "학생그룹";
+            const zipFileName = `${dateStr}-${groupName}.zip`;
+            const zipFilePath = `student-attachments/${Date.now()}_${zipFileName}`;
+            
+            // ZIP 파일 업로드
+            const { error: zipUploadError } = await supabase.storage
+              .from('counseling-attachments')
+              .upload(zipFilePath, zipBlob, {
+                contentType: 'application/zip'
+              });
+            
+            if (!zipUploadError) {
+              const { data: { publicUrl } } = supabase.storage
+                .from('counseling-attachments')
+                .getPublicUrl(zipFilePath);
+              
+              emailBody += `\n\n[첨부파일 다운로드]\n<a href="${publicUrl}" download="${zipFileName}">${zipFileName}</a>`;
+            } else {
+              console.error("ZIP 업로드 실패:", zipUploadError);
+              // ZIP 실패시 개별 파일 링크 제공
+              emailBody += `\n\n[첨부파일 다운로드]`;
+              attachmentUrls.forEach((url, index) => {
+                const fileName = bulkStudentAttachmentFiles[index]?.name || `첨부파일${index + 1}`;
+                emailBody += `\n${index + 1}. <a href="${url}" download="${fileName}">${fileName}</a>`;
+              });
+            }
+          } catch (zipError) {
+            console.error("ZIP 생성 실패:", zipError);
+            // ZIP 실패시 개별 파일 링크 제공
+            emailBody += `\n\n[첨부파일 다운로드]`;
+            attachmentUrls.forEach((url, index) => {
+              const fileName = bulkStudentAttachmentFiles[index]?.name || `첨부파일${index + 1}`;
+              emailBody += `\n${index + 1}. <a href="${url}" download="${fileName}">${fileName}</a>`;
+            });
+          }
+        } else {
+          // 단일 파일이면 그냥 링크 제공
+          const fileName = bulkStudentAttachmentFiles[0]?.name || '첨부파일';
+          emailBody += `\n\n[첨부파일 다운로드]\n<a href="${attachmentUrls[0]}" download="${fileName}">${fileName}</a>`;
+        }
+      }
+
       // 이메일 없는 학생이 있으면 경고
       if (studentsWithoutEmail.length > 0) {
         const skippedNames = studentsWithoutEmail.map(s => s.name).join(", ");
@@ -847,7 +987,7 @@ const DataInquiry = () => {
         body: {
           adminId: user.id,
           subject: bulkEmailSubject,
-          body: bulkEmailBody,
+          body: emailBody,
           students: studentsToEmail,
         },
       });
@@ -863,6 +1003,8 @@ const DataInquiry = () => {
       setSelectedStudents(new Set());
       setBulkEmailSubject("");
       setBulkEmailBody("");
+      setSelectedTemplateId("");
+      handleClearAllBulkStudentAttachments();
     } catch (error: any) {
       console.error("일괄 이메일 발송 실패:", error);
       toast.error(error.message || "일괄 이메일 발송에 실패했습니다");
@@ -3805,6 +3947,108 @@ const DataInquiry = () => {
                 rows={12}
                 className="resize-none"
               />
+            </div>
+            <div>
+              <Label>첨부파일 ({bulkStudentAttachmentFiles.length}개)</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkStudentFileInputRef.current?.click()}
+                >
+                  <FileUp className="w-4 h-4 mr-2" />
+                  파일 선택
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkStudentCameraInputRef.current?.click()}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  카메라
+                </Button>
+                {bulkStudentAttachmentFiles.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearAllBulkStudentAttachments}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    전체 삭제
+                  </Button>
+                )}
+              </div>
+              <input
+                ref={bulkStudentFileInputRef}
+                type="file"
+                multiple
+                accept="*/*"
+                onChange={handleBulkStudentAttachmentUpload}
+                className="hidden"
+              />
+              <input
+                ref={bulkStudentCameraInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                capture="environment"
+                onChange={handleBulkStudentAttachmentUpload}
+                className="hidden"
+              />
+              {bulkStudentAttachmentPreviews.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {bulkStudentAttachmentPreviews.map((item, index) => (
+                    <div key={index} className="relative group">
+                      {item.preview ? (
+                        <img
+                          src={item.preview}
+                          alt={`첨부 ${index + 1}`}
+                          className="w-full h-20 object-cover rounded border"
+                        />
+                      ) : (
+                        <div className="w-full h-20 flex items-center justify-center bg-muted rounded border">
+                          <FileUp className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveBulkStudentAttachment(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                      <p className="text-xs truncate mt-1">{item.file.name}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {bulkStudentAttachmentFiles.filter(f => !f.type.startsWith('image/')).length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {bulkStudentAttachmentFiles.map((file, index) => {
+                    if (file.type.startsWith('image/')) return null;
+                    return (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <FileUp className="w-4 h-4" />
+                        <span className="flex-1 truncate">{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => handleRemoveBulkStudentAttachment(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
