@@ -2880,12 +2880,17 @@ const DataInquiry = () => {
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
               className="max-w-xs"
               maxLength={100}
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
             />
-            <Button onClick={async () => {
-              // 항상 필터 초기화
-              setSearchTerm("");
-              setSearchDepartment("");
-              setSearchSubject("");
+            <Button onClick={() => handleQuery()} disabled={isLoading}>
+              {isLoading ? "조회 중..." : "검색"}
+            </Button>
+            <Button variant="outline" onClick={async () => { 
+              setSearchTerm(""); 
+              setSearchDepartment(""); 
+              setSearchSubject(""); 
               setSearchHomeroom("");
               setSearchDeptName("");
               setColumnFilters({});
@@ -2903,7 +2908,7 @@ const DataInquiry = () => {
                 setTimeout(() => handleQuery(), 150);
               }
             }} disabled={isLoading}>
-              {isLoading ? "조회 중..." : "조회"}
+              전체 조회
             </Button>
             {(searchTerm || searchDepartment || searchSubject || searchHomeroom || searchDeptName || Object.keys(columnFilters).length > 0) && (
               <Button variant="outline" onClick={async () => { 
@@ -2913,11 +2918,6 @@ const DataInquiry = () => {
                 setSearchHomeroom("");
                 setSearchDeptName("");
                 setColumnFilters({});
-                
-                // 선택 유지 (누적을 위해 초기화하지 않음)
-                // if (selectedTable === "teachers") {
-                //   setSelectedTeachers(new Set());
-                // }
                 
                 // 교사 테이블인 경우 즉시 전체 조회 (state 업데이트 타이밍 문제 방지)
                 if (selectedTable === "teachers") {
