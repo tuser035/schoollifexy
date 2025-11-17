@@ -163,9 +163,44 @@ All colors MUST be HSL.
       font-size: 1.25rem !important;
     }
 
+    h2 {
+      font-size: 1.1rem !important;
+    }
+
     /* 버튼 크기 조정 */
     button {
       padding: 0.375rem 0.75rem !important;
+      font-size: 0.875rem !important;
+    }
+
+    /* 카드 패딩 줄이기 */
+    .card {
+      padding: 0.75rem !important;
+    }
+
+    /* 폼 요소 간격 줄이기 */
+    form > * + * {
+      margin-top: 0.5rem !important;
+    }
+
+    /* 테이블 폰트 크기 조정 */
+    table {
+      font-size: 0.875rem !important;
+    }
+
+    /* 사이드바 너비 조정 */
+    aside {
+      width: 200px !important;
+    }
+  }
+
+  /* 태블릿 가로모드 최적화 */
+  @media (orientation: landscape) and (min-width: 768px) and (max-height: 900px) {
+    /* 더 넓은 화면 활용 */
+    .container {
+      max-width: 100% !important;
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
     }
   }
 }
