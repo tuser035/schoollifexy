@@ -623,6 +623,17 @@ const DataInquiry = () => {
 
       const user = JSON.parse(userString);
 
+      // 유효한 이메일 도메인
+      const validDomains = ['sc.gyo6.net', 'gmail.com'];
+      
+      const isValidEmail = (email: string): boolean => {
+        if (!email || email === '-' || email.trim() === '' || !email.includes('@')) {
+          return false;
+        }
+        const domain = email.split('@')[1];
+        return validDomains.includes(domain);
+      };
+
       const selectedStudentIds = Array.from(selectedStudents);
       const allSelectedStudents = data
         .filter((row: any) => selectedStudentIds.includes(row.학번))
@@ -632,7 +643,7 @@ const DataInquiry = () => {
             studentId: student.학번,
             name: student.이름,
             email: email,
-            hasValidEmail: email && email !== '-' && email.trim() !== '' && email.includes('@')
+            hasValidEmail: isValidEmail(email)
           };
         });
       
@@ -711,8 +722,19 @@ const DataInquiry = () => {
 
       const user = JSON.parse(userString);
 
+      // 유효한 이메일 도메인
+      const validDomains = ['sc.gyo6.net', 'gmail.com'];
+      
+      const isValidEmail = (email: string): boolean => {
+        if (!email || email === '-' || email.trim() === '' || !email.includes('@')) {
+          return false;
+        }
+        const domain = email.split('@')[1];
+        return validDomains.includes(domain);
+      };
+
       const selectedTeacherEmails = Array.from(selectedTeachers);
-      const teachersToEmail = data
+      const allSelectedTeachers = data
         .filter((row: any) => selectedTeacherEmails.includes(row.이메일))
         .map((teacher: any) => {
           const email = teacher.이메일;
@@ -720,18 +742,33 @@ const DataInquiry = () => {
             studentId: email, // 교사는 이메일로 구분
             name: teacher.이름,
             email: email,
-            hasValidEmail: email && email !== '-' && email.trim() !== '' && email.includes('@')
+            hasValidEmail: isValidEmail(email)
           };
-        })
+        });
+      
+      const teachersToEmail = allSelectedTeachers
         .filter((teacher: any) => teacher.hasValidEmail)
         .map(({ studentId, name, email }) => ({ studentId, name, email }));
+      
+      const teachersWithoutEmail = allSelectedTeachers
+        .filter((teacher: any) => !teacher.hasValidEmail);
 
       console.log("선택된 교사 수:", selectedTeacherEmails.length);
       console.log("유효한 이메일을 가진 교사:", teachersToEmail);
+      console.log("이메일 없는 교사:", teachersWithoutEmail);
 
       if (teachersToEmail.length === 0) {
         toast.error("선택한 교사 중 유효한 이메일이 있는 교사가 없습니다");
         return;
+      }
+
+      // 이메일 없는 교사가 있으면 경고
+      if (teachersWithoutEmail.length > 0) {
+        const skippedNames = teachersWithoutEmail.map(t => t.name).join(", ");
+        toast.warning(
+          `${teachersWithoutEmail.length}명은 유효한 이메일이 없어 제외됩니다\n(${skippedNames})`,
+          { duration: 5000 }
+        );
       }
 
       // Resend를 통한 자동 발송
