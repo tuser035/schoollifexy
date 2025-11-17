@@ -36,7 +36,7 @@ const StudentLogin = () => {
         <Input
           id="student-id"
           type="text"
-          placeholder="예: 10101 (1학년 1반 1번)"
+          placeholder="예: 111(1학년 1반 1번)"
           value={studentId}
           onChange={(e) => setStudentId(e.target.value)}
           required
