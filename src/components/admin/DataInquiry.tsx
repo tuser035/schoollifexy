@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -413,6 +413,16 @@ const DataInquiry = () => {
       setBulkEmailSubject(template.subject);
       setBulkEmailBody(template.body);
     }
+  };
+
+  // 그룹 저장 다이얼로그 열기
+  const openGroupDialog = (e?: React.MouseEvent) => {
+    try {
+      e?.preventDefault();
+      e?.stopPropagation();
+    } catch {}
+    console.log("그룹 저장 다이얼로그 열기");
+    setIsGroupDialogOpen(true);
   };
 
   // 그룹 저장
@@ -2668,7 +2678,7 @@ const DataInquiry = () => {
                 <>
                   <Button 
                     variant="outline"
-                    onClick={() => setIsGroupDialogOpen(true)}
+                    onClick={openGroupDialog}
                   >
                     그룹 저장 ({selectedStudents.size})
                   </Button>
@@ -2732,7 +2742,7 @@ const DataInquiry = () => {
                 <>
                   <Button 
                     variant="outline"
-                    onClick={() => setIsGroupDialogOpen(true)}
+                    onClick={openGroupDialog}
                   >
                     그룹 저장(1)
                   </Button>
@@ -3659,10 +3669,13 @@ const DataInquiry = () => {
       {/* 그룹 저장 다이얼로그 */}
       <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
         <DialogContent className="bg-background max-w-md">
-          <DialogHeader>
+      <DialogHeader>
             <DialogTitle>
               {selectedTable === "students" ? "학생 그룹 저장" : "교사 그룹 저장"}
             </DialogTitle>
+            <DialogDescription>
+              선택한 대상의 그룹명을 입력하고 저장하세요.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
