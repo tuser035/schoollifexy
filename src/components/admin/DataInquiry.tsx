@@ -505,6 +505,1543 @@ const DataInquiry = () => {
         toast.success(`"${newGroupName}" 학생 그룹이 저장되었습니다`);
         await loadStudentGroups();
       } else if (isTeacherTable) {
+        const selectedIds = Array.from(selectedTeachers);
+        if (selectedIds.length === 0) {
+          toast.error("교사를 선택해주세요");
+          return;
+        }
+
+        try {
+          // 동일한 그룹명이 이미 있는지 확인
+          const { data: existingGroups, error: fetchError } = await supabase
+            .from("teacher_groups")
+            .select("*")
+            .eq("admin_id", user.id)
+            .eq("group_name", newGroupName)
+            .limit(1);
+
+          if (fetchError) throw fetchError;
+
+          if (existingGroups && existingGroups.length > 0) {
+            const existing = existingGroups[0];
+            const merged = Array.from(new Set([...(existing.teacher_ids || []), ...selectedIds]));
+
+            const { data: updated, error: updateError } = await supabase
+              .from("teacher_groups")
+              .update({ teacher_ids: merged })
+              .eq("id", existing.id)
+              .select();
+
+            if (updateError) throw updateError;
+
+            console.log("교사 그룹 업데이트 완료:", updated);
+            toast.success(`"${newGroupName}" 교사 그룹에 ${selectedIds.length}명 추가되었습니다 (총 ${merged.length}명)`);
+          } else {
+            const groupData = {
+              admin_id: user.id,
+              group_name: newGroupName,
+              teacher_ids: selectedIds,
+            };
+
+            console.log("저장할 교사 그룹 데이터:", groupData);
+
+            const { data, error } = await supabase
+              .from("teacher_groups")
+              .insert(groupData)
+              .select();
+
+            if (error) throw error;
+
+            console.log("교사 그룹 저장 완료:", data);
+            toast.success(`"${newGroupName}" 교사 그룹이 저장되었습니다`);
+          }
+
+          await loadTeacherGroups();
+        } catch (err) {
+          console.error("교사 그룹 저장/업데이트 에러:", err);
+          throw err;
+        }
+      }
+
+      // 그룹 저장 후 상태 초기화
+      setIsGroupDialogOpen(false);
+      setNewGroupName("");
+      setSelectedStudents(new Set());
+      setSelectedTeachers(new Set());
+      setSelectedTeacherNames(new Map());
+      setColumnFilters({});
+      setSearchTerm("");
+      setSearchDepartment("");
+      setSearchSubject("");
+      
+      // 전체 목록 다시 조회
+      await handleQuery();
+    } catch (error: any) {
+      console.error("그룹 저장 실패:", error);
+      toast.error(error.message || "그룹 저장에 실패했습니다");
+    } finally {
+      setIsSavingGroup(false);
+    }
+  };
+
+  // 그룹 불러오기
+  const handleLoadGroup = async (groupId: string) => {
+    try {
+      setIsLoading(true);
+      const group = studentGroups.find((g) => g.id === groupId);
+      if (!group) return;
+
+      // 세션 설정
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      const adminId = parsedUser.id;
+
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: adminId
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: adminId
+        });
+      }
+
+      // 그룹의 학생 ID로 학생 데이터 조회
+      const { data: studentsData, error } = await supabase
+        .from('students')
+        .select('*, departments(name)')
+        .in('student_id', group.student_ids);
+
+      if (error) throw error;
+
+      // 데이터 포맷팅
+      const formattedData = studentsData?.map(row => ({
+        "증명사진": row.photo_url,
+        "학번": row.student_id,
+        "이름": row.name,
+        "학년": row.grade,
+        "반": row.class,
+        "번호": row.number,
+        "학과": row.departments?.name || '-',
+        "전화번호": row.student_call || '-',
+        "이메일": row.gmail || '-',
+        "학부모전화1": row.parents_call1 || '-',
+        "학부모전화2": row.parents_call2 || '-'
+      })) || [];
+
+      setData(formattedData);
+      setSelectedStudents(new Set(group.student_ids));
+      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${group.student_ids.length}명)`);
+    } catch (error: any) {
+      console.error("그룹 불러오기 실패:", error);
+      toast.error("그룹 불러오기에 실패했습니다");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 그룹 삭제
+  const handleDeleteGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?`)) return;
+
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) throw new Error("로그인이 필요합니다");
+
+      const user = JSON.parse(userString);
+
+      // Set session for RLS
+      if (user.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const { error } = await supabase.from("student_groups").delete().eq("id", groupId);
+
+      if (error) throw error;
+
+      toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
+      await loadStudentGroups();
+    } catch (error: any) {
+      console.error("그룹 삭제 실패:", error);
+      toast.error("그룹 삭제에 실패했습니다");
+    }
+  };
+
+  // 교사 그룹 불러오기
+  const handleLoadTeacherGroup = async (groupId: string) => {
+    try {
+      setIsLoading(true);
+      const group = teacherGroups.find((g) => g.id === groupId);
+      if (!group) return;
+
+      // 세션 설정
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      const adminId = parsedUser.id;
+
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: adminId
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: adminId
+        });
+      }
+
+      // 그룹의 교사 이메일로 교사 데이터 조회
+      const { data: teachersData, error } = await supabase
+        .from('teachers')
+        .select('*, departments(name)')
+        .in('teacher_email', group.teacher_ids);
+
+      if (error) throw error;
+
+      // 데이터 포맷팅
+      const formattedData = teachersData?.map(row => ({
+        "이름": row.name,
+        "전화번호": row.call_t,
+        "이메일": row.teacher_email,
+        "학년": row.grade || '-',
+        "반": row.class || '-',
+        "담임여부": row.is_homeroom ? 'O' : 'X',
+        "학과": row.departments?.name || '-',
+        "부서": row.department || '-',
+        "과목": row.subject || '-',
+        "증명사진": row.photo_url
+      })) || [];
+
+      setData(formattedData);
+      
+      // 이름 매핑과 최신 이메일 매핑 저장
+      const nameMap = new Map<string, string>();
+      const latestEmails = new Set<string>();
+      
+      teachersData?.forEach(row => {
+        if (row.teacher_email && row.name) {
+          nameMap.set(row.teacher_email, row.name);
+          latestEmails.add(row.teacher_email); // DB에서 조회한 최신 이메일
+        }
+      });
+      
+      // 최신 이메일로 selectedTeachers 업데이트
+      setSelectedTeachers(latestEmails);
+      setSelectedTeacherNames(nameMap);
+      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${latestEmails.size}명)`);
+    } catch (error: any) {
+      console.error("교사 그룹 불러오기 실패:", error);
+      toast.error("교사 그룹 불러오기에 실패했습니다");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 교사 그룹 삭제
+  const handleDeleteTeacherGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?`)) return;
+
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) throw new Error("로그인이 필요합니다");
+
+      const user = JSON.parse(userString);
+
+      // Set session for RLS
+      if (user.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const { error } = await supabase.from("teacher_groups").delete().eq("id", groupId);
+
+      if (error) throw error;
+
+      toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
+      await loadTeacherGroups();
+    } catch (error: any) {
+      console.error("교사 그룹 삭제 실패:", error);
+      toast.error("교사 그룹 삭제에 실패했습니다");
+    }
+  };
+
+  // 일괄 이메일 발송
+  const handleSendBulkEmail = async () => {
+    setIsSendingBulkEmail(true);
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) {
+        throw new Error("로그인이 필요합니다");
+      }
+
+      const user = JSON.parse(userString);
+
+      // 유효한 이메일 도메인
+      const validDomains = ['sc.gyo6.net', 'gmail.com'];
+      
+      const isValidEmail = (email: string): boolean => {
+        if (!email || email === '-' || email.trim() === '' || !email.includes('@')) {
+          return false;
+        }
+        const domain = email.split('@')[1];
+        return validDomains.includes(domain);
+      };
+
+      const selectedStudentIds = Array.from(selectedStudents);
+      const allSelectedStudents = data
+        .filter((row: any) => selectedStudentIds.includes(row.학번))
+        .map((student: any) => {
+          const email = student.이메일 || student.gmail;
+          return {
+            studentId: student.학번,
+            name: student.이름,
+            email: email,
+            hasValidEmail: isValidEmail(email)
+          };
+        });
+      
+      const studentsToEmail = allSelectedStudents
+        .filter((student: any) => student.hasValidEmail)
+        .map(({ studentId, name, email }) => ({ studentId, name, email }));
+      
+      const studentsWithoutEmail = allSelectedStudents
+        .filter((student: any) => !student.hasValidEmail);
+
+      console.log("선택된 학생 수:", selectedStudentIds.length);
+      console.log("유효한 이메일을 가진 학생:", studentsToEmail);
+      console.log("이메일 없는 학생:", studentsWithoutEmail);
+
+      if (studentsToEmail.length === 0) {
+        toast.error("선택한 학생 중 유효한 이메일이 있는 학생이 없습니다");
+        return;
+      }
+
+      // 이메일 없는 학생이 있으면 경고
+      if (studentsWithoutEmail.length > 0) {
+        const skippedNames = studentsWithoutEmail.map(s => s.name).join(", ");
+        toast.warning(
+          `${studentsWithoutEmail.length}명은 유효한 이메일이 없어 제외됩니다\n(${skippedNames})`,
+          { duration: 5000 }
+        );
+      }
+
+      // Resend를 통한 자동 발송
+      const { data: result, error } = await supabase.functions.invoke("send-bulk-email", {
+        body: {
+          adminId: user.id,
+          subject: bulkEmailSubject,
+          body: bulkEmailBody,
+          students: studentsToEmail,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(
+        `이메일 발송 완료!\n성공: ${result.totalSent}건, 실패: ${result.totalFailed}건`,
+        { duration: 5000 }
+      );
+      
+      setIsBulkEmailDialogOpen(false);
+      setSelectedStudents(new Set());
+      setBulkEmailSubject("");
+      setBulkEmailBody("");
+    } catch (error: any) {
+      console.error("일괄 이메일 발송 실패:", error);
+      toast.error(error.message || "일괄 이메일 발송에 실패했습니다");
+    } finally {
+      setIsSendingBulkEmail(false);
+    }
+  };
+
+  // 교사 일괄 이메일 템플릿 선택
+  const handleBulkTeacherTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setBulkTeacherEmailSubject(template.subject);
+      setBulkTeacherEmailBody(template.body);
+    }
+  };
+
+  // 교사 일괄 이메일 발송
+  const handleSendBulkTeacherEmail = async () => {
+    setIsSendingBulkTeacherEmail(true);
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) {
+        throw new Error("로그인이 필요합니다");
+      }
+
+      const user = JSON.parse(userString);
+
+      // 세션 설정
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: user.id
+      });
+
+      // 선택된 교사 이메일 목록
+      const selectedTeacherEmails = Array.from(selectedTeachers);
+      
+      // 데이터베이스에서 최신 교사 정보 조회
+      const { data: latestTeachers, error: fetchError } = await supabase
+        .from('teachers')
+        .select('teacher_email, name')
+        .in('teacher_email', selectedTeacherEmails);
+
+      if (fetchError) throw fetchError;
+
+      console.log("DB에서 조회한 최신 교사 정보:", latestTeachers);
+
+      // 유효한 이메일 도메인
+      const validDomains = ['sc.gyo6.net', 'gmail.com'];
+      
+      const isValidEmail = (email: string): boolean => {
+        if (!email || email === '-' || email.trim() === '' || !email.includes('@')) {
+          return false;
+        }
+        const domain = email.split('@')[1];
+        return validDomains.includes(domain);
+      };
+
+      const allSelectedTeachers = (latestTeachers || []).map((teacher: any) => {
+        const email = teacher.teacher_email;
+        return {
+          studentId: email, // 교사는 이메일로 구분
+          name: teacher.name,
+          email: email,
+          hasValidEmail: isValidEmail(email)
+        };
+      });
+      
+      const teachersToEmail = allSelectedTeachers
+        .filter((teacher: any) => teacher.hasValidEmail)
+        .map(({ studentId, name, email }) => ({ studentId, name, email }));
+      
+      const teachersWithoutEmail = allSelectedTeachers
+        .filter((teacher: any) => !teacher.hasValidEmail);
+
+      console.log("선택된 교사 수:", selectedTeacherEmails.length);
+      console.log("유효한 이메일을 가진 교사:", teachersToEmail);
+      console.log("이메일 없는 교사:", teachersWithoutEmail);
+
+      if (teachersToEmail.length === 0) {
+        toast.error("선택한 교사 중 유효한 이메일이 있는 교사가 없습니다");
+        return;
+      }
+
+      // 이메일 없는 교사가 있으면 경고
+      if (teachersWithoutEmail.length > 0) {
+        const skippedNames = teachersWithoutEmail.map(t => t.name).join(", ");
+        toast.warning(
+          `${teachersWithoutEmail.length}명은 유효한 이메일이 없어 제외됩니다\n(${skippedNames})`,
+          { duration: 5000 }
+        );
+      }
+
+      // Resend를 통한 자동 발송
+      const { data: result, error } = await supabase.functions.invoke("send-bulk-email", {
+        body: {
+          adminId: user.id,
+          subject: bulkTeacherEmailSubject,
+          body: bulkTeacherEmailBody,
+          students: teachersToEmail, // API는 students 필드를 사용하지만 교사도 처리 가능
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(
+        `이메일 발송 완료!\n성공: ${result.totalSent}건, 실패: ${result.totalFailed}건`,
+        { duration: 5000 }
+      );
+      
+      setIsBulkTeacherEmailDialogOpen(false);
+      setSelectedTeachers(new Set());
+      setSelectedTeacherNames(new Map());
+      setBulkTeacherEmailSubject("");
+      setBulkTeacherEmailBody("");
+    } catch (error: any) {
+      console.error("교사 일괄 이메일 발송 실패:", error);
+      toast.error(error.message || "교사 일괄 이메일 발송에 실패했습니다");
+    } finally {
+      setIsSendingBulkTeacherEmail(false);
+    }
+  };
+
+  // 교사 일괄 이메일 다이얼로그 열기
+  const handleOpenBulkTeacherEmailDialog = async () => {
+    if (selectedTeachers.size === 0) {
+      toast.error("교사를 선택해주세요");
+      return;
+    }
+
+    await loadTemplates();
+    setIsBulkTeacherEmailDialogOpen(true);
+  };
+
+  const exportToCSV = () => {
+    if (data.length === 0) {
+      toast.error("내보낼 데이터가 없습니다");
+      return;
+    }
+
+    let csvHeader: string;
+    let csvRows: string[];
+
+    // 이달의 학생 테이블의 경우 상세 내역 포함
+    if (selectedTable === "monthly" && monthlyRawData.length > 0) {
+      csvHeader = "날짜,학생,학번,추천교사,구분,사유,증빙사진,상담첨부파일";
+      csvRows = monthlyRawData.map(row => {
+        const date = new Date(row.created_at).toLocaleDateString('ko-KR');
+        const studentName = row.student_name || "-";
+        const studentId = row.student_id || "-";
+        const teacher = row.teacher_name || "-";
+        const category = row.category || "-";
+        const reason = (row.reason || "-").replace(/,/g, " ").replace(/\n/g, " ");
+        
+        // 이미지 URL에서 파일명 추출 및 하이퍼링크 생성
+        let imageDisplay = "-";
+        if (row.image_url && row.image_url !== "-") {
+          const fileName = row.image_url.split('/').pop() || "이미지";
+          // Excel에서 클릭 가능한 하이퍼링크 수식 생성
+          imageDisplay = `=HYPERLINK("${row.image_url}","${fileName}")`;
+        }
+        
+        // 상담 첨부파일 하이퍼링크 생성 (여러 개인 경우 모두 포함)
+        let counselingAttachments = "-";
+        if (row.counseling_attachments && row.counseling_attachments.length > 0) {
+          counselingAttachments = row.counseling_attachments
+            .map((url: string, idx: number) => {
+              const fileName = url.split('/').pop() || `첨부${idx + 1}`;
+              return `=HYPERLINK("${url}","${fileName}")`;
+            })
+            .join(" | ");
+        }
+        
+        return `${date},${studentName},${studentId},${teacher},${category},"${reason}",${imageDisplay},"${counselingAttachments}"`;
+      });
+    } else if (selectedTable === "merits" && meritsRawData.length > 0) {
+      csvHeader = "날짜,학생,교사,카테고리,사유,점수,증빙사진";
+      csvRows = meritsRawData.map(row => {
+        const date = new Date(row.created_at).toLocaleDateString('ko-KR');
+        const studentName = `${row.student_name} (${row.student_grade}-${row.student_class})`;
+        const teacher = row.teacher_name || "-";
+        const category = row.category;
+        const reason = (row.reason || "-").replace(/,/g, " ").replace(/\n/g, " ");
+        const score = row.score;
+        
+        // 이미지 URL에서 파일명 추출 및 하이퍼링크 생성
+        let imageDisplay = "-";
+        if (row.image_url && row.image_url !== "-") {
+          const fileName = row.image_url.split('/').pop() || "이미지";
+          imageDisplay = `=HYPERLINK("${row.image_url}","${fileName}")`;
+        }
+        
+        return `${date},${studentName},${teacher},${category},"${reason}",${score},${imageDisplay}`;
+      });
+    } else if (selectedTable === "demerits" && demeritsRawData.length > 0) {
+      csvHeader = "날짜,학생,교사,카테고리,사유,점수,증빙사진";
+      csvRows = demeritsRawData.map(row => {
+        const date = new Date(row.created_at).toLocaleDateString('ko-KR');
+        const studentName = `${row.student_name} (${row.student_grade}-${row.student_class})`;
+        const teacher = row.teacher_name || "-";
+        const category = row.category;
+        const reason = (row.reason || "-").replace(/,/g, " ").replace(/\n/g, " ");
+        const score = row.score;
+        
+        // 이미지 URL에서 파일명 추출 및 하이퍼링크 생성
+        let imageDisplay = "-";
+        if (row.image_url && row.image_url !== "-") {
+          const fileName = row.image_url.split('/').pop() || "이미지";
+          imageDisplay = `=HYPERLINK("${row.image_url}","${fileName}")`;
+        }
+        
+        return `${date},${studentName},${teacher},${category},"${reason}",${score},${imageDisplay}`;
+      });
+    } else {
+      // 기존 방식대로 처리
+      csvHeader = columns.join(",");
+      csvRows = data.map(row => 
+        columns.map(col => {
+          const value = row[col]?.toString() || "";
+          return value.includes(",") || value.includes("\n") ? `"${value}"` : value;
+        }).join(",")
+      );
+    }
+    
+    // BOM 추가 (한글 깨짐 방지)
+    const BOM = "\uFEFF";
+    const csvContent = BOM + csvHeader + "\n" + csvRows.join("\n");
+    
+    // Blob 생성 및 다운로드
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const tableNames: Record<TableType, string> = {
+      students: "학생",
+      teachers: "교사",
+      homeroom: "담임반",
+      merits: "상점",
+      demerits: "벌점",
+      monthly: "이달의학생",
+      departments: "학과"
+    };
+    link.download = `${tableNames[selectedTable]}_${timestamp}.csv`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.success("CSV 파일이 다운로드되었습니다");
+  };
+
+  const handleOpenCounselingDialog = (student: MonthlyStudent) => {
+    setSelectedStudent(student);
+    setCounselorName("");
+    setCounselingDate(new Date().toISOString().split('T')[0]);
+    setCounselingContent("");
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
+    setIsCounselingDialogOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAttachmentFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setAttachmentPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
+
+  const handleSaveCounseling = async () => {
+    if (!selectedStudent?.student_id) {
+      toast.error("학생 정보를 찾을 수 없습니다");
+      return;
+    }
+
+    if (!counselorName.trim()) {
+      toast.error("상담사 이름을 입력해주세요");
+      return;
+    }
+
+    if (!counselingContent.trim()) {
+      toast.error("상담 내용을 입력해주세요");
+      return;
+    }
+
+    setIsSavingCounseling(true);
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) {
+        toast.error("권한이 필요합니다");
+        return;
+      }
+
+      // Set admin or teacher session for RLS
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: parsedUser.id
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: parsedUser.id
+        });
+      }
+
+      let attachmentUrl = null;
+
+      // 첨부 파일 업로드
+      if (attachmentFile) {
+        const fileExt = attachmentFile.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `counseling/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('evidence-photos')
+          .upload(filePath, attachmentFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('evidence-photos')
+          .getPublicUrl(filePath);
+
+        attachmentUrl = publicUrl;
+      }
+
+      const { error } = await supabase
+        .from("career_counseling")
+        .insert({
+          student_id: selectedStudent.student_id,
+          counselor_name: counselorName.trim(),
+          counseling_date: counselingDate,
+          content: counselingContent.trim(),
+          admin_id: parsedUser.id,
+          attachment_url: attachmentUrl
+        });
+
+      if (error) throw error;
+
+      toast.success("상담 기록이 저장되었습니다");
+      setIsCounselingDialogOpen(false);
+      handleRemoveAttachment();
+    } catch (error: any) {
+      toast.error(error.message || "상담 기록 저장에 실패했습니다");
+    } finally {
+      setIsSavingCounseling(false);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) {
+      toast.error("삭제할 항목을 선택해주세요");
+      return;
+    }
+
+    if (!confirm(`선택한 ${selectedIds.size}개 항목을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      
+      // Set session for RLS
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: parsedUser.id
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: parsedUser.id
+        });
+      }
+
+      const idsToDelete = Array.from(selectedIds);
+      let tableName = "";
+      
+      if (selectedTable === "merits") {
+        tableName = "merits";
+      } else if (selectedTable === "demerits") {
+        tableName = "demerits";
+      } else if (selectedTable === "monthly") {
+        tableName = "monthly";
+      }
+
+      if (!tableName) {
+        toast.error("이 테이블에서는 삭제할 수 없습니다");
+        return;
+      }
+
+      const { error } = await supabase
+        .from(tableName as "merits" | "demerits" | "monthly")
+        .delete()
+        .in('id', idsToDelete);
+
+      if (error) throw error;
+
+      toast.success(`${idsToDelete.length}개 항목이 삭제되었습니다`);
+      setSelectedIds(new Set());
+      handleQuery(); // 다시 조회
+    } catch (error: any) {
+      toast.error(error.message || "삭제에 실패했습니다");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const ids = new Set<string>();
+      if (selectedTable === "merits") {
+        meritsRawData.forEach((item: any) => item.id && ids.add(item.id));
+      } else if (selectedTable === "demerits") {
+        demeritsRawData.forEach((item: any) => item.id && ids.add(item.id));
+      } else if (selectedTable === "monthly") {
+        monthlyRawData.forEach((item: any) => item.id && ids.add(item.id));
+      }
+      setSelectedIds(ids);
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSet = new Set(selectedIds);
+    if (checked) {
+      newSet.add(id);
+    } else {
+      newSet.delete(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  // 교사 편집 다이얼로그 열기
+  const handleOpenTeacherEdit = (teacher: any) => {
+    setEditingTeacher({
+      originalEmail: teacher.이메일, // 원래 이메일 저장
+      email: teacher.이메일,
+      name: teacher.이름,
+      phone: teacher.전화번호,
+      grade: teacher.학년 === "-" ? null : teacher.학년,
+      class: teacher.반 === "-" ? null : teacher.반,
+      department: teacher.부서 === "-" ? "" : teacher.부서,
+      subject: teacher.담당교과 === "-" ? "" : teacher.담당교과,
+      isHomeroom: teacher.담임여부 === "담임"
+    });
+    setIsTeacherEditDialogOpen(true);
+  };
+
+  // 교사 정보 저장
+  const handleSaveTeacher = async () => {
+    if (!editingTeacher) return;
+
+    setIsSavingTeacher(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      const adminId = parsedUser.id;
+
+      // Set admin session
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: adminId
+      });
+
+      // 교사 정보 업데이트
+      const { error } = await supabase
+        .from('teachers')
+        .update({
+          name: editingTeacher.name,
+          call_t: editingTeacher.phone,
+          teacher_email: editingTeacher.email, // 이메일도 업데이트
+          grade: editingTeacher.grade,
+          class: editingTeacher.class,
+          department: editingTeacher.department || null,
+          subject: editingTeacher.subject || null,
+          is_homeroom: editingTeacher.isHomeroom
+        })
+        .eq('teacher_email', editingTeacher.originalEmail); // 원래 이메일로 찾기
+
+      if (error) throw error;
+
+      toast.success("교사 정보가 수정되었습니다");
+      setIsTeacherEditDialogOpen(false);
+      setEditingTeacher(null);
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error) {
+      console.error("Error updating teacher:", error);
+      toast.error("교사 정보 수정에 실패했습니다");
+    } finally {
+      setIsSavingTeacher(false);
+    }
+  };
+
+  // 교사 삭제
+  const handleDeleteTeacher = async (teacherName: string, teacherEmail: string) => {
+    if (!confirm(`정말로 "${teacherName}" 교사를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      // 관리자 ID 가져오기
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      // 교사 삭제
+      const { error } = await supabase
+        .from("teachers")
+        .delete()
+        .eq("teacher_email", teacherEmail);
+
+      if (error) throw error;
+
+      toast.success(`"${teacherName}" 교사가 삭제되었습니다`);
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error: any) {
+      console.error("교사 삭제 실패:", error);
+      toast.error(error.message || "교사 삭제에 실패했습니다");
+    }
+  };
+
+  // 학생 편집 열기
+  const handleOpenStudentEdit = (student: any) => {
+    setEditingStudent({
+      studentId: student.학번,
+      name: student.이름,
+      grade: student.학년,
+      class: student.반,
+      number: student.번호,
+      deptName: student.학과,
+      phone: student.학생전화 === "-" ? "" : student.학생전화,
+      email: student.이메일 === "-" ? "" : student.이메일,
+      parentPhone1: student.학부모전화1 === "-" ? "" : student.학부모전화1,
+      parentPhone2: student.학부모전화2 === "-" ? "" : student.학부모전화2,
+    });
+    setIsStudentEditDialogOpen(true);
+  };
+
+  // 학생 정보 저장
+  const handleSaveStudent = async () => {
+    if (!editingStudent) return;
+
+    setIsSavingStudent(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) throw new Error("관리자 인증이 필요합니다");
+
+      const parsedUser = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: parsedUser.id });
+
+      const { error } = await supabase
+        .from("students")
+        .update({
+          name: editingStudent.name,
+          student_call: editingStudent.phone || null,
+          gmail: editingStudent.email || null,
+          parents_call1: editingStudent.parentPhone1 || null,
+          parents_call2: editingStudent.parentPhone2 || null,
+        })
+        .eq('student_id', editingStudent.studentId);
+
+      if (error) throw error;
+
+      toast.success("학생 정보가 수정되었습니다");
+      setIsStudentEditDialogOpen(false);
+      setEditingStudent(null);
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error) {
+      console.error("Error updating student:", error);
+      toast.error("학생 정보 수정에 실패했습니다");
+    } finally {
+      setIsSavingStudent(false);
+    }
+  };
+
+  // 학생 삭제
+  const handleDeleteStudent = async (studentName: string, studentId: string) => {
+    if (!confirm(`정말로 "${studentName}" 학생을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      const { error } = await supabase
+        .from("students")
+        .delete()
+        .eq("student_id", studentId);
+
+      if (error) throw error;
+
+      toast.success(`"${studentName}" 학생이 삭제되었습니다`);
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error: any) {
+      console.error("학생 삭제 실패:", error);
+      toast.error(error.message || "학생 삭제에 실패했습니다");
+    }
+  };
+
+  // 학과 목록 로드
+  const loadDepartments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("departments")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setDepartments(data || []);
+    } catch (error: any) {
+      console.error("학과 목록 로드 실패:", error);
+      toast.error("학과 목록을 불러오는데 실패했습니다");
+    }
+  };
+
+  // 전화번호 포맷팅 함수
+  const formatPhoneNumber = (value: string) => {
+    // 숫자만 추출
+    const numbers = value.replace(/[^\d]/g, '');
+    
+    // 길이에 따라 포맷팅
+    if (numbers.length <= 3) {
+      return numbers;
+    } else if (numbers.length <= 7) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    } else if (numbers.length <= 11) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+    }
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  };
+
+  // 신규 교사 추가
+  const handleAddTeacher = async () => {
+    try {
+      setIsAddingTeacher(true);
+
+      // 필수 입력 확인
+      if (!newTeacherData.name.trim() || !newTeacherData.call_t.trim() || !newTeacherData.teacher_email.trim()) {
+        toast.error("이름, 전화번호, 이메일은 필수 입력 항목입니다");
+        return;
+      }
+
+      // 관리자 ID 가져오기
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      
+      // 먼저 관리자 권한 확인
+      if (user.type !== "admin") {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
+      // 데이터베이스 함수를 사용하여 교사 추가 (RLS 자동 처리)
+      const { data, error } = await supabase.rpc("admin_insert_teacher", {
+        admin_id_input: user.id,
+        name_input: newTeacherData.name.trim(),
+        call_t_input: newTeacherData.call_t.trim(),
+        teacher_email_input: newTeacherData.teacher_email.trim(),
+        grade_input: newTeacherData.grade && newTeacherData.grade !== "none" ? parseInt(newTeacherData.grade) : null,
+        class_input: newTeacherData.class && newTeacherData.class !== "none" ? parseInt(newTeacherData.class) : null,
+        is_homeroom_input: newTeacherData.is_homeroom,
+        dept_code_input: newTeacherData.dept_code && newTeacherData.dept_code !== "none" ? newTeacherData.dept_code : null,
+        department_input: newTeacherData.department.trim() || null,
+        subject_input: newTeacherData.subject.trim() || null
+      });
+
+      if (error) {
+        console.error("교사 추가 오류:", error);
+        throw error;
+      }
+
+      // 교사 목록을 조회하여 전체 인원 확인 및 테이블 업데이트
+      const { data: teachersData } = await supabase.rpc("admin_get_teachers", {
+        admin_id_input: user.id,
+        search_text: null,
+        search_grade: null,
+        search_class: null,
+        search_department: null,
+        search_subject: null
+      });
+
+      const totalTeachers = teachersData?.length || 0;
+      
+      // 테이블 데이터 즉시 업데이트
+      const result = teachersData?.map(row => ({
+        "이름": row.name,
+        "전화번호": row.call_t,
+        "이메일": row.teacher_email,
+        "학년": row.grade || "-",
+        "반": row.class || "-",
+        "담임여부": row.is_homeroom ? "담임" : "-",
+        "학과": row.dept_name,
+        "부서": row.department,
+        "담당교과": row.subject
+      })) || [];
+
+      setData(result);
+      setColumns(result[0] ? Object.keys(result[0]) : []);
+      
+      let totalCount = totalTeachers;
+      try {
+        const { count } = await supabase.from('teachers').select('*', { count: 'exact', head: true });
+        if (typeof count === 'number') totalCount = count;
+      } catch {}
+      
+      toast.success(`신규 교사가 추가되었습니다. 전체 교사 인원: ${totalCount}명`);
+      setIsAddTeacherDialogOpen(false);
+      
+      // 폼 초기화
+      setNewTeacherData({
+        name: "",
+        call_t: "",
+        teacher_email: "",
+        grade: "none",
+        class: "none",
+        is_homeroom: false,
+        dept_code: "none",
+        department: "",
+        subject: ""
+      });
+    } catch (error: any) {
+      console.error("교사 추가 실패:", error);
+      toast.error(error.message || "교사 추가에 실패했습니다");
+    } finally {
+      setIsAddingTeacher(false);
+    }
+  };
+
+  // 학번 입력 시 자동으로 학년, 반, 번호 채우기
+  const handleStudentIdChange = (value: string) => {
+    setNewStudentData(prev => ({ ...prev, student_id: value }));
+    
+    // 학번이 2자리 이상일 때만 자동 채우기
+    if (value.length >= 2) {
+      const grade = value.charAt(0); // 첫째 자리: 학년
+      const classNum = value.charAt(1); // 둘째 자리: 반
+      const number = value.slice(2); // 나머지: 번호
+      
+      setNewStudentData(prev => ({
+        ...prev,
+        student_id: value,
+        grade: grade,
+        class: classNum,
+        number: number
+      }));
+    }
+  };
+
+  // 신규 학생 추가
+  const handleAddStudent = async () => {
+    try {
+      setIsAddingStudent(true);
+
+      // 필수 입력 확인
+      if (!newStudentData.student_id.trim() || !newStudentData.name.trim() || 
+          !newStudentData.grade || !newStudentData.class || !newStudentData.number) {
+        toast.error("학번, 이름, 학년, 반, 번호는 필수 입력 항목입니다");
+        return;
+      }
+
+      // 관리자 ID 가져오기
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      
+      // 학번 중복 체크
+      const { data: existingStudent, error: checkError } = await supabase
+        .from("students")
+        .select("student_id")
+        .eq("student_id", newStudentData.student_id.trim())
+        .single();
+
+      if (existingStudent) {
+        toast.error("이미 존재하는 학번입니다");
+        return;
+      }
+
+      if (checkError && checkError.code !== "PGRST116") {
+        // PGRST116은 "no rows returned" 에러로, 중복이 없다는 의미
+        console.error("학번 확인 오류:", checkError);
+        throw checkError;
+      }
+      
+      // 데이터베이스 함수를 사용하여 학생 추가 (RLS 자동 처리)
+      const { data, error } = await supabase.rpc("admin_insert_student", {
+        admin_id_input: user.id,
+        student_id_input: newStudentData.student_id.trim(),
+        name_input: newStudentData.name.trim(),
+        grade_input: parseInt(newStudentData.grade),
+        class_input: parseInt(newStudentData.class),
+        number_input: parseInt(newStudentData.number),
+        dept_code_input: newStudentData.dept_code && newStudentData.dept_code !== "none" ? newStudentData.dept_code : null,
+        student_call_input: newStudentData.student_call.trim() || null,
+        gmail_input: newStudentData.gmail.trim() || null,
+        parents_call1_input: newStudentData.parents_call1.trim() || null,
+        parents_call2_input: newStudentData.parents_call2.trim() || null
+      });
+
+      if (error) {
+        console.error("학생 추가 오류:", error);
+        throw error;
+      }
+
+      toast.success("신규 학생이 추가되었습니다");
+      setIsAddStudentDialogOpen(false);
+      
+      // 폼 초기화
+      setNewStudentData({
+        student_id: "",
+        name: "",
+        grade: "1",
+        class: "1",
+        number: "",
+        dept_code: "none",
+        student_call: "",
+        gmail: "",
+        parents_call1: "",
+        parents_call2: ""
+      });
+
+      // 목록 새로고침
+      handleQuery();
+    } catch (error: any) {
+      console.error("학생 추가 실패:", error);
+      toast.error(error.message || "학생 추가에 실패했습니다");
+    } finally {
+      setIsAddingStudent(false);
+    }
+  };
+
+  // 교사 전용 즉시 조회 헬퍼 (필터 클릭 시 1회 클릭 적용)
+  const queryTeachersImmediate = async (overrides?: { department?: string | null; subject?: string | null; homeroom?: string | null; deptName?: string | null }) => {
+    setIsLoading(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) throw new Error("관리자 인증이 필요합니다");
+      const parsedUser = JSON.parse(authUser);
+      const adminId = parsedUser.id;
+
+      // 세션 설정
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: adminId });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: adminId });
+      }
+
+      // overrides에 명시적으로 전달된 값(null 포함)을 우선 사용하고, 없으면 현재 상태값 사용
+      const deptVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "department"))
+        ? overrides.department
+        : (searchDepartment.trim() || null);
+      const subjVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "subject"))
+        ? overrides.subject
+        : (searchSubject.trim() || null);
+      const homeroomVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "homeroom"))
+        ? overrides.homeroom
+        : (searchHomeroom.trim() || null);
+      const deptNameVal = (overrides && Object.prototype.hasOwnProperty.call(overrides, "deptName"))
+        ? overrides.deptName
+        : (searchDeptName.trim() || null);
+
+      const { data, error } = await supabase.rpc("admin_get_teachers", {
+        admin_id_input: adminId,
+        search_text: null,
+        search_grade: null,
+        search_class: null,
+        search_department: deptVal,
+        search_subject: subjVal,
+        search_homeroom: homeroomVal,
+        search_dept_name: deptNameVal,
+      });
+      if (error) throw error;
+
+      const result = data?.map(row => ({
+        "이름": row.name,
+        "전화번호": row.call_t,
+        "이메일": row.teacher_email,
+        "학년": row.grade || "-",
+        "반": row.class || "-",
+        "담임여부": row.is_homeroom ? "담임" : "-",
+        "학과": row.dept_name,
+        "부서": row.department,
+        "담당교과": row.subject
+      })) || [];
+
+      setData(result);
+      setColumns(result[0] ? Object.keys(result[0]) : []);
+      setOriginalData(result); // 담당교과 필터 목록 업데이트를 위해 originalData 설정
+      
+      // 정확한 총 인원수 계산 및 토스트 메시지 표시
+      // 학과 필터는 조인이 필요하므로 RPC 결과 길이를 직접 사용
+      if (deptNameVal) {
+        toast.success(`${deptNameVal} 교사: ${result.length}명`);
+      } else {
+        try {
+          let q = supabase.from('teachers').select('*', { count: 'exact', head: true });
+          if (deptVal) q = q.ilike('department', `%${deptVal}%`);
+          if (subjVal) q = q.ilike('subject', `%${subjVal}%`);
+          if (homeroomVal === '담임') q = q.eq('is_homeroom', true);
+          if (homeroomVal === '-') q = q.or('is_homeroom.eq.false,is_homeroom.is.null');
+          const { count: totalCount } = await q;
+          
+          // 필터가 적용된 경우와 전체 조회 구분
+          if (homeroomVal) {
+            toast.success(`${homeroomVal} 교사: ${totalCount ?? result.length}명`);
+          } else if (subjVal) {
+            toast.success(`${subjVal} 교사: ${totalCount ?? result.length}명`);
+          } else if (deptVal) {
+            toast.success(`${deptVal} 교사: ${totalCount ?? result.length}명`);
+          } else {
+            toast.success(`전체 교사 인원: ${totalCount ?? result.length}명`);
+          }
+        } catch {
+          toast.success(`전체 교사 인원: ${result.length}명`);
+        }
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || "조회 실패");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQuery = async (options?: { showToast?: boolean }) => {
+    const showToast = options?.showToast !== false; // 기본값은 true
+    setIsLoading(true);
+    
+    // 선택 유지: 검색/조회 시 기존 선택을 유지하여 누적되도록 함
+    // setSelectedStudents(new Set());
+    // setSelectedTeachers(new Set());
+    
+    try {
+      // 관리자 ID 가져오기
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        setIsLoading(false);
+        return;
+      }
+      
+      const parsedUser = JSON.parse(authUser);
+      if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) {
+        toast.error("권한이 필요합니다");
+        setIsLoading(false);
+        return;
+      }
+      
+      const adminId = parsedUser.id;
+      const trimmedSearch = searchTerm.trim().slice(0, 100);
+      let result;
+
+      if (selectedTable === "students") {
+        let searchGrade: number | null = null;
+        let searchClass: number | null = null;
+        let searchText: string | null = null;
+
+        if (trimmedSearch) {
+          // 숫자인 경우 학년이나 반 또는 학번으로 검색
+          if (!isNaN(Number(trimmedSearch))) {
+            const searchNum = trimmedSearch;
+            
+            // 세 자리 이상 숫자인 경우: 학번(student_id)으로 직접 검색
+            if (searchNum.length >= 3) {
+              // Set session for RLS
+              if (parsedUser.type === "admin") {
+                await supabase.rpc("set_admin_session", {
+                  admin_id_input: adminId
+                });
+              } else if (parsedUser.type === "teacher") {
+                await supabase.rpc("set_teacher_session", {
+                  teacher_id_input: adminId
+                });
+              }
+
+              const { data: studentData, error: queryError } = await supabase
+                .from('students')
+                .select(`
+                  student_id,
+                  name,
+                  grade,
+                  class,
+                  number,
+                  student_call,
+                  gmail,
+                  departments(name)
+                `)
+                .eq('student_id', trimmedSearch);
+
+              if (queryError) throw queryError;
+
+              if (studentData && studentData.length > 0) {
+                result = studentData.map(student => ({
+                  "학번": student.student_id,
+                  "이름": student.name,
+                  "학년": student.grade,
+                  "반": student.class,
+                  "번호": student.number,
+                  "학과": (student.departments as any)?.name || "",
+                  "전화번호": student.student_call || "",
+                  "이메일": student.gmail || ""
+                }));
+              } else {
+                result = [];
+                toast.info(`학번 ${trimmedSearch}인 학생을 찾을 수 없습니다`);
+              }
+              
+              setData(result || []);
+              if (result && result.length > 0) {
+                setColumns(Object.keys(result[0]));
+              } else {
+                setColumns([]);
+              }
+              setIsLoading(false);
+              return;
+            }
+            // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반
+            else if (searchNum.length === 2) {
+              searchGrade = parseInt(searchNum[0]);
+              searchClass = parseInt(searchNum[1]);
+            }
+            // 한 자리 숫자인 경우: 학년으로 검색 + 총 인원 표시
+            else {
+              searchGrade = parseInt(trimmedSearch);
+              
+              // Set session for RLS
+              if (parsedUser.type === "admin") {
+                await supabase.rpc("set_admin_session", {
+                  admin_id_input: adminId
+                });
+              } else if (parsedUser.type === "teacher") {
+                await supabase.rpc("set_teacher_session", {
+                  teacher_id_input: adminId
+                });
+              }
+
+              // 학년 총 인원 조회 및 토스트 표시
+              const { count } = await supabase
+                .from('students')
+                .select('*', { count: 'exact', head: true })
+                .eq('grade', searchGrade);
+              
+              if (count !== null) {
+                toast.success(`${searchGrade}학년 총 인원: ${count}명`);
+              }
+            }
+          } else {
+            // 문자인 경우 이름으로 검색
+            searchText = trimmedSearch;
+          }
+        } else {
+          // 검색어가 없을 때: 전교생 조회 + 총 인원 표시
+          if (parsedUser.type === "admin") {
+            await supabase.rpc("set_admin_session", {
+              admin_id_input: adminId
+            });
+          } else if (parsedUser.type === "teacher") {
+            await supabase.rpc("set_teacher_session", {
+              teacher_id_input: adminId
+            });
+          }
+
+          const { count } = await supabase
+            .from('students')
+            .select('*', { count: 'exact', head: true });
+          
+          if (count !== null) {
+            toast.success(`전교생 총 인원: ${count}명`);
+          }
+        }
+
+        const { data, error: queryError } = await supabase.rpc("admin_get_students", {
+          admin_id_input: adminId,
+          search_text: searchText,
+          search_grade: searchGrade,
+          search_class: searchClass
+        });
+
+        if (queryError) throw queryError;
+
+        result = data?.map(row => ({
+          "증명사진": row.photo_url,
+          "학번": row.student_id,
+          "이름": row.name,
+          "학년": row.grade,
+          "반": row.class,
+          "번호": row.number,
+          "학과": row.dept_name,
+          "전화번호": row.student_call,
+          "이메일": row.gmail,
+          "학부모전화1": row.parents_call1,
+          "학부모전화2": row.parents_call2
+        }));
+
+      } else if (selectedTable === "teachers") {
+        let searchGrade: number | null = null;
+        let searchClass: number | null = null;
+        let searchText: string | null = null;
+        let searchDept: string | null = null;
+        let searchSubj: string | null = null;
+
+        if (trimmedSearch) {
+          // 숫자인 경우 학년이나 반으로 검색
+          if (!isNaN(Number(trimmedSearch))) {
+            const searchNum = trimmedSearch;
+            
+            // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반
+            if (searchNum.length === 2) {
+              searchGrade = parseInt(searchNum[0]);
+              searchClass = parseInt(searchNum[1]);
+            } else {
+              searchGrade = parseInt(trimmedSearch);
+            }
+          } else {
+            // 문자인 경우 이름으로 검색
+            searchText = trimmedSearch;
+          }
+        }
+
+        // state의 값 사용
+        searchDept = searchDepartment.trim() || null;
+        searchSubj = searchSubject.trim() || null;
+
+        // Set session for RLS
         if (parsedUser.type === "admin") {
           await supabase.rpc("set_admin_session", {
             admin_id_input: adminId
@@ -515,25 +2052,18 @@ const DataInquiry = () => {
           });
         }
 
-        // UUID를 포함하여 직접 조회
-        let query = supabase
-          .from('teachers')
-          .select('id, name, call_t, teacher_email, grade, class, is_homeroom, department, subject, photo_url, departments(name)');
-        
-        if (searchText) {
-          query = query.or(`name.ilike.%${searchText}%,call_t.ilike.%${searchText}%,teacher_email.ilike.%${searchText}%`);
-        }
-        if (searchGrade !== null) query = query.eq('grade', searchGrade);
-        if (searchClass !== null) query = query.eq('class', searchClass);
-        if (searchDept) query = query.ilike('department', `%${searchDept}%`);
-        if (searchSubj) query = query.ilike('subject', `%${searchSubj}%`);
-
-        const { data, error: queryError } = await query;
+        const { data, error: queryError } = await supabase.rpc("admin_get_teachers", {
+          admin_id_input: adminId,
+          search_text: searchText,
+          search_grade: searchGrade,
+          search_class: searchClass,
+          search_department: searchDept,
+          search_subject: searchSubj
+        });
 
         if (queryError) throw queryError;
 
         result = data?.map(row => ({
-          "id": row.id, // UUID 포함 (숨김 필드)
           "증명사진": row.photo_url,
           "이름": row.name,
           "전화번호": row.call_t,
@@ -541,9 +2071,9 @@ const DataInquiry = () => {
           "학년": row.grade || "-",
           "반": row.class || "-",
           "담임여부": row.is_homeroom ? "담임" : "-",
-          "학과": row.departments?.name || "-",
-          "부서": row.department || "-",
-          "담당교과": row.subject || "-"
+          "학과": row.dept_name,
+          "부서": row.department,
+          "담당교과": row.subject
         }));
 
         // 전체 교사 인원수 알림 (showToast가 true일 때만)
@@ -1519,12 +3049,12 @@ const DataInquiry = () => {
                             />
                           </TableCell>
                         )}
-                        {selectedTable === "teachers" && row["id"] && (
+                        {selectedTable === "teachers" && row["이메일"] && (
                           <TableCell>
                             <input
                               type="checkbox"
-                              checked={selectedTeachers.has(row["id"])}
-                              onChange={(e) => handleToggleTeacher(row["id"], e.target.checked, row["이름"], row["이메일"])}
+                              checked={selectedTeachers.has(row["이메일"])}
+                              onChange={(e) => handleToggleTeacher(row["이메일"], e.target.checked)}
                               className="cursor-pointer"
                             />
                           </TableCell>
