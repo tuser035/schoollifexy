@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import AdminLogin from "@/components/auth/AdminLogin";
-import { School, BookOpen } from "lucide-react";
+import { School } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import manualIcon from "@/assets/manual-icon.png";
 
 const backgroundImages = [
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4", // 산 풍경
@@ -64,15 +65,12 @@ const Index = () => {
               <p className="text-2xl font-semibold bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
                 SchoolLife.KR
               </p>
-              <Button
-                variant="outline"
-                size="sm"
+              <img 
+                src={manualIcon}
+                alt="사용자 매뉴얼"
                 onClick={() => navigate("/manual")}
-                className="mt-4"
-              >
-                <BookOpen className="w-4 h-4 mr-2" />
-                사용자 매뉴얼
-              </Button>
+                className="mt-4 mx-auto cursor-pointer hover:opacity-80 transition-opacity w-32 h-auto"
+              />
             </div>
 
             <Tabs defaultValue="teacher" className="w-full">
