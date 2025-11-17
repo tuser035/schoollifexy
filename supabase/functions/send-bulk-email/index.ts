@@ -81,6 +81,11 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       try {
+        // Rate limit 방지를 위한 delay (500ms)
+        if (sendResults.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
         // 실제 학생 이메일로 발송
         const emailResponse = await resend.emails.send({
           from: "School Point <onboarding@resend.dev>",
