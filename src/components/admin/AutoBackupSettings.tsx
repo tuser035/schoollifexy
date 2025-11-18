@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import JSZip from "jszip";
+import Papa from "papaparse";
 
 const AutoBackupSettings = () => {
   const [isEnabled, setIsEnabled] = useState(false);
@@ -48,16 +50,92 @@ const AutoBackupSettings = () => {
   const testBackup = async () => {
     setIsTesting(true);
     try {
+      // 1. Edge Function으로 JSON 백업 수행
       const { data, error } = await supabase.functions.invoke('auto-backup');
 
       if (error) throw error;
 
-      if (data.success) {
-        toast.success('백업 테스트 성공!');
-        await loadBackupFiles();
-      } else {
+      if (!data.success) {
         toast.error('백업 실패: ' + (data.error || '알 수 없는 오류'));
+        return;
       }
+
+      // 2. CSV 파일로 전체 데이터 내보내기
+      const zip = new JSZip();
+      const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
+      
+      const tables = [
+        "students",
+        "teachers",
+        "merits",
+        "demerits",
+        "monthly",
+        "career_counseling",
+        "email_history",
+        "email_templates",
+        "departments",
+        "student_groups",
+        "teacher_groups",
+        "file_metadata"
+      ] as const;
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const tableName of tables) {
+        try {
+          const { data: tableData, error: tableError } = await supabase
+            .from(tableName as any)
+            .select("*");
+
+          if (tableError) {
+            console.error(`Error fetching ${tableName}:`, tableError);
+            errorCount++;
+            continue;
+          }
+
+          if (tableData && tableData.length > 0) {
+            const csv = Papa.unparse(tableData);
+            zip.file(`${tableName}.csv`, csv);
+            successCount++;
+          } else {
+            zip.file(`${tableName}.csv`, "");
+            successCount++;
+          }
+        } catch (err) {
+          console.error(`Error processing ${tableName}:`, err);
+          errorCount++;
+        }
+      }
+
+      // 백업 정보 파일 추가
+      const backupInfo = {
+        백업일시: new Date().toLocaleString("ko-KR"),
+        관리자: user.email || user.name,
+        테이블수: successCount,
+        실패수: errorCount,
+        버전: "1.0"
+      };
+
+      zip.file("backup_info.json", JSON.stringify(backupInfo, null, 2));
+
+      // ZIP 파일 생성 및 다운로드
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `database_backup_${new Date().toISOString().split("T")[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`백업 완료: JSON 백업 + ${successCount}개 테이블 CSV 다운로드`);
+      if (errorCount > 0) {
+        toast.warning(`${errorCount}개 테이블 내보내기 실패`);
+      }
+      
+      await loadBackupFiles();
     } catch (error: any) {
       console.error('Backup test error:', error);
       toast.error('백업 테스트 실패: ' + error.message);
@@ -143,7 +221,7 @@ const AutoBackupSettings = () => {
       <Alert className="bg-primary/5 border-primary/20">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          자동 백업은 매일 새벽 3시에 실행됩니다. 백업 파일은 JSON 형식으로 저장되며, 최근 30일간의 백업이 보관됩니다.
+          백업 실행 시 서버에 JSON 백업이 저장되며, 모든 테이블의 데이터가 CSV 파일로 ZIP 압축되어 다운로드됩니다. (students.csv, teachers.csv 등 포함)
         </AlertDescription>
       </Alert>
 
@@ -213,12 +291,12 @@ const AutoBackupSettings = () => {
             {isTesting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                백업 실행 중...
+                백업 및 CSV 다운로드 중...
               </>
             ) : (
               <>
                 <Database className="mr-2 h-4 w-4" />
-                백업 테스트 실행
+                백업 실행 및 CSV 다운로드
               </>
             )}
           </Button>
