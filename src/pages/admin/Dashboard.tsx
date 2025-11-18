@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
 import DataInquiry from "@/components/admin/DataInquiry";
@@ -71,6 +72,20 @@ const AdminDashboard = () => {
       return;
     }
     
+    // Set session for RLS
+    const setSession = async () => {
+      try {
+        if (parsedUser.type === "admin") {
+          await supabase.rpc("set_admin_session", { admin_id_input: parsedUser.id });
+        } else if (parsedUser.type === "teacher") {
+          await supabase.rpc("set_teacher_session", { teacher_id_input: parsedUser.id });
+        }
+      } catch (error) {
+        console.error("Error setting session:", error);
+      }
+    };
+    
+    setSession();
     setUser(parsedUser);
     // 기본 탭 설정
     const defaultTab = parsedUser.type === "teacher" ? "data" : "password";

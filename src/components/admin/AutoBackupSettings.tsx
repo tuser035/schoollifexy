@@ -50,6 +50,15 @@ const AutoBackupSettings = () => {
   const testBackup = async () => {
     setIsTesting(true);
     try {
+      // Get admin user and set session
+      const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
+      if (!user.id) {
+        throw new Error("관리자 로그인이 필요합니다");
+      }
+
+      // Set admin session for RLS
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
       // 1. Edge Function으로 JSON 백업 수행
       const { data, error } = await supabase.functions.invoke('auto-backup');
 
@@ -62,7 +71,6 @@ const AutoBackupSettings = () => {
 
       // 2. CSV 파일로 전체 데이터 내보내기
       const zip = new JSZip();
-      const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
       
       const tables = [
         "students",
