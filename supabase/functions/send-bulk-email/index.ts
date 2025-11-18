@@ -21,6 +21,12 @@ interface SendBulkEmailRequest {
   subject: string;
   body: string;
   students: Student[];
+  attachmentInfo?: {
+    url?: string;
+    name?: string;
+    isZip?: boolean;
+    files?: Array<{ url: string; name: string }>;
+  };
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -35,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { adminId, subject, body, students }: SendBulkEmailRequest = await req.json();
+    const { adminId, subject, body, students, attachmentInfo }: SendBulkEmailRequest = await req.json();
 
     console.log("Bulk email request:", { adminId, subject, studentCount: students.length });
 
@@ -101,6 +107,44 @@ const handler = async (req: Request): Promise<Response> => {
           },
         });
 
+        // 첨부파일 링크 HTML 생성
+        let attachmentHtml = '';
+        if (attachmentInfo) {
+          if (attachmentInfo.url && attachmentInfo.name) {
+            // 단일 파일 또는 ZIP
+            attachmentHtml = `
+              <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #495057;">📎 첨부파일</h3>
+                <a href="${attachmentInfo.url}" 
+                   style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: 500;"
+                   download="${attachmentInfo.name}">
+                  ${attachmentInfo.name} 다운로드
+                </a>
+              </div>
+            `;
+          } else if (attachmentInfo.files && attachmentInfo.files.length > 0) {
+            // 여러 개별 파일
+            const fileLinks = attachmentInfo.files.map((file, index) => `
+              <li style="margin-bottom: 10px;">
+                <a href="${file.url}" 
+                   style="color: #007bff; text-decoration: none; font-weight: 500;"
+                   download="${file.name}">
+                  ${index + 1}. ${file.name}
+                </a>
+              </li>
+            `).join('');
+            
+            attachmentHtml = `
+              <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #495057;">📎 첨부파일</h3>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                  ${fileLinks}
+                </ul>
+              </div>
+            `;
+          }
+        }
+
         await client.send({
           from: gmailUser!,
           to: student.email,
@@ -111,6 +155,8 @@ const handler = async (req: Request): Promise<Response> => {
               <div style="background-color: #ffffff; padding: 20px;">
                 <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${body}</div>
               </div>
+              
+              ${attachmentHtml}
               
               <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
                 <p style="margin: 0 0 10px 0;"><strong>School Point 학생 관리 시스템</strong></p>
