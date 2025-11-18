@@ -2371,7 +2371,21 @@ const DataInquiry = () => {
                 "검색"
               }
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                // 교사 테이블에서 전화번호 패턴인 경우 자동 포맷팅
+                if (selectedTable === "teachers") {
+                  const numbers = value.replace(/[^\d]/g, '');
+                  // 010, 011 등으로 시작하고 3자리 이상인 경우 전화번호로 간주
+                  if (numbers.length >= 3 && /^(010|011|016|017|018|019)/.test(numbers)) {
+                    setSearchTerm(formatPhoneNumber(value));
+                  } else {
+                    setSearchTerm(value);
+                  }
+                } else {
+                  setSearchTerm(value);
+                }
+              }}
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
               className="max-w-xs"
               maxLength={100}
