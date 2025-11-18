@@ -605,6 +605,16 @@ const DataInquiry = () => {
             .getPublicUrl(filePath);
           
           attachmentUrls.push(publicUrl);
+
+          // 파일 메타데이터 저장
+          await supabase.from('file_metadata').insert({
+            storage_path: filePath,
+            original_filename: file.name,
+            file_size: file.size,
+            mime_type: file.type,
+            bucket_name: 'counseling-attachments',
+            uploaded_by: user.id
+          });
         }
       }
 
@@ -690,6 +700,16 @@ const DataInquiry = () => {
                 .getPublicUrl(zipFilePath);
               
               emailBody += `\n\n[첨부파일 다운로드]\n<a href="${publicUrl}" download="${zipFileName}">${zipFileName}</a>`;
+
+              // ZIP 파일 메타데이터 저장
+              await supabase.from('file_metadata').insert({
+                storage_path: zipFilePath,
+                original_filename: zipFileName,
+                file_size: zipBlob.size,
+                mime_type: 'application/zip',
+                bucket_name: 'counseling-attachments',
+                uploaded_by: user.id
+              });
             } else {
               console.error("ZIP 업로드 실패:", zipUploadError);
               // ZIP 실패시 개별 파일 링크 제공
