@@ -968,6 +968,16 @@ const DataInquiry = () => {
           .getPublicUrl(filePath);
 
         attachmentUrl = publicUrl;
+
+        // 파일 메타데이터 저장
+        await supabase.from('file_metadata').insert({
+          storage_path: filePath,
+          original_filename: attachmentFile.name,
+          file_size: attachmentFile.size,
+          mime_type: attachmentFile.type,
+          bucket_name: 'evidence-photos',
+          uploaded_by: parsedUser.id
+        });
       }
 
       const { error } = await supabase

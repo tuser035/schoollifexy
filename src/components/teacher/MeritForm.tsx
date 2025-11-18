@@ -219,6 +219,16 @@ const MeritForm = () => {
           .getPublicUrl(filePath);
 
         imageUrl = publicUrl;
+
+        // 파일 메타데이터 저장
+        await supabase.from('file_metadata').insert({
+          storage_path: filePath,
+          original_filename: imageFile.name,
+          file_size: imageFile.size,
+          mime_type: imageFile.type,
+          bucket_name: 'evidence-photos',
+          uploaded_by: user.id
+        });
       }
 
       const finalReason = additionalReason.trim() 

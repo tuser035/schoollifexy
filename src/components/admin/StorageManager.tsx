@@ -11,8 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileObject } from "@supabase/storage-js";
 
+interface FileWithMetadata extends FileObject {
+  originalFilename?: string;
+}
+
 const StorageManager = () => {
-  const [files, setFiles] = useState<FileObject[]>([]);
+  const [files, setFiles] = useState<FileWithMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null);
@@ -34,17 +38,37 @@ const StorageManager = () => {
       }
 
       // evidence-photos 버킷의 모든 파일 조회
-      const { data, error } = await supabase.storage
+      const { data: storageFiles, error: storageError } = await supabase.storage
         .from("evidence-photos")
         .list("", {
           limit: 1000,
           sortBy: { column: "created_at", order: "desc" }
         });
 
-      if (error) throw error;
+      if (storageError) throw storageError;
 
-      setFiles(data || []);
-      toast.success(`${data?.length || 0}개의 파일을 불러왔습니다`);
+      // 파일 메타데이터 조회
+      const { data: metadata, error: metadataError } = await supabase
+        .from("file_metadata")
+        .select("storage_path, original_filename")
+        .eq("bucket_name", "evidence-photos");
+
+      if (metadataError) {
+        console.error("메타데이터 조회 오류:", metadataError);
+      }
+
+      // 메타데이터와 파일 정보 매칭
+      const metadataMap = new Map(
+        metadata?.map(m => [m.storage_path, m.original_filename]) || []
+      );
+
+      const filesWithMetadata: FileWithMetadata[] = (storageFiles || []).map(file => ({
+        ...file,
+        originalFilename: metadataMap.get(file.name)
+      }));
+
+      setFiles(filesWithMetadata);
+      toast.success(`${filesWithMetadata.length}개의 파일을 불러왔습니다`);
     } catch (error: any) {
       toast.error(error.message || "파일 목록 조회에 실패했습니다");
     } finally {
@@ -56,11 +80,23 @@ const StorageManager = () => {
     if (!deleteFileId) return;
 
     try {
-      const { error } = await supabase.storage
+      // Storage에서 파일 삭제
+      const { error: storageError } = await supabase.storage
         .from("evidence-photos")
         .remove([deleteFileId]);
 
-      if (error) throw error;
+      if (storageError) throw storageError;
+
+      // 메타데이터 삭제
+      const { error: metadataError } = await supabase
+        .from("file_metadata")
+        .delete()
+        .eq("storage_path", deleteFileId)
+        .eq("bucket_name", "evidence-photos");
+
+      if (metadataError) {
+        console.error("메타데이터 삭제 오류:", metadataError);
+      }
 
       // 삭제 성공 시 즉시 상태 업데이트
       setFiles(prevFiles => prevFiles.filter(file => file.name !== deleteFileId));
@@ -108,11 +144,24 @@ const StorageManager = () => {
     try {
       const fileCount = files.length;
       const fileNames = files.map(file => file.name);
-      const { error } = await supabase.storage
+      
+      // Storage에서 파일 삭제
+      const { error: storageError } = await supabase.storage
         .from("evidence-photos")
         .remove(fileNames);
 
-      if (error) throw error;
+      if (storageError) throw storageError;
+
+      // 모든 메타데이터 삭제
+      const { error: metadataError } = await supabase
+        .from("file_metadata")
+        .delete()
+        .eq("bucket_name", "evidence-photos")
+        .in("storage_path", fileNames);
+
+      if (metadataError) {
+        console.error("메타데이터 삭제 오류:", metadataError);
+      }
 
       // 삭제 성공 시 즉시 상태 업데이트
       setFiles([]);
@@ -178,7 +227,14 @@ const StorageManager = () => {
                 <TableBody>
                   {files.map((file) => (
                     <TableRow key={file.id}>
-                      <TableCell className="font-medium">{file.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span className="text-sm">{file.originalFilename || file.name}</span>
+                          {file.originalFilename && (
+                            <span className="text-xs text-muted-foreground">({file.name})</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{formatFileSize(file.metadata?.size)}</TableCell>
                       <TableCell>{formatDate(file.created_at)}</TableCell>
                       <TableCell className="text-right space-x-2">

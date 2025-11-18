@@ -218,6 +218,42 @@ export type Database = {
         }
         Relationships: []
       }
+      file_metadata: {
+        Row: {
+          bucket_name: string
+          created_at: string | null
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          original_filename: string
+          storage_path: string
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          bucket_name?: string
+          created_at?: string | null
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          original_filename: string
+          storage_path: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          bucket_name?: string
+          created_at?: string | null
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          original_filename?: string
+          storage_path?: string
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       merits: {
         Row: {
           category: string
