@@ -3238,6 +3238,49 @@ const DataInquiry = () => {
         </DialogContent>
       </Dialog>
 
+      {/* 그룹 저장 다이얼로그 */}
+      <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>학생 그룹 저장</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>선택된 학생 ({selectedStudents.size}명)</Label>
+              <div className="text-sm text-muted-foreground max-h-24 overflow-y-auto p-2 border rounded">
+                {Array.from(selectedStudents).map((studentId) => {
+                  const student = data.find((row: any) => row.학번 === studentId);
+                  return student ? `${student.이름} (${studentId})` : studentId;
+                }).join(', ')}
+              </div>
+            </div>
+            <div>
+              <Label>그룹명</Label>
+              <Input
+                placeholder="그룹명을 입력하세요"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsGroupDialogOpen(false)}
+              disabled={isSavingGroup}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSaveGroup}
+              disabled={isSavingGroup}
+            >
+              {isSavingGroup ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* 일괄 메시지 발송 다이얼로그 */}
       <Dialog open={isBulkEmailDialogOpen} onOpenChange={setIsBulkEmailDialogOpen}>
         <DialogContent className="max-w-2xl">
