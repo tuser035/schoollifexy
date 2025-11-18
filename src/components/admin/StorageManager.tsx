@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, RefreshCw, Eye, Download } from "lucide-react";
+import { Trash2, RefreshCw, Eye, Download, Edit2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FileObject } from "@supabase/storage-js";
 
 const StorageManager = () => {
@@ -14,6 +16,7 @@ const StorageManager = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null);
+  const [renameFile, setRenameFile] = useState<{ oldName: string; newName: string } | null>(null);
 
   const loadFiles = async () => {
     setIsLoading(true);
@@ -110,6 +113,48 @@ const StorageManager = () => {
     return new Date(dateString).toLocaleString("ko-KR");
   };
 
+  const handleRenameFile = async () => {
+    if (!renameFile || !renameFile.newName.trim()) return;
+
+    try {
+      // 새 파일명이 기존과 같으면 무시
+      if (renameFile.oldName === renameFile.newName) {
+        setRenameFile(null);
+        return;
+      }
+
+      // 파일 다운로드
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from("evidence-photos")
+        .download(renameFile.oldName);
+
+      if (downloadError) throw downloadError;
+
+      // 새 이름으로 업로드
+      const { error: uploadError } = await supabase.storage
+        .from("evidence-photos")
+        .upload(renameFile.newName, fileData, {
+          cacheControl: "3600",
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // 기존 파일 삭제
+      const { error: deleteError } = await supabase.storage
+        .from("evidence-photos")
+        .remove([renameFile.oldName]);
+
+      if (deleteError) throw deleteError;
+
+      toast.success("파일명이 변경되었습니다");
+      setRenameFile(null);
+      loadFiles();
+    } catch (error: any) {
+      toast.error(error.message || "파일명 변경에 실패했습니다");
+    }
+  };
+
   useEffect(() => {
     loadFiles();
   }, []);
@@ -134,10 +179,10 @@ const StorageManager = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>파일명</TableHead>
-                    <TableHead>크기</TableHead>
-                    <TableHead>업로드 날짜</TableHead>
-                    <TableHead className="text-right">작업</TableHead>
+            <TableHead>파일명</TableHead>
+            <TableHead>크기</TableHead>
+            <TableHead>업로드 날짜</TableHead>
+            <TableHead className="text-right w-[200px]">작업</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -162,6 +207,13 @@ const StorageManager = () => {
                           onClick={() => handleDownloadFile(file.name)}
                         >
                           <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setRenameFile({ oldName: file.name, newName: file.name })}
+                        >
+                          <Edit2 className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
@@ -215,6 +267,34 @@ const StorageManager = () => {
               />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 파일명 변경 다이얼로그 */}
+      <Dialog open={!!renameFile} onOpenChange={() => setRenameFile(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>파일명 변경</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newFileName">새 파일명</Label>
+              <Input
+                id="newFileName"
+                value={renameFile?.newName || ""}
+                onChange={(e) => setRenameFile(prev => prev ? { ...prev, newName: e.target.value } : null)}
+                placeholder="새 파일명을 입력하세요"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setRenameFile(null)}>
+                취소
+              </Button>
+              <Button onClick={handleRenameFile}>
+                변경
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
