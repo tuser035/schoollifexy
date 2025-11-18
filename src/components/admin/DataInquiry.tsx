@@ -3403,6 +3403,157 @@ const DataInquiry = () => {
         </DialogContent>
       </Dialog>
 
+      {/* 신규 교사 추가 Dialog */}
+      <Dialog open={isAddTeacherDialogOpen} onOpenChange={setIsAddTeacherDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>신규 교사 추가</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="teacher-name">이름 *</Label>
+                <Input
+                  id="teacher-name"
+                  value={newTeacherData.name}
+                  onChange={(e) => setNewTeacherData({...newTeacherData, name: e.target.value})}
+                  placeholder="교사 이름"
+                  maxLength={50}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="teacher-phone">전화번호 *</Label>
+                <Input
+                  id="teacher-phone"
+                  value={newTeacherData.call_t}
+                  onChange={(e) => setNewTeacherData({...newTeacherData, call_t: formatPhoneNumber(e.target.value)})}
+                  placeholder="010-0000-0000"
+                  maxLength={13}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="teacher-email">이메일 *</Label>
+              <Input
+                id="teacher-email"
+                type="email"
+                value={newTeacherData.teacher_email}
+                onChange={(e) => setNewTeacherData({...newTeacherData, teacher_email: e.target.value})}
+                placeholder="example@email.com"
+                maxLength={100}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="teacher-grade">학년 (담임인 경우)</Label>
+                <Select
+                  value={newTeacherData.grade}
+                  onValueChange={(value) => setNewTeacherData({...newTeacherData, grade: value})}
+                >
+                  <SelectTrigger id="teacher-grade">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">선택 안함</SelectItem>
+                    <SelectItem value="1">1학년</SelectItem>
+                    <SelectItem value="2">2학년</SelectItem>
+                    <SelectItem value="3">3학년</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="teacher-class">반 (담임인 경우)</Label>
+                <Select
+                  value={newTeacherData.class}
+                  onValueChange={(value) => setNewTeacherData({...newTeacherData, class: value})}
+                >
+                  <SelectTrigger id="teacher-class">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">선택 안함</SelectItem>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>{num}반</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="teacher-dept">학과</Label>
+              <Select
+                value={newTeacherData.dept_code}
+                onValueChange={(value) => setNewTeacherData({...newTeacherData, dept_code: value})}
+              >
+                <SelectTrigger id="teacher-dept">
+                  <SelectValue placeholder="학과 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">선택 안함</SelectItem>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.code} value={dept.code}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="teacher-department">부서</Label>
+              <Input
+                id="teacher-department"
+                value={newTeacherData.department}
+                onChange={(e) => setNewTeacherData({...newTeacherData, department: e.target.value})}
+                placeholder="예: 교무부, 학생부"
+                maxLength={50}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="teacher-subject">담당교과</Label>
+              <Input
+                id="teacher-subject"
+                value={newTeacherData.subject}
+                onChange={(e) => setNewTeacherData({...newTeacherData, subject: e.target.value})}
+                placeholder="예: 국어, 수학"
+                maxLength={50}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="teacher-homeroom"
+                checked={newTeacherData.is_homeroom}
+                onCheckedChange={(checked) => setNewTeacherData({...newTeacherData, is_homeroom: checked as boolean})}
+              />
+              <Label htmlFor="teacher-homeroom" className="cursor-pointer">담임 여부</Label>
+            </div>
+
+            <div className="text-sm text-muted-foreground">
+              * 표시는 필수 입력 항목입니다. 초기 비밀번호는 '1234qwert'로 설정됩니다.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddTeacherDialogOpen(false)}
+              disabled={isAddingTeacher}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleAddTeacher}
+              disabled={isAddingTeacher || !newTeacherData.name.trim() || !newTeacherData.call_t.trim() || !newTeacherData.teacher_email.trim()}
+            >
+              {isAddingTeacher ? "추가 중..." : "추가"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 신규 학생 추가 Dialog */}
       <Dialog open={isAddStudentDialogOpen} onOpenChange={setIsAddStudentDialogOpen}>
