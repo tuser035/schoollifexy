@@ -149,18 +149,9 @@ const DataInquiry = () => {
       const user = JSON.parse(userString);
       console.log("학생 그룹 로드 시작:", user.type, user.id);
 
-      // Set session for RLS
-      if (user.type === "admin") {
-        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-      } else if (user.type === "teacher") {
-        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
-      }
-
-      const { data, error } = await supabase
-        .from("student_groups")
-        .select("*")
-        .eq("admin_id", user.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("admin_get_student_groups", {
+        admin_id_input: user.id
+      });
 
       if (error) {
         console.error("학생 그룹 조회 에러:", error);
