@@ -1143,27 +1143,19 @@ const DataInquiry = () => {
       }
 
       const parsedUser = JSON.parse(authUser);
-      const adminId = parsedUser.id;
 
-      // Set admin session
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: adminId
+      const { data, error } = await supabase.rpc("admin_update_teacher", {
+        admin_id_input: parsedUser.id,
+        original_email_input: editingTeacher.originalEmail,
+        name_input: editingTeacher.name,
+        call_t_input: editingTeacher.phone,
+        teacher_email_input: editingTeacher.email,
+        grade_input: editingTeacher.grade,
+        class_input: editingTeacher.class,
+        department_input: editingTeacher.department || '',
+        subject_input: editingTeacher.subject || '',
+        is_homeroom_input: editingTeacher.isHomeroom
       });
-
-      // 교사 정보 업데이트
-      const { error } = await supabase
-        .from('teachers')
-        .update({
-          name: editingTeacher.name,
-          call_t: editingTeacher.phone,
-          teacher_email: editingTeacher.email, // 이메일도 업데이트
-          grade: editingTeacher.grade,
-          class: editingTeacher.class,
-          department: editingTeacher.department || null,
-          subject: editingTeacher.subject || null,
-          is_homeroom: editingTeacher.isHomeroom
-        })
-        .eq('teacher_email', editingTeacher.originalEmail); // 원래 이메일로 찾기
 
       if (error) throw error;
 
@@ -1258,18 +1250,16 @@ const DataInquiry = () => {
       if (!authUser) throw new Error("관리자 인증이 필요합니다");
 
       const parsedUser = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: parsedUser.id });
 
-      const { error } = await supabase
-        .from("students")
-        .update({
-          name: editingStudent.name,
-          student_call: editingStudent.phone || null,
-          gmail: editingStudent.email || null,
-          parents_call1: editingStudent.parentPhone1 || null,
-          parents_call2: editingStudent.parentPhone2 || null,
-        })
-        .eq('student_id', editingStudent.studentId);
+      const { data, error } = await supabase.rpc("admin_update_student", {
+        admin_id_input: parsedUser.id,
+        student_id_input: editingStudent.studentId,
+        name_input: editingStudent.name,
+        student_call_input: editingStudent.phone || '',
+        gmail_input: editingStudent.email || '',
+        parents_call1_input: editingStudent.parentPhone1 || '',
+        parents_call2_input: editingStudent.parentPhone2 || ''
+      });
 
       if (error) throw error;
 
