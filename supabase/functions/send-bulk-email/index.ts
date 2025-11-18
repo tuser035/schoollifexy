@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.1";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const gmailUser = Deno.env.get("GMAIL_USER");
+const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,12 +87,24 @@ const handler = async (req: Request): Promise<Response> => {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
 
-        // 실제 학생 이메일로 발송
-        const emailResponse = await resend.emails.send({
-          from: "School Point <onboarding@resend.dev>",
-          replyTo: "gb25tr04@sc.gyo6.net",
-          to: [student.email],
+        // Gmail SMTP로 이메일 발송
+        const client = new SMTPClient({
+          connection: {
+            hostname: "smtp.gmail.com",
+            port: 587,
+            tls: true,
+            auth: {
+              username: gmailUser!,
+              password: gmailPassword!,
+            },
+          },
+        });
+
+        await client.send({
+          from: gmailUser!,
+          to: student.email,
           subject: subject,
+          content: body,
           html: `
             <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
               <div style="background-color: #ffffff; padding: 20px;">
@@ -106,22 +119,17 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
             </div>
           `,
-          text: `
-${body.replace(/<[^>]*>/g, '')}
-
----
-School Point 학생 관리 시스템
-문의: gb25tr04@sc.gyo6.net
-          `.trim(),
         });
 
-        console.log(`Email sent to ${student.name}:`, emailResponse);
+        await client.close();
+
+        console.log(`Email sent to ${student.name} via Gmail SMTP`);
 
         sendResults.push({
           student: student.name,
           email: student.email,
           success: true,
-          messageId: emailResponse.data?.id || "unknown",
+          messageId: "gmail-smtp",
         });
 
         // 이메일 히스토리 기록
