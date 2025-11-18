@@ -247,6 +247,15 @@ const MeritForm = () => {
 
       const user = JSON.parse(authUser);
 
+      // 교사 세션 설정 (RLS 적용을 위해 필수)
+      const { error: sessionError } = await supabase.rpc('set_teacher_session', {
+        teacher_id_input: user.id,
+      });
+      if (sessionError) {
+        console.error('set_teacher_session error:', sessionError);
+        throw new Error('세션 설정 중 오류가 발생했습니다');
+      }
+
       let imageUrl = null;
 
       // Upload image if exists
