@@ -429,42 +429,39 @@ const DataInquiry = () => {
       const parsedUser = JSON.parse(authUser);
       const adminId = parsedUser.id;
 
-      if (parsedUser.type === "admin") {
-        await supabase.rpc("set_admin_session", {
-          admin_id_input: adminId
-        });
-      } else if (parsedUser.type === "teacher") {
-        await supabase.rpc("set_teacher_session", {
-          teacher_id_input: adminId
-        });
-      }
-
       // 그룹의 학생 ID로 학생 데이터 조회
-      const { data: studentsData, error } = await supabase
-        .from('students')
-        .select('*, departments(name)')
-        .in('student_id', group.student_ids);
+      const { data: studentsData, error } = await supabase.rpc("admin_get_students", {
+        admin_id_input: adminId,
+        search_text: null,
+        search_grade: null,
+        search_class: null
+      });
 
       if (error) throw error;
 
+      // 그룹에 포함된 학생만 필터링
+      const filteredStudents = studentsData?.filter(student => 
+        group.student_ids.includes(student.student_id)
+      ) || [];
+
       // 데이터 포맷팅
-      const formattedData = studentsData?.map(row => ({
+      const formattedData = filteredStudents.map(row => ({
         "증명사진": row.photo_url,
         "학번": row.student_id,
         "이름": row.name,
         "학년": row.grade,
         "반": row.class,
         "번호": row.number,
-        "학과": row.departments?.name || '-',
+        "학과": row.dept_name || '-',
         "전화번호": row.student_call || '-',
         "이메일": row.gmail || '-',
         "학부모전화1": row.parents_call1 || '-',
         "학부모전화2": row.parents_call2 || '-'
-      })) || [];
+      }));
 
       setData(formattedData);
       setSelectedStudents(new Set(group.student_ids));
-      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${group.student_ids.length}명)`);
+      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${filteredStudents.length}명)`);
     } catch (error: any) {
       console.error("그룹 불러오기 실패:", error);
       toast.error("그룹 불러오기에 실패했습니다");
