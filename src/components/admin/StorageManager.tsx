@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, RefreshCw, Eye, Download } from "lucide-react";
+import { Trash2, RefreshCw, Eye, Download, Trash } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ const StorageManager = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
   const loadFiles = async () => {
     setIsLoading(true);
@@ -100,6 +101,25 @@ const StorageManager = () => {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (files.length === 0) return;
+
+    try {
+      const fileNames = files.map(file => file.name);
+      const { error } = await supabase.storage
+        .from("evidence-photos")
+        .remove(fileNames);
+
+      if (error) throw error;
+
+      toast.success(`${files.length}개의 파일이 삭제되었습니다`);
+      setShowDeleteAllConfirm(false);
+      loadFiles();
+    } catch (error: any) {
+      toast.error(error.message || "파일 삭제에 실패했습니다");
+    }
+  };
+
   const formatFileSize = (bytes?: number) => {
     if (!bytes || bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -121,10 +141,20 @@ const StorageManager = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Storage 파일 관리</CardTitle>
-          <Button onClick={loadFiles} disabled={isLoading} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-            새로고침
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowDeleteAllConfirm(true)} 
+              disabled={isLoading || files.length === 0} 
+              variant="destructive"
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              모두 삭제
+            </Button>
+            <Button onClick={loadFiles} disabled={isLoading} variant="outline">
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              새로고침
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {files.length === 0 ? (
@@ -219,6 +249,26 @@ const StorageManager = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* 모두 삭제 확인 다이얼로그 */}
+      <AlertDialog open={showDeleteAllConfirm} onOpenChange={setShowDeleteAllConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>모든 파일 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 모든 파일({files.length}개)을 삭제하시겠습니까? 
+              <br />
+              <span className="font-medium text-destructive mt-2 block">이 작업은 되돌릴 수 없습니다.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              모두 삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
