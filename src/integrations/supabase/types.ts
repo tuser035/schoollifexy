@@ -760,6 +760,16 @@ export type Database = {
           teacher_name: string
         }[]
       }
+      admin_get_student_groups: {
+        Args: { admin_id_input: string }
+        Returns: {
+          created_at: string
+          group_name: string
+          id: string
+          student_ids: string[]
+          updated_at: string
+        }[]
+      }
       admin_get_student_points_by_class: {
         Args: { admin_id_input: string; p_class: number; p_grade: number }
         Returns: {
