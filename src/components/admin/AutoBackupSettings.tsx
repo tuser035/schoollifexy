@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Clock, Database, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Clock, Database, AlertCircle, CheckCircle2, Loader2, Download, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const AutoBackupSettings = () => {
   const [isEnabled, setIsEnabled] = useState(false);
@@ -14,6 +15,9 @@ const AutoBackupSettings = () => {
   const [lastBackup, setLastBackup] = useState<string | null>(null);
   const [backupFiles, setBackupFiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [selectedBackupFile, setSelectedBackupFile] = useState<string | null>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
 
   useEffect(() => {
     loadBackupFiles();
@@ -83,6 +87,47 @@ const AutoBackupSettings = () => {
     } catch (error) {
       console.error('Download error:', error);
       toast.error('다운로드 실패');
+    }
+  };
+
+  const openRestoreDialog = (fileName: string) => {
+    setSelectedBackupFile(fileName);
+    setRestoreDialogOpen(true);
+  };
+
+  const restoreBackup = async () => {
+    if (!selectedBackupFile) return;
+
+    setIsRestoring(true);
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const adminId = user.id;
+
+      if (!adminId) {
+        throw new Error("관리자 ID를 찾을 수 없습니다");
+      }
+
+      const { data, error } = await supabase.functions.invoke('restore-backup', {
+        body: { 
+          backupFileName: selectedBackupFile,
+          adminId 
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("백업 복원이 완료되었습니다. 페이지를 새로고침해주세요.");
+      setRestoreDialogOpen(false);
+      
+      // 페이지 새로고침 권장
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (error) {
+      console.error("Restore error:", error);
+      toast.error("백업 복원 실패: " + (error as Error).message);
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -211,19 +256,72 @@ const AutoBackupSettings = () => {
                       {' '}{(file.metadata?.size / 1024).toFixed(2)} KB
                     </p>
                   </div>
-                  <Button
-                    onClick={() => downloadBackup(file.name)}
-                    variant="ghost"
-                    size="sm"
-                  >
-                    다운로드
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => downloadBackup(file.name)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      다운로드
+                    </Button>
+                    <Button
+                      onClick={() => openRestoreDialog(file.name)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      복원
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>백업 복원 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-4">
+                <p className="text-destructive font-semibold">
+                  ⚠️ 경고: 이 작업은 되돌릴 수 없습니다!
+                </p>
+                <p>
+                  현재 데이터베이스의 모든 데이터가 삭제되고 선택한 백업 파일의 데이터로 완전히 대체됩니다.
+                </p>
+                <div className="bg-muted p-3 rounded-md">
+                  <p className="text-sm font-medium">복원할 백업:</p>
+                  <p className="text-sm text-muted-foreground">{selectedBackupFile}</p>
+                </div>
+                <p className="text-sm">
+                  정말로 이 백업을 복원하시겠습니까?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRestoring}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={restoreBackup}
+              disabled={isRestoring}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isRestoring ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  복원 중...
+                </>
+              ) : (
+                "복원 실행"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
