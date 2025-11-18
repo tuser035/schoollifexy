@@ -29,9 +29,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // SERVICE_ROLE_KEY를 사용하여 RLS 우회
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     const { adminId, subject, body, students }: SendBulkEmailRequest = await req.json();
