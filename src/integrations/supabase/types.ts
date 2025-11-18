@@ -38,6 +38,54 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          status: string | null
+          table_name: string | null
+          user_agent: string | null
+          user_id: string | null
+          user_type: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          status?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_type?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          status?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_type?: string | null
+        }
+        Relationships: []
+      }
       career_counseling: {
         Row: {
           admin_id: string
@@ -845,6 +893,20 @@ export type Database = {
           student_id_input: string
           teacher_id_input: string
           year_input: number
+        }
+        Returns: string
+      }
+      log_audit_event: {
+        Args: {
+          p_action_type: string
+          p_error_message?: string
+          p_new_data?: Json
+          p_old_data?: Json
+          p_record_id?: string
+          p_status?: string
+          p_table_name?: string
+          p_user_id: string
+          p_user_type: string
         }
         Returns: string
       }

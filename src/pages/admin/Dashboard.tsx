@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -15,6 +15,7 @@ import { EmailHistory } from "@/components/admin/EmailHistory";
 import EmailTemplateManager from "@/components/admin/EmailTemplateManager";
 import DataExport from "@/components/admin/DataExport";
 import AutoBackupSettings from "@/components/admin/AutoBackupSettings";
+import { SecurityLogs } from "@/components/admin/SecurityLogs";
 import {
   Sidebar,
   SidebarContent,
@@ -48,6 +49,7 @@ const menuItems = (userType: "admin" | "teacher") => {
       { value: "export", label: "백업", icon: PackageOpen },
       { value: "auto-backup", label: "자동백업", icon: Settings },
       { value: "storage", label: "파일", icon: FolderOpen },
+      { value: "security-logs", label: "보안로그", icon: Shield },
     ] : []),
   ];
   return items;
@@ -111,6 +113,8 @@ const AdminDashboard = () => {
         return <AutoBackupSettings />;
       case "storage":
         return <StorageManager />;
+      case "security-logs":
+        return <SecurityLogs />;
       default:
         return null;
     }
