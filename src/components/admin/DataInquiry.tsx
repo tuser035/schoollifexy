@@ -1483,22 +1483,24 @@ const DataInquiry = () => {
 
       const user = JSON.parse(authUser);
       
-      // 학번 중복 체크
-      const { data: existingStudent, error: checkError } = await supabase
-        .from("students")
-        .select("student_id")
-        .eq("student_id", newStudentData.student_id.trim())
-        .single();
+      // 학번 중복 체크 - admin_get_students 함수 사용
+      const { data: existingStudents, error: checkError } = await supabase
+        .rpc("admin_get_students", {
+          admin_id_input: user.id,
+          search_text: newStudentData.student_id.trim()
+        });
 
-      if (existingStudent) {
-        toast.error("이미 존재하는 학번입니다");
-        return;
-      }
-
-      if (checkError && checkError.code !== "PGRST116") {
-        // PGRST116은 "no rows returned" 에러로, 중복이 없다는 의미
+      if (checkError) {
         console.error("학번 확인 오류:", checkError);
         throw checkError;
+      }
+
+      if (existingStudents && existingStudents.length > 0) {
+        const exactMatch = existingStudents.find(s => s.student_id === newStudentData.student_id.trim());
+        if (exactMatch) {
+          toast.error("이미 존재하는 학번입니다");
+          return;
+        }
       }
       
       // 데이터베이스 함수를 사용하여 학생 추가 (RLS 자동 처리)
@@ -1688,46 +1690,33 @@ const DataInquiry = () => {
           if (!isNaN(Number(trimmedSearch))) {
             const searchNum = trimmedSearch;
             
-            // 세 자리 이상 숫자인 경우: 학번(student_id)으로 직접 검색
+            // 세 자리 이상 숫자인 경우: 학번(student_id)으로 검색
             if (searchNum.length >= 3) {
-              // Set session for RLS
-              if (parsedUser.type === "admin") {
-                await supabase.rpc("set_admin_session", {
-                  admin_id_input: adminId
-                });
-              } else if (parsedUser.type === "teacher") {
-                await supabase.rpc("set_teacher_session", {
-                  teacher_id_input: adminId
-                });
-              }
-
-              const { data: studentData, error: queryError } = await supabase
-                .from('students')
-                .select(`
-                  student_id,
-                  name,
-                  grade,
-                  class,
-                  number,
-                  student_call,
-                  gmail,
-                  departments(name)
-                `)
-                .eq('student_id', trimmedSearch);
+              // admin_get_students 함수 사용
+              const { data: studentData, error: queryError } = await supabase.rpc("admin_get_students", {
+                admin_id_input: adminId,
+                search_text: trimmedSearch
+              });
 
               if (queryError) throw queryError;
 
-              if (studentData && studentData.length > 0) {
-                result = studentData.map(student => ({
-                  "학번": student.student_id,
-                  "이름": student.name,
-                  "학년": student.grade,
-                  "반": student.class,
-                  "번호": student.number,
-                  "학과": (student.departments as any)?.name || "",
-                  "전화번호": student.student_call || "",
-                  "이메일": student.gmail || ""
-                }));
+              // 정확히 일치하는 학번 찾기
+              const exactMatch = studentData?.find((s: any) => s.student_id === trimmedSearch);
+
+              if (exactMatch) {
+                result = [{
+                  "증명사진": exactMatch.photo_url,
+                  "학번": exactMatch.student_id,
+                  "이름": exactMatch.name,
+                  "학년": exactMatch.grade,
+                  "반": exactMatch.class,
+                  "번호": exactMatch.number,
+                  "학과": exactMatch.dept_name,
+                  "전화번호": exactMatch.student_call,
+                  "이메일": exactMatch.gmail,
+                  "학부모전화1": exactMatch.parents_call1,
+                  "학부모전화2": exactMatch.parents_call2
+                }];
               } else {
                 result = [];
                 toast.info(`학번 ${trimmedSearch}인 학생을 찾을 수 없습니다`);
@@ -1750,50 +1739,10 @@ const DataInquiry = () => {
             // 한 자리 숫자인 경우: 학년으로 검색 + 총 인원 표시
             else {
               searchGrade = parseInt(trimmedSearch);
-              
-              // Set session for RLS
-              if (parsedUser.type === "admin") {
-                await supabase.rpc("set_admin_session", {
-                  admin_id_input: adminId
-                });
-              } else if (parsedUser.type === "teacher") {
-                await supabase.rpc("set_teacher_session", {
-                  teacher_id_input: adminId
-                });
-              }
-
-              // 학년 총 인원 조회 및 토스트 표시
-              const { count } = await supabase
-                .from('students')
-                .select('*', { count: 'exact', head: true })
-                .eq('grade', searchGrade);
-              
-              if (count !== null) {
-                toast.success(`${searchGrade}학년 총 인원: ${count}명`);
-              }
             }
           } else {
             // 문자인 경우 이름으로 검색
             searchText = trimmedSearch;
-          }
-        } else {
-          // 검색어가 없을 때: 전교생 조회 + 총 인원 표시
-          if (parsedUser.type === "admin") {
-            await supabase.rpc("set_admin_session", {
-              admin_id_input: adminId
-            });
-          } else if (parsedUser.type === "teacher") {
-            await supabase.rpc("set_teacher_session", {
-              teacher_id_input: adminId
-            });
-          }
-
-          const { count } = await supabase
-            .from('students')
-            .select('*', { count: 'exact', head: true });
-          
-          if (count !== null) {
-            toast.success(`전교생 총 인원: ${count}명`);
           }
         }
 
@@ -1819,6 +1768,17 @@ const DataInquiry = () => {
           "학부모전화1": row.parents_call1,
           "학부모전화2": row.parents_call2
         }));
+
+        // 조회 후 인원 알림
+        if (showToast && result && result.length > 0) {
+          if (searchGrade && searchClass) {
+            toast.success(`${searchGrade}학년 ${searchClass}반 인원: ${result.length}명`);
+          } else if (searchGrade) {
+            toast.success(`${searchGrade}학년 총 인원: ${result.length}명`);
+          } else if (!searchText) {
+            toast.success(`전체 인원: ${result.length}명`);
+          }
+        }
 
       } else if (selectedTable === "teachers") {
         let searchGrade: number | null = null;
