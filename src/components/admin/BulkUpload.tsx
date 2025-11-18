@@ -241,6 +241,17 @@ const BulkUpload = () => {
           parents_call1: header.indexOf("parents_call1") !== -1 ? header.indexOf("parents_call1") : header.indexOf("학부모전화1"),
           parents_call2: header.indexOf("parents_call2") !== -1 ? header.indexOf("parents_call2") : header.indexOf("학부모전화2"),
         },
+        teachers: {
+          name: header.indexOf("name") !== -1 ? header.indexOf("name") : 0,
+          teacher_email: header.indexOf("teacher_email") !== -1 ? header.indexOf("teacher_email") : 1,
+          grade: header.indexOf("grade") !== -1 ? header.indexOf("grade") : -1,
+          class: header.indexOf("class") !== -1 ? header.indexOf("class") : -1,
+          dept_code: header.indexOf("dept_code") !== -1 ? header.indexOf("dept_code") : -1,
+          call_t: header.indexOf("call_t") !== -1 ? header.indexOf("call_t") : -1,
+          is_homeroom: header.indexOf("is_homeroom") !== -1 ? header.indexOf("is_homeroom") : -1,
+          department: header.indexOf("department") !== -1 ? header.indexOf("department") : -1,
+          subject: header.indexOf("subject") !== -1 ? header.indexOf("subject") : -1,
+        },
         homeroom: {
           teacher_email: header.indexOf("teacher_email"),
           grade: header.indexOf("grade"),
@@ -292,14 +303,26 @@ const BulkUpload = () => {
               parents_call2: sIdx.parents_call2 !== -1 ? (values[sIdx.parents_call2] || null) : (values[9] || null),
             };
           } else if (table === "teachers") {
+            const tIdx = idx.teachers;
+            
+            // Extract values only if column exists in CSV (index !== -1)
+            const name = tIdx.name !== -1 ? values[tIdx.name]?.trim() : null;
+            const teacher_email = tIdx.teacher_email !== -1 ? values[tIdx.teacher_email]?.trim() : null;
+            
+            if (!name || !teacher_email) {
+              throw new Error(`name과 teacher_email은 필수 항목입니다`);
+            }
+            
             record = {
-              teacher_email: values[0],
-              name: values[1],
-              grade: values[2] ? parseInt(values[2]) : null,
-              class: values[3] ? parseInt(values[3]) : null,
-              dept_code: values[4] || null,
-              call_t: values[5],
-              is_homeroom: values[6] === "true" || values[6] === "1",
+              name,
+              teacher_email,
+              grade: tIdx.grade !== -1 && values[tIdx.grade] ? parseInt(values[tIdx.grade]) : null,
+              class: tIdx.class !== -1 && values[tIdx.class] ? parseInt(values[tIdx.class]) : null,
+              dept_code: tIdx.dept_code !== -1 ? values[tIdx.dept_code]?.trim() || null : null,
+              call_t: tIdx.call_t !== -1 ? values[tIdx.call_t]?.trim() : teacher_email,
+              is_homeroom: tIdx.is_homeroom !== -1 ? (values[tIdx.is_homeroom] === "true" || values[tIdx.is_homeroom] === "1") : false,
+              department: tIdx.department !== -1 ? values[tIdx.department]?.trim() || null : null,
+              subject: tIdx.subject !== -1 ? values[tIdx.subject]?.trim() || null : null,
             };
           } else if (table === "merits" || table === "demerits") {
             const pIdx = idx.points;
