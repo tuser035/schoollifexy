@@ -3657,21 +3657,88 @@ const DataInquiry = () => {
             <DialogDescription>학생의 정보를 수정할 수 있습니다.</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 px-1">
-...
+            {editingStudent && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>학번</Label>
+                    <Input value={editingStudent.studentId} disabled />
+                  </div>
+                  <div>
+                    <Label>이름</Label>
+                    <Input 
+                      value={editingStudent.name}
+                      onChange={(e) => setEditingStudent({...editingStudent, name: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label>학년</Label>
+                    <Input value={editingStudent.grade} disabled />
+                  </div>
+                  <div>
+                    <Label>반</Label>
+                    <Input value={editingStudent.class} disabled />
+                  </div>
+                  <div>
+                    <Label>번호</Label>
+                    <Input value={editingStudent.number} disabled />
+                  </div>
+                </div>
+                <div>
+                  <Label>학과</Label>
+                  <Input value={editingStudent.deptName || "-"} disabled />
+                </div>
+                <div>
+                  <Label>학생 전화번호</Label>
+                  <Input 
+                    value={editingStudent.phone}
+                    onChange={(e) => setEditingStudent({...editingStudent, phone: e.target.value})}
+                    placeholder="010-0000-0000"
+                  />
+                </div>
+                <div>
+                  <Label>이메일</Label>
+                  <Input 
+                    value={editingStudent.email}
+                    onChange={(e) => setEditingStudent({...editingStudent, email: e.target.value})}
+                    placeholder="example@email.com"
+                    type="email"
+                  />
+                </div>
+                <div>
+                  <Label>학부모 전화번호 1</Label>
+                  <Input 
+                    value={editingStudent.parentPhone1}
+                    onChange={(e) => setEditingStudent({...editingStudent, parentPhone1: e.target.value})}
+                    placeholder="010-0000-0000"
+                  />
+                </div>
+                <div>
+                  <Label>학부모 전화번호 2</Label>
+                  <Input 
+                    value={editingStudent.parentPhone2}
+                    onChange={(e) => setEditingStudent({...editingStudent, parentPhone2: e.target.value})}
+                    placeholder="010-0000-0000"
+                  />
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter className="shrink-0 pt-4">
             <Button
               variant="outline"
-              onClick={() => setIsEmailDialogOpen(false)}
-              disabled={isSendingEmail}
+              onClick={() => setIsStudentEditDialogOpen(false)}
+              disabled={isSavingStudent}
             >
               취소
             </Button>
             <Button
-              onClick={handleSendEmail}
-              disabled={isSendingEmail || !emailSubject.trim() || !emailBody.trim()}
+              onClick={handleSaveStudent}
+              disabled={isSavingStudent}
             >
-              {isSendingEmail ? "발송 중..." : "발송"}
+              {isSavingStudent ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>
