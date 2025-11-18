@@ -66,9 +66,6 @@ const DataInquiry = () => {
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [isSavingGroup, setIsSavingGroup] = useState(false);
-  const [selectedTeachers, setSelectedTeachers] = useState<Set<string>>(new Set());
-  const [selectedTeacherNames, setSelectedTeacherNames] = useState<Map<string, string>>(new Map()); // 이메일 -> 이름 매핑
-  const [teacherGroups, setTeacherGroups] = useState<any[]>([]);
   const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
@@ -115,14 +112,6 @@ const DataInquiry = () => {
     parents_call2: ""
   });
   const [isAddingStudent, setIsAddingStudent] = useState(false);
-  const [isBulkTeacherEmailDialogOpen, setIsBulkTeacherEmailDialogOpen] = useState(false);
-  const [bulkTeacherEmailSubject, setBulkTeacherEmailSubject] = useState("");
-  const [bulkTeacherEmailBody, setBulkTeacherEmailBody] = useState("");
-  const [isSendingBulkTeacherEmail, setIsSendingBulkTeacherEmail] = useState(false);
-  const [bulkTeacherAttachmentFiles, setBulkTeacherAttachmentFiles] = useState<File[]>([]);
-  const [bulkTeacherAttachmentPreviews, setBulkTeacherAttachmentPreviews] = useState<{file: File, preview: string}[]>([]);
-  const bulkTeacherFileInputRef = useRef<HTMLInputElement>(null);
-  const bulkTeacherCameraInputRef = useRef<HTMLInputElement>(null);
 
   // 모바일 기기 감지 함수
   const isMobileDevice = () => {
@@ -186,68 +175,11 @@ const DataInquiry = () => {
     }
   };
 
-  // 교사 그룹 로드
-  const loadTeacherGroups = async () => {
-    try {
-      const userString = localStorage.getItem("auth_user");
-      if (!userString) {
-        console.log("교사 그룹 로드: 사용자 정보 없음");
-        setTeacherGroups([]);
-        return;
-      }
-
-      const user = JSON.parse(userString);
-      console.log("교사 그룹 로드 시작:", user.type, user.id);
-
-      // Set session for RLS - 먼저 세션 설정
-      if (user.type === "admin") {
-        const { error: sessionError } = await supabase.rpc("set_admin_session", { 
-          admin_id_input: user.id 
-        });
-        if (sessionError) {
-          console.error("Admin 세션 설정 실패:", sessionError);
-        }
-      } else if (user.type === "teacher") {
-        const { error: sessionError } = await supabase.rpc("set_teacher_session", { 
-          teacher_id_input: user.id 
-        });
-        if (sessionError) {
-          console.error("Teacher 세션 설정 실패:", sessionError);
-        }
-      }
-
-      console.log("교사 그룹 조회 중...");
-      const { data, error } = await supabase
-        .from("teacher_groups")
-        .select("*")
-        .eq("admin_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("교사 그룹 조회 에러:", error);
-        console.error("에러 상세:", JSON.stringify(error, null, 2));
-        throw error;
-      }
-
-      console.log("교사 그룹 로드 완료:", data?.length || 0, "개", data);
-      setTeacherGroups(data || []);
-      
-      if (!data || data.length === 0) {
-        console.warn("저장된 교사 그룹이 없습니다. admin_id:", user.id);
-      }
-    } catch (error: any) {
-      console.error("교사 그룹 로드 실패:", error);
-      setTeacherGroups([]);
-      toast.error(`교사 그룹 목록 조회 실패: ${error.message || '알 수 없는 오류'}`);
-    }
-  };
 
   // selectedTable이 변경될 때 그룹 로드
   useEffect(() => {
     if (selectedTable === "students") {
       loadStudentGroups();
-    } else if (selectedTable === "teachers") {
-      loadTeacherGroups();
     }
   }, [selectedTable]);
 
@@ -480,16 +412,8 @@ const DataInquiry = () => {
       return;
     }
 
-    const isStudentTable = selectedTable === "students";
-    const isTeacherTable = selectedTable === "teachers";
-
-    if (isStudentTable && selectedStudents.size === 0) {
+    if (selectedStudents.size === 0) {
       toast.error("학생을 선택해주세요");
-      return;
-    }
-
-    if (isTeacherTable && selectedTeachers.size === 0) {
-      toast.error("교사를 선택해주세요");
       return;
     }
 
@@ -499,8 +423,7 @@ const DataInquiry = () => {
       if (!userString) throw new Error("로그인이 필요합니다");
 
       const user = JSON.parse(userString);
-      console.log("그룹 저장 시작:", newGroupName, 
-        isStudentTable ? `학생 수: ${selectedStudents.size}` : `교사 수: ${selectedTeachers.size}`);
+      console.log("그룹 저장 시작:", newGroupName, `학생 수: ${selectedStudents.size}`);
 
       // Set session for RLS
       if (user.type === "admin") {
@@ -509,93 +432,32 @@ const DataInquiry = () => {
         await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
       }
 
-      if (isStudentTable) {
-        const groupData = {
-          admin_id: user.id,
-          group_name: newGroupName,
-          student_ids: Array.from(selectedStudents),
-        };
-        
-        console.log("저장할 학생 그룹 데이터:", groupData);
+      const groupData = {
+        admin_id: user.id,
+        group_name: newGroupName,
+        student_ids: Array.from(selectedStudents),
+      };
+      
+      console.log("저장할 학생 그룹 데이터:", groupData);
 
-        const { data, error } = await supabase
-          .from("student_groups")
-          .insert(groupData)
-          .select();
+      const { data, error } = await supabase
+        .from("student_groups")
+        .insert(groupData)
+        .select();
 
-        if (error) {
-          console.error("학생 그룹 저장 에러:", error);
-          throw error;
-        }
-
-        console.log("학생 그룹 저장 완료:", data);
-        toast.success(`"${newGroupName}" 학생 그룹이 저장되었습니다`);
-        await loadStudentGroups();
-      } else if (isTeacherTable) {
-        const selectedIds = Array.from(selectedTeachers);
-        if (selectedIds.length === 0) {
-          toast.error("교사를 선택해주세요");
-          return;
-        }
-
-        try {
-          // 동일한 그룹명이 이미 있는지 확인
-          const { data: existingGroups, error: fetchError } = await supabase
-            .from("teacher_groups")
-            .select("*")
-            .eq("admin_id", user.id)
-            .eq("group_name", newGroupName)
-            .limit(1);
-
-          if (fetchError) throw fetchError;
-
-          if (existingGroups && existingGroups.length > 0) {
-            const existing = existingGroups[0];
-            const merged = Array.from(new Set([...(existing.teacher_ids || []), ...selectedIds]));
-
-            const { data: updated, error: updateError } = await supabase
-              .from("teacher_groups")
-              .update({ teacher_ids: merged })
-              .eq("id", existing.id)
-              .select();
-
-            if (updateError) throw updateError;
-
-            console.log("교사 그룹 업데이트 완료:", updated);
-            toast.success(`"${newGroupName}" 교사 그룹에 ${selectedIds.length}명 추가되었습니다 (총 ${merged.length}명)`);
-          } else {
-            const groupData = {
-              admin_id: user.id,
-              group_name: newGroupName,
-              teacher_ids: selectedIds,
-            };
-
-            console.log("저장할 교사 그룹 데이터:", groupData);
-
-            const { data, error } = await supabase
-              .from("teacher_groups")
-              .insert(groupData)
-              .select();
-
-            if (error) throw error;
-
-            console.log("교사 그룹 저장 완료:", data);
-            toast.success(`"${newGroupName}" 교사 그룹이 저장되었습니다`);
-          }
-
-          await loadTeacherGroups();
-        } catch (err) {
-          console.error("교사 그룹 저장/업데이트 에러:", err);
-          throw err;
-        }
+      if (error) {
+        console.error("학생 그룹 저장 에러:", error);
+        throw error;
       }
+
+      console.log("학생 그룹 저장 완료:", data);
+      toast.success(`"${newGroupName}" 학생 그룹이 저장되었습니다`);
+      await loadStudentGroups();
 
       // 그룹 저장 후 상태 초기화
       setIsGroupDialogOpen(false);
       setNewGroupName("");
       setSelectedStudents(new Set());
-      setSelectedTeachers(new Set());
-      setSelectedTeacherNames(new Map());
       setColumnFilters({});
       setSearchTerm("");
       setSearchDepartment("");
@@ -702,107 +564,7 @@ const DataInquiry = () => {
   };
 
   // 교사 그룹 불러오기
-  const handleLoadTeacherGroup = async (groupId: string) => {
-    try {
-      setIsLoading(true);
-      const group = teacherGroups.find((g) => g.id === groupId);
-      if (!group) return;
 
-      // 세션 설정
-      const authUser = localStorage.getItem("auth_user");
-      if (!authUser) {
-        toast.error("로그인이 필요합니다");
-        return;
-      }
-
-      const parsedUser = JSON.parse(authUser);
-      const adminId = parsedUser.id;
-
-      if (parsedUser.type === "admin") {
-        await supabase.rpc("set_admin_session", {
-          admin_id_input: adminId
-        });
-      } else if (parsedUser.type === "teacher") {
-        await supabase.rpc("set_teacher_session", {
-          teacher_id_input: adminId
-        });
-      }
-
-      // 그룹의 교사 이메일로 교사 데이터 조회
-      const { data: teachersData, error } = await supabase
-        .from('teachers')
-        .select('*, departments(name)')
-        .in('teacher_email', group.teacher_ids);
-
-      if (error) throw error;
-
-      // 데이터 포맷팅
-      const formattedData = teachersData?.map(row => ({
-        "이름": row.name,
-        "전화번호": row.call_t,
-        "이메일": row.teacher_email,
-        "학년": row.grade || '-',
-        "반": row.class || '-',
-        "담임여부": row.is_homeroom ? 'O' : 'X',
-        "학과": row.departments?.name || '-',
-        "부서": row.department || '-',
-        "과목": row.subject || '-',
-        "증명사진": row.photo_url
-      })) || [];
-
-      setData(formattedData);
-      
-      // 이름 매핑과 최신 이메일 매핑 저장
-      const nameMap = new Map<string, string>();
-      const latestEmails = new Set<string>();
-      
-      teachersData?.forEach(row => {
-        if (row.teacher_email && row.name) {
-          nameMap.set(row.teacher_email, row.name);
-          latestEmails.add(row.teacher_email); // DB에서 조회한 최신 이메일
-        }
-      });
-      
-      // 최신 이메일로 selectedTeachers 업데이트
-      setSelectedTeachers(latestEmails);
-      setSelectedTeacherNames(nameMap);
-      toast.success(`"${group.group_name}" 그룹을 불러왔습니다 (${latestEmails.size}명)`);
-    } catch (error: any) {
-      console.error("교사 그룹 불러오기 실패:", error);
-      toast.error("교사 그룹 불러오기에 실패했습니다");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 교사 그룹 삭제
-  const handleDeleteTeacherGroup = async (groupId: string, groupName: string) => {
-    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?`)) return;
-
-    try {
-      const userString = localStorage.getItem("auth_user");
-      if (!userString) throw new Error("로그인이 필요합니다");
-
-      const user = JSON.parse(userString);
-
-      // Set session for RLS
-      if (user.type === "admin") {
-        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-      } else if (user.type === "teacher") {
-        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
-      }
-
-      const { error } = await supabase.from("teacher_groups").delete().eq("id", groupId);
-
-      if (error) throw error;
-
-      toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
-      await loadTeacherGroups();
-    } catch (error: any) {
-      console.error("교사 그룹 삭제 실패:", error);
-      toast.error("교사 그룹 삭제에 실패했습니다");
-    }
-  };
 
   // 학생 일괄 메시지 첨부파일 핸들러
   const handleBulkStudentAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2846,10 +2608,6 @@ const DataInquiry = () => {
         if (selectedTable === "students") {
           loadStudentGroups();
         }
-        // 교사 테이블을 조회한 경우 그룹 목록도 로드
-        if (selectedTable === "teachers") {
-          loadTeacherGroups();
-        }
       } else {
         setColumns([]);
         setData([]);
@@ -3085,70 +2843,6 @@ const DataInquiry = () => {
                   </Button>
                 </>
               )}
-              {selectedTable === "teachers" && (
-                <>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[230px] justify-start">
-                        <Users className="h-4 w-4 mr-2" />
-                        저장된 교사 그룹 불러오기
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-2 bg-background" align="start">
-                      {teacherGroups.length === 0 ? (
-                        <div className="p-2 text-sm text-muted-foreground text-center">
-                          저장된 그룹이 없습니다
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          {teacherGroups.map((group) => (
-                            <div
-                              key={group.id}
-                              className="flex items-center justify-between p-2 hover:bg-muted rounded-md group"
-                            >
-                              <button
-                                onClick={() => {
-                                  handleLoadTeacherGroup(group.id);
-                                }}
-                                className="flex-1 text-left text-sm"
-                              >
-                                {group.group_name} ({group.teacher_ids.length}명)
-                              </button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteTeacherGroup(group.id, group.group_name);
-                                }}
-                                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                </>
-              )}
-              {selectedTable === "teachers" && selectedTeachers.size > 0 && (
-                <>
-                  <Button 
-                    variant="outline"
-                    onClick={openGroupDialog}
-                  >
-                    그룹 저장({selectedTeachers.size})
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    onClick={handleOpenBulkTeacherEmailDialog}
-                  >
-                    일괄 메시지 발송({selectedTeachers.size})
-                  </Button>
-                </>
-              )}
               {(selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly") && (
                 <Button 
                   variant="destructive" 
@@ -3173,16 +2867,6 @@ const DataInquiry = () => {
                           type="checkbox"
                           checked={selectedStudents.size > 0 && selectedStudents.size === data.length}
                           onChange={(e) => handleToggleAllStudents(e.target.checked)}
-                          className="cursor-pointer"
-                        />
-                      </TableHead>
-                    )}
-                    {selectedTable === "teachers" && (
-                      <TableHead className="w-12">
-                        <input
-                          type="checkbox"
-                          checked={selectedTeachers.size > 0 && selectedTeachers.size === data.length}
-                          onChange={(e) => handleToggleAllTeachers(e.target.checked)}
                           className="cursor-pointer"
                         />
                       </TableHead>
@@ -3351,16 +3035,6 @@ const DataInquiry = () => {
                               type="checkbox"
                               checked={selectedStudents.has(row["학번"])}
                               onChange={(e) => handleToggleStudent(row["학번"], e.target.checked)}
-                              className="cursor-pointer"
-                            />
-                          </TableCell>
-                        )}
-                        {selectedTable === "teachers" && row["이메일"] && (
-                          <TableCell>
-                            <input
-                              type="checkbox"
-                              checked={selectedTeachers.has(row["이메일"])}
-                              onChange={(e) => handleToggleTeacher(row["이메일"], e.target.checked)}
                               className="cursor-pointer"
                             />
                           </TableCell>
@@ -3924,429 +3598,6 @@ const DataInquiry = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 교사 일괄 메시지 발송 다이얼로그 */}
-      <Dialog open={isBulkTeacherEmailDialogOpen} onOpenChange={setIsBulkTeacherEmailDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>교사 일괄 메시지 발송</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>템플릿 선택</Label>
-              <Select value={selectedTemplateId} onValueChange={handleBulkTeacherTemplateSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="템플릿을 선택하세요" />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {templates.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      등록된 템플릿이 없습니다
-                    </div>
-                  ) : (
-                    templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        [{template.template_type === 'email' ? '이메일' : '메신저'}] {template.title}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>수신자 ({selectedTeachers.size}명)</Label>
-              <div className="text-sm text-muted-foreground max-h-24 overflow-y-auto p-2 border rounded">
-                {Array.from(selectedTeachers).map((teacherEmail) => {
-                  const teacher = data.find((row: any) => row.이메일 === teacherEmail);
-                  return teacher ? `${teacher.이름} (${teacherEmail})` : teacherEmail;
-                }).join(', ')}
-              </div>
-            </div>
-            <div>
-              <Label>제목</Label>
-              <Input
-                value={bulkTeacherEmailSubject}
-                onChange={(e) => setBulkTeacherEmailSubject(e.target.value)}
-                placeholder="이메일 제목"
-              />
-            </div>
-            <div>
-              <Label>내용</Label>
-              <Textarea
-                value={bulkTeacherEmailBody}
-                onChange={(e) => setBulkTeacherEmailBody(e.target.value)}
-                placeholder="이메일 내용을 입력하세요"
-                rows={8}
-                className="resize-none"
-              />
-            </div>
-            <div>
-              <Label>첨부파일 ({bulkTeacherAttachmentFiles.length}개)</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => bulkTeacherFileInputRef.current?.click()}
-                >
-                  <FileUp className="w-4 h-4 mr-2" />
-                  파일 첨부
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => bulkTeacherCameraInputRef.current?.click()}
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  카메라
-                </Button>
-                {bulkTeacherAttachmentFiles.length > 0 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleClearAllBulkTeacherAttachments}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    전체 삭제
-                  </Button>
-                )}
-                <input
-                  ref={bulkTeacherFileInputRef}
-                  type="file"
-                  multiple
-                  onChange={handleBulkTeacherFileChange}
-                  className="hidden"
-                />
-                <input
-                  ref={bulkTeacherCameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleBulkTeacherFileChange}
-                  className="hidden"
-                />
-              </div>
-              {bulkTeacherAttachmentPreviews.length > 0 && (
-                <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
-                  {bulkTeacherAttachmentPreviews.map((item, index) => (
-                    <div key={index} className="relative p-2 border rounded-lg">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute top-1 right-1 z-10"
-                        onClick={() => handleRemoveBulkTeacherAttachment(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                      {item.file.type.startsWith('image/') ? (
-                        <div className="space-y-1">
-                          <img
-                            src={item.preview}
-                            alt={`첨부 파일 ${index + 1}`}
-                            className="max-w-full max-h-32 object-contain mx-auto"
-                          />
-                          <div className="text-xs text-muted-foreground text-center truncate">
-                            {item.file.name} ({(item.file.size / 1024).toFixed(1)}KB)
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 p-2">
-                          <FileUp className="w-4 h-4 text-muted-foreground" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm truncate">{item.file.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {(item.file.size / 1024).toFixed(1)}KB
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsBulkTeacherEmailDialogOpen(false)}
-              disabled={isSendingBulkTeacherEmail}
-            >
-              취소
-            </Button>
-            <Button
-              onClick={handleSendBulkTeacherEmail}
-              disabled={isSendingBulkTeacherEmail || !bulkTeacherEmailSubject.trim() || !bulkTeacherEmailBody.trim()}
-            >
-              {isSendingBulkTeacherEmail ? "발송 중..." : "일괄 발송"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 그룹 저장 다이얼로그 */}
-      <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
-        <DialogContent className="bg-background max-w-md">
-      <DialogHeader>
-            <DialogTitle>
-              {selectedTable === "students" ? "학생 그룹 저장" : "교사 그룹 저장"}
-            </DialogTitle>
-            <DialogDescription>
-              선택한 대상의 그룹명을 입력하고 저장하세요.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>그룹명</Label>
-              <Input
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder={selectedTable === "students" ? "예: 로봇 동아리, 축구부" : "예: 교무부, 수학과"}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isSavingGroup) {
-                    handleSaveGroup();
-                  }
-                }}
-              />
-            </div>
-            {selectedTable === "students" ? (
-              <div>
-                <Label>선택된 학생 ({selectedStudents.size}명)</Label>
-                <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto p-2 border rounded">
-                  {Array.from(selectedStudents).map((studentId) => {
-                    const student = data.find((row: any) => row.학번 === studentId);
-                    return student ? `${student.이름} (${studentId})` : studentId;
-                  }).join(', ')}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <Label>선택된 교사 ({selectedTeachers.size}명)</Label>
-                <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto p-2 border rounded">
-                  {Array.from(selectedTeachers).map((teacherEmail) => {
-                    const name = selectedTeacherNames.get(teacherEmail) || '이름 없음';
-                    return `${name} (${teacherEmail})`;
-                  }).join(', ')}
-                </div>
-              </div>
-            )}
-            {selectedTable === "students" && studentGroups.length > 0 && (
-              <div>
-                <Label>기존 학생 그룹 목록</Label>
-                <div className="space-y-2 max-h-40 overflow-y-auto p-2 border rounded">
-                  {studentGroups.map((group) => (
-                    <div key={group.id} className="flex items-center justify-between text-sm">
-                      <span>{group.group_name} ({group.student_ids.length}명)</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteGroup(group.id, group.group_name)}
-                        className="h-6 px-2"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {selectedTable === "teachers" && teacherGroups.length > 0 && (
-              <div>
-                <Label>기존 교사 그룹 목록</Label>
-                <div className="space-y-2 max-h-40 overflow-y-auto p-2 border rounded">
-                  {teacherGroups.map((group) => (
-                    <div key={group.id} className="flex items-center justify-between text-sm">
-                      <span>{group.group_name} ({group.teacher_ids.length}명)</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteTeacherGroup(group.id, group.group_name)}
-                        className="h-6 px-2"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsGroupDialogOpen(false);
-                setNewGroupName("");
-              }}
-              disabled={isSavingGroup}
-            >
-              취소
-            </Button>
-            <Button
-              onClick={handleSaveGroup}
-              disabled={isSavingGroup || !newGroupName.trim()}
-            >
-              {isSavingGroup ? "저장 중..." : "저장"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 신규 교사 추가 Dialog */}
-      <Dialog open={isAddTeacherDialogOpen} onOpenChange={setIsAddTeacherDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>신규 교사 추가</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="teacher-name">이름 *</Label>
-                <Input
-                  id="teacher-name"
-                  value={newTeacherData.name}
-                  onChange={(e) => setNewTeacherData({ ...newTeacherData, name: e.target.value })}
-                  placeholder="교사명 입력"
-                  maxLength={50}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="teacher-phone">전화번호 *</Label>
-                <Input
-                  id="teacher-phone"
-                  value={newTeacherData.call_t}
-                  onChange={(e) => {
-                    const formatted = formatPhoneNumber(e.target.value);
-                    setNewTeacherData({ ...newTeacherData, call_t: formatted });
-                  }}
-                  placeholder="010-XXXX-XXXX"
-                  maxLength={13}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="teacher-email">이메일 *</Label>
-              <Input
-                id="teacher-email"
-                type="email"
-                value={newTeacherData.teacher_email}
-                onChange={(e) => setNewTeacherData({ ...newTeacherData, teacher_email: e.target.value })}
-                placeholder="example@school.com"
-                maxLength={100}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="teacher-grade">학년</Label>
-                <Select
-                  value={newTeacherData.grade}
-                  onValueChange={(value) => setNewTeacherData({ ...newTeacherData, grade: value })}
-                >
-                  <SelectTrigger id="teacher-grade">
-                    <SelectValue placeholder="학년 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">선택안함</SelectItem>
-                    <SelectItem value="1">1학년</SelectItem>
-                    <SelectItem value="2">2학년</SelectItem>
-                    <SelectItem value="3">3학년</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="teacher-class">반</Label>
-                <Select
-                  value={newTeacherData.class}
-                  onValueChange={(value) => setNewTeacherData({ ...newTeacherData, class: value })}
-                >
-                  <SelectTrigger id="teacher-class">
-                    <SelectValue placeholder="반 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">선택안함</SelectItem>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                      <SelectItem key={num} value={num.toString()}>{num}반</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="teacher-homeroom"
-                checked={newTeacherData.is_homeroom}
-                onCheckedChange={(checked) => 
-                  setNewTeacherData({ ...newTeacherData, is_homeroom: checked as boolean })
-                }
-              />
-              <Label htmlFor="teacher-homeroom" className="cursor-pointer">담임 여부</Label>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="teacher-dept">학과</Label>
-              <Select
-                value={newTeacherData.dept_code}
-                onValueChange={(value) => setNewTeacherData({ ...newTeacherData, dept_code: value })}
-              >
-                <SelectTrigger id="teacher-dept">
-                  <SelectValue placeholder="학과 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">선택안함</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.code}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="teacher-department">부서</Label>
-              <Input
-                id="teacher-department"
-                value={newTeacherData.department}
-                onChange={(e) => setNewTeacherData({ ...newTeacherData, department: e.target.value })}
-                placeholder="교육정보부, 학생부 등"
-                maxLength={50}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="teacher-subject">담당교과</Label>
-              <Input
-                id="teacher-subject"
-                value={newTeacherData.subject}
-                onChange={(e) => setNewTeacherData({ ...newTeacherData, subject: e.target.value })}
-                placeholder="국어, 수학, 영어, 정보 등"
-                maxLength={50}
-              />
-            </div>
-
-            <div className="text-sm text-muted-foreground">
-              * 표시는 필수 입력 항목입니다. 초기 비밀번호는 '1234qwert'로 설정됩니다.
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsAddTeacherDialogOpen(false)}
-              disabled={isAddingTeacher}
-            >
-              취소
-            </Button>
-            <Button
-              onClick={handleAddTeacher}
-              disabled={isAddingTeacher || !newTeacherData.name.trim() || !newTeacherData.call_t.trim() || !newTeacherData.teacher_email.trim()}
-            >
-              {isAddingTeacher ? "추가 중..." : "추가"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* 신규 학생 추가 Dialog */}
       <Dialog open={isAddStudentDialogOpen} onOpenChange={setIsAddStudentDialogOpen}>
