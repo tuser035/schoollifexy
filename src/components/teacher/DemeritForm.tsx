@@ -103,11 +103,34 @@ const DemeritForm = () => {
 
   useEffect(() => {
     if (searchTerm.trim()) {
-      const filtered = students.filter(s => 
-        s.name.includes(searchTerm) || 
-        s.student_id.includes(searchTerm) ||
-        `${s.grade}${s.class}${s.number}`.includes(searchTerm)
-      );
+      const term = searchTerm.trim();
+      const filtered = students.filter(s => {
+        // 이름 검색
+        if (s.name.includes(term)) return true;
+        
+        // 학번 검색
+        if (s.student_id.includes(term)) return true;
+        
+        // 학년반번호 검색 (예: "1", "101", "10105", "1-1", "1-1-5")
+        const gradeStr = s.grade.toString();
+        const classStr = s.class.toString().padStart(2, '0');
+        const numberStr = s.number.toString().padStart(2, '0');
+        
+        // 단순 숫자 검색
+        if (gradeStr === term) return true; // 학년만
+        if (s.class.toString() === term) return true; // 반만
+        if (s.number.toString() === term) return true; // 번호만
+        
+        // 연속 검색 (101, 10105 등)
+        const continuous = `${gradeStr}${classStr}${numberStr}`;
+        if (continuous.includes(term)) return true;
+        
+        // 하이픈 검색 (1-1, 1-1-5 등)
+        const withDash = `${gradeStr}-${s.class}-${s.number}`;
+        if (withDash.includes(term)) return true;
+        
+        return false;
+      });
       setFilteredStudents(filtered);
     } else {
       setFilteredStudents([]);
