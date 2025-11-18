@@ -25,6 +25,12 @@ export const loginStudent = async (studentId: string, password: string) => {
     if (!data) throw new Error("로그인에 실패했습니다");
 
     const userData = data as any;
+    
+    // Set session for RLS policies
+    await supabase.rpc("set_student_session", {
+      student_id_input: userData.student_id,
+    });
+    
     return {
       id: userData.id,
       type: "student" as UserType,
@@ -54,6 +60,12 @@ export const loginTeacher = async (phone: string, password: string) => {
     if (!data) throw new Error("로그인에 실패했습니다");
 
     const userData = data as any;
+    
+    // Set session for RLS policies
+    await supabase.rpc("set_teacher_session", {
+      teacher_id_input: userData.id,
+    });
+    
     return {
       id: userData.id,
       type: "teacher" as UserType,
@@ -80,6 +92,12 @@ export const loginAdmin = async (email: string, password: string) => {
     if (!data) throw new Error("로그인에 실패했습니다");
 
     const userData = data as any;
+    
+    // Set session for RLS policies
+    await supabase.rpc("set_admin_session", {
+      admin_id_input: userData.id,
+    });
+    
     return {
       id: userData.id,
       type: "admin" as UserType,
