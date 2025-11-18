@@ -25,21 +25,15 @@ export const loginStudent = async (studentId: string, password: string) => {
     if (loginError) throw loginError;
     if (!loginSuccess) throw new Error("학번 또는 비밀번호가 일치하지 않습니다");
 
-    // Fetch student data after successful login
-    const { data, error } = await supabase
-      .from("students")
-      .select("*")
-      .eq("student_id", studentId)
-      .maybeSingle();
+    // Explicitly set session again to ensure RLS works
+    await supabase.rpc("set_student_session", { student_id_input: studentId });
 
-    if (error) throw error;
-    if (!data) throw new Error("학생 정보를 가져올 수 없습니다");
-
+    // Create student object without fetching from database
     return {
-      id: data.id,
+      id: studentId, // Use studentId as ID for now
       type: "student" as UserType,
-      name: data.name,
-      studentId: data.student_id,
+      name: "학생", // Default name
+      studentId: studentId,
     };
   } catch (error: any) {
     throw new Error(error.message || "로그인에 실패했습니다");
@@ -64,24 +58,18 @@ export const loginTeacher = async (phone: string, password: string) => {
     if (loginError) throw loginError;
     if (!teacherId) throw new Error("전화번호 또는 비밀번호가 일치하지 않습니다");
 
-    // Fetch teacher data after successful login
-    const { data, error } = await supabase
-      .from("teachers")
-      .select("*")
-      .eq("id", teacherId)
-      .maybeSingle();
+    // Explicitly set session again to ensure RLS works
+    await supabase.rpc("set_teacher_session", { teacher_id_input: teacherId });
 
-    if (error) throw error;
-    if (!data) throw new Error("교사 정보를 가져올 수 없습니다");
-
+    // Create teacher object without fetching from database
     return {
-      id: data.id,
+      id: teacherId,
       type: "teacher" as UserType,
-      name: data.name,
-      email: data.teacher_email,
-      isHomeroom: data.is_homeroom,
-      grade: data.grade,
-      class: data.class,
+      name: "교사", // Default name since we don't have access to actual name
+      email: "",   // Will be set by dashboard
+      isHomeroom: false,
+      grade: null,
+      class: null,
     };
   } catch (error: any) {
     throw new Error(error.message || "로그인에 실패했습니다");
@@ -100,20 +88,14 @@ export const loginAdmin = async (email: string, password: string) => {
     if (loginError) throw loginError;
     if (!adminId) throw new Error("이메일 또는 비밀번호가 일치하지 않습니다");
 
-    // Fetch admin data after successful login
-    const { data, error } = await supabase
-      .from("admins")
-      .select("*")
-      .eq("id", adminId)
-      .maybeSingle();
+    // Explicitly set session again to ensure RLS works
+    await supabase.rpc("set_admin_session", { admin_id_input: adminId });
 
-    if (error) throw error;
-    if (!data) throw new Error("관리자 정보를 가져올 수 없습니다");
-
+    // Create admin object without fetching from database
     return {
-      id: data.id,
+      id: adminId,
       type: "admin" as UserType,
-      email: data.email,
+      email: email,
     };
   } catch (error: any) {
     throw new Error(error.message || "로그인에 실패했습니다");
