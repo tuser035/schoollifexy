@@ -3015,7 +3015,80 @@ const DataInquiry = () => {
             <DialogDescription>교사의 정보를 수정할 수 있습니다.</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 px-1">
-...
+            {editingTeacher && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>이름</Label>
+                    <Input 
+                      value={editingTeacher.name}
+                      onChange={(e) => setEditingTeacher({...editingTeacher, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>전화번호</Label>
+                    <Input 
+                      value={editingTeacher.phone}
+                      onChange={(e) => setEditingTeacher({...editingTeacher, phone: e.target.value})}
+                      placeholder="010-0000-0000"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>이메일</Label>
+                  <Input 
+                    value={editingTeacher.email}
+                    onChange={(e) => setEditingTeacher({...editingTeacher, email: e.target.value})}
+                    placeholder="example@email.com"
+                    type="email"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>학년 (담임인 경우)</Label>
+                    <Input 
+                      value={editingTeacher.grade || ""}
+                      onChange={(e) => setEditingTeacher({...editingTeacher, grade: e.target.value ? Number(e.target.value) : null})}
+                      placeholder="1, 2, 3"
+                      type="number"
+                    />
+                  </div>
+                  <div>
+                    <Label>반 (담임인 경우)</Label>
+                    <Input 
+                      value={editingTeacher.class || ""}
+                      onChange={(e) => setEditingTeacher({...editingTeacher, class: e.target.value ? Number(e.target.value) : null})}
+                      placeholder="1-10"
+                      type="number"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>부서</Label>
+                  <Input 
+                    value={editingTeacher.department || ""}
+                    onChange={(e) => setEditingTeacher({...editingTeacher, department: e.target.value})}
+                    placeholder="예: 교무부, 학생부"
+                  />
+                </div>
+                <div>
+                  <Label>담당교과</Label>
+                  <Input 
+                    value={editingTeacher.subject || ""}
+                    onChange={(e) => setEditingTeacher({...editingTeacher, subject: e.target.value})}
+                    placeholder="예: 국어, 수학"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="isHomeroom"
+                    checked={editingTeacher.isHomeroom}
+                    onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isHomeroom: checked as boolean})}
+                  />
+                  <Label htmlFor="isHomeroom" className="cursor-pointer">담임 여부</Label>
+                </div>
+              </>
+            )}
           </div>
           <DialogFooter className="shrink-0 pt-4">
             <Button
