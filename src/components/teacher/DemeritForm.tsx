@@ -138,19 +138,43 @@ const DemeritForm = () => {
   }, [searchTerm, students]);
 
   const fetchStudents = async () => {
-    const { data, error } = await supabase
-      .from("students")
-      .select("id, student_id, name, grade, class, number")
-      .order("grade")
-      .order("class")
-      .order("number");
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
 
-    if (error) {
+      const user = JSON.parse(authUser);
+      
+      const { data, error } = await supabase.rpc("admin_get_students", {
+        admin_id_input: user.id,
+        search_text: null,
+        search_grade: null,
+        search_class: null
+      });
+
+      if (error) {
+        console.error("Error fetching students:", error);
+        toast.error("학생 목록을 불러오는데 실패했습니다");
+        return;
+      }
+
+      // Transform data to match Student interface
+      const transformedData = (data || []).map((s: any) => ({
+        id: s.student_id, // Using student_id as id for consistency
+        student_id: s.student_id,
+        name: s.name,
+        grade: s.grade,
+        class: s.class,
+        number: s.number
+      }));
+
+      setStudents(transformedData);
+    } catch (error: any) {
+      console.error("Error in fetchStudents:", error);
       toast.error("학생 목록을 불러오는데 실패했습니다");
-      return;
     }
-
-    setStudents(data || []);
   };
 
   const handleCategoryChange = (category: string) => {
