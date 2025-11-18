@@ -16,6 +16,16 @@ export interface AuthUser {
 // Student login
 export const loginStudent = async (studentId: string, password: string) => {
   try {
+    // Login using secure function (verifies password and sets session)
+    const { data: loginSuccess, error: loginError } = await supabase.rpc("student_login", {
+      student_id_input: studentId,
+      password_input: password,
+    });
+
+    if (loginError) throw loginError;
+    if (!loginSuccess) throw new Error("학번 또는 비밀번호가 일치하지 않습니다");
+
+    // Fetch student data after successful login
     const { data, error } = await supabase
       .from("students")
       .select("*")
@@ -23,19 +33,7 @@ export const loginStudent = async (studentId: string, password: string) => {
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) throw new Error("학생을 찾을 수 없습니다");
-
-    // Verify password using pgcrypto
-    const { data: authData, error: authError } = await supabase.rpc("verify_student_password", {
-      student_id_input: studentId,
-      password_input: password,
-    });
-
-    if (authError) throw authError;
-    if (!authData) throw new Error("비밀번호가 일치하지 않습니다");
-
-    // Set session
-    await supabase.rpc("set_student_session", { student_id_input: studentId });
+    if (!data) throw new Error("학생 정보를 가져올 수 없습니다");
 
     return {
       id: data.id,
@@ -57,26 +55,24 @@ export const loginTeacher = async (phone: string, password: string) => {
       ? `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7)}`
       : phone;
     
-    const { data, error } = await supabase
-      .from("teachers")
-      .select("*")
-      .eq("call_t", normalizedPhone)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) throw new Error("교사를 찾을 수 없습니다");
-
-    // Verify password using pgcrypto
-    const { data: authData, error: authError } = await supabase.rpc("verify_teacher_password", {
+    // Login using secure function (verifies password and sets session)
+    const { data: teacherId, error: loginError } = await supabase.rpc("teacher_login", {
       phone_input: normalizedPhone,
       password_input: password,
     });
 
-    if (authError) throw authError;
-    if (!authData) throw new Error("비밀번호가 일치하지 않습니다");
+    if (loginError) throw loginError;
+    if (!teacherId) throw new Error("전화번호 또는 비밀번호가 일치하지 않습니다");
 
-    // Set session
-    await supabase.rpc("set_teacher_session", { teacher_id_input: data.id });
+    // Fetch teacher data after successful login
+    const { data, error } = await supabase
+      .from("teachers")
+      .select("*")
+      .eq("id", teacherId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new Error("교사 정보를 가져올 수 없습니다");
 
     return {
       id: data.id,
@@ -95,26 +91,24 @@ export const loginTeacher = async (phone: string, password: string) => {
 // Admin login
 export const loginAdmin = async (email: string, password: string) => {
   try {
-    const { data, error } = await supabase
-      .from("admins")
-      .select("*")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) throw new Error("관리자를 찾을 수 없습니다");
-
-    // Verify password using pgcrypto
-    const { data: authData, error: authError } = await supabase.rpc("verify_admin_password", {
+    // Login using secure function (verifies password and sets session)
+    const { data: adminId, error: loginError } = await supabase.rpc("admin_login", {
       email_input: email,
       password_input: password,
     });
 
-    if (authError) throw authError;
-    if (!authData) throw new Error("비밀번호가 일치하지 않습니다");
+    if (loginError) throw loginError;
+    if (!adminId) throw new Error("이메일 또는 비밀번호가 일치하지 않습니다");
 
-    // Set session
-    await supabase.rpc("set_admin_session", { admin_id_input: data.id });
+    // Fetch admin data after successful login
+    const { data, error } = await supabase
+      .from("admins")
+      .select("*")
+      .eq("id", adminId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new Error("관리자 정보를 가져올 수 없습니다");
 
     return {
       id: data.id,

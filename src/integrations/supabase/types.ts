@@ -821,6 +821,10 @@ export type Database = {
         }
         Returns: string
       }
+      admin_login: {
+        Args: { email_input: string; password_input: string }
+        Returns: string
+      }
       admin_update_email_template: {
         Args: {
           admin_id_input: string
@@ -855,6 +859,14 @@ export type Database = {
       set_teacher_session: {
         Args: { teacher_id_input: string }
         Returns: undefined
+      }
+      student_login: {
+        Args: { password_input: string; student_id_input: string }
+        Returns: boolean
+      }
+      teacher_login: {
+        Args: { password_input: string; phone_input: string }
+        Returns: string
       }
       update_admin_password: {
         Args: { admin_id_input: string; new_password: string }
