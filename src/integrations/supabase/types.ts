@@ -862,6 +862,14 @@ export type Database = {
         }
         Returns: string
       }
+      admin_insert_student_group: {
+        Args: {
+          admin_id_input: string
+          group_name_input: string
+          student_ids_input: string[]
+        }
+        Returns: string
+      }
       admin_insert_teacher: {
         Args: {
           admin_id_input: string

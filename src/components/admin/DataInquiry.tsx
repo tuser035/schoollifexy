@@ -387,25 +387,11 @@ const DataInquiry = () => {
       const user = JSON.parse(userString);
       console.log("그룹 저장 시작:", newGroupName, `학생 수: ${selectedStudents.size}`);
 
-      // Set session for RLS
-      if (user.type === "admin") {
-        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-      } else if (user.type === "teacher") {
-        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
-      }
-
-      const groupData = {
-        admin_id: user.id,
-        group_name: newGroupName,
-        student_ids: Array.from(selectedStudents),
-      };
-      
-      console.log("저장할 학생 그룹 데이터:", groupData);
-
-      const { data, error } = await supabase
-        .from("student_groups")
-        .insert(groupData)
-        .select();
+      const { data, error } = await supabase.rpc("admin_insert_student_group", {
+        admin_id_input: user.id,
+        group_name_input: newGroupName,
+        student_ids_input: Array.from(selectedStudents)
+      });
 
       if (error) {
         console.error("학생 그룹 저장 에러:", error);
