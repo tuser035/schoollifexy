@@ -5046,6 +5046,7 @@ const DataInquiry = () => {
                     </div>
                     <div className="photo-label">
                       <div>{teacher['이름']}</div>
+                      {teacher['부서'] && <div className="text-xs text-muted-foreground">{teacher['부서']}</div>}
                       <div className="text-xs text-muted-foreground">{teacher['담당교과'] || teacher['부서'] || ''}</div>
                     </div>
                   </div>
