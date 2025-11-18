@@ -585,6 +585,14 @@ export type Database = {
         Args: { admin_id_input: string; template_id_input: string }
         Returns: boolean
       }
+      admin_delete_student: {
+        Args: { admin_id_input: string; student_id_input: string }
+        Returns: boolean
+      }
+      admin_delete_teacher: {
+        Args: { admin_id_input: string; teacher_email_input: string }
+        Returns: boolean
+      }
       admin_get_counseling_records: {
         Args: { admin_id_input: string; student_id_input: string }
         Returns: {
