@@ -892,6 +892,33 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_student: {
+        Args: {
+          admin_id_input: string
+          gmail_input: string
+          name_input: string
+          parents_call1_input: string
+          parents_call2_input: string
+          student_call_input: string
+          student_id_input: string
+        }
+        Returns: boolean
+      }
+      admin_update_teacher: {
+        Args: {
+          admin_id_input: string
+          call_t_input: string
+          class_input: number
+          department_input: string
+          grade_input: number
+          is_homeroom_input: boolean
+          name_input: string
+          original_email_input: string
+          subject_input: string
+          teacher_email_input: string
+        }
+        Returns: boolean
+      }
       insert_monthly_recommendation: {
         Args: {
           category_input: string
