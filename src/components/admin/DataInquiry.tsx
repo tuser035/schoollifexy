@@ -1196,13 +1196,11 @@ const DataInquiry = () => {
       }
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
-      // 교사 삭제
-      const { error } = await supabase
-        .from("teachers")
-        .delete()
-        .eq("teacher_email", teacherEmail);
+      const { data, error } = await supabase.rpc("admin_delete_teacher", {
+        admin_id_input: user.id,
+        teacher_email_input: teacherEmail
+      });
 
       if (error) throw error;
 
@@ -1303,12 +1301,11 @@ const DataInquiry = () => {
       }
 
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
-      const { error } = await supabase
-        .from("students")
-        .delete()
-        .eq("student_id", studentId);
+      const { data, error } = await supabase.rpc("admin_delete_student", {
+        admin_id_input: user.id,
+        student_id_input: studentId
+      });
 
       if (error) throw error;
 
