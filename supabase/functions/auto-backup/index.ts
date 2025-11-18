@@ -1,9 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.1';
+import { Resend } from 'https://esm.sh/resend@4.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,6 +19,18 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     console.log('Starting automatic backup...');
+
+    // 관리자 이메일 목록 가져오기
+    const { data: admins, error: adminError } = await supabase
+      .from('admins')
+      .select('email');
+
+    if (adminError) {
+      console.error('Error fetching admin emails:', adminError);
+    }
+
+    const adminEmails = admins?.map(admin => admin.email) || [];
+    console.log(`Found ${adminEmails.length} admin emails for notifications`);
 
     // 모든 테이블 목록
     const tables = [
@@ -106,6 +121,33 @@ Deno.serve(async (req) => {
 
     console.log(`Backup completed: ${backupFileName}`);
 
+    // 성공 이메일 발송
+    if (adminEmails.length > 0) {
+      try {
+        const emailPromises = adminEmails.map(email => 
+          resend.emails.send({
+            from: '에듀파인 백업 시스템 <onboarding@resend.dev>',
+            to: [email],
+            subject: '✅ 자동 백업 완료',
+            html: `
+              <h2>자동 백업이 성공적으로 완료되었습니다</h2>
+              <p><strong>백업 시간:</strong> ${new Date(timestamp).toLocaleString('ko-KR')}</p>
+              <p><strong>백업 파일:</strong> ${backupFileName}</p>
+              <p><strong>백업된 테이블:</strong> ${backupMetadata.tables}개</p>
+              <p><strong>총 레코드 수:</strong> ${backupMetadata.totalRecords}개</p>
+              <br/>
+              <p>관리자 대시보드에서 백업 파일을 확인하실 수 있습니다.</p>
+            `,
+          })
+        );
+        
+        await Promise.all(emailPromises);
+        console.log(`Success email sent to ${adminEmails.length} admin(s)`);
+      } catch (emailError) {
+        console.error('Error sending success email:', emailError);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -122,6 +164,42 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Backup error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // 실패 이메일 발송
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      const { data: admins } = await supabase
+        .from('admins')
+        .select('email');
+      
+      const adminEmails = admins?.map(admin => admin.email) || [];
+      
+      if (adminEmails.length > 0) {
+        const emailPromises = adminEmails.map(email => 
+          resend.emails.send({
+            from: '에듀파인 백업 시스템 <onboarding@resend.dev>',
+            to: [email],
+            subject: '❌ 자동 백업 실패',
+            html: `
+              <h2>자동 백업 중 오류가 발생했습니다</h2>
+              <p><strong>시간:</strong> ${new Date().toLocaleString('ko-KR')}</p>
+              <p><strong>오류 메시지:</strong> ${errorMessage}</p>
+              <br/>
+              <p>시스템 관리자에게 문의하시기 바랍니다.</p>
+            `,
+          })
+        );
+        
+        await Promise.all(emailPromises);
+        console.log(`Failure email sent to ${adminEmails.length} admin(s)`);
+      }
+    } catch (emailError) {
+      console.error('Error sending failure email:', emailError);
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
