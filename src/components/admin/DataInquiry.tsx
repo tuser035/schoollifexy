@@ -1713,6 +1713,23 @@ const DataInquiry = () => {
     }
   };
 
+  // 전화번호 포맷팅 함수
+  const formatPhoneNumber = (value: string) => {
+    // 숫자만 추출
+    const numbers = value.replace(/[^\d]/g, '');
+    
+    // 길이에 따라 포맷팅
+    if (numbers.length <= 3) {
+      return numbers;
+    } else if (numbers.length <= 7) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    } else if (numbers.length <= 11) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+    }
+    // 11자리 초과 시 11자리까지만
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  };
+
   // 학생 편집 열기
   const handleOpenStudentEdit = (student: any) => {
     setEditingStudent({
@@ -1816,22 +1833,6 @@ const DataInquiry = () => {
       console.error("학과 목록 로드 실패:", error);
       toast.error("학과 목록을 불러오는데 실패했습니다");
     }
-  };
-
-  // 전화번호 포맷팅 함수
-  const formatPhoneNumber = (value: string) => {
-    // 숫자만 추출
-    const numbers = value.replace(/[^\d]/g, '');
-    
-    // 길이에 따라 포맷팅
-    if (numbers.length <= 3) {
-      return numbers;
-    } else if (numbers.length <= 7) {
-      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-    } else if (numbers.length <= 11) {
-      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
-    }
-    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
   };
 
   // 신규 교사 추가
@@ -3694,8 +3695,9 @@ const DataInquiry = () => {
                   <Label>학생 전화번호</Label>
                   <Input 
                     value={editingStudent.phone}
-                    onChange={(e) => setEditingStudent({...editingStudent, phone: e.target.value})}
+                    onChange={(e) => setEditingStudent({...editingStudent, phone: formatPhoneNumber(e.target.value)})}
                     placeholder="010-0000-0000"
+                    maxLength={13}
                   />
                 </div>
                 <div>
@@ -3711,16 +3713,18 @@ const DataInquiry = () => {
                   <Label>학부모 전화번호 1</Label>
                   <Input 
                     value={editingStudent.parentPhone1}
-                    onChange={(e) => setEditingStudent({...editingStudent, parentPhone1: e.target.value})}
+                    onChange={(e) => setEditingStudent({...editingStudent, parentPhone1: formatPhoneNumber(e.target.value)})}
                     placeholder="010-0000-0000"
+                    maxLength={13}
                   />
                 </div>
                 <div>
                   <Label>학부모 전화번호 2</Label>
                   <Input 
                     value={editingStudent.parentPhone2}
-                    onChange={(e) => setEditingStudent({...editingStudent, parentPhone2: e.target.value})}
+                    onChange={(e) => setEditingStudent({...editingStudent, parentPhone2: formatPhoneNumber(e.target.value)})}
                     placeholder="010-0000-0000"
+                    maxLength={13}
                   />
                 </div>
               </>
