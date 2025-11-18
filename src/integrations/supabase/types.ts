@@ -823,7 +823,7 @@ export type Database = {
       }
       admin_login: {
         Args: { email_input: string; password_input: string }
-        Returns: string
+        Returns: Json
       }
       admin_update_email_template: {
         Args: {
@@ -862,11 +862,11 @@ export type Database = {
       }
       student_login: {
         Args: { password_input: string; student_id_input: string }
-        Returns: boolean
+        Returns: Json
       }
       teacher_login: {
         Args: { password_input: string; phone_input: string }
-        Returns: string
+        Returns: Json
       }
       update_admin_password: {
         Args: { admin_id_input: string; new_password: string }
