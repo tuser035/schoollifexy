@@ -1797,8 +1797,15 @@ const DataInquiry = () => {
         let searchSubj: string | null = null;
 
         if (trimmedSearch) {
-          // 숫자인 경우 학년이나 반으로 검색
-          if (!isNaN(Number(trimmedSearch))) {
+          // 전화번호 패턴 검사 (010으로 시작하거나 하이픈이 포함된 경우)
+          const isPhoneNumber = /^(010|011|016|017|018|019)/.test(trimmedSearch.replace(/-/g, '')) || 
+                                trimmedSearch.includes('-');
+          
+          if (isPhoneNumber) {
+            // 전화번호로 검색
+            searchText = trimmedSearch;
+          } else if (!isNaN(Number(trimmedSearch))) {
+            // 숫자인 경우 학년이나 반으로 검색
             const searchNum = trimmedSearch;
             
             // 두 자리 숫자인 경우: 첫 자리=학년, 둘째 자리=반
@@ -2357,7 +2364,7 @@ const DataInquiry = () => {
             <Input
               placeholder={
                 selectedTable === "students" ? "학생명, 학년, 학년반" :
-                selectedTable === "teachers" ? "교사명, 학년, 학년반" :
+                selectedTable === "teachers" ? "교사명, 폰번호, 학년, 학년반" :
                 selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
                 selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly" 
                   ? "학생명, 교사명, 학년반, 학년반번호로 검색" :
