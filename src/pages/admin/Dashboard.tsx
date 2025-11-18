@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -13,6 +13,7 @@ import StorageManager from "@/components/admin/StorageManager";
 import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
 import { EmailHistory } from "@/components/admin/EmailHistory";
 import EmailTemplateManager from "@/components/admin/EmailTemplateManager";
+import DataExport from "@/components/admin/DataExport";
 import {
   Sidebar,
   SidebarContent,
@@ -43,6 +44,7 @@ const menuItems = (userType: "admin" | "teacher") => {
     { value: "email-history", label: "이메일", icon: Mail },
     ...(userType === "admin" ? [
       { value: "email-templates", label: "템플릿", icon: FileText },
+      { value: "export", label: "백업", icon: PackageOpen },
       { value: "storage", label: "파일", icon: FolderOpen },
     ] : []),
   ];
@@ -101,6 +103,8 @@ const AdminDashboard = () => {
         return <EmailHistory />;
       case "email-templates":
         return <EmailTemplateManager />;
+      case "export":
+        return <DataExport />;
       case "storage":
         return <StorageManager />;
       default:
