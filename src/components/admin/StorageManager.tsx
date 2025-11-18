@@ -62,9 +62,10 @@ const StorageManager = () => {
 
       if (error) throw error;
 
+      // 삭제 성공 시 즉시 상태 업데이트
+      setFiles(prevFiles => prevFiles.filter(file => file.name !== deleteFileId));
       toast.success("파일이 삭제되었습니다");
       setDeleteFileId(null);
-      loadFiles();
     } catch (error: any) {
       toast.error(error.message || "파일 삭제에 실패했습니다");
     }
@@ -105,6 +106,7 @@ const StorageManager = () => {
     if (files.length === 0) return;
 
     try {
+      const fileCount = files.length;
       const fileNames = files.map(file => file.name);
       const { error } = await supabase.storage
         .from("evidence-photos")
@@ -112,9 +114,10 @@ const StorageManager = () => {
 
       if (error) throw error;
 
-      toast.success(`${files.length}개의 파일이 삭제되었습니다`);
+      // 삭제 성공 시 즉시 상태 업데이트
+      setFiles([]);
+      toast.success(`${fileCount}개의 파일이 삭제되었습니다`);
       setShowDeleteAllConfirm(false);
-      loadFiles();
     } catch (error: any) {
       toast.error(error.message || "파일 삭제에 실패했습니다");
     }
