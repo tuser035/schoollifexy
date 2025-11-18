@@ -33,17 +33,23 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Verify admin exists
-    const { data: admin, error: adminError } = await supabase
+    // Verify admin or teacher exists
+    const { data: admin } = await supabase
       .from('admins')
       .select('id')
       .eq('id', admin_id)
       .maybeSingle()
 
-    console.log('Admin verification:', { admin, adminError })
+    const { data: teacher } = await supabase
+      .from('teachers')
+      .select('id')
+      .eq('id', admin_id)
+      .maybeSingle()
 
-    if (adminError || !admin) {
-      console.error('Unauthorized:', adminError)
+    console.log('Auth verification:', { admin, teacher })
+
+    if (!admin && !teacher) {
+      console.error('Unauthorized: Not found in admins or teachers')
       return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
