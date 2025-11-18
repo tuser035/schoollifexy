@@ -565,13 +565,20 @@ const DataInquiry = () => {
       const attachmentUrls: string[] = [];
       if (bulkStudentAttachmentFiles.length > 0) {
         for (const file of bulkStudentAttachmentFiles) {
-          const fileExt = file.name.split('.').pop();
+          const fileExt = file.name.split('.').pop()?.toLowerCase();
           const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
           const filePath = `student-attachments/${fileName}`;
 
+          // Content-Type 설정
+          const contentType = file.type || 'application/octet-stream';
+
           const { error: uploadError } = await supabase.storage
             .from('counseling-attachments')
-            .upload(filePath, file);
+            .upload(filePath, file, {
+              contentType: contentType,
+              cacheControl: '3600',
+              upsert: false
+            });
 
           if (uploadError) {
             console.error("파일 업로드 실패:", uploadError);
@@ -590,7 +597,7 @@ const DataInquiry = () => {
             storage_path: filePath,
             original_filename: file.name,
             file_size: file.size,
-            mime_type: file.type,
+            mime_type: contentType,
             bucket_name: 'counseling-attachments',
             uploaded_by: user.id
           });
@@ -639,6 +646,7 @@ const DataInquiry = () => {
 
       // 첨부파일 URL들이 있으면 이메일 본문에 추가
       let emailBody = bulkEmailBody;
+      let attachmentInfo = null;
       
       if (attachmentUrls.length > 0) {
         // 여러 파일이면 ZIP으로 압축
@@ -678,7 +686,11 @@ const DataInquiry = () => {
                 .from('counseling-attachments')
                 .getPublicUrl(zipFilePath);
               
-              emailBody += `\n\n[첨부파일 다운로드]\n<a href="${publicUrl}" download="${zipFileName}">${zipFileName}</a>`;
+              attachmentInfo = {
+                url: publicUrl,
+                name: zipFileName,
+                isZip: true
+              };
 
               // ZIP 파일 메타데이터 저장
               await supabase.from('file_metadata').insert({
@@ -691,26 +703,33 @@ const DataInquiry = () => {
               });
             } else {
               console.error("ZIP 업로드 실패:", zipUploadError);
-              // ZIP 실패시 개별 파일 링크 제공
-              emailBody += `\n\n[첨부파일 다운로드]`;
-              attachmentUrls.forEach((url, index) => {
-                const fileName = bulkStudentAttachmentFiles[index]?.name || `첨부파일${index + 1}`;
-                emailBody += `\n${index + 1}. <a href="${url}" download="${fileName}">${fileName}</a>`;
-              });
+              // ZIP 실패시 개별 파일 정보 제공
+              attachmentInfo = {
+                files: attachmentUrls.map((url, index) => ({
+                  url,
+                  name: bulkStudentAttachmentFiles[index]?.name || `첨부파일${index + 1}`
+                })),
+                isZip: false
+              };
             }
           } catch (zipError) {
             console.error("ZIP 생성 실패:", zipError);
-            // ZIP 실패시 개별 파일 링크 제공
-            emailBody += `\n\n[첨부파일 다운로드]`;
-            attachmentUrls.forEach((url, index) => {
-              const fileName = bulkStudentAttachmentFiles[index]?.name || `첨부파일${index + 1}`;
-              emailBody += `\n${index + 1}. <a href="${url}" download="${fileName}">${fileName}</a>`;
-            });
+            // ZIP 실패시 개별 파일 정보 제공
+            attachmentInfo = {
+              files: attachmentUrls.map((url, index) => ({
+                url,
+                name: bulkStudentAttachmentFiles[index]?.name || `첨부파일${index + 1}`
+              })),
+              isZip: false
+            };
           }
         } else {
-          // 단일 파일이면 그냥 링크 제공
-          const fileName = bulkStudentAttachmentFiles[0]?.name || '첨부파일';
-          emailBody += `\n\n[첨부파일 다운로드]\n<a href="${attachmentUrls[0]}" download="${fileName}">${fileName}</a>`;
+          // 단일 파일이면 그냥 정보 제공
+          attachmentInfo = {
+            url: attachmentUrls[0],
+            name: bulkStudentAttachmentFiles[0]?.name || '첨부파일',
+            isZip: false
+          };
         }
       }
 
@@ -730,6 +749,7 @@ const DataInquiry = () => {
           subject: bulkEmailSubject,
           body: emailBody,
           students: studentsToEmail,
+          attachmentInfo: attachmentInfo
         },
       });
 
