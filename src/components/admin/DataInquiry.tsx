@@ -1364,6 +1364,22 @@ const DataInquiry = () => {
         return;
       }
 
+      // 전화번호 중복 체크
+      const { data: existingTeacher, error: checkError } = await supabase
+        .from('teachers')
+        .select('call_t, name')
+        .eq('call_t', newTeacherData.call_t.trim())
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("전화번호 중복 확인 오류:", checkError);
+      }
+
+      if (existingTeacher) {
+        toast.error(`해당 전화번호(${newTeacherData.call_t})는 이미 ${existingTeacher.name} 교사가 사용 중입니다`);
+        return;
+      }
+
       // 데이터베이스 함수를 사용하여 교사 추가 (RLS 자동 처리)
       const { data, error } = await supabase.rpc("admin_insert_teacher", {
         admin_id_input: user.id,
@@ -1436,7 +1452,19 @@ const DataInquiry = () => {
       });
     } catch (error: any) {
       console.error("교사 추가 실패:", error);
-      toast.error(error.message || "교사 추가에 실패했습니다");
+      
+      // 에러 코드별 메시지 처리
+      if (error.code === '23505') {
+        if (error.message?.includes('call_t')) {
+          toast.error("해당 전화번호는 이미 등록되어 있습니다");
+        } else if (error.message?.includes('teacher_email')) {
+          toast.error("해당 이메일은 이미 등록되어 있습니다");
+        } else {
+          toast.error("중복된 정보가 있습니다");
+        }
+      } else {
+        toast.error(error.message || "교사 추가에 실패했습니다");
+      }
     } finally {
       setIsAddingTeacher(false);
     }
