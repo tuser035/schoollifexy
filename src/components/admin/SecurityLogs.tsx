@@ -36,6 +36,24 @@ export const SecurityLogs = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
+      
+      // Set admin session for RLS
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+      
+      const user = JSON.parse(authUser);
+      if (user.type !== "admin") {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+      
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: user.id
+      });
+      
       const { data, error } = await supabase
         .from("audit_logs")
         .select("*")
