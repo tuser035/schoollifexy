@@ -313,11 +313,17 @@ const MeritForm = () => {
           category: selectedCategory,
           reason: finalReason,
           score: selectedScore,
-          image_url: imageUrls.length > 0 ? imageUrls : null,
+          image_url: imageUrls.length > 0 ? imageUrls : [],
         });
 
       if (error) {
-        console.error('Merit insert error:', error);
+        console.error('Merit insert error details:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         throw error;
       }
 
