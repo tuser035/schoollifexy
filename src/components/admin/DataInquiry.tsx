@@ -996,13 +996,21 @@ const DataInquiry = () => {
       // Set admin or teacher session for RLS
       console.log('User info:', parsedUser);
       if (parsedUser.type === "admin") {
-        await supabase.rpc("set_admin_session", {
+        const { error: sessionError } = await supabase.rpc("set_admin_session", {
           admin_id_input: parsedUser.id
         });
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw new Error('세션 설정 중 오류가 발생했습니다');
+        }
       } else if (parsedUser.type === "teacher") {
-        await supabase.rpc("set_teacher_session", {
+        const { error: sessionError } = await supabase.rpc("set_teacher_session", {
           teacher_id_input: parsedUser.id
         });
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw new Error('세션 설정 중 오류가 발생했습니다');
+        }
       }
 
       let attachmentUrl = null;
@@ -1038,6 +1046,7 @@ const DataInquiry = () => {
         attachment_url: attachmentUrl
       });
 
+      // Insert counseling record
       const { error } = await supabase
         .from("career_counseling")
         .insert({
