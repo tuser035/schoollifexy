@@ -130,7 +130,7 @@ export type Database = {
           category: string
           created_at: string | null
           id: string
-          image_url: string | null
+          image_url: string[] | null
           reason: string | null
           score: number
           student_id: string | null
@@ -140,7 +140,7 @@ export type Database = {
           category: string
           created_at?: string | null
           id?: string
-          image_url?: string | null
+          image_url?: string[] | null
           reason?: string | null
           score?: number
           student_id?: string | null
@@ -150,7 +150,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           id?: string
-          image_url?: string | null
+          image_url?: string[] | null
           reason?: string | null
           score?: number
           student_id?: string | null
@@ -319,7 +319,7 @@ export type Database = {
           category: string
           created_at: string | null
           id: string
-          image_url: string | null
+          image_url: string[] | null
           reason: string | null
           score: number
           student_id: string | null
@@ -329,7 +329,7 @@ export type Database = {
           category: string
           created_at?: string | null
           id?: string
-          image_url?: string | null
+          image_url?: string[] | null
           reason?: string | null
           score?: number
           student_id?: string | null
@@ -339,7 +339,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           id?: string
-          image_url?: string | null
+          image_url?: string[] | null
           reason?: string | null
           score?: number
           student_id?: string | null
@@ -367,7 +367,7 @@ export type Database = {
           category: string | null
           created_at: string | null
           id: string
-          image_url: string | null
+          image_url: string[] | null
           month: number
           reason: string | null
           student_id: string | null
@@ -378,7 +378,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           id?: string
-          image_url?: string | null
+          image_url?: string[] | null
           month: number
           reason?: string | null
           student_id?: string | null
@@ -389,7 +389,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           id?: string
-          image_url?: string | null
+          image_url?: string[] | null
           month?: number
           reason?: string | null
           student_id?: string | null
@@ -949,18 +949,31 @@ export type Database = {
         }
         Returns: boolean
       }
-      insert_monthly_recommendation: {
-        Args: {
-          category_input: string
-          image_url_input: string
-          month_input: number
-          reason_input: string
-          student_id_input: string
-          teacher_id_input: string
-          year_input: number
-        }
-        Returns: string
-      }
+      insert_monthly_recommendation:
+        | {
+            Args: {
+              category_input: string
+              image_url_input: string
+              month_input: number
+              reason_input: string
+              student_id_input: string
+              teacher_id_input: string
+              year_input: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              category_input: string
+              image_url_input: string[]
+              month_input: number
+              reason_input: string
+              student_id_input: string
+              teacher_id_input: string
+              year_input: number
+            }
+            Returns: string
+          }
       log_audit_event: {
         Args: {
           p_action_type: string
