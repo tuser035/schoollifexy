@@ -620,7 +620,7 @@ export type Database = {
         Returns: {
           category: string
           created_at: string
-          image_url: string
+          image_url: string[]
           reason: string
           score: number
           teacher_name: string
@@ -636,7 +636,7 @@ export type Database = {
         Returns: {
           category: string
           created_at: string
-          image_url: string
+          image_url: string[]
           reason: string
           score: number
           student_class: number
@@ -716,7 +716,7 @@ export type Database = {
         Returns: {
           category: string
           created_at: string
-          image_url: string
+          image_url: string[]
           reason: string
           score: number
           teacher_name: string
@@ -732,7 +732,7 @@ export type Database = {
         Returns: {
           category: string
           created_at: string
-          image_url: string
+          image_url: string[]
           reason: string
           score: number
           student_class: number
@@ -751,7 +751,7 @@ export type Database = {
         Returns: {
           category: string
           created_at: string
-          image_url: string
+          image_url: string[]
           month: number
           reason: string
           student_class: number
@@ -767,7 +767,7 @@ export type Database = {
         Returns: {
           category: string
           created_at: string
-          image_url: string
+          image_url: string[]
           reason: string
           teacher_name: string
         }[]
