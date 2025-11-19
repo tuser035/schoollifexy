@@ -487,9 +487,15 @@ const DataInquiry = () => {
         await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
       }
 
-      const { error } = await supabase.from("student_groups").delete().eq("id", groupId);
+      const { error, count } = await supabase.from("student_groups").delete({ count: 'exact' }).eq("id", groupId);
 
       if (error) throw error;
+
+      // 실제로 삭제된 행이 없으면 에러 처리
+      if (count === 0) {
+        toast.error("이 그룹을 삭제할 권한이 없습니다");
+        return;
+      }
 
       toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
       await loadStudentGroups();
@@ -2555,7 +2561,7 @@ const DataInquiry = () => {
                                 className="h-7 w-7 p-0 hover:bg-destructive/10 transition-colors"
                                 title="그룹 삭제"
                               >
-                                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive transition-colors" />
+                                <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>
                           ))}
