@@ -2970,32 +2970,34 @@ const DataInquiry = () => {
 
       {/* 진로상담 기록 다이얼로그 */}
       <Dialog open={isCounselingDialogOpen} onOpenChange={setIsCounselingDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>상담 기록 - {selectedStudent?.학생}</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">상담 기록 - {selectedStudent?.학생}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="counselor-name">상담사 이름 *</Label>
+              <Label htmlFor="counselor-name" className="text-sm">상담사 이름 *</Label>
               <Input
                 id="counselor-name"
                 value={counselorName}
                 onChange={(e) => setCounselorName(e.target.value)}
                 placeholder="상담사 이름을 입력하세요"
                 maxLength={50}
+                className="text-sm"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="counseling-date">상담 날짜 *</Label>
+              <Label htmlFor="counseling-date" className="text-sm">상담 날짜 *</Label>
               <Input
                 id="counseling-date"
                 type="date"
                 value={counselingDate}
                 onChange={(e) => setCounselingDate(e.target.value)}
+                className="text-sm"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="counseling-content">상담 내용 *</Label>
+              <Label htmlFor="counseling-content" className="text-sm">상담 내용 *</Label>
               <Textarea
                 id="counseling-content"
                 value={counselingContent}
@@ -3003,18 +3005,21 @@ const DataInquiry = () => {
                 placeholder="상담 내용을 상세히 입력하세요"
                 rows={8}
                 maxLength={2000}
+                className="text-sm min-h-[150px]"
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {counselingContent.length} / 2000자
               </p>
             </div>
             <div className="space-y-2">
-              <Label>첨부 파일 (선택사항)</Label>
-              <div className="flex gap-2">
+              <Label className="text-sm">첨부 파일 (선택사항)</Label>
+              <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
+                  className="text-sm"
+                  size="sm"
                 >
                   <FileUp className="w-4 h-4 mr-2" />
                   파일
@@ -3023,6 +3028,8 @@ const DataInquiry = () => {
                   type="button"
                   variant="outline"
                   onClick={() => cameraInputRef.current?.click()}
+                  className="text-sm"
+                  size="sm"
                 >
                   <Camera className="w-4 h-4 mr-2" />
                   카메라
@@ -3048,38 +3055,40 @@ const DataInquiry = () => {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute top-1 right-1"
+                    className="absolute top-1 right-1 h-8 w-8 p-0"
                     onClick={handleRemoveAttachment}
                   >
-                    <X className="w-4 h-4" />
+                    <X className="h-4 w-4" />
                   </Button>
                   {attachmentFile?.type.startsWith('image/') ? (
-                    <img
-                      src={attachmentPreview}
-                      alt="첨부 파일 미리보기"
-                      className="max-w-full max-h-48 object-contain mx-auto"
+                    <img 
+                      src={attachmentPreview} 
+                      alt="첨부 파일 미리보기" 
+                      className="w-full h-auto rounded max-h-[200px] object-contain"
                     />
                   ) : (
                     <div className="flex items-center gap-2 p-2">
-                      <FileUp className="w-6 h-6" />
-                      <span className="text-sm">{attachmentFile?.name}</span>
+                      <FileUp className="w-8 h-8 text-muted-foreground" />
+                      <span className="text-sm truncate">{attachmentFile?.name}</span>
                     </div>
                   )}
                 </div>
               )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setIsCounselingDialogOpen(false)}
               disabled={isSavingCounseling}
+              className="w-full sm:w-auto"
             >
               취소
             </Button>
-            <Button
-              onClick={handleSaveCounseling}
+            <Button 
+              onClick={handleSaveCounseling} 
               disabled={isSavingCounseling}
+              className="w-full sm:w-auto"
             >
               {isSavingCounseling ? "저장 중..." : "저장"}
             </Button>
