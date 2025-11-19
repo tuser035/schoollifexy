@@ -949,6 +949,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_class_monthly_statistics: {
+        Args: {
+          class_input: number
+          grade_input: number
+          user_id_input: string
+          year_input: number
+        }
+        Returns: {
+          demerits_total: number
+          merits_total: number
+          month: number
+        }[]
+      }
       insert_demerit: {
         Args: {
           p_category: string
