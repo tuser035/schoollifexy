@@ -538,6 +538,7 @@ export type Database = {
           dept_code: string | null
           grade: number | null
           id: string
+          is_admin: boolean | null
           is_homeroom: boolean | null
           name: string
           password_hash: string
@@ -554,6 +555,7 @@ export type Database = {
           dept_code?: string | null
           grade?: number | null
           id?: string
+          is_admin?: boolean | null
           is_homeroom?: boolean | null
           name: string
           password_hash?: string
@@ -570,6 +572,7 @@ export type Database = {
           dept_code?: string | null
           grade?: number | null
           id?: string
+          is_admin?: boolean | null
           is_homeroom?: boolean | null
           name?: string
           password_hash?: string
@@ -832,6 +835,7 @@ export type Database = {
               department: string
               dept_name: string
               grade: number
+              is_admin: boolean
               is_homeroom: boolean
               name: string
               photo_url: string
@@ -934,21 +938,38 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_update_teacher: {
-        Args: {
-          admin_id_input: string
-          call_t_input: string
-          class_input: number
-          department_input: string
-          grade_input: number
-          is_homeroom_input: boolean
-          name_input: string
-          original_email_input: string
-          subject_input: string
-          teacher_email_input: string
-        }
-        Returns: boolean
-      }
+      admin_update_teacher:
+        | {
+            Args: {
+              admin_id_input: string
+              call_t_input: string
+              class_input: number
+              department_input: string
+              grade_input: number
+              is_admin_input?: boolean
+              is_homeroom_input: boolean
+              name_input: string
+              original_email_input: string
+              subject_input: string
+              teacher_email_input: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              admin_id_input: string
+              call_t_input: string
+              class_input: number
+              department_input: string
+              grade_input: number
+              is_homeroom_input: boolean
+              name_input: string
+              original_email_input: string
+              subject_input: string
+              teacher_email_input: string
+            }
+            Returns: boolean
+          }
       delete_counseling_record: {
         Args: { p_admin_id: string; p_record_id: string }
         Returns: boolean

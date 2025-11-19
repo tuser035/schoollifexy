@@ -1199,7 +1199,8 @@ const DataInquiry = () => {
       class: teacher.반 === "-" ? null : teacher.반,
       department: teacher.부서 === "-" ? "" : teacher.부서,
       subject: teacher.담당교과 === "-" ? "" : teacher.담당교과,
-      isHomeroom: teacher.담임여부 === "담임"
+      isHomeroom: teacher.담임여부 === "담임",
+      isAdmin: teacher.관리자여부 === "관리자"
     });
     setIsTeacherEditDialogOpen(true);
   };
@@ -1228,7 +1229,8 @@ const DataInquiry = () => {
         class_input: editingTeacher.class,
         department_input: editingTeacher.department || '',
         subject_input: editingTeacher.subject || '',
-        is_homeroom_input: editingTeacher.isHomeroom
+        is_homeroom_input: editingTeacher.isHomeroom,
+        is_admin_input: editingTeacher.isAdmin || false
       });
 
       if (error) throw error;
@@ -1557,6 +1559,7 @@ const DataInquiry = () => {
         "학년": row.grade || "-",
         "반": row.class || "-",
         "담임여부": row.is_homeroom ? "담임" : "-",
+        "관리자여부": row.is_admin ? "관리자" : "-",
         "학과": row.dept_name,
         "부서": row.department,
         "담당교과": row.subject
@@ -1805,6 +1808,7 @@ const DataInquiry = () => {
           "학년": row.grade || "-",
           "반": row.class || "-",
           "담임여부": row.is_homeroom ? "담임" : "-",
+          "관리자여부": row.is_admin ? "관리자" : "-",
           "학과": row.dept_name,
           "부서": row.department,
           "담당교과": row.subject
@@ -3076,6 +3080,14 @@ const DataInquiry = () => {
                     onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isHomeroom: checked as boolean})}
                   />
                   <Label htmlFor="isHomeroom" className="cursor-pointer">담임 여부</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="isAdmin"
+                    checked={editingTeacher.isAdmin || false}
+                    onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isAdmin: checked as boolean})}
+                  />
+                  <Label htmlFor="isAdmin" className="cursor-pointer">관리자 여부</Label>
                 </div>
               </>
             )}
