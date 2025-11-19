@@ -926,10 +926,8 @@ const DataInquiry = () => {
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        if (parsedUser.type === "teacher" && parsedUser.name) {
+        if (parsedUser.name) {
           defaultCounselorName = parsedUser.name;
-        } else if (parsedUser.type === "admin" && parsedUser.email) {
-          defaultCounselorName = parsedUser.email;
         }
       } catch (e) {
         console.error("Failed to parse user data:", e);
@@ -2973,6 +2971,9 @@ const DataInquiry = () => {
         <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg">상담 기록 - {selectedStudent?.학생}</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              학생의 진로 상담 내용을 기록합니다.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

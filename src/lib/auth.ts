@@ -101,6 +101,7 @@ export const loginAdmin = async (email: string, password: string) => {
     return {
       id: userData.id,
       type: "admin" as UserType,
+      name: userData.name,
       email: userData.email,
     };
   } catch (error: any) {
