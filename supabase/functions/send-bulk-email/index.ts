@@ -1,9 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.1";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
-const gmailUser = Deno.env.get("GMAIL_USER");
-const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD");
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const gmailUser = Deno.env.get("GMAIL_USER") || "noreply@school-point.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -94,23 +94,6 @@ const handler = async (req: Request): Promise<Response> => {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
 
-        // Gmail SMTP로 이메일 발송
-        const client = new SMTPClient({
-          connection: {
-            hostname: "smtp.gmail.com",
-            port: 587,
-            tls: true,
-            auth: {
-              username: gmailUser!,
-              password: gmailPassword!,
-            },
-          },
-          debug: {
-            log: false,
-            allowUnsecure: false,
-          },
-        });
-
         // 첨부파일 링크 HTML 생성
         let attachmentHtml = '';
         if (attachmentInfo) {
@@ -122,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <a href="${attachmentInfo.url}" 
                    style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: 500;"
                    download="${attachmentInfo.name}">
-                  ${attachmentInfo.name} 다운로드
+                  ${attachmentInfo.isZip ? '📦 ' : '📄 '}${attachmentInfo.name} 다운로드
                 </a>
               </div>
             `;
@@ -166,22 +149,21 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         `;
 
-        await client.send({
-          from: gmailUser!,
+        // Resend API로 메일 발송
+        await resend.emails.send({
+          from: gmailUser,
           to: student.email,
           subject: subject,
           html: htmlBody,
         });
 
-        await client.close();
-
-        console.log(`Email sent to ${student.name} via Gmail SMTP`);
+        console.log(`Email sent to ${student.name} via Resend`);
 
         sendResults.push({
           student: student.name,
           email: student.email,
           success: true,
-          messageId: "gmail-smtp",
+          messageId: "resend-api",
         });
 
         // 이메일 히스토리 기록
