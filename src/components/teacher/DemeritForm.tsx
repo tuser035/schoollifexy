@@ -469,7 +469,7 @@ const DemeritForm = () => {
                   <img
                     src={imagePreview}
                     alt="증빙 사진"
-                    className="w-[50px] h-[50px] object-cover rounded border-2 border-border"
+                    className="w-[100px] h-[100px] object-cover rounded border-2 border-border"
                   />
                   <Button
                     type="button"
