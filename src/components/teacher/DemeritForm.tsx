@@ -474,22 +474,22 @@ const DemeritForm = () => {
           {imagePreviews.length > 0 && (
             <Card>
               <CardContent className="p-4">
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative inline-block">
+                    <div key={index} className="relative">
                       <img
                         src={preview}
                         alt={`증빙 사진 ${index + 1}`}
-                        className="w-[100px] h-[100px] object-cover rounded border-2 border-border"
+                        className="w-full h-auto object-contain rounded border-2 border-border"
                       />
                       <Button
                         type="button"
                         variant="destructive"
                         size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6"
+                        className="absolute top-2 right-2 h-8 w-8"
                         onClick={() => handleRemoveImage(index)}
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
