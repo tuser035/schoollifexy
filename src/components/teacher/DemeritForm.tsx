@@ -284,6 +284,15 @@ const DemeritForm = () => {
         ? `${basicReason}\n${additionalReason.trim()}`
         : basicReason;
 
+      console.log('Inserting demerit with data:', {
+        student_id: selectedStudent.student_id,
+        teacher_id: user.id,
+        category: selectedCategory,
+        reason: finalReason,
+        score: selectedScore,
+        image_url: imageUrls.length > 0 ? imageUrls : null,
+      });
+
       const { error } = await supabase
         .from("demerits")
         .insert({
@@ -295,7 +304,10 @@ const DemeritForm = () => {
           image_url: imageUrls.length > 0 ? imageUrls : null,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Demerit insert error:', error);
+        throw error;
+      }
 
       toast.success(`${selectedStudent.name} 학생에게 벌점 ${selectedScore}점이 부여되었습니다`);
       
