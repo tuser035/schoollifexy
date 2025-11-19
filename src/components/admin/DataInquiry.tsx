@@ -589,10 +589,16 @@ const DataInquiry = () => {
 
       const user = JSON.parse(userString);
 
-      // 세션 설정 (파일 업로드를 위해)
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: user.id
-      });
+      // 세션 설정 (파일 업로드를 위해) - 교사와 관리자 구분
+      if (userType === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: user.id
+        });
+      } else {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: user.id
+        });
+      }
 
       // 여러 첨부파일 업로드
       const attachmentUrls: string[] = [];
