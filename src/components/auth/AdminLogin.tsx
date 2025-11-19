@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("");
+  const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const AdminLogin = () => {
 
     try {
       const { loginAdmin } = await import("@/lib/auth");
-      const user = await loginAdmin(email, password);
+      const user = await loginAdmin(emailOrPhone, password);
       
       localStorage.setItem("auth_user", JSON.stringify(user));
       toast.success("관리자 로그인 성공!");
@@ -32,13 +32,13 @@ const AdminLogin = () => {
   return (
     <form onSubmit={handleLogin} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="admin-email">이메일</Label>
+        <Label htmlFor="admin-email-or-phone">이메일 또는 전화번호</Label>
         <Input
-          id="admin-email"
-          type="email"
-          placeholder="ID@gbe.kr"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          id="admin-email-or-phone"
+          type="text"
+          placeholder="ID@gbe.kr 또는 010-0000-0000"
+          value={emailOrPhone}
+          onChange={(e) => setEmailOrPhone(e.target.value)}
           required
         />
       </div>
