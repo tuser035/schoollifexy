@@ -713,17 +713,28 @@ const DataInquiry = () => {
             const zipFileName = `${dateStr}-${groupName}.zip`;
             const zipFilePath = `student-attachments/${Date.now()}_${zipFileName}`;
             
-            // ZIP 파일 업로드
-            const { error: zipUploadError } = await supabase.storage
-              .from('counseling-attachments')
-              .upload(zipFilePath, zipBlob, {
-                contentType: 'application/zip'
-              });
+            // ZIP 파일 업로드 - edge function 사용
+            const reader = new FileReader();
+            const base64Promise = new Promise<string>((resolve) => {
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(zipBlob);
+            });
+            const base64Data = await base64Promise;
             
-            if (!zipUploadError) {
-              const { data: { publicUrl } } = supabase.storage
-                .from('counseling-attachments')
-                .getPublicUrl(zipFilePath);
+            const { data: uploadResult, error: zipUploadError } = await supabase.functions.invoke(
+              'upload-counseling-attachment',
+              {
+                body: {
+                  admin_id: user.id,
+                  filename: zipFileName,
+                  file_base64: base64Data,
+                  content_type: 'application/zip'
+                }
+              }
+            );
+            
+            if (!zipUploadError && uploadResult?.ok) {
+              const publicUrl = uploadResult.publicUrl;
               
               attachmentInfo = {
                 url: publicUrl,
@@ -733,7 +744,7 @@ const DataInquiry = () => {
 
               // ZIP 파일 메타데이터 저장
               await supabase.from('file_metadata').insert({
-                storage_path: zipFilePath,
+                storage_path: uploadResult.path,
                 original_filename: zipFileName,
                 file_size: zipBlob.size,
                 mime_type: 'application/zip',
