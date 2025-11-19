@@ -40,7 +40,7 @@ const TeacherLogin = () => {
       
       localStorage.setItem("auth_user", JSON.stringify(user));
       toast.success(`환영합니다, ${user.name}님!`);
-      navigate("/teacher/dashboard");
+      navigate("/teacher/merit");
     } catch (error: any) {
       toast.error(error.message || "로그인에 실패했습니다.");
     } finally {
