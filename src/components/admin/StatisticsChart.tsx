@@ -31,23 +31,15 @@ const StatisticsChart = () => {
         return;
       }
 
-      // Set admin or teacher session for RLS
-      if (parsedUser.type === "admin") {
-        await supabase.rpc("set_admin_session", {
-          admin_id_input: parsedUser.id
-        });
-      } else if (parsedUser.type === "teacher") {
-        await supabase.rpc("set_teacher_session", {
-          teacher_id_input: parsedUser.id
-        });
-      }
-
-      // 해당 학급의 학생 목록 가져오기
-      const { data: students, error: studentsError } = await supabase
-        .from("students")
-        .select("student_id")
-        .eq("grade", parseInt(grade))
-        .eq("class", parseInt(classNum));
+      // 해당 학급의 학생 목록 가져오기 (RPC 함수 사용)
+      const { data: students, error: studentsError } = await supabase.rpc(
+        "admin_get_students",
+        {
+          admin_id_input: parsedUser.id,
+          search_grade: parseInt(grade),
+          search_class: parseInt(classNum)
+        }
+      );
 
       if (studentsError) throw studentsError;
 
