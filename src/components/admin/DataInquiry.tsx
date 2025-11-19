@@ -2552,9 +2552,10 @@ const DataInquiry = () => {
                                   e.stopPropagation();
                                   handleDeleteGroup(group.id, group.group_name);
                                 }}
-                                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-7 w-7 p-0 hover:bg-destructive/10 transition-colors"
+                                title="그룹 삭제"
                               >
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive transition-colors" />
                               </Button>
                             </div>
                           ))}
