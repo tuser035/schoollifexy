@@ -1241,9 +1241,24 @@ const DataInquiry = () => {
       
       // 목록 새로고침
       handleQuery();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating teacher:", error);
-      toast.error("교사 정보 수정에 실패했습니다");
+      
+      // PostgreSQL unique constraint violation 에러 처리
+      if (error.code === '23505') {
+        if (error.message?.includes('call_t') || error.details?.includes('call_t')) {
+          toast.error(`전화번호 ${editingTeacher.phone}는 이미 다른 교사가 사용 중입니다`);
+        } else if (error.message?.includes('email') || error.details?.includes('email')) {
+          toast.error(`이메일 ${editingTeacher.email}은 이미 다른 교사가 사용 중입니다`);
+        } else {
+          toast.error("중복된 값이 존재합니다");
+        }
+      } else if (error.message?.includes('이메일') && error.message?.includes('관리자')) {
+        // 트리거에서 발생한 에러 (admins 테이블 email 충돌)
+        toast.error(error.message);
+      } else {
+        toast.error("교사 정보 수정에 실패했습니다");
+      }
     } finally {
       setIsSavingTeacher(false);
     }
