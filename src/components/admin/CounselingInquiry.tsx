@@ -17,6 +17,7 @@ interface CounselingRecord {
   counseling_date: string;
   content: string;
   created_at: string;
+  attachment_url: string | null;
 }
 
 const CounselingInquiry = () => {
@@ -34,6 +35,8 @@ const CounselingInquiry = () => {
   const [editCounselingContent, setEditCounselingContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<CounselingRecord | null>(null);
+  const [editAttachmentFile, setEditAttachmentFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleQuery = async () => {
     if (!searchInput.trim()) {
@@ -124,11 +127,12 @@ const CounselingInquiry = () => {
       setStudentName(studentData.name);
       setStudentId(studentData.student_id);
 
-      // 상담 기록 조회
-      const { data, error } = await supabase.rpc("admin_get_counseling_records", {
-        admin_id_input: parsedUser.id,
-        student_id_input: studentData.student_id
-      });
+      // 상담 기록 조회 - 첨부파일 포함을 위해 직접 테이블 조회
+      const { data, error } = await supabase
+        .from('career_counseling')
+        .select('id, counselor_name, counseling_date, content, created_at, attachment_url')
+        .eq('student_id', studentData.student_id)
+        .order('counseling_date', { ascending: false });
 
       if (error) {
         console.error('Counseling records query error:', error);
@@ -160,6 +164,7 @@ const CounselingInquiry = () => {
     setEditCounselorName(record.counselor_name);
     setEditCounselingDate(record.counseling_date);
     setEditCounselingContent(record.content);
+    setEditAttachmentFile(null);
     setIsEditDialogOpen(true);
   };
 
@@ -196,12 +201,40 @@ const CounselingInquiry = () => {
         admin_id_input: parsedUser.id
       });
 
+      let attachmentUrl = selectedRecord.attachment_url;
+
+      // Upload new file if selected
+      if (editAttachmentFile) {
+        setIsUploading(true);
+        const fileExt = editAttachmentFile.name.split('.').pop();
+        const fileName = `${studentId}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('counseling-attachments')
+          .upload(filePath, editAttachmentFile, {
+            upsert: false
+          });
+
+        if (uploadError) {
+          throw new Error(`파일 업로드 실패: ${uploadError.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('counseling-attachments')
+          .getPublicUrl(filePath);
+
+        attachmentUrl = publicUrl;
+        setIsUploading(false);
+      }
+
       const { error } = await supabase
         .from("career_counseling")
         .update({
           counselor_name: editCounselorName.trim(),
           counseling_date: editCounselingDate,
-          content: editCounselingContent.trim()
+          content: editCounselingContent.trim(),
+          attachment_url: attachmentUrl
         })
         .eq("id", selectedRecord.id);
 
@@ -209,6 +242,7 @@ const CounselingInquiry = () => {
 
       toast.success("상담 기록이 수정되었습니다");
       setIsEditDialogOpen(false);
+      setEditAttachmentFile(null);
       
       // 목록 새로고침
       await handleQuery();
@@ -216,6 +250,7 @@ const CounselingInquiry = () => {
       toast.error(error.message || "수정에 실패했습니다");
     } finally {
       setIsSaving(false);
+      setIsUploading(false);
     }
   };
 
@@ -445,6 +480,20 @@ const CounselingInquiry = () => {
                   {selectedRecord.content}
                 </div>
               </div>
+              {selectedRecord.attachment_url && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">첨부 파일</div>
+                  <a 
+                    href={selectedRecord.attachment_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-primary hover:underline"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    첨부 파일 다운로드
+                  </a>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -490,20 +539,47 @@ const CounselingInquiry = () => {
                 {editCounselingContent.length} / 2000자
               </p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-attachment">첨부 파일 (선택사항)</Label>
+              {selectedRecord?.attachment_url && !editAttachmentFile && (
+                <div className="text-sm text-muted-foreground mb-2">
+                  <a 
+                    href={selectedRecord.attachment_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-primary hover:underline"
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    현재 첨부 파일
+                  </a>
+                </div>
+              )}
+              <Input
+                id="edit-attachment"
+                type="file"
+                onChange={(e) => setEditAttachmentFile(e.target.files?.[0] || null)}
+                accept=".pdf,.doc,.docx,.hwp,.jpg,.jpeg,.png"
+              />
+              {editAttachmentFile && (
+                <p className="text-sm text-muted-foreground">
+                  선택된 파일: {editAttachmentFile.name}
+                </p>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
-              disabled={isSaving}
+              disabled={isSaving || isUploading}
             >
               취소
             </Button>
             <Button
               onClick={handleSaveEdit}
-              disabled={isSaving}
+              disabled={isSaving || isUploading}
             >
-              {isSaving ? "저장 중..." : "저장"}
+              {isUploading ? "파일 업로드 중..." : isSaving ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>
