@@ -37,7 +37,7 @@ const CounselingInquiry = () => {
 
   const handleQuery = async () => {
     if (!searchInput.trim()) {
-      toast.error("학번 또는 이름을 입력해주세요");
+      toast.error("학번, 이름 또는 학년반번호를 입력해주세요");
       return;
     }
 
@@ -51,18 +51,42 @@ const CounselingInquiry = () => {
       }
 
       const parsedUser = JSON.parse(authUser);
-      if (parsedUser.type !== "admin" || !parsedUser.id) {
-        toast.error("관리자 권한이 필요합니다");
+      if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) {
+        toast.error("권한이 필요합니다");
         return;
       }
 
-      // 학생 정보 확인 (학번 또는 이름으로 검색)
-      const { data: studentData, error: studentError } = await supabase
+      const input = searchInput.trim();
+      let query = supabase
         .from("students")
-        .select("name, student_id")
-        .or(`student_id.eq.${searchInput.trim()},name.ilike.%${searchInput.trim()}%`)
-        .limit(1)
-        .single();
+        .select("name, student_id, grade, class, number");
+
+      // 학년반번호 형식 체크 (예: 386 = 3학년 8반 6번)
+      if (/^\d{3,4}$/.test(input)) {
+        const grade = parseInt(input[0]);
+        let classNum, number;
+        
+        if (input.length === 3) {
+          // 예: 386 → 3학년 8반 6번
+          classNum = parseInt(input[1]);
+          number = parseInt(input[2]);
+        } else if (input.length === 4) {
+          // 예: 1215 → 1학년 2반 15번
+          classNum = parseInt(input[1]);
+          number = parseInt(input.substring(2));
+        }
+        
+        if (grade && classNum && number) {
+          query = query.or(`student_id.eq.${input},and(grade.eq.${grade},class.eq.${classNum},number.eq.${number}),name.ilike.%${input}%`);
+        } else {
+          query = query.or(`student_id.eq.${input},name.ilike.%${input}%`);
+        }
+      } else {
+        // 학번 또는 이름으로 검색
+        query = query.or(`student_id.eq.${input},name.ilike.%${input}%`);
+      }
+
+      const { data: studentData, error: studentError } = await query.limit(1).single();
 
       if (studentError || !studentData) {
         toast.error("해당 학생을 찾을 수 없습니다");
@@ -252,7 +276,7 @@ const CounselingInquiry = () => {
         <CardContent className="space-y-4">
           <div className="flex gap-4">
             <Input
-              placeholder="학번 또는 이름 (예: 3817, 한정훈)"
+              placeholder="학번, 이름 또는 학년반번호 (예: 3817, 한정훈, 386)"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
