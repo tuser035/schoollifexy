@@ -3051,21 +3051,21 @@ const DataInquiry = () => {
                 />
               </div>
               {attachmentPreview && (
-                <div className="relative mt-2 p-2 border rounded-lg">
+                <div className="relative mt-2 p-2 border rounded-lg inline-block">
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute top-1 right-1 h-8 w-8 p-0"
+                    className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-background border shadow-sm"
                     onClick={handleRemoveAttachment}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </Button>
                   {attachmentFile?.type.startsWith('image/') ? (
                     <img 
                       src={attachmentPreview} 
                       alt="첨부 파일 미리보기" 
-                      className="w-full h-auto rounded max-h-[200px] object-contain"
+                      className="w-[50px] h-[50px] rounded object-cover"
                     />
                   ) : (
                     <div className="flex items-center gap-2 p-2">
