@@ -1072,6 +1072,17 @@ const DataInquiry = () => {
         attachment_url: attachmentUrl
       });
 
+      // Re-set session before insert to ensure RLS policies work
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: parsedUser.id
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: parsedUser.id
+        });
+      }
+
       // Insert counseling record
       const { error } = await supabase
         .from("career_counseling")
