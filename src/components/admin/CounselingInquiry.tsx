@@ -127,6 +127,17 @@ const CounselingInquiry = () => {
       setStudentName(studentData.name);
       setStudentId(studentData.student_id);
 
+      // Set admin or teacher session for RLS
+      if (parsedUser.type === "admin") {
+        await supabase.rpc("set_admin_session", {
+          admin_id_input: parsedUser.id
+        });
+      } else if (parsedUser.type === "teacher") {
+        await supabase.rpc("set_teacher_session", {
+          teacher_id_input: parsedUser.id
+        });
+      }
+
       // 상담 기록 조회 - 첨부파일 포함을 위해 직접 테이블 조회
       const { data, error } = await supabase
         .from('career_counseling')
