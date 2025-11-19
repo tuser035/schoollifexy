@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.1";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const fromEmail = "onboarding@resend.dev"; // Resend 인증된 테스트 이메일
+const fromEmail = "noreply@schoollifexy.kr"; // 인증된 도메인 이메일
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
