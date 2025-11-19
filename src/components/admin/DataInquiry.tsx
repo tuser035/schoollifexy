@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,8 @@ const DataInquiry = () => {
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [isSavingGroup, setIsSavingGroup] = useState(false);
+  const [isDeleteGroupDialogOpen, setIsDeleteGroupDialogOpen] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState<{ id: string; name: string } | null>(null);
   const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
@@ -470,9 +473,15 @@ const DataInquiry = () => {
     }
   };
 
+  // 그룹 삭제 확인 열기
+  const handleOpenDeleteGroup = (groupId: string, groupName: string) => {
+    setDeletingGroup({ id: groupId, name: groupName });
+    setIsDeleteGroupDialogOpen(true);
+  };
+
   // 그룹 삭제
-  const handleDeleteGroup = async (groupId: string, groupName: string) => {
-    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?`)) return;
+  const handleDeleteGroup = async () => {
+    if (!deletingGroup) return;
 
     try {
       const userString = localStorage.getItem("auth_user");
@@ -487,21 +496,27 @@ const DataInquiry = () => {
         await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
       }
 
-      const { error, count } = await supabase.from("student_groups").delete({ count: 'exact' }).eq("id", groupId);
+      const { error, count } = await supabase.from("student_groups").delete({ count: 'exact' }).eq("id", deletingGroup.id);
 
       if (error) throw error;
 
       // 실제로 삭제된 행이 없으면 에러 처리
       if (count === 0) {
         toast.error("이 그룹을 삭제할 권한이 없습니다");
+        setIsDeleteGroupDialogOpen(false);
+        setDeletingGroup(null);
         return;
       }
 
-      toast.success(`"${groupName}" 그룹이 삭제되었습니다`);
+      toast.success(`"${deletingGroup.name}" 그룹이 삭제되었습니다`);
       await loadStudentGroups();
+      setIsDeleteGroupDialogOpen(false);
+      setDeletingGroup(null);
     } catch (error: any) {
       console.error("그룹 삭제 실패:", error);
       toast.error("그룹 삭제에 실패했습니다");
+      setIsDeleteGroupDialogOpen(false);
+      setDeletingGroup(null);
     }
   };
 
@@ -2556,7 +2571,7 @@ const DataInquiry = () => {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDeleteGroup(group.id, group.group_name);
+                                  handleOpenDeleteGroup(group.id, group.group_name);
                                 }}
                                 className="h-7 w-7 p-0 hover:bg-destructive/10 transition-colors"
                                 title="그룹 삭제"
@@ -4328,6 +4343,24 @@ const DataInquiry = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* 그룹 삭제 확인 다이얼로그 */}
+      <AlertDialog open={isDeleteGroupDialogOpen} onOpenChange={setIsDeleteGroupDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>그룹 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{deletingGroup?.name}" 그룹을 삭제하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingGroup(null)}>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
