@@ -84,7 +84,8 @@ const DataInquiry = () => {
     class: null,
     department: "",
     subject: "",
-    isHomeroom: false
+    isHomeroom: false,
+    isAdmin: false
   });
   const [isStudentEditDialogOpen, setIsStudentEditDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
@@ -1300,6 +1301,7 @@ const DataInquiry = () => {
         grade_input: newTeacher.grade || null,
         class_input: newTeacher.class || null,
         is_homeroom_input: newTeacher.isHomeroom,
+        is_admin_input: newTeacher.isAdmin || false,
         department_input: newTeacher.department || null,
         subject_input: newTeacher.subject || null
       });
@@ -1316,7 +1318,8 @@ const DataInquiry = () => {
         class: null,
         department: "",
         subject: "",
-        isHomeroom: false
+        isHomeroom: false,
+        isAdmin: false
       });
       
       // 목록 새로고침
@@ -2483,7 +2486,8 @@ const DataInquiry = () => {
                       class: null,
                       department: "",
                       subject: "",
-                      isHomeroom: false
+                      isHomeroom: false,
+                      isAdmin: false
                     });
                     setIsAddTeacherDialogOpen(true);
                   }}
@@ -3301,13 +3305,23 @@ const DataInquiry = () => {
                 />
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isHomeroomNew"
-                checked={newTeacher.isHomeroom}
-                onCheckedChange={(checked) => setNewTeacher({...newTeacher, isHomeroom: checked === true})}
-              />
-              <Label htmlFor="isHomeroomNew" className="cursor-pointer">담임 여부</Label>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isHomeroomNew"
+                  checked={newTeacher.isHomeroom}
+                  onCheckedChange={(checked) => setNewTeacher({...newTeacher, isHomeroom: checked === true})}
+                />
+                <Label htmlFor="isHomeroomNew" className="cursor-pointer">담임 여부</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isAdminNew"
+                  checked={newTeacher.isAdmin}
+                  onCheckedChange={(checked) => setNewTeacher({...newTeacher, isAdmin: checked === true})}
+                />
+                <Label htmlFor="isAdminNew" className="cursor-pointer">관리자 여부</Label>
+              </div>
             </div>
           </div>
           <DialogFooter className="shrink-0 pt-4">
