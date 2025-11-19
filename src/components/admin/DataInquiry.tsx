@@ -67,6 +67,8 @@ const DataInquiry = () => {
   const [studentGroups, setStudentGroups] = useState<any[]>([]);
   const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [emailSendResults, setEmailSendResults] = useState<any[]>([]);
+  const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
   const [isSavingGroup, setIsSavingGroup] = useState(false);
   const [isDeleteGroupDialogOpen, setIsDeleteGroupDialogOpen] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState<{ id: string; name: string } | null>(null);
@@ -786,10 +788,9 @@ const DataInquiry = () => {
 
       if (error) throw error;
 
-      toast.success(
-        `이메일 발송 완료!\n성공: ${result.totalSent}건, 실패: ${result.totalFailed}건`,
-        { duration: 5000 }
-      );
+      // 발송 결과 저장 및 결과 다이얼로그 표시
+      setEmailSendResults(result.results || []);
+      setIsResultDialogOpen(true);
       
       setIsBulkEmailDialogOpen(false);
       setSelectedStudents(new Set());
@@ -3548,6 +3549,59 @@ const DataInquiry = () => {
               disabled={isSendingBulkEmail || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}
             >
               {isSendingBulkEmail ? "발송 중..." : "일괄 발송"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 발송 결과 다이얼로그 */}
+      <Dialog open={isResultDialogOpen} onOpenChange={setIsResultDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>일괄 메시지 발송 결과</DialogTitle>
+            <DialogDescription>
+              총 {emailSendResults.length}건 중 
+              성공 {emailSendResults.filter(r => r.success).length}건, 
+              실패 {emailSendResults.filter(r => !r.success).length}건
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>학생</TableHead>
+                  <TableHead>이메일</TableHead>
+                  <TableHead>상태</TableHead>
+                  <TableHead>메시지</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {emailSendResults.map((result, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{result.student}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{result.email}</TableCell>
+                    <TableCell>
+                      {result.success ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          ✓ 성공
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          ✗ 실패
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {result.success ? '발송 완료' : result.error || '알 수 없는 오류'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsResultDialogOpen(false)}>
+              확인
             </Button>
           </DialogFooter>
         </DialogContent>
