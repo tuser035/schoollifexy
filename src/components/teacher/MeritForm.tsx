@@ -250,15 +250,6 @@ const MeritForm = () => {
 
       const user = JSON.parse(authUser);
 
-      // 교사 세션 설정 (RLS 적용을 위해 필수)
-      const { error: sessionError } = await supabase.rpc('set_teacher_session', {
-        teacher_id_input: user.id,
-      });
-      if (sessionError) {
-        console.error('set_teacher_session error:', sessionError);
-        throw new Error('세션 설정 중 오류가 발생했습니다');
-      }
-
       let imageUrls: string[] = [];
 
       // Upload images if exist
@@ -296,34 +287,18 @@ const MeritForm = () => {
         ? `${basicReason}\n${additionalReason.trim()}`
         : basicReason;
 
-      console.log('Inserting merit with data:', {
-        student_id: selectedStudent.student_id,
-        teacher_id: user.id,
-        category: selectedCategory,
-        reason: finalReason,
-        score: selectedScore,
-        image_url: imageUrls.length > 0 ? imageUrls : null,
+      // Use RPC function to insert merit with proper session handling
+      const { data: meritId, error } = await supabase.rpc('insert_merit', {
+        p_student_id: selectedStudent.student_id,
+        p_teacher_id: user.id,
+        p_category: selectedCategory,
+        p_reason: finalReason,
+        p_score: selectedScore,
+        p_image_url: imageUrls,
       });
 
-      const { error } = await supabase
-        .from("merits")
-        .insert({
-          student_id: selectedStudent.student_id,
-          teacher_id: user.id,
-          category: selectedCategory,
-          reason: finalReason,
-          score: selectedScore,
-          image_url: imageUrls.length > 0 ? imageUrls : [],
-        });
-
       if (error) {
-        console.error('Merit insert error details:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
+        console.error('Merit insert error:', error);
         throw error;
       }
 
