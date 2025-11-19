@@ -2385,7 +2385,12 @@ const DataInquiry = () => {
       }
 
       if (result && result.length > 0) {
-        setColumns(Object.keys(result[0]));
+        // monthly 테이블의 경우 컬럼 순서 명시적으로 설정
+        if (selectedTable === "monthly") {
+          setColumns(["학생", "추천횟수", "연도", "월"]);
+        } else {
+          setColumns(Object.keys(result[0]));
+        }
         setData(result);
         setOriginalData(result);
         
