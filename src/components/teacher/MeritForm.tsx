@@ -254,16 +254,22 @@ const MeritForm = () => {
 
       // Upload images if exist
       if (imageFiles.length > 0) {
+        console.log('Starting upload for', imageFiles.length, 'files');
         for (const imageFile of imageFiles) {
           const fileExt = imageFile.name.split('.').pop();
           const fileName = `${user.id}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
           const filePath = `${fileName}`;
 
+          console.log('Uploading file:', filePath, 'Size:', imageFile.size, 'Type:', imageFile.type);
           const { error: uploadError } = await supabase.storage
             .from('evidence-photos')
             .upload(filePath, imageFile);
 
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            throw uploadError;
+          }
+          console.log('Upload successful:', filePath);
 
           const { data: { publicUrl } } = supabase.storage
             .from('evidence-photos')
