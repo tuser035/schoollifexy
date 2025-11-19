@@ -3012,8 +3012,24 @@ const DataInquiry = () => {
                     <Label>전화번호</Label>
                     <Input 
                       value={editingTeacher.phone}
-                      onChange={(e) => setEditingTeacher({...editingTeacher, phone: e.target.value})}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ''); // 숫자만 추출
+                        let formatted = value;
+                        
+                        if (value.length <= 3) {
+                          formatted = value;
+                        } else if (value.length <= 7) {
+                          formatted = `${value.slice(0, 3)}-${value.slice(3)}`;
+                        } else if (value.length <= 11) {
+                          formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(7)}`;
+                        } else {
+                          formatted = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(7, 11)}`;
+                        }
+                        
+                        setEditingTeacher({...editingTeacher, phone: formatted});
+                      }}
                       placeholder="010-0000-0000"
+                      maxLength={13}
                     />
                   </div>
                 </div>
