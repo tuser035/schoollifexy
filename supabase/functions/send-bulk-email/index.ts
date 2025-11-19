@@ -150,20 +150,31 @@ const handler = async (req: Request): Promise<Response> => {
         `;
 
         // Resend API로 메일 발송
-        await resend.emails.send({
+        const { data: emailData, error: emailError } = await resend.emails.send({
           from: gmailUser,
           to: student.email,
           subject: subject,
           html: htmlBody,
         });
 
-        console.log(`Email sent to ${student.name} via Resend`);
+        if (emailError) {
+          console.error(`Failed to send email to ${student.name}:`, emailError);
+          sendResults.push({
+            student: student.name,
+            email: student.email,
+            success: false,
+            error: emailError.message,
+          });
+          continue;
+        }
+
+        console.log(`Email sent to ${student.name} via Resend, ID: ${emailData?.id}`);
 
         sendResults.push({
           student: student.name,
           email: student.email,
           success: true,
-          messageId: "resend-api",
+          messageId: emailData?.id || "resend-api",
         });
 
         // 이메일 히스토리 기록
@@ -177,6 +188,7 @@ const handler = async (req: Request): Promise<Response> => {
           subject: subject,
           body: body,
           sent_at: new Date().toISOString(),
+          resend_email_id: emailData?.id || null,
         });
       } catch (error: any) {
         console.error(`Failed to send email to ${student.name}:`, error);
