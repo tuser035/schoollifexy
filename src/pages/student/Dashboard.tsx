@@ -44,35 +44,27 @@ const StudentDashboard = () => {
   const fetchStudentData = async (studentId: string) => {
     setIsLoading(true);
     try {
-      // Set student session for RLS
-      await supabase.rpc("set_student_session", {
-        student_id_input: studentId,
-      });
-
-      // Fetch merits
-      const { data: meritsData, error: meritsError } = await supabase
-        .from("merits")
-        .select("*, teachers(name)")
-        .eq("student_id", studentId)
-        .order("created_at", { ascending: false });
+      // Fetch merits using RPC
+      const { data: meritsData, error: meritsError } = await supabase.rpc(
+        "student_get_merits",
+        { student_id_input: studentId }
+      );
 
       if (meritsError) throw meritsError;
 
-      // Fetch demerits
-      const { data: demeritsData, error: demeritsError } = await supabase
-        .from("demerits")
-        .select("*, teachers(name)")
-        .eq("student_id", studentId)
-        .order("created_at", { ascending: false });
+      // Fetch demerits using RPC
+      const { data: demeritsData, error: demeritsError } = await supabase.rpc(
+        "student_get_demerits",
+        { student_id_input: studentId }
+      );
 
       if (demeritsError) throw demeritsError;
 
-      // Fetch monthly
-      const { data: monthlyData, error: monthlyError } = await supabase
-        .from("monthly")
-        .select("*, teachers(name)")
-        .eq("student_id", studentId)
-        .order("created_at", { ascending: false });
+      // Fetch monthly using RPC
+      const { data: monthlyData, error: monthlyError } = await supabase.rpc(
+        "student_get_monthly",
+        { student_id_input: studentId }
+      );
 
       if (monthlyError) throw monthlyError;
 
@@ -299,16 +291,16 @@ const StudentDashboard = () => {
                           merits.map((merit, idx) => (
                             <TableRow key={idx}>
                               <TableCell>{new Date(merit.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{merit.teachers?.name || "-"}</TableCell>
+                              <TableCell>{merit.teacher_name || "-"}</TableCell>
                               <TableCell>{merit.category}</TableCell>
                               <TableCell>{merit.reason || "-"}</TableCell>
                               <TableCell className="text-merit-blue font-medium">{merit.score}</TableCell>
                               <TableCell>
-                                {merit.image_url ? (
+                                {merit.image_url && merit.image_url.length > 0 ? (
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleImageClick(merit.image_url)}
+                                    onClick={() => handleImageClick(merit.image_url[0])}
                                   >
                                     <ImageIcon className="h-4 w-4 mr-1" />
                                     보기
@@ -360,16 +352,16 @@ const StudentDashboard = () => {
                           demerits.map((demerit, idx) => (
                             <TableRow key={idx}>
                               <TableCell>{new Date(demerit.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{demerit.teachers?.name || "-"}</TableCell>
+                              <TableCell>{demerit.teacher_name || "-"}</TableCell>
                               <TableCell>{demerit.category}</TableCell>
                               <TableCell>{demerit.reason || "-"}</TableCell>
                               <TableCell className="text-demerit-orange font-medium">{demerit.score}</TableCell>
                               <TableCell>
-                                {demerit.image_url ? (
+                                {demerit.image_url && demerit.image_url.length > 0 ? (
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleImageClick(demerit.image_url)}
+                                    onClick={() => handleImageClick(demerit.image_url[0])}
                                   >
                                     <ImageIcon className="h-4 w-4 mr-1" />
                                     보기
@@ -420,15 +412,15 @@ const StudentDashboard = () => {
                           monthly.map((item, idx) => (
                             <TableRow key={idx}>
                               <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{item.teachers?.name || "-"}</TableCell>
+                              <TableCell>{item.teacher_name || "-"}</TableCell>
                               <TableCell>{item.category || "-"}</TableCell>
                               <TableCell>{item.reason || "-"}</TableCell>
                               <TableCell>
-                                {item.image_url ? (
+                                {item.image_url && item.image_url.length > 0 ? (
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleImageClick(item.image_url)}
+                                    onClick={() => handleImageClick(item.image_url[0])}
                                   >
                                     <ImageIcon className="h-4 w-4 mr-1" />
                                     보기
