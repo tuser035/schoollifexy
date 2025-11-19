@@ -31,70 +31,30 @@ const StatisticsChart = () => {
         return;
       }
 
-      // 해당 학급의 학생 목록 가져오기 (RPC 함수 사용)
-      const { data: students, error: studentsError } = await supabase.rpc(
-        "admin_get_students",
+      // Use RPC function to get monthly statistics
+      const { data: statistics, error: statsError } = await supabase.rpc(
+        "get_class_monthly_statistics",
         {
-          admin_id_input: parsedUser.id,
-          search_grade: parseInt(grade),
-          search_class: parseInt(classNum)
+          user_id_input: parsedUser.id,
+          grade_input: parseInt(grade),
+          class_input: parseInt(classNum),
+          year_input: parseInt(year)
         }
       );
 
-      if (studentsError) throw studentsError;
+      if (statsError) throw statsError;
 
-      if (!students || students.length === 0) {
-        toast.info("해당 학급에 학생이 없습니다");
+      if (!statistics || statistics.length === 0) {
+        toast.info("통계 데이터가 없습니다");
         setChartData([]);
         return;
       }
 
-      const studentIds = students.map(s => s.student_id);
-
-      // 월별 상점 통계
-      const { data: merits, error: meritsError } = await supabase
-        .from("merits")
-        .select("created_at, score, student_id")
-        .in("student_id", studentIds);
-
-      if (meritsError) throw meritsError;
-
-      // 월별 벌점 통계
-      const { data: demerits, error: demeritsError } = await supabase
-        .from("demerits")
-        .select("created_at, score, student_id")
-        .in("student_id", studentIds);
-
-      if (demeritsError) throw demeritsError;
-
-      // 월별 데이터 집계
-      const monthlyData: Record<number, { merits: number; demerits: number }> = {};
-      
-      for (let i = 1; i <= 12; i++) {
-        monthlyData[i] = { merits: 0, demerits: 0 };
-      }
-
-      merits?.forEach((merit) => {
-        const date = new Date(merit.created_at);
-        if (date.getFullYear() === parseInt(year)) {
-          const month = date.getMonth() + 1;
-          monthlyData[month].merits += merit.score;
-        }
-      });
-
-      demerits?.forEach((demerit) => {
-        const date = new Date(demerit.created_at);
-        if (date.getFullYear() === parseInt(year)) {
-          const month = date.getMonth() + 1;
-          monthlyData[month].demerits += demerit.score;
-        }
-      });
-
-      const formattedData = Object.entries(monthlyData).map(([month, data]) => ({
-        month: `${month}월`,
-        상점: data.merits,
-        벌점: data.demerits,
-        순점수: data.merits - data.demerits
+      const formattedData = statistics.map((stat: any) => ({
+        month: `${stat.month}월`,
+        상점: stat.merits_total,
+        벌점: stat.demerits_total,
+        순점수: stat.merits_total - stat.demerits_total
       }));
 
       setChartData(formattedData);
