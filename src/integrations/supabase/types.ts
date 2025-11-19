@@ -949,6 +949,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_demerit: {
+        Args: {
+          p_category: string
+          p_image_url: string[]
+          p_reason: string
+          p_score: number
+          p_student_id: string
+          p_teacher_id: string
+        }
+        Returns: string
+      }
+      insert_merit: {
+        Args: {
+          p_category: string
+          p_image_url: string[]
+          p_reason: string
+          p_score: number
+          p_student_id: string
+          p_teacher_id: string
+        }
+        Returns: string
+      }
       insert_monthly_recommendation:
         | {
             Args: {
