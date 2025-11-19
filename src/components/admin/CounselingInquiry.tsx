@@ -57,9 +57,9 @@ const CounselingInquiry = () => {
       }
 
       const input = searchInput.trim();
-      let query = supabase
-        .from("students")
-        .select("name, student_id, grade, class, number");
+      let searchText = null;
+      let searchGrade = null;
+      let searchClass = null;
 
       // 학년반번호 형식 체크 (예: 386 = 3학년 8반 6번)
       if (/^\d{3,4}$/.test(input)) {
@@ -76,30 +76,49 @@ const CounselingInquiry = () => {
           number = parseInt(input.substring(2));
         }
         
-        if (grade && classNum && number) {
-          query = query.or(`student_id.eq.${input},and(grade.eq.${grade},class.eq.${classNum},number.eq.${number}),name.ilike.%${input}%`);
-        } else {
-          query = query.or(`student_id.eq.${input},name.ilike.%${input}%`);
-        }
+        searchGrade = grade;
+        searchClass = classNum;
+        // number로 필터링은 결과를 받은 후 처리
       } else {
         // 학번 또는 이름으로 검색
-        query = query.or(`student_id.eq.${input},name.ilike.%${input}%`);
+        searchText = input;
       }
 
-      const { data: studentData, error: studentError } = await query.limit(1).maybeSingle();
+      // Use admin_get_students function with proper RLS permissions
+      const { data: studentsData, error: studentsError } = await supabase.rpc('admin_get_students', {
+        admin_id_input: parsedUser.id,
+        search_text: searchText,
+        search_grade: searchGrade,
+        search_class: searchClass
+      });
 
-      if (studentError) {
-        console.error('Student query error:', studentError);
+      if (studentsError) {
+        console.error('Student query error:', studentsError);
         toast.error("학생 조회 중 오류가 발생했습니다");
         return;
       }
 
-      if (!studentData) {
+      if (!studentsData || studentsData.length === 0) {
         toast.error("해당 학생을 찾을 수 없습니다");
         setRecords([]);
         setStudentName("");
         setStudentId("");
         return;
+      }
+
+      // 학년반번호 형식인 경우 번호로 추가 필터링
+      let studentData = studentsData[0];
+      if (/^\d{3,4}$/.test(input)) {
+        const number = input.length === 3 ? parseInt(input[2]) : parseInt(input.substring(2));
+        const filtered = studentsData.find(s => s.number === number);
+        if (!filtered) {
+          toast.error("해당 학생을 찾을 수 없습니다");
+          setRecords([]);
+          setStudentName("");
+          setStudentId("");
+          return;
+        }
+        studentData = filtered;
       }
 
       setStudentName(studentData.name);
