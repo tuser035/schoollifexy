@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, AlertCircle, Star, LogOut, Database } from "lucide-react";
+import { Award, AlertCircle, Star, LogOut } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import MeritForm from "@/components/teacher/MeritForm";
 import DemeritForm from "@/components/teacher/DemeritForm";
 import MonthlyForm from "@/components/teacher/MonthlyForm";
-import DataView from "@/components/teacher/DataView";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -49,16 +48,21 @@ const TeacherDashboard = () => {
               {user.isHomeroom && user.grade && user.class && ` (${user.grade}-${user.class})`}
             </p>
           </div>
-          <Button onClick={handleLogout} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" />
-            로그아웃
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate("/admin/dashboard")} variant="outline">
+              데이터 조회
+            </Button>
+            <Button onClick={handleLogout} variant="outline">
+              <LogOut className="w-4 h-4 mr-2" />
+              로그아웃
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="merit" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger 
               value="merit"
               className="data-[state=active]:bg-merit-blue data-[state=active]:text-white"
@@ -79,10 +83,6 @@ const TeacherDashboard = () => {
             >
               <Star className="w-4 h-4 mr-2" />
               이달의 학생
-            </TabsTrigger>
-            <TabsTrigger value="dataview">
-              <Database className="w-4 h-4 mr-2" />
-              데이터 조회
             </TabsTrigger>
           </TabsList>
 
@@ -117,10 +117,6 @@ const TeacherDashboard = () => {
                 <MonthlyForm />
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="dataview">
-            <DataView />
           </TabsContent>
         </Tabs>
       </main>
