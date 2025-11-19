@@ -1072,28 +1072,15 @@ const DataInquiry = () => {
         attachment_url: attachmentUrl
       });
 
-      // Re-set session before insert to ensure RLS policies work
-      if (parsedUser.type === "admin") {
-        await supabase.rpc("set_admin_session", {
-          admin_id_input: parsedUser.id
-        });
-      } else if (parsedUser.type === "teacher") {
-        await supabase.rpc("set_teacher_session", {
-          teacher_id_input: parsedUser.id
-        });
-      }
-
-      // Insert counseling record
-      const { error } = await supabase
-        .from("career_counseling")
-        .insert({
-          student_id: selectedStudent.student_id,
-          counselor_name: counselorName.trim(),
-          counseling_date: counselingDate,
-          content: counselingContent.trim(),
-          admin_id: parsedUser.id,
-          attachment_url: attachmentUrl
-        });
+      // Insert counseling record using RPC function
+      const { data: recordId, error } = await supabase.rpc("insert_counseling_record", {
+        p_student_id: selectedStudent.student_id,
+        p_counselor_name: counselorName.trim(),
+        p_counseling_date: counselingDate,
+        p_content: counselingContent.trim(),
+        p_admin_id: parsedUser.id,
+        p_attachment_url: attachmentUrl
+      });
 
       if (error) {
         console.error('Insert error:', error);
