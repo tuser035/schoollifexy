@@ -2623,7 +2623,7 @@ const DataInquiry = () => {
                       </TableHead>
                     )}
                     {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
-                      <TableHead key={col} className="whitespace-nowrap">
+                      <TableHead key={col} className={col === "증명사진" ? "w-16 sm:w-20 md:w-24" : col === "이름" ? "w-16 sm:w-20 md:w-24 whitespace-nowrap" : "whitespace-nowrap"}>
                         <div className="flex items-center gap-2">
                           <span>{col}</span>
                           {selectedTable === "teachers" && (col === "부서" || col === "담당교과" || col === "담임여부" || col === "학과") && (
@@ -2800,26 +2800,26 @@ const DataInquiry = () => {
                           const studentNumber = row["번호"] || "";
                           
                           return (
-                            <TableCell key={col} className="whitespace-nowrap">
+                            <TableCell key={col} className={col === "증명사진" ? "whitespace-nowrap p-2" : col === "이름" ? "whitespace-nowrap max-w-[80px] sm:max-w-[100px] md:max-w-[120px] truncate" : "whitespace-nowrap"}>
                               {isPhotoColumn ? (
-                                <div className="flex flex-col items-center gap-2 py-2">
+                                <div className="flex flex-col items-center gap-1 py-1">
                                   {value && value !== "-" && value !== "null" ? (
                                     <img 
                                       src={value} 
                                       alt={`${studentName} 증명사진`}
-                                      className="w-24 h-32 object-cover rounded border"
+                                      className="w-12 h-16 sm:w-16 sm:h-20 md:w-20 md:h-28 object-cover rounded border"
                                       onError={(e) => {
                                         e.currentTarget.src = "/placeholder.svg";
                                       }}
                                     />
                                   ) : (
-                                    <div className="w-24 h-32 bg-muted rounded border flex items-center justify-center text-muted-foreground text-sm">
+                                    <div className="w-12 h-16 sm:w-16 sm:h-20 md:w-20 md:h-28 bg-muted rounded border flex items-center justify-center text-muted-foreground text-xs">
                                       사진 없음
                                     </div>
                                   )}
                                   <div className="text-center">
-                                    <div className="text-sm font-semibold">{studentGrade}-{studentClass}-{studentNumber}</div>
-                                    <div className="text-sm">{studentName}</div>
+                                    <div className="text-xs sm:text-sm font-semibold">{studentGrade}-{studentClass}-{studentNumber}</div>
+                                    <div className="text-xs sm:text-sm truncate max-w-[60px] sm:max-w-[80px] md:max-w-[100px]">{studentName}</div>
                                   </div>
                                 </div>
                               ) : isPhoneColumn && isValidPhone ? (
