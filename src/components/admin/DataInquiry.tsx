@@ -27,6 +27,7 @@ interface MonthlyStudent {
 }
 
 const DataInquiry = () => {
+  const [userType, setUserType] = useState<"admin" | "teacher">("admin");
   const [selectedTable, setSelectedTable] = useState<TableType>("students");
   const [data, setData] = useState<any[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
@@ -169,6 +170,15 @@ const DataInquiry = () => {
     }
   };
 
+
+  // 사용자 타입 가져오기
+  useEffect(() => {
+    const authUser = localStorage.getItem("auth_user");
+    if (authUser) {
+      const parsedUser = JSON.parse(authUser);
+      setUserType(parsedUser.type);
+    }
+  }, []);
 
   // selectedTable이 변경될 때 그룹 로드
   useEffect(() => {
@@ -2427,9 +2437,9 @@ const DataInquiry = () => {
                 <SelectItem value="students">학생</SelectItem>
                 <SelectItem value="teachers">교사</SelectItem>
                 <SelectItem value="homeroom">담임반</SelectItem>
-                <SelectItem value="merits">상점</SelectItem>
-                <SelectItem value="demerits">벌점</SelectItem>
-                <SelectItem value="monthly">이달의 학생</SelectItem>
+                {userType === "admin" && <SelectItem value="merits">상점</SelectItem>}
+                {userType === "admin" && <SelectItem value="demerits">벌점</SelectItem>}
+                {userType === "admin" && <SelectItem value="monthly">이달의 학생</SelectItem>}
                 <SelectItem value="departments">학과</SelectItem>
               </SelectContent>
             </Select>
