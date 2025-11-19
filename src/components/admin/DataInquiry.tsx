@@ -1569,32 +1569,17 @@ const DataInquiry = () => {
       setColumns(result[0] ? Object.keys(result[0]) : []);
       setOriginalData(result); // 담당교과 필터 목록 업데이트를 위해 originalData 설정
       
-      // 정확한 총 인원수 계산 및 토스트 메시지 표시
-      // 학과 필터는 조인이 필요하므로 RPC 결과 길이를 직접 사용
+      // RPC 결과의 길이를 사용하여 정확한 인원수 표시
       if (deptNameVal) {
         toast.success(`${deptNameVal} 교사: ${result.length}명`);
+      } else if (homeroomVal) {
+        toast.success(`${homeroomVal} 교사: ${result.length}명`);
+      } else if (subjVal) {
+        toast.success(`${subjVal} 교사: ${result.length}명`);
+      } else if (deptVal) {
+        toast.success(`${deptVal} 교사: ${result.length}명`);
       } else {
-        try {
-          let q = supabase.from('teachers').select('*', { count: 'exact', head: true });
-          if (deptVal) q = q.ilike('department', `%${deptVal}%`);
-          if (subjVal) q = q.ilike('subject', `%${subjVal}%`);
-          if (homeroomVal === '담임') q = q.eq('is_homeroom', true);
-          if (homeroomVal === '-') q = q.or('is_homeroom.eq.false,is_homeroom.is.null');
-          const { count: totalCount } = await q;
-          
-          // 필터가 적용된 경우와 전체 조회 구분
-          if (homeroomVal) {
-            toast.success(`${homeroomVal} 교사: ${totalCount ?? result.length}명`);
-          } else if (subjVal) {
-            toast.success(`${subjVal} 교사: ${totalCount ?? result.length}명`);
-          } else if (deptVal) {
-            toast.success(`${deptVal} 교사: ${totalCount ?? result.length}명`);
-          } else {
-            toast.success(`전체 교사 인원: ${totalCount ?? result.length}명`);
-          }
-        } catch {
-          toast.success(`전체 교사 인원: ${result.length}명`);
-        }
+        toast.success(`전체 교사 인원: ${result.length}명`);
       }
     } catch (e: any) {
       console.error(e);
@@ -1816,18 +1801,7 @@ const DataInquiry = () => {
 
         // 전체 교사 인원수 알림 (showToast가 true일 때만)
         if (showToast) {
-          try {
-            let q = supabase.from('teachers').select('*', { count: 'exact', head: true });
-            if (searchText) q = q.or(`name.ilike.%${searchText}%,call_t.ilike.%${searchText}%`);
-            if (searchGrade !== null) q = q.eq('grade', searchGrade);
-            if (searchClass !== null) q = q.eq('class', searchClass);
-            if (searchDept) q = q.ilike('department', `%${searchDept}%`);
-            if (searchSubj) q = q.ilike('subject', `%${searchSubj}%`);
-            const { count: totalCount } = await q;
-            toast.success(`전체 교사 인원: ${totalCount ?? result?.length ?? 0}명`);
-          } catch {
-            toast.success(`전체 교사 인원: ${result?.length ?? 0}명`);
-          }
+          toast.success(`전체 교사 인원: ${result?.length ?? 0}명`);
         }
 
       } else if (selectedTable === "homeroom") {
