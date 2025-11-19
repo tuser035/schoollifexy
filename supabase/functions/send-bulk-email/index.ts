@@ -170,7 +170,6 @@ const handler = async (req: Request): Promise<Response> => {
           from: gmailUser!,
           to: student.email,
           subject: subject,
-          content: body, // Plain text version
           html: htmlBody,
         });
 
