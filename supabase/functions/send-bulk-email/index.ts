@@ -149,7 +149,6 @@ const handler = async (req: Request): Promise<Response> => {
           from: gmailUser!,
           to: student.email,
           subject: subject,
-          content: body,
           html: `
             <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
               <div style="background-color: #ffffff; padding: 20px;">
