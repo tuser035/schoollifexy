@@ -919,8 +919,25 @@ const DataInquiry = () => {
   };
 
   const handleOpenCounselingDialog = (student: MonthlyStudent) => {
+    // Get current logged in user's name
+    const storedUser = localStorage.getItem("auth_user");
+    let defaultCounselorName = "";
+    
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.type === "teacher" && parsedUser.name) {
+          defaultCounselorName = parsedUser.name;
+        } else if (parsedUser.type === "admin" && parsedUser.email) {
+          defaultCounselorName = parsedUser.email;
+        }
+      } catch (e) {
+        console.error("Failed to parse user data:", e);
+      }
+    }
+    
     setSelectedStudent(student);
-    setCounselorName("");
+    setCounselorName(defaultCounselorName);
     setCounselingDate(new Date().toISOString().split('T')[0]);
     setCounselingContent("");
     setAttachmentFile(null);
