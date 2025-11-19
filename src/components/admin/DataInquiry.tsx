@@ -1020,6 +1020,11 @@ const DataInquiry = () => {
         });
       }
 
+      // Set admin session for RLS
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: parsedUser.id
+      });
+
       const { error } = await supabase
         .from("career_counseling")
         .insert({
