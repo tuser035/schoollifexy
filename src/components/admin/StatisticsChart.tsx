@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Download } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const StatisticsChart = () => {
   const [grade, setGrade] = useState<string>("1");
@@ -260,6 +261,34 @@ const StatisticsChart = () => {
                   </LineChart>
                 )}
               </ResponsiveContainer>
+            </div>
+          )}
+
+          {chartData.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold mb-4">월별 상세 데이터</h3>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-center">월</TableHead>
+                      <TableHead className="text-center">상점</TableHead>
+                      <TableHead className="text-center">벌점</TableHead>
+                      <TableHead className="text-center">순점수</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {chartData.map((row) => (
+                      <TableRow key={row.month}>
+                        <TableCell className="text-center font-medium">{row.month}</TableCell>
+                        <TableCell className="text-center text-merit-blue font-semibold">{row.상점}</TableCell>
+                        <TableCell className="text-center text-demerit-orange font-semibold">{row.벌점}</TableCell>
+                        <TableCell className="text-center text-monthly-green font-semibold">{row.순점수}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </CardContent>
