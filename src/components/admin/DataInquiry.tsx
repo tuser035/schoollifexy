@@ -1015,26 +1015,37 @@ const DataInquiry = () => {
 
       let attachmentUrl = null;
 
-      // 첨부 파일 업로드
+      // 첨부 파일 업로드 (Edge Function 사용)
       if (attachmentFile) {
-        const fileExt = attachmentFile.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `counseling/${fileName}`;
+        const reader = new FileReader();
+        const fileBase64 = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(attachmentFile);
+        });
 
-        const { error: uploadError } = await supabase.storage
-          .from('counseling-attachments')
-          .upload(filePath, attachmentFile);
+        const uploadResponse = await supabase.functions.invoke('upload-counseling-attachment', {
+          body: {
+            admin_id: parsedUser.id,
+            filename: attachmentFile.name,
+            file_base64: fileBase64,
+            content_type: attachmentFile.type,
+          },
+        });
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw uploadError;
+        console.log('Upload response:', uploadResponse);
+
+        if (uploadResponse.error) {
+          console.error('Upload error:', uploadResponse.error);
+          throw new Error('파일 업로드 중 오류가 발생했습니다');
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('counseling-attachments')
-          .getPublicUrl(filePath);
+        if (!uploadResponse.data?.ok) {
+          console.error('Upload failed:', uploadResponse.data);
+          throw new Error(uploadResponse.data?.error || '파일 업로드 실패');
+        }
 
-        attachmentUrl = publicUrl;
+        attachmentUrl = uploadResponse.data.publicUrl;
       }
 
       console.log('Inserting counseling record:', {
