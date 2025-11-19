@@ -971,31 +971,18 @@ export type Database = {
         }
         Returns: string
       }
-      insert_monthly_recommendation:
-        | {
-            Args: {
-              category_input: string
-              image_url_input: string
-              month_input: number
-              reason_input: string
-              student_id_input: string
-              teacher_id_input: string
-              year_input: number
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              category_input: string
-              image_url_input: string[]
-              month_input: number
-              reason_input: string
-              student_id_input: string
-              teacher_id_input: string
-              year_input: number
-            }
-            Returns: string
-          }
+      insert_monthly_recommendation: {
+        Args: {
+          category_input: string
+          image_url_input: string[]
+          month_input: number
+          reason_input: string
+          student_id_input: string
+          teacher_id_input: string
+          year_input: number
+        }
+        Returns: string
+      }
       log_audit_event: {
         Args: {
           p_action_type: string
