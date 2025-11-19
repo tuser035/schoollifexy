@@ -962,6 +962,17 @@ export type Database = {
           month: number
         }[]
       }
+      get_counseling_records: {
+        Args: { p_admin_id: string; p_student_id: string }
+        Returns: {
+          attachment_url: string
+          content: string
+          counseling_date: string
+          counselor_name: string
+          created_at: string
+          id: string
+        }[]
+      }
       insert_counseling_record: {
         Args: {
           p_admin_id: string
