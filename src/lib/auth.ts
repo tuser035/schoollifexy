@@ -83,8 +83,17 @@ export const loginTeacher = async (phone: string, password: string) => {
 // Admin login
 export const loginAdmin = async (emailOrPhone: string, password: string) => {
   try {
+    // Normalize phone number if not email (remove all non-digits, then format as XXX-XXXX-XXXX)
+    let normalizedInput = emailOrPhone;
+    if (!emailOrPhone.includes('@')) {
+      const digitsOnly = emailOrPhone.replace(/\D/g, '');
+      normalizedInput = digitsOnly.length === 11 
+        ? `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7)}`
+        : emailOrPhone;
+    }
+    
     const { data, error } = await supabase.rpc("admin_login", {
-      email_or_phone_input: emailOrPhone,
+      email_or_phone_input: normalizedInput,
       password_input: password,
     });
 
