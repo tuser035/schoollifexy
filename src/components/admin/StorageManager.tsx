@@ -37,6 +37,15 @@ const StorageManager = () => {
         return;
       }
 
+      // Set admin session for RLS
+      const { error: sessionError } = await supabase.rpc("set_admin_session", {
+        admin_id_input: parsedUser.id
+      });
+
+      if (sessionError) {
+        console.error("세션 설정 오류:", sessionError);
+      }
+
       // evidence-photos 버킷의 모든 파일 조회
       const { data: storageFiles, error: storageError } = await supabase.storage
         .from("evidence-photos")
@@ -80,6 +89,27 @@ const StorageManager = () => {
     if (!deleteFileId) return;
 
     try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      if (parsedUser.type !== "admin") {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
+      // Set admin session for RLS
+      const { error: sessionError } = await supabase.rpc("set_admin_session", {
+        admin_id_input: parsedUser.id
+      });
+
+      if (sessionError) {
+        console.error("세션 설정 오류:", sessionError);
+      }
+
       // Storage에서 파일 삭제
       const { error: storageError } = await supabase.storage
         .from("evidence-photos")
@@ -142,6 +172,27 @@ const StorageManager = () => {
     if (files.length === 0) return;
 
     try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+      if (parsedUser.type !== "admin") {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
+      // Set admin session for RLS
+      const { error: sessionError } = await supabase.rpc("set_admin_session", {
+        admin_id_input: parsedUser.id
+      });
+
+      if (sessionError) {
+        console.error("세션 설정 오류:", sessionError);
+      }
+
       const fileCount = files.length;
       const fileNames = files.map(file => file.name);
       
