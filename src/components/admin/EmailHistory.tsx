@@ -20,6 +20,8 @@ interface EmailHistoryRecord {
   subject: string;
   body: string;
   sent_at: string;
+  opened?: boolean;
+  opened_at?: string;
 }
 
 export const EmailHistory = () => {
@@ -150,13 +152,14 @@ export const EmailHistory = () => {
                   <TableHead>수신자</TableHead>
                   <TableHead>이메일</TableHead>
                   <TableHead>제목</TableHead>
+                  <TableHead>읽음 상태</TableHead>
                   <TableHead>상세</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       이메일 발송 이력이 없습니다
                     </TableCell>
                   </TableRow>
@@ -172,6 +175,20 @@ export const EmailHistory = () => {
                       <TableCell>{record.recipient_name}</TableCell>
                       <TableCell>{record.recipient_email}</TableCell>
                       <TableCell className="max-w-xs truncate">{record.subject}</TableCell>
+                      <TableCell>
+                        {record.opened ? (
+                          <div className="flex flex-col text-sm">
+                            <span className="text-green-600 font-medium">✓ 읽음</span>
+                            {record.opened_at && (
+                              <span className="text-muted-foreground text-xs">
+                                {format(new Date(record.opened_at), "MM/dd HH:mm", { locale: ko })}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">미열람</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="outline"

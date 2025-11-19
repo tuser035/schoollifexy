@@ -199,9 +199,12 @@ export type Database = {
           body: string
           created_at: string | null
           id: string
+          opened: boolean | null
+          opened_at: string | null
           recipient_email: string
           recipient_name: string
           recipient_student_id: string | null
+          resend_email_id: string | null
           sender_id: string
           sender_name: string
           sender_type: string
@@ -212,9 +215,12 @@ export type Database = {
           body: string
           created_at?: string | null
           id?: string
+          opened?: boolean | null
+          opened_at?: string | null
           recipient_email: string
           recipient_name: string
           recipient_student_id?: string | null
+          resend_email_id?: string | null
           sender_id: string
           sender_name: string
           sender_type: string
@@ -225,9 +231,12 @@ export type Database = {
           body?: string
           created_at?: string | null
           id?: string
+          opened?: boolean | null
+          opened_at?: string | null
           recipient_email?: string
           recipient_name?: string
           recipient_student_id?: string | null
+          resend_email_id?: string | null
           sender_id?: string
           sender_name?: string
           sender_type?: string
