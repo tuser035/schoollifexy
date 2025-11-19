@@ -75,6 +75,17 @@ const DataInquiry = () => {
   const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
+  const [isAddTeacherDialogOpen, setIsAddTeacherDialogOpen] = useState(false);
+  const [newTeacher, setNewTeacher] = useState<any>({
+    name: "",
+    phone: "",
+    email: "",
+    grade: null,
+    class: null,
+    department: "",
+    subject: "",
+    isHomeroom: false
+  });
   const [isStudentEditDialogOpen, setIsStudentEditDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [isSavingStudent, setIsSavingStudent] = useState(false);
@@ -1264,6 +1275,71 @@ const DataInquiry = () => {
     }
   };
 
+  // 교사 추가
+  const handleAddTeacher = async () => {
+    if (!newTeacher.name || !newTeacher.phone || !newTeacher.email) {
+      toast.error("이름, 전화번호, 이메일은 필수 입력 항목입니다");
+      return;
+    }
+
+    setIsSavingTeacher(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const parsedUser = JSON.parse(authUser);
+
+      const { data, error } = await supabase.rpc("admin_insert_teacher", {
+        admin_id_input: parsedUser.id,
+        name_input: newTeacher.name,
+        call_t_input: newTeacher.phone,
+        teacher_email_input: newTeacher.email,
+        grade_input: newTeacher.grade || null,
+        class_input: newTeacher.class || null,
+        is_homeroom_input: newTeacher.isHomeroom,
+        department_input: newTeacher.department || null,
+        subject_input: newTeacher.subject || null
+      });
+
+      if (error) throw error;
+
+      toast.success("교사가 추가되었습니다");
+      setIsAddTeacherDialogOpen(false);
+      setNewTeacher({
+        name: "",
+        phone: "",
+        email: "",
+        grade: null,
+        class: null,
+        department: "",
+        subject: "",
+        isHomeroom: false
+      });
+      
+      // 목록 새로고침
+      handleQuery();
+    } catch (error: any) {
+      console.error("Error adding teacher:", error);
+      
+      if (error.code === '23505') {
+        if (error.message?.includes('call_t') || error.details?.includes('call_t')) {
+          toast.error(`전화번호 ${newTeacher.phone}는 이미 다른 교사가 사용 중입니다`);
+        } else if (error.message?.includes('email') || error.details?.includes('email')) {
+          toast.error(`이메일 ${newTeacher.email}은 이미 다른 교사가 사용 중입니다`);
+        } else {
+          toast.error("중복된 값이 존재합니다");
+        }
+      } else {
+        toast.error("교사 추가에 실패했습니다");
+      }
+    } finally {
+      setIsSavingTeacher(false);
+    }
+  };
+
   // 교사 삭제
   const handleDeleteTeacher = async (teacherName: string, teacherEmail: string) => {
     if (!confirm(`정말로 "${teacherName}" 교사를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
@@ -2395,6 +2471,26 @@ const DataInquiry = () => {
           )}
           {selectedTable === "teachers" && (
             <>
+              {userType === "admin" && (
+                <Button 
+                  variant="default"
+                  onClick={() => {
+                    setNewTeacher({
+                      name: "",
+                      phone: "",
+                      email: "",
+                      grade: null,
+                      class: null,
+                      department: "",
+                      subject: "",
+                      isHomeroom: false
+                    });
+                    setIsAddTeacherDialogOpen(true);
+                  }}
+                >
+                  교사 추가
+                </Button>
+              )}
               {data.length > 0 && (
                 <>
                   <Button 
@@ -3110,6 +3206,123 @@ const DataInquiry = () => {
               disabled={isSavingTeacher}
             >
               {isSavingTeacher ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 교사 추가 다이얼로그 */}
+      <Dialog open={isAddTeacherDialogOpen} onOpenChange={setIsAddTeacherDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0">
+          <DialogHeader className="shrink-0 pb-4">
+            <DialogTitle>교사 추가</DialogTitle>
+            <DialogDescription>새로운 교사를 추가합니다.</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 px-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>이름 *</Label>
+                <Input
+                  value={newTeacher.name}
+                  onChange={(e) => setNewTeacher({...newTeacher, name: e.target.value})}
+                  placeholder="교사명"
+                />
+              </div>
+              <div>
+                <Label>전화번호 *</Label>
+                <Input
+                  value={newTeacher.phone}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    const digitsOnly = value.replace(/\D/g, '');
+                    let formatted = digitsOnly;
+                    
+                    if (digitsOnly.length <= 3) {
+                      formatted = digitsOnly;
+                    } else if (digitsOnly.length <= 7) {
+                      formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`;
+                    } else if (digitsOnly.length <= 11) {
+                      formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7)}`;
+                    } else {
+                      formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7, 11)}`;
+                    }
+                    
+                    setNewTeacher({...newTeacher, phone: formatted});
+                  }}
+                  placeholder="010-0000-0000"
+                  maxLength={13}
+                />
+              </div>
+            </div>
+            <div>
+              <Label>이메일 *</Label>
+              <Input
+                type="email"
+                value={newTeacher.email}
+                onChange={(e) => setNewTeacher({...newTeacher, email: e.target.value})}
+                placeholder="teacher@gbe.kr"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>학년</Label>
+                <Input
+                  type="number"
+                  value={newTeacher.grade || ""}
+                  onChange={(e) => setNewTeacher({...newTeacher, grade: e.target.value ? parseInt(e.target.value) : null})}
+                  placeholder="학년"
+                />
+              </div>
+              <div>
+                <Label>반</Label>
+                <Input
+                  type="number"
+                  value={newTeacher.class || ""}
+                  onChange={(e) => setNewTeacher({...newTeacher, class: e.target.value ? parseInt(e.target.value) : null})}
+                  placeholder="반"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>부서</Label>
+                <Input
+                  value={newTeacher.department}
+                  onChange={(e) => setNewTeacher({...newTeacher, department: e.target.value})}
+                  placeholder="부서"
+                />
+              </div>
+              <div>
+                <Label>담당교과</Label>
+                <Input
+                  value={newTeacher.subject}
+                  onChange={(e) => setNewTeacher({...newTeacher, subject: e.target.value})}
+                  placeholder="담당교과"
+                />
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isHomeroomNew"
+                checked={newTeacher.isHomeroom}
+                onCheckedChange={(checked) => setNewTeacher({...newTeacher, isHomeroom: checked === true})}
+              />
+              <Label htmlFor="isHomeroomNew" className="cursor-pointer">담임 여부</Label>
+            </div>
+          </div>
+          <DialogFooter className="shrink-0 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddTeacherDialogOpen(false)}
+              disabled={isSavingTeacher}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleAddTeacher}
+              disabled={isSavingTeacher}
+            >
+              {isSavingTeacher ? "추가 중..." : "추가"}
             </Button>
           </DialogFooter>
         </DialogContent>
