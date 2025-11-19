@@ -2623,7 +2623,12 @@ const DataInquiry = () => {
                       </TableHead>
                     )}
                     {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => (
-                      <TableHead key={col} className={col === "증명사진" ? "w-16 sm:w-20 md:w-24" : col === "이름" ? "w-16 sm:w-20 md:w-24 whitespace-nowrap" : "whitespace-nowrap"}>
+                      <TableHead key={col} className={
+                        col === "증명사진" ? "w-16 sm:w-20 md:w-24" : 
+                        col === "이름" ? "w-16 sm:w-20 md:w-24 whitespace-nowrap" : 
+                        col === "학년" || col === "반" || col === "번호" ? "w-12 sm:w-14 md:w-16 whitespace-nowrap" : 
+                        "whitespace-nowrap"
+                      }>
                         <div className="flex items-center gap-2">
                           <span>{col}</span>
                           {selectedTable === "teachers" && (col === "부서" || col === "담당교과" || col === "담임여부" || col === "학과") && (
@@ -2800,7 +2805,12 @@ const DataInquiry = () => {
                           const studentNumber = row["번호"] || "";
                           
                           return (
-                            <TableCell key={col} className={col === "증명사진" ? "whitespace-nowrap p-2" : col === "이름" ? "whitespace-nowrap max-w-[80px] sm:max-w-[100px] md:max-w-[120px] truncate" : "whitespace-nowrap"}>
+                            <TableCell key={col} className={
+                              col === "증명사진" ? "whitespace-nowrap p-2" : 
+                              col === "이름" ? "whitespace-nowrap max-w-[80px] sm:max-w-[100px] md:max-w-[120px] truncate" : 
+                              col === "학년" || col === "반" || col === "번호" ? "whitespace-nowrap text-center p-2" : 
+                              "whitespace-nowrap"
+                            }>
                               {isPhotoColumn ? (
                                 <div className="flex flex-col items-center gap-1 py-1">
                                   {value && value !== "-" && value !== "null" ? (
