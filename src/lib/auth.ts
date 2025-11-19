@@ -81,10 +81,10 @@ export const loginTeacher = async (phone: string, password: string) => {
 };
 
 // Admin login
-export const loginAdmin = async (email: string, password: string) => {
+export const loginAdmin = async (emailOrPhone: string, password: string) => {
   try {
     const { data, error } = await supabase.rpc("admin_login", {
-      email_input: email,
+      email_or_phone_input: emailOrPhone,
       password_input: password,
     });
 

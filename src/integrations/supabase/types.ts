@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       admins: {
         Row: {
+          call_a: string | null
           created_at: string | null
           email: string
           id: string
@@ -24,6 +25,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          call_a?: string | null
           created_at?: string | null
           email: string
           id?: string
@@ -32,6 +34,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          call_a?: string | null
           created_at?: string | null
           email?: string
           id?: string
@@ -912,7 +915,7 @@ export type Database = {
         Returns: string
       }
       admin_login: {
-        Args: { email_input: string; password_input: string }
+        Args: { email_or_phone_input: string; password_input: string }
         Returns: Json
       }
       admin_update_email_template: {
