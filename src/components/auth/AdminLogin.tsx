@@ -44,23 +44,32 @@ const AdminLogin = () => {
             // 이메일 형식이면 그대로 사용
             if (value.includes('@')) {
               setEmailOrPhone(value);
-            } else {
-              // 전화번호 형식이면 자동으로 하이픈 추가
-              const digitsOnly = value.replace(/\D/g, '');
-              let formatted = digitsOnly;
-              
-              if (digitsOnly.length <= 3) {
-                formatted = digitsOnly;
-              } else if (digitsOnly.length <= 7) {
-                formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`;
-              } else if (digitsOnly.length <= 11) {
-                formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7)}`;
-              } else {
-                formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7, 11)}`;
-              }
-              
-              setEmailOrPhone(formatted);
+              return;
             }
+            
+            // 숫자가 하나라도 있으면 전화번호로 처리
+            const hasDigit = /\d/.test(value);
+            if (!hasDigit) {
+              // 숫자가 없으면 그대로 입력 (이메일 입력 중)
+              setEmailOrPhone(value);
+              return;
+            }
+            
+            // 전화번호 형식이면 자동으로 하이픈 추가
+            const digitsOnly = value.replace(/\D/g, '');
+            let formatted = digitsOnly;
+            
+            if (digitsOnly.length <= 3) {
+              formatted = digitsOnly;
+            } else if (digitsOnly.length <= 7) {
+              formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`;
+            } else if (digitsOnly.length <= 11) {
+              formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7)}`;
+            } else {
+              formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 7)}-${digitsOnly.slice(7, 11)}`;
+            }
+            
+            setEmailOrPhone(formatted);
           }}
           required
         />
