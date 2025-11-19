@@ -1022,6 +1022,49 @@ export type Database = {
         Args: { teacher_id_input: string }
         Returns: undefined
       }
+      student_get_demerits: {
+        Args: { student_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          image_url: string[]
+          reason: string
+          score: number
+          student_id: string
+          teacher_id: string
+          teacher_name: string
+        }[]
+      }
+      student_get_merits: {
+        Args: { student_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          image_url: string[]
+          reason: string
+          score: number
+          student_id: string
+          teacher_id: string
+          teacher_name: string
+        }[]
+      }
+      student_get_monthly: {
+        Args: { student_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          image_url: string[]
+          month: number
+          reason: string
+          student_id: string
+          teacher_id: string
+          teacher_name: string
+          year: number
+        }[]
+      }
       student_login: {
         Args: { password_input: string; student_id_input: string }
         Returns: Json
