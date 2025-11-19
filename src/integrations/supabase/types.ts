@@ -962,6 +962,17 @@ export type Database = {
           month: number
         }[]
       }
+      insert_counseling_record: {
+        Args: {
+          p_admin_id: string
+          p_attachment_url?: string
+          p_content: string
+          p_counseling_date: string
+          p_counselor_name: string
+          p_student_id: string
+        }
+        Returns: string
+      }
       insert_demerit: {
         Args: {
           p_category: string
