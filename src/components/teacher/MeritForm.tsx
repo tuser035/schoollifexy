@@ -477,11 +477,11 @@ const MeritForm = () => {
           {imagePreview && (
             <Card>
               <CardContent className="p-4">
-                <div className="relative">
+                <div className="relative inline-block">
                   <img
                     src={imagePreview}
                     alt="증빙 사진"
-                    className="w-full h-auto max-h-[300px] sm:max-h-[400px] md:max-h-[500px] object-contain rounded"
+                    className="w-[50px] h-[50px] object-cover rounded border-2 border-border"
                   />
                   <Button
                     type="button"
