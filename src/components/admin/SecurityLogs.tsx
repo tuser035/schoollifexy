@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, AlertTriangle, CheckCircle, XCircle, Search } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle, XCircle, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -28,6 +29,7 @@ export const SecurityLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [userTypeFilter, setUserTypeFilter] = useState<string>("all");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchLogs();
@@ -37,7 +39,7 @@ export const SecurityLogs = () => {
     try {
       setLoading(true);
       
-      // Set admin session for RLS
+      // Get admin user
       const authUser = localStorage.getItem("auth_user");
       if (!authUser) {
         toast.error("관리자 인증이 필요합니다");
@@ -50,15 +52,11 @@ export const SecurityLogs = () => {
         return;
       }
       
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: user.id
+      // Fetch audit logs using RPC function
+      const { data, error } = await supabase.rpc("get_audit_logs", {
+        p_admin_id: user.id,
+        p_limit: 100
       });
-      
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
 
       if (error) throw error;
       setLogs(data || []);
@@ -95,6 +93,42 @@ export const SecurityLogs = () => {
     if (userType === "admin") return <Badge variant="secondary">관리자</Badge>;
     if (userType === "system") return <Badge variant="outline">시스템</Badge>;
     return <Badge variant="outline">{userType}</Badge>;
+  };
+
+  const handleDeleteOldLogs = async (daysOld: number) => {
+    if (!confirm(`${daysOld}일 이전의 로그를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("관리자 인증이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      if (user.type !== "admin") {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
+      const { data: deletedCount, error } = await supabase.rpc("delete_old_audit_logs", {
+        p_admin_id: user.id,
+        p_days_old: daysOld
+      });
+
+      if (error) throw error;
+
+      toast.success(`${deletedCount}건의 로그가 삭제되었습니다`);
+      fetchLogs(); // 목록 새로고침
+    } catch (error: any) {
+      console.error("Error deleting logs:", error);
+      toast.error("로그 삭제에 실패했습니다");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredLogs = logs.filter((log) => {
@@ -149,10 +183,34 @@ export const SecurityLogs = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>보안 감사 로그</CardTitle>
-          <CardDescription>
-            시스템의 모든 로그인 시도와 데이터 변경 이력을 확인할 수 있습니다
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>보안 감사 로그</CardTitle>
+              <CardDescription>
+                시스템의 모든 로그인 시도와 데이터 변경 이력을 확인할 수 있습니다
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDeleteOldLogs(90)}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                90일 이전 삭제
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDeleteOldLogs(30)}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                30일 이전 삭제
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 mb-4">

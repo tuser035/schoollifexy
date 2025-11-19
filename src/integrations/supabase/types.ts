@@ -953,6 +953,28 @@ export type Database = {
         Args: { p_admin_id: string; p_record_id: string }
         Returns: boolean
       }
+      delete_old_audit_logs: {
+        Args: { p_admin_id: string; p_days_old?: number }
+        Returns: number
+      }
+      get_audit_logs: {
+        Args: { p_admin_id: string; p_limit?: number }
+        Returns: {
+          action_type: string
+          created_at: string
+          error_message: string
+          id: string
+          ip_address: string
+          new_data: Json
+          old_data: Json
+          record_id: string
+          status: string
+          table_name: string
+          user_agent: string
+          user_id: string
+          user_type: string
+        }[]
+      }
       get_class_monthly_statistics: {
         Args: {
           class_input: number
