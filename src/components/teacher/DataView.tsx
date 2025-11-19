@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,16 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, Award, AlertCircle, Star, TrendingUp } from "lucide-react";
+import { Download } from "lucide-react";
 
 type TableType = "merits" | "demerits" | "monthly";
-
-interface DashboardStats {
-  totalMerits: number;
-  totalDemerits: number;
-  totalMonthly: number;
-  recentActivity: number;
-}
 
 const DataView = () => {
   const [selectedTable, setSelectedTable] = useState<TableType>("merits");
@@ -25,68 +18,6 @@ const DataView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [gradeFilter, setGradeFilter] = useState<string>("");
   const [classFilter, setClassFilter] = useState<string>("");
-  const [stats, setStats] = useState<DashboardStats>({
-    totalMerits: 0,
-    totalDemerits: 0,
-    totalMonthly: 0,
-    recentActivity: 0
-  });
-
-  useEffect(() => {
-    loadDashboardStats();
-  }, []);
-
-  const loadDashboardStats = async () => {
-    try {
-      const authUser = localStorage.getItem("auth_user");
-      if (!authUser) return;
-
-      const parsedUser = JSON.parse(authUser);
-      if (parsedUser.type !== "teacher" || !parsedUser.id) return;
-
-      // Set teacher session
-      await supabase.rpc("set_teacher_session", {
-        teacher_id_input: parsedUser.id
-      });
-
-      // Get merits count
-      const { count: meritsCount } = await supabase
-        .from("merits")
-        .select("*", { count: "exact", head: true })
-        .eq("teacher_id", parsedUser.id);
-
-      // Get demerits count
-      const { count: demeritsCount } = await supabase
-        .from("demerits")
-        .select("*", { count: "exact", head: true })
-        .eq("teacher_id", parsedUser.id);
-
-      // Get monthly count
-      const { count: monthlyCount } = await supabase
-        .from("monthly")
-        .select("*", { count: "exact", head: true })
-        .eq("teacher_id", parsedUser.id);
-
-      // Get recent activity (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-      const { count: recentCount } = await supabase
-        .from("merits")
-        .select("*", { count: "exact", head: true })
-        .eq("teacher_id", parsedUser.id)
-        .gte("created_at", sevenDaysAgo.toISOString());
-
-      setStats({
-        totalMerits: meritsCount || 0,
-        totalDemerits: demeritsCount || 0,
-        totalMonthly: monthlyCount || 0,
-        recentActivity: recentCount || 0
-      });
-    } catch (error) {
-      console.error("Failed to load stats:", error);
-    }
-  };
 
   const handleQuery = async () => {
     if (!searchTerm && !gradeFilter && !classFilter) {
@@ -238,60 +169,11 @@ const DataView = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Dashboard Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">부여한 상점</CardTitle>
-            <Award className="h-4 w-4 text-merit-blue" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-merit-blue">{stats.totalMerits}</div>
-            <p className="text-xs text-muted-foreground">누적 상점 부여 건수</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">부여한 벌점</CardTitle>
-            <AlertCircle className="h-4 w-4 text-demerit-orange" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-demerit-orange">{stats.totalDemerits}</div>
-            <p className="text-xs text-muted-foreground">누적 벌점 부여 건수</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">이달의 학생 추천</CardTitle>
-            <Star className="h-4 w-4 text-monthly-green" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-monthly-green">{stats.totalMonthly}</div>
-            <p className="text-xs text-muted-foreground">누적 추천 건수</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">최근 7일 활동</CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.recentActivity}</div>
-            <p className="text-xs text-muted-foreground">최근 상점 부여 건수</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Data Query Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>데이터 조회</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>데이터 조회</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <Select value={selectedTable} onValueChange={(val) => setSelectedTable(val as TableType)}>
             <SelectTrigger className="w-full sm:w-[200px]">
@@ -374,7 +256,6 @@ const DataView = () => {
         )}
       </CardContent>
     </Card>
-    </div>
   );
 };
 
