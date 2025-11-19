@@ -994,6 +994,7 @@ const DataInquiry = () => {
       }
 
       // Set admin or teacher session for RLS
+      console.log('User info:', parsedUser);
       if (parsedUser.type === "admin") {
         await supabase.rpc("set_admin_session", {
           admin_id_input: parsedUser.id
@@ -1013,27 +1014,29 @@ const DataInquiry = () => {
         const filePath = `counseling/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('evidence-photos')
+          .from('counseling-attachments')
           .upload(filePath, attachmentFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
-          .from('evidence-photos')
+          .from('counseling-attachments')
           .getPublicUrl(filePath);
 
         attachmentUrl = publicUrl;
-
-        // 파일 메타데이터 저장
-        await supabase.from('file_metadata').insert({
-          storage_path: filePath,
-          original_filename: attachmentFile.name,
-          file_size: attachmentFile.size,
-          mime_type: attachmentFile.type,
-          bucket_name: 'evidence-photos',
-          uploaded_by: parsedUser.id
-        });
       }
+
+      console.log('Inserting counseling record:', {
+        student_id: selectedStudent.student_id,
+        counselor_name: counselorName.trim(),
+        counseling_date: counselingDate,
+        content: counselingContent.trim(),
+        admin_id: parsedUser.id,
+        attachment_url: attachmentUrl
+      });
 
       const { error } = await supabase
         .from("career_counseling")
@@ -1046,7 +1049,10 @@ const DataInquiry = () => {
           attachment_url: attachmentUrl
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Insert error:', error);
+        throw error;
+      }
 
       toast.success("상담 기록이 저장되었습니다");
       setIsCounselingDialogOpen(false);
