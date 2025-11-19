@@ -49,13 +49,15 @@ const DataExport = () => {
           }
 
           if (data && data.length > 0) {
-            // CSV로 변환
+            // BOM 추가 (한글 깨짐 방지)
+            const BOM = "\uFEFF";
             const csv = Papa.unparse(data);
-            zip.file(`${tableName}.csv`, csv);
+            zip.file(`${tableName}.csv`, BOM + csv);
             successCount++;
           } else {
             // 빈 테이블도 포함 (헤더만)
-            zip.file(`${tableName}.csv`, "");
+            const BOM = "\uFEFF";
+            zip.file(`${tableName}.csv`, BOM);
             successCount++;
           }
         } catch (err) {
