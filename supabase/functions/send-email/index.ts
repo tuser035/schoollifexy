@@ -112,6 +112,7 @@ const handler = async (req: Request): Promise<Response> => {
           subject: template.subject,
           body: template.body,
           sent_at: new Date().toISOString(),
+          resend_email_id: emailResponse.data?.id || null,
         });
       } catch (error: any) {
         console.error(`Failed to send email to ${student.name}:`, error);

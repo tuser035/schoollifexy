@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.1";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const gmailUser = Deno.env.get("GMAIL_USER") || "noreply@school-point.com";
+const fromEmail = "onboarding@resend.dev"; // Resend 인증된 테스트 이메일
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -151,7 +151,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Resend API로 메일 발송
         const { data: emailData, error: emailError } = await resend.emails.send({
-          from: gmailUser,
+          from: fromEmail,
           to: student.email,
           subject: subject,
           html: htmlBody,
