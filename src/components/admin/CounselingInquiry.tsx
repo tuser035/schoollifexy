@@ -86,9 +86,15 @@ const CounselingInquiry = () => {
         query = query.or(`student_id.eq.${input},name.ilike.%${input}%`);
       }
 
-      const { data: studentData, error: studentError } = await query.limit(1).single();
+      const { data: studentData, error: studentError } = await query.limit(1).maybeSingle();
 
-      if (studentError || !studentData) {
+      if (studentError) {
+        console.error('Student query error:', studentError);
+        toast.error("학생 조회 중 오류가 발생했습니다");
+        return;
+      }
+
+      if (!studentData) {
         toast.error("해당 학생을 찾을 수 없습니다");
         setRecords([]);
         setStudentName("");
@@ -105,14 +111,20 @@ const CounselingInquiry = () => {
         student_id_input: studentData.student_id
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Counseling records query error:', error);
+        throw error;
+      }
 
       setRecords(data || []);
 
       if (!data || data.length === 0) {
         toast.info("상담 기록이 없습니다");
+      } else {
+        toast.success(`${data.length}건의 상담 기록을 찾았습니다`);
       }
     } catch (error: any) {
+      console.error('Query error:', error);
       toast.error(error.message || "조회에 실패했습니다");
     } finally {
       setIsLoading(false);
