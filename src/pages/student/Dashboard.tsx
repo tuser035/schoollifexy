@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Award, AlertCircle, Star, LogOut, ImageIcon } from "lucide-react";
+import { Award, AlertCircle, Star, LogOut, ImageIcon, Download } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import Papa from "papaparse";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -101,6 +102,60 @@ const StudentDashboard = () => {
   const handleImageClick = (imageUrl: string) => {
     setSelectedImage(imageUrl);
     setIsImageDialogOpen(true);
+  };
+
+  const downloadCSV = (data: any[], type: 'merits' | 'demerits' | 'monthly') => {
+    let csvData: any[] = [];
+    let filename = '';
+
+    if (type === 'merits') {
+      csvData = data.map(item => ({
+        '날짜': new Date(item.created_at).toLocaleDateString(),
+        '교사': item.teachers?.name || '-',
+        '카테고리': item.category,
+        '사유': item.reason || '-',
+        '점수': item.score,
+      }));
+      filename = `${user?.name}(${user?.studentId})_상점.csv`;
+    } else if (type === 'demerits') {
+      csvData = data.map(item => ({
+        '날짜': new Date(item.created_at).toLocaleDateString(),
+        '교사': item.teachers?.name || '-',
+        '카테고리': item.category,
+        '사유': item.reason || '-',
+        '점수': item.score,
+      }));
+      filename = `${user?.name}(${user?.studentId})_벌점.csv`;
+    } else if (type === 'monthly') {
+      csvData = data.map(item => ({
+        '년도': item.year,
+        '월': item.month,
+        '교사': item.teachers?.name || '-',
+        '카테고리': item.category || '-',
+        '사유': item.reason || '-',
+      }));
+      filename = `${user?.name}(${user?.studentId})_이달의학생.csv`;
+    }
+
+    const csv = Papa.unparse(csvData, {
+      quotes: true,
+      delimiter: ',',
+    });
+
+    // UTF-8 BOM 추가 (엑셀에서 한글 깨짐 방지)
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success('CSV 파일이 다운로드되었습니다');
   };
 
   if (!user) {
@@ -210,6 +265,17 @@ const StudentDashboard = () => {
                 </TabsList>
 
                 <TabsContent value="merits">
+                  <div className="flex justify-end mb-4">
+                    <Button 
+                      onClick={() => downloadCSV(merits, 'merits')}
+                      variant="outline"
+                      size="sm"
+                      disabled={merits.length === 0}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      CSV 다운로드
+                    </Button>
+                  </div>
                   <div className="border rounded-lg overflow-auto">
                     <Table>
                       <TableHeader>
@@ -260,6 +326,17 @@ const StudentDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="demerits">
+                  <div className="flex justify-end mb-4">
+                    <Button 
+                      onClick={() => downloadCSV(demerits, 'demerits')}
+                      variant="outline"
+                      size="sm"
+                      disabled={demerits.length === 0}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      CSV 다운로드
+                    </Button>
+                  </div>
                   <div className="border rounded-lg overflow-auto">
                     <Table>
                       <TableHeader>
@@ -310,6 +387,17 @@ const StudentDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="monthly">
+                  <div className="flex justify-end mb-4">
+                    <Button 
+                      onClick={() => downloadCSV(monthly, 'monthly')}
+                      variant="outline"
+                      size="sm"
+                      disabled={monthly.length === 0}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      CSV 다운로드
+                    </Button>
+                  </div>
                   <div className="border rounded-lg overflow-auto">
                     <Table>
                       <TableHeader>
