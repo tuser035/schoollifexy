@@ -949,6 +949,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      delete_counseling_record: {
+        Args: { p_admin_id: string; p_record_id: string }
+        Returns: boolean
+      }
       get_class_monthly_statistics: {
         Args: {
           class_input: number
@@ -1098,6 +1102,17 @@ export type Database = {
       }
       update_admin_password: {
         Args: { admin_id_input: string; new_password: string }
+        Returns: boolean
+      }
+      update_counseling_record: {
+        Args: {
+          p_admin_id: string
+          p_attachment_url?: string
+          p_content: string
+          p_counseling_date: string
+          p_counselor_name: string
+          p_record_id: string
+        }
         Returns: boolean
       }
       update_student_password: {

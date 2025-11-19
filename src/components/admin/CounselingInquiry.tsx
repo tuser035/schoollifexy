@@ -195,11 +195,6 @@ const CounselingInquiry = () => {
         return;
       }
 
-      // Set admin session for RLS
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: parsedUser.id
-      });
-
       let attachmentUrl = selectedRecord.attachment_url;
 
       // Upload new file if selected
@@ -227,15 +222,15 @@ const CounselingInquiry = () => {
         setIsUploading(false);
       }
 
-      const { error } = await supabase
-        .from("career_counseling")
-        .update({
-          counselor_name: editCounselorName.trim(),
-          counseling_date: editCounselingDate,
-          content: editCounselingContent.trim(),
-          attachment_url: attachmentUrl
-        })
-        .eq("id", selectedRecord.id);
+      // Update counseling record using RPC function
+      const { data, error } = await supabase.rpc("update_counseling_record", {
+        p_admin_id: parsedUser.id,
+        p_record_id: selectedRecord.id,
+        p_counselor_name: editCounselorName.trim(),
+        p_counseling_date: editCounselingDate,
+        p_content: editCounselingContent.trim(),
+        p_attachment_url: attachmentUrl
+      });
 
       if (error) throw error;
 
@@ -274,15 +269,11 @@ const CounselingInquiry = () => {
         return;
       }
 
-      // Set admin session for RLS
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: parsedUser.id
+      // Delete counseling record using RPC function
+      const { data, error } = await supabase.rpc("delete_counseling_record", {
+        p_admin_id: parsedUser.id,
+        p_record_id: recordToDelete.id
       });
-
-      const { error } = await supabase
-        .from("career_counseling")
-        .delete()
-        .eq("id", recordToDelete.id);
 
       if (error) throw error;
 
