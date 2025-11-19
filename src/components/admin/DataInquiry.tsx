@@ -1302,6 +1302,7 @@ const DataInquiry = () => {
         class_input: newTeacher.class || null,
         is_homeroom_input: newTeacher.isHomeroom,
         is_admin_input: newTeacher.isAdmin || false,
+        dept_code_input: null,
         department_input: newTeacher.department || null,
         subject_input: newTeacher.subject || null
       });

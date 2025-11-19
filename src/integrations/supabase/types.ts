@@ -899,21 +899,38 @@ export type Database = {
         }
         Returns: string
       }
-      admin_insert_teacher: {
-        Args: {
-          admin_id_input: string
-          call_t_input: string
-          class_input?: number
-          department_input?: string
-          dept_code_input?: string
-          grade_input?: number
-          is_homeroom_input?: boolean
-          name_input: string
-          subject_input?: string
-          teacher_email_input: string
-        }
-        Returns: string
-      }
+      admin_insert_teacher:
+        | {
+            Args: {
+              admin_id_input: string
+              call_t_input: string
+              class_input?: number
+              department_input?: string
+              dept_code_input?: string
+              grade_input?: number
+              is_admin_input?: boolean
+              is_homeroom_input?: boolean
+              name_input: string
+              subject_input?: string
+              teacher_email_input: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              admin_id_input: string
+              call_t_input: string
+              class_input?: number
+              department_input?: string
+              dept_code_input?: string
+              grade_input?: number
+              is_homeroom_input?: boolean
+              name_input: string
+              subject_input?: string
+              teacher_email_input: string
+            }
+            Returns: string
+          }
       admin_login: {
         Args: { email_or_phone_input: string; password_input: string }
         Returns: Json
