@@ -17,6 +17,16 @@ const DataExport = () => {
     try {
       const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
       
+      if (!user.id || user.type !== "admin") {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
+      // Set admin session for RLS
+      await supabase.rpc("set_admin_session", {
+        admin_id_input: user.id
+      });
+      
       // 모든 테이블 목록
       const tables = [
         "students",
