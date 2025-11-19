@@ -97,8 +97,8 @@ const MeritForm = () => {
   const [additionalReason, setAdditionalReason] = useState("");
   const [selectedScore, setSelectedScore] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [imageLoading, setImageLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -205,25 +205,28 @@ const MeritForm = () => {
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
       setImageLoading(true);
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        setImageLoading(false);
-        if (selectedScore > 0) {
-          toast.success(`${selectedScore}점 부여 됩니다`);
-        }
-      };
-      reader.readAsDataURL(file);
+      setImageFiles(prev => [...prev, ...files]);
+      
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviews(prev => [...prev, reader.result as string]);
+          setImageLoading(false);
+          if (selectedScore > 0) {
+            toast.success(`${selectedScore}점 부여 됩니다`);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const handleRemoveImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
+  const handleRemoveImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
     setImageLoading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (cameraInputRef.current) cameraInputRef.current.value = "";
@@ -256,35 +259,37 @@ const MeritForm = () => {
         throw new Error('세션 설정 중 오류가 발생했습니다');
       }
 
-      let imageUrl = null;
+      let imageUrls: string[] = [];
 
-      // Upload image if exists
-      if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
+      // Upload images if exist
+      if (imageFiles.length > 0) {
+        for (const imageFile of imageFiles) {
+          const fileExt = imageFile.name.split('.').pop();
+          const fileName = `${user.id}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('evidence-photos')
-          .upload(filePath, imageFile);
+          const { error: uploadError } = await supabase.storage
+            .from('evidence-photos')
+            .upload(filePath, imageFile);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('evidence-photos')
-          .getPublicUrl(filePath);
+          const { data: { publicUrl } } = supabase.storage
+            .from('evidence-photos')
+            .getPublicUrl(filePath);
 
-        imageUrl = publicUrl;
+          imageUrls.push(publicUrl);
 
-        // 파일 메타데이터 저장
-        await supabase.from('file_metadata').insert({
-          storage_path: filePath,
-          original_filename: imageFile.name,
-          file_size: imageFile.size,
-          mime_type: imageFile.type,
-          bucket_name: 'evidence-photos',
-          uploaded_by: user.id
-        });
+          // 파일 메타데이터 저장
+          await supabase.from('file_metadata').insert({
+            storage_path: filePath,
+            original_filename: imageFile.name,
+            file_size: imageFile.size,
+            mime_type: imageFile.type,
+            bucket_name: 'evidence-photos',
+            uploaded_by: user.id
+          });
+        }
       }
 
       const finalReason = additionalReason.trim() 
@@ -299,7 +304,7 @@ const MeritForm = () => {
           category: selectedCategory,
           reason: finalReason,
           score: selectedScore,
-          image_url: imageUrl,
+          image_url: imageUrls.length > 0 ? imageUrls : null,
         });
 
       if (error) throw error;
@@ -314,7 +319,10 @@ const MeritForm = () => {
       setBasicReason("");
       setAdditionalReason("");
       setSelectedScore(0);
-      handleRemoveImage();
+      setImageFiles([]);
+      setImagePreviews([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
     } catch (error: any) {
       toast.error(error.message || "상점 부여에 실패했습니다");
     } finally {
@@ -464,6 +472,7 @@ const MeritForm = () => {
             type="file"
             accept="image/*"
             capture="environment"
+            multiple
             onChange={handleImageSelect}
             className="hidden"
           />
@@ -471,27 +480,32 @@ const MeritForm = () => {
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            multiple
             onChange={handleImageSelect}
             className="hidden"
           />
-          {imagePreview && (
+          {imagePreviews.length > 0 && (
             <Card>
               <CardContent className="p-4">
-                <div className="relative inline-block">
-                  <img
-                    src={imagePreview}
-                    alt="증빙 사진"
-                    className="w-[100px] h-[100px] object-cover rounded border-2 border-border"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={handleRemoveImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                <div className="flex flex-wrap gap-2">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative inline-block">
+                      <img
+                        src={preview}
+                        alt={`증빙 사진 ${index + 1}`}
+                        className="w-[100px] h-[100px] object-cover rounded border-2 border-border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -518,6 +532,11 @@ const MeritForm = () => {
       >
         {isSubmitting ? "부여 중..." : imageLoading ? "사진 로딩 중..." : "상점 부여"}
       </Button>
+      {imagePreviews.length > 0 && (
+        <p className="text-xs text-muted-foreground text-center">
+          {imagePreviews.length}개의 사진이 선택됨
+        </p>
+      )}
     </form>
   );
 };
