@@ -2560,15 +2560,17 @@ const DataInquiry = () => {
           )}
           {selectedTable === "students" && (
             <>
-              <Button 
-                variant="default"
-                onClick={() => {
-                  loadDepartments();
-                  setIsAddStudentDialogOpen(true);
-                }}
-              >
-                신규 학생 추가
-              </Button>
+              {userType === "admin" && (
+                <Button 
+                  variant="default"
+                  onClick={() => {
+                    loadDepartments();
+                    setIsAddStudentDialogOpen(true);
+                  }}
+                >
+                  신규 학생 추가
+                </Button>
+              )}
               {data.length > 0 && (
                 <>
                   <Button 
