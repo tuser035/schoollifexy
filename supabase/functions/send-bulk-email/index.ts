@@ -105,6 +105,10 @@ const handler = async (req: Request): Promise<Response> => {
               password: gmailPassword!,
             },
           },
+          debug: {
+            log: false,
+            allowUnsecure: false,
+          },
         });
 
         // 첨부파일 링크 HTML 생성
@@ -145,26 +149,29 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
+        const htmlBody = `
+          <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <div style="background-color: #ffffff; padding: 20px;">
+              <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${body}</div>
+            </div>
+            
+            ${attachmentHtml}
+            
+            <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
+              <p style="margin: 0 0 10px 0;"><strong>School Point 학생 관리 시스템</strong></p>
+              <p style="margin: 0 0 5px 0;">이 메일은 귀하가 등록한 학생 정보를 기반으로 발송되었습니다.</p>
+              <p style="margin: 0 0 5px 0;">문의사항: gb25tr04@sc.gyo6.net</p>
+              <p style="margin: 0;">수신을 원하지 않으시면 학교에 연락해 주세요.</p>
+            </div>
+          </div>
+        `;
+
         await client.send({
           from: gmailUser!,
           to: student.email,
           subject: subject,
-          html: `
-            <div style="max-width: 600px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <div style="background-color: #ffffff; padding: 20px;">
-                <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${body}</div>
-              </div>
-              
-              ${attachmentHtml}
-              
-              <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
-                <p style="margin: 0 0 10px 0;"><strong>School Point 학생 관리 시스템</strong></p>
-                <p style="margin: 0 0 5px 0;">이 메일은 귀하가 등록한 학생 정보를 기반으로 발송되었습니다.</p>
-                <p style="margin: 0 0 5px 0;">문의사항: gb25tr04@sc.gyo6.net</p>
-                <p style="margin: 0;">수신을 원하지 않으시면 학교에 연락해 주세요.</p>
-              </div>
-            </div>
-          `,
+          content: body, // Plain text version
+          html: htmlBody,
         });
 
         await client.close();
