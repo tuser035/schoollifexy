@@ -46,15 +46,41 @@ const StorageManager = () => {
         console.error("세션 설정 오류:", sessionError);
       }
 
-      // evidence-photos 버킷의 모든 파일 조회
-      const { data: storageFiles, error: storageError } = await supabase.storage
-        .from("evidence-photos")
-        .list("", {
-          limit: 1000,
-          sortBy: { column: "created_at", order: "desc" }
-        });
+      // 재귀적으로 모든 파일을 가져오는 함수
+      const getAllFiles = async (path: string = ""): Promise<FileObject[]> => {
+        const { data, error } = await supabase.storage
+          .from("evidence-photos")
+          .list(path, {
+            limit: 1000,
+            sortBy: { column: "created_at", order: "desc" }
+          });
 
-      if (storageError) throw storageError;
+        if (error) throw error;
+        if (!data) return [];
+
+        let allFiles: FileObject[] = [];
+
+        for (const item of data) {
+          const fullPath = path ? `${path}/${item.name}` : item.name;
+          
+          if (item.id === null) {
+            // 폴더인 경우 재귀적으로 탐색
+            const subFiles = await getAllFiles(fullPath);
+            allFiles = allFiles.concat(subFiles);
+          } else {
+            // 파일인 경우 추가 (전체 경로 포함)
+            allFiles.push({
+              ...item,
+              name: fullPath
+            });
+          }
+        }
+
+        return allFiles;
+      };
+
+      // 모든 파일 가져오기
+      const storageFiles = await getAllFiles();
 
       // 파일 메타데이터 조회
       const { data: metadata, error: metadataError } = await supabase
@@ -71,7 +97,7 @@ const StorageManager = () => {
         metadata?.map(m => [m.storage_path, m.original_filename]) || []
       );
 
-      const filesWithMetadata: FileWithMetadata[] = (storageFiles || []).map(file => ({
+      const filesWithMetadata: FileWithMetadata[] = storageFiles.map(file => ({
         ...file,
         originalFilename: metadataMap.get(file.name)
       }));
@@ -79,6 +105,7 @@ const StorageManager = () => {
       setFiles(filesWithMetadata);
       toast.success(`${filesWithMetadata.length}개의 파일을 불러왔습니다`);
     } catch (error: any) {
+      console.error("파일 로딩 오류:", error);
       toast.error(error.message || "파일 목록 조회에 실패했습니다");
     } finally {
       setIsLoading(false);
