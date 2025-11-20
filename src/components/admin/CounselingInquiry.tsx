@@ -60,14 +60,6 @@ const CounselingInquiry = () => {
       
       // If input is empty, fetch all counseling records using RPC function
       if (!input) {
-        // Get total student count
-        const { data: studentData, error: studentError } = await supabase
-          .rpc('admin_get_students', {
-            admin_id_input: parsedUser.id
-          });
-
-        const totalStudents = studentData?.length || 0;
-
         const { data: allRecords, error: allRecordsError } = await supabase
           .rpc('admin_get_all_counseling_records', {
             admin_id_input: parsedUser.id
@@ -87,8 +79,14 @@ const CounselingInquiry = () => {
           studentId: record.student_id || '-'
         }));
 
+        // Count unique students who have counseling records
+        const uniqueStudents = new Set(
+          transformedRecords.map(r => r.student_id).filter(id => id && id !== '-')
+        );
+        const totalCounseledStudents = uniqueStudents.size;
+
         setRecords(transformedRecords);
-        setStudentName(`전체 학생 (${totalStudents}명)`);
+        setStudentName(`전체 상담 학생 (${totalCounseledStudents}명)`);
         setStudentId("");
         toast.success(`총 ${transformedRecords.length}건의 상담기록을 조회했습니다`);
         setIsLoading(false);
