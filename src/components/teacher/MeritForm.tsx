@@ -258,36 +258,33 @@ const MeritForm = () => {
       if (imageFiles.length > 0) {
         console.log('Starting upload for', imageFiles.length, 'files');
         for (const imageFile of imageFiles) {
-          const fileExt = imageFile.name.split('.').pop();
-          const fileName = `${user.id}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          const filePath = `${fileName}`;
-
-          console.log('Uploading file:', filePath, 'Size:', imageFile.size, 'Type:', imageFile.type);
-          const { error: uploadError } = await supabase.storage
-            .from('evidence-photos')
-            .upload(filePath, imageFile);
-
-          if (uploadError) {
-            console.error('Upload error:', uploadError);
-            throw uploadError;
-          }
-          console.log('Upload successful:', filePath);
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('evidence-photos')
-            .getPublicUrl(filePath);
-
-          imageUrls.push(publicUrl);
-
-          // 파일 메타데이터 저장
-          await supabase.from('file_metadata').insert({
-            storage_path: filePath,
-            original_filename: imageFile.name,
-            file_size: imageFile.size,
-            mime_type: imageFile.type,
-            bucket_name: 'evidence-photos',
-            uploaded_by: user.id
+          console.log('Uploading file:', imageFile.name, 'Size:', imageFile.size, 'Type:', imageFile.type);
+          
+          // Convert file to base64
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(imageFile);
           });
+
+          // Upload via edge function
+          const { data: uploadData, error: uploadError } = await supabase.functions.invoke('upload-evidence-photo', {
+            body: {
+              teacher_id: user.id,
+              filename: imageFile.name,
+              file_base64: base64,
+              content_type: imageFile.type,
+              file_size: imageFile.size
+            }
+          });
+
+          if (uploadError || !uploadData?.ok) {
+            console.error('Upload error:', uploadError || uploadData);
+            throw new Error(uploadData?.error || uploadError?.message || 'Upload failed');
+          }
+
+          console.log('Upload successful:', uploadData.path);
+          imageUrls.push(uploadData.publicUrl);
         }
       }
 

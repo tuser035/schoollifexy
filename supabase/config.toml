@@ -15,4 +15,7 @@ verify_jwt = false
 [functions.upload-counseling-attachment]
 verify_jwt = false
 
+[functions.upload-evidence-photo]
+verify_jwt = false
+
 
