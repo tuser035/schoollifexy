@@ -177,11 +177,9 @@ const BulkUpload = () => {
                 // Convert empty strings to null
                 if (value === '' || value === null) {
                   cleaned[trimmedKey] = null;
-                  return;
                 }
-                
                 // Parse image_url field for merits, demerits, monthly tables
-                if (trimmedKey === 'image_url' && (table === 'merits' || table === 'demerits' || table === 'monthly')) {
+                else if (trimmedKey === 'image_url' && (table === 'merits' || table === 'demerits' || table === 'monthly')) {
                   try {
                     // Check if it's a JSON string array
                     if (typeof value === 'string' && value.startsWith('[')) {
