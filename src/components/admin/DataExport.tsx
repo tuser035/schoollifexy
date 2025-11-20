@@ -9,6 +9,54 @@ import Papa from "papaparse";
 
 const DataExport = () => {
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingSchema, setIsExportingSchema] = useState(false);
+
+  const exportSchema = async () => {
+    setIsExportingSchema(true);
+    
+    try {
+      const user = JSON.parse(localStorage.getItem("auth_user") || "{}");
+      
+      if (!user.id || user.type !== "admin") {
+        toast.error("관리자 권한이 필요합니다");
+        return;
+      }
+
+      // Fetch the database schema file
+      const response = await fetch('/database-schema.sql');
+      if (!response.ok) {
+        throw new Error('스키마 파일을 찾을 수 없습니다');
+      }
+
+      const schemaSQL = await response.text();
+
+      // Add header with admin info
+      const headerSQL = `-- Database Schema Export
+-- Generated: ${new Date().toLocaleString("ko-KR")}
+-- Admin: ${user.email || user.name}
+
+${schemaSQL}`;
+
+      // Create and download file
+      const blob = new Blob([headerSQL], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const timestamp = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `database_schema_${timestamp}.sql`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("스키마가 다운로드되었습니다");
+    } catch (error) {
+      console.error("Schema export error:", error);
+      toast.error("스키마 내보내기 중 오류가 발생했습니다");
+    } finally {
+      setIsExportingSchema(false);
+    }
+  };
 
   const exportAllData = async () => {
     setIsExporting(true);
