@@ -398,8 +398,29 @@ const BulkUpload = () => {
               }
               result = { data: results, error: null };
             } else {
-              // For other tables - just insert
-              result = await supabase.from(table).insert(cleanRecords);
+              // For other tables - directly insert with additional UUID field validation
+              // Final cleanup: ensure all UUID fields are either valid UUIDs or null
+              const finalCleanRecords = cleanRecords.map(record => {
+                const final = { ...record };
+                // List of UUID fields across all tables
+                const uuidFields = ['teacher_id', 'admin_id', 'student_id', 'uploaded_by', 'sender_id'];
+                
+                uuidFields.forEach(field => {
+                  if (field in final) {
+                    const value = final[field];
+                    // If the value is empty string, null, undefined, or whitespace, set to null
+                    if (value === '' || value === null || value === undefined || 
+                        (typeof value === 'string' && value.trim() === '')) {
+                      final[field] = null;
+                    }
+                  }
+                });
+                
+                return final;
+              });
+              
+              console.log('Final cleaned records before insert:', finalCleanRecords);
+              result = await supabase.from(table).insert(finalCleanRecords);
             }
             
             if (result.error) throw result.error;
