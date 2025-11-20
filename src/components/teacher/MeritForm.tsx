@@ -215,9 +215,6 @@ const MeritForm = () => {
         reader.onloadend = () => {
           setImagePreviews(prev => [...prev, reader.result as string]);
           setImageLoading(false);
-          if (selectedScore > 0) {
-            toast.success(`${selectedScore}점 부여 됩니다`);
-          }
         };
         reader.readAsDataURL(file);
       });
