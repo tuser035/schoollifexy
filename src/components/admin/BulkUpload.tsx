@@ -26,25 +26,25 @@ const tables: TableConfig[] = [
   {
     name: "학생",
     table: "students",
-    columns: "student_id, name, grade, class, number, dept_code, student_call, gmail, parents_call1, parents_call2",
+    columns: "student_id, name, grade, class, number, dept_code, student_call, gmail, parents_call1, parents_call2, photo_url",
     color: "border-student-orange",
   },
   {
     name: "교사",
     table: "teachers",
-    columns: "teacher_email, name, grade, class, dept_code, call_t, is_homeroom, department, subject",
+    columns: "teacher_email, name, call_t, grade, class, dept_code, department, subject, is_homeroom, is_admin, photo_url",
     color: "border-teacher-blue",
   },
   {
     name: "상점",
     table: "merits",
-    columns: "student_id, teacher_email, category, reason, score",
+    columns: "student_id, teacher_id, category, reason, score, image_url, created_at",
     color: "border-merit-blue",
   },
   {
     name: "벌점",
     table: "demerits",
-    columns: "student_id, teacher_email, category, reason, score",
+    columns: "student_id, teacher_id, category, reason, score, image_url, created_at",
     color: "border-demerit-orange",
   },
   {
