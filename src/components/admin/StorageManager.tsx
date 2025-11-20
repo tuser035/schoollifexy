@@ -46,60 +46,30 @@ const StorageManager = () => {
         console.error("세션 설정 오류:", sessionError);
       }
 
-      // 재귀적으로 모든 파일을 가져오는 함수
-      const getAllFiles = async (path: string = ""): Promise<FileObject[]> => {
-        const { data, error } = await supabase.storage
-          .from("evidence-photos")
-          .list(path, {
-            limit: 1000,
-            sortBy: { column: "created_at", order: "desc" }
-          });
-
-        if (error) throw error;
-        if (!data) return [];
-
-        let allFiles: FileObject[] = [];
-
-        for (const item of data) {
-          const fullPath = path ? `${path}/${item.name}` : item.name;
-          
-          if (item.id === null) {
-            // 폴더인 경우 재귀적으로 탐색
-            const subFiles = await getAllFiles(fullPath);
-            allFiles = allFiles.concat(subFiles);
-          } else {
-            // 파일인 경우 추가 (전체 경로 포함)
-            allFiles.push({
-              ...item,
-              name: fullPath
-            });
-          }
-        }
-
-        return allFiles;
-      };
-
-      // 모든 파일 가져오기
-      const storageFiles = await getAllFiles();
-
-      // 파일 메타데이터 조회
+      // file_metadata 테이블에서 파일 정보 가져오기
       const { data: metadata, error: metadataError } = await supabase
         .from("file_metadata")
-        .select("storage_path, original_filename")
-        .eq("bucket_name", "evidence-photos");
+        .select("*")
+        .eq("bucket_name", "evidence-photos")
+        .order("created_at", { ascending: false });
 
-      if (metadataError) {
-        console.error("메타데이터 조회 오류:", metadataError);
-      }
+      if (metadataError) throw metadataError;
 
-      // 메타데이터와 파일 정보 매칭
-      const metadataMap = new Map(
-        metadata?.map(m => [m.storage_path, m.original_filename]) || []
-      );
-
-      const filesWithMetadata: FileWithMetadata[] = storageFiles.map(file => ({
-        ...file,
-        originalFilename: metadataMap.get(file.name)
+      // 메타데이터를 FileWithMetadata 형식으로 변환
+      const filesWithMetadata: FileWithMetadata[] = (metadata || []).map(m => ({
+        id: m.id,
+        name: m.storage_path,
+        bucket_id: m.bucket_name,
+        created_at: m.uploaded_at || m.created_at || new Date().toISOString(),
+        updated_at: m.created_at || new Date().toISOString(),
+        last_accessed_at: m.uploaded_at || m.created_at || new Date().toISOString(),
+        owner: m.uploaded_by || null,
+        buckets: null,
+        metadata: {
+          size: m.file_size || 0,
+          mimetype: m.mime_type || 'application/octet-stream'
+        },
+        originalFilename: m.original_filename
       }));
 
       setFiles(filesWithMetadata);
