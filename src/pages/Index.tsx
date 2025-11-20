@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
-import AdminLogin from "@/components/auth/AdminLogin";
 import SystemAdminLogin from "@/components/auth/SystemAdminLogin";
 import { School } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -78,7 +77,7 @@ const Index = () => {
             </div>
 
             <Tabs defaultValue="student" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger 
                   value="student"
                   className="data-[state=active]:bg-student data-[state=active]:text-white"
@@ -91,12 +90,6 @@ const Index = () => {
                 >
                   교사
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="admin"
-                  className="data-[state=active]:bg-admin data-[state=active]:text-white"
-                >
-                  관리자
-                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="student">
@@ -105,10 +98,6 @@ const Index = () => {
 
               <TabsContent value="teacher">
                 <TeacherLogin />
-              </TabsContent>
-
-              <TabsContent value="admin">
-                <AdminLogin />
               </TabsContent>
             </Tabs>
           </div>
