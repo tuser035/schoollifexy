@@ -259,12 +259,20 @@ ${schemaSQL}`;
         <CardContent className="space-y-4">
           <div className="bg-muted/50 p-4 rounded-lg space-y-2">
             <h3 className="font-semibold text-sm">포함되는 스키마:</h3>
-            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-              <li>모든 테이블의 구조 정의 (CREATE TABLE)</li>
-              <li>컬럼 이름, 데이터 타입, 제약조건</li>
-              <li>기본값(DEFAULT) 설정</li>
-              <li>NOT NULL 제약조건</li>
-            </ul>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs text-muted-foreground">
+              <div>• 학생 정보 (students)</div>
+              <div>• 교사 정보 (teachers)</div>
+              <div>• 상점 기록 (merits)</div>
+              <div>• 벌점 기록 (demerits)</div>
+              <div>• 이달의 학생 (monthly)</div>
+              <div>• 진로상담 (career_counseling)</div>
+              <div>• 이메일 기록 (email_history)</div>
+              <div>• 이메일 템플릿 (email_templates)</div>
+              <div>• 학과 정보 (departments)</div>
+              <div>• 학생 그룹 (student_groups)</div>
+              <div>• 교사 그룹 (teacher_groups)</div>
+              <div>• 파일 메타데이터 (file_metadata)</div>
+            </div>
           </div>
 
           <div className="bg-primary/5 p-4 rounded-lg space-y-2 border border-primary/20">
