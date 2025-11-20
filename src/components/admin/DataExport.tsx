@@ -70,31 +70,18 @@ ${schemaSQL}`;
         return;
       }
 
-      // Set admin session for RLS
-      await supabase.rpc("set_admin_session", {
-        admin_id_input: user.id
+      // Call edge function to get all data
+      const response = await supabase.functions.invoke('export-all-data', {
+        body: { adminId: user.id }
       });
-      
-      // 모든 테이블 목록
-      const tables = [
-        "students",
-        "teachers",
-        "merits",
-        "demerits",
-        "monthly",
-        "career_counseling",
-        "email_history",
-        "email_templates",
-        "departments",
-        "student_groups",
-        "teacher_groups",
-        "file_metadata"
-      ] as const;
 
-      let successCount = 0;
-      let errorCount = 0;
+      if (response.error) {
+        throw new Error(response.error.message || '데이터를 가져오는 중 오류가 발생했습니다');
+      }
 
-      // 테이블별 컬럼 순서 정의 (업로드 순서와 일치)
+      const { data: exportData, metadata } = response.data;
+
+      // Define column order for specific tables
       const tableColumns: Record<string, string[]> = {
         students: ["student_id", "name", "grade", "class", "number", "dept_code", "student_call", "gmail", "parents_call1", "parents_call2"],
         teachers: ["teacher_email", "name", "grade", "class", "dept_code", "call_t", "is_homeroom", "department", "subject"],
@@ -103,79 +90,64 @@ ${schemaSQL}`;
         departments: ["code", "name"],
       };
 
-      for (const tableName of tables) {
-        try {
-          const { data, error } = await supabase
-            .from(tableName as any)
-            .select("*");
+      let processedCount = 0;
 
-          if (error) {
-            console.error(`Error fetching ${tableName}:`, error);
-            errorCount++;
-            continue;
-          }
-
-          if (data && data.length > 0) {
-            // 특정 테이블은 컬럼 순서를 맞춤
-            let processedData = data;
-            if (tableColumns[tableName]) {
-              processedData = data.map(row => {
-                const orderedRow: any = {};
-                tableColumns[tableName].forEach(col => {
-                  if (col in row) {
-                    orderedRow[col] = row[col];
-                  }
-                });
-                return orderedRow;
+      // Process each table
+      for (const [tableName, tableData] of Object.entries(exportData)) {
+        if (Array.isArray(tableData) && tableData.length > 0) {
+          // Apply column ordering if defined
+          let processedData = tableData;
+          if (tableColumns[tableName]) {
+            processedData = tableData.map(row => {
+              const orderedRow: any = {};
+              tableColumns[tableName].forEach(col => {
+                if (col in row) {
+                  orderedRow[col] = row[col];
+                }
               });
-            }
-
-            // BOM 추가 (한글 깨짐 방지)
-            const BOM = "\uFEFF";
-            const csv = Papa.unparse(processedData);
-            zip.file(`${tableName}.csv`, BOM + csv);
-            successCount++;
-          } else {
-            // 빈 테이블도 포함 (헤더만)
-            const BOM = "\uFEFF";
-            zip.file(`${tableName}.csv`, BOM);
-            successCount++;
+              return orderedRow;
+            });
           }
-        } catch (err) {
-          console.error(`Error processing ${tableName}:`, err);
-          errorCount++;
+
+          // Add BOM for Korean text support
+          const BOM = "\uFEFF";
+          const csv = Papa.unparse(processedData);
+          zip.file(`${tableName}.csv`, BOM + csv);
+          processedCount++;
+        } else {
+          // Include empty tables with header only
+          const BOM = "\uFEFF";
+          zip.file(`${tableName}.csv`, BOM);
+          processedCount++;
         }
       }
 
-      // 백업 정보 파일 추가
+      // Add backup info
       const backupInfo = {
-        백업일시: new Date().toLocaleString("ko-KR"),
-        관리자: user.email || user.name,
-        테이블수: successCount,
-        실패수: errorCount,
+        백업일시: new Date(metadata.exportDate).toLocaleString("ko-KR"),
+        관리자: metadata.adminEmail,
+        테이블수: processedCount,
         버전: "1.0"
       };
 
       zip.file("backup_info.json", JSON.stringify(backupInfo, null, 2));
 
-      // ZIP 파일 생성 및 다운로드
+      // Generate and download ZIP
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
+      const timestamp = new Date().toISOString().split('T')[0];
       link.href = url;
-      link.download = `database_backup_${new Date().toISOString().split("T")[0]}.zip`;
+      link.download = `school_data_backup_${timestamp}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast.success(`백업 완료: ${successCount}개 테이블 내보내기 성공`);
-      if (errorCount > 0) {
-        toast.warning(`${errorCount}개 테이블 내보내기 실패`);
-      }
+      toast.success(`${processedCount}개 테이블의 데이터가 성공적으로 내보내졌습니다`);
     } catch (error) {
       console.error("Export error:", error);
-      toast.error("데이터 내보내기 실패");
+      toast.error("데이터 내보내기 중 오류가 발생했습니다");
     } finally {
       setIsExporting(false);
     }
