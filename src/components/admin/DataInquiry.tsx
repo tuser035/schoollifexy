@@ -4446,24 +4446,26 @@ const DataInquiry = () => {
 
       {/* 증빙사진 보기 다이얼로그 */}
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>증빙사진</DialogTitle>
             <DialogDescription>
               등록된 증빙사진을 확인할 수 있습니다.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
             {selectedImages.map((imageUrl, index) => (
-              <div key={index} className="border rounded-lg p-2">
-                <img 
-                  src={imageUrl} 
-                  alt={`증빙사진 ${index + 1}`}
-                  className="w-full h-auto rounded"
-                  onError={(e) => {
-                    e.currentTarget.src = "/placeholder.svg";
-                  }}
-                />
+              <div key={index} className="border rounded-lg p-2 flex flex-col">
+                <div className="relative w-full aspect-square">
+                  <img 
+                    src={imageUrl} 
+                    alt={`증빙사진 ${index + 1}`}
+                    className="absolute inset-0 w-full h-full object-contain rounded"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.svg";
+                    }}
+                  />
+                </div>
                 <div className="text-center mt-2 text-sm text-muted-foreground">
                   사진 {index + 1}
                 </div>
