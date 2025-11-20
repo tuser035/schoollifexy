@@ -243,15 +243,47 @@ const BulkUpload = () => {
             // Insert using different methods based on table type
             let result;
             if (table === 'students') {
-              result = await supabase.from(table).upsert(cleanRecords, { 
-                onConflict: 'student_id',
-                ignoreDuplicates: false 
-              });
+              // Use RPC function for students to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_student', {
+                  admin_id_input: user.id,
+                  student_id_input: record.student_id,
+                  name_input: record.name,
+                  grade_input: record.grade,
+                  class_input: record.class,
+                  number_input: record.number,
+                  dept_code_input: record.dept_code || null,
+                  student_call_input: record.student_call || null,
+                  gmail_input: record.gmail || null,
+                  parents_call1_input: record.parents_call1 || null,
+                  parents_call2_input: record.parents_call2 || null
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
             } else if (table === 'teachers') {
-              result = await supabase.from(table).upsert(cleanRecords, { 
-                onConflict: 'teacher_email',
-                ignoreDuplicates: false 
-              });
+              // Use RPC function for teachers to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_teacher', {
+                  admin_id_input: user.id,
+                  name_input: record.name,
+                  call_t_input: record.call_t,
+                  teacher_email_input: record.teacher_email,
+                  grade_input: record.grade || null,
+                  class_input: record.class || null,
+                  is_homeroom_input: record.is_homeroom || false,
+                  is_admin_input: record.is_admin || false,
+                  dept_code_input: record.dept_code || null,
+                  department_input: record.department || null,
+                  subject_input: record.subject || null
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
             } else if (table === 'teacher_groups') {
               // Use RPC function for teacher groups to handle RLS properly
               const results = [];
