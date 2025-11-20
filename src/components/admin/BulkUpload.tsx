@@ -241,6 +241,17 @@ const BulkUpload = () => {
           parents_call1: header.indexOf("parents_call1") !== -1 ? header.indexOf("parents_call1") : header.indexOf("학부모전화1"),
           parents_call2: header.indexOf("parents_call2") !== -1 ? header.indexOf("parents_call2") : header.indexOf("학부모전화2"),
         },
+        teachers: {
+          teacher_email: header.indexOf("teacher_email") !== -1 ? header.indexOf("teacher_email") : header.indexOf("이메일"),
+          name: header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("이름"),
+          grade: header.indexOf("grade") !== -1 ? header.indexOf("grade") : header.indexOf("학년"),
+          class: header.indexOf("class") !== -1 ? header.indexOf("class") : header.indexOf("반"),
+          dept_code: header.indexOf("dept_code") !== -1 ? header.indexOf("dept_code") : header.indexOf("학과"),
+          call_t: header.indexOf("call_t") !== -1 ? header.indexOf("call_t") : header.indexOf("전화번호"),
+          is_homeroom: header.indexOf("is_homeroom") !== -1 ? header.indexOf("is_homeroom") : header.indexOf("담임여부"),
+          department: header.indexOf("department") !== -1 ? header.indexOf("department") : header.indexOf("부서"),
+          subject: header.indexOf("subject") !== -1 ? header.indexOf("subject") : header.indexOf("담당교과"),
+        },
         homeroom: {
           teacher_email: header.indexOf("teacher_email"),
           grade: header.indexOf("grade"),
@@ -248,11 +259,15 @@ const BulkUpload = () => {
           year: header.indexOf("year"),
         },
         points: { // for merits and demerits
-          student_id: header.indexOf("student_id"),
-          teacher_email: header.indexOf("teacher_email"),
-          category: header.indexOf("category"),
-          reason: header.indexOf("reason"),
-          score: header.indexOf("score"),
+          student_id: header.indexOf("student_id") !== -1 ? header.indexOf("student_id") : header.indexOf("학번"),
+          teacher_email: header.indexOf("teacher_email") !== -1 ? header.indexOf("teacher_email") : header.indexOf("교사이메일"),
+          category: header.indexOf("category") !== -1 ? header.indexOf("category") : header.indexOf("구분"),
+          reason: header.indexOf("reason") !== -1 ? header.indexOf("reason") : header.indexOf("사유"),
+          score: header.indexOf("score") !== -1 ? header.indexOf("score") : header.indexOf("점수"),
+        },
+        departments: {
+          code: header.indexOf("code") !== -1 ? header.indexOf("code") : header.indexOf("코드"),
+          name: header.indexOf("name") !== -1 ? header.indexOf("name") : header.indexOf("이름"),
         }
       } as const;
       for (let i = 0; i < dataLines.length; i++) {
@@ -292,14 +307,17 @@ const BulkUpload = () => {
               parents_call2: sIdx.parents_call2 !== -1 ? (values[sIdx.parents_call2] || null) : (values[9] || null),
             };
           } else if (table === "teachers") {
+            const tIdx = idx.teachers;
             record = {
-              teacher_email: values[0],
-              name: values[1],
-              grade: values[2] ? parseInt(values[2]) : null,
-              class: values[3] ? parseInt(values[3]) : null,
-              dept_code: values[4] || null,
-              call_t: values[5],
-              is_homeroom: values[6] === "true" || values[6] === "1",
+              teacher_email: tIdx.teacher_email !== -1 ? values[tIdx.teacher_email] : values[0],
+              name: tIdx.name !== -1 ? values[tIdx.name] : values[1],
+              grade: tIdx.grade !== -1 ? (values[tIdx.grade] ? parseInt(values[tIdx.grade]) : null) : (values[2] ? parseInt(values[2]) : null),
+              class: tIdx.class !== -1 ? (values[tIdx.class] ? parseInt(values[tIdx.class]) : null) : (values[3] ? parseInt(values[3]) : null),
+              dept_code: tIdx.dept_code !== -1 ? (values[tIdx.dept_code] || null) : (values[4] || null),
+              call_t: tIdx.call_t !== -1 ? values[tIdx.call_t] : values[5],
+              is_homeroom: tIdx.is_homeroom !== -1 ? (values[tIdx.is_homeroom] === "true" || values[tIdx.is_homeroom] === "1" || values[tIdx.is_homeroom] === "담임") : (values[6] === "true" || values[6] === "1"),
+              department: tIdx.department !== -1 ? (values[tIdx.department] || null) : (values[7] || null),
+              subject: tIdx.subject !== -1 ? (values[tIdx.subject] || null) : (values[8] || null),
             };
           } else if (table === "merits" || table === "demerits") {
             const pIdx = idx.points;
@@ -344,9 +362,10 @@ const BulkUpload = () => {
               score: (pIdx.score !== -1 ? values[pIdx.score] : values[4]) ? parseInt(pIdx.score !== -1 ? values[pIdx.score] : values[4]) : 1,
             };
           } else if (table === "departments") {
+            const dIdx = idx.departments;
             record = {
-              code: values[0],
-              name: values[1],
+              code: dIdx.code !== -1 ? values[dIdx.code] : values[0],
+              name: dIdx.name !== -1 ? values[dIdx.name] : values[1],
             };
           }
           
