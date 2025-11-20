@@ -34,32 +34,21 @@ import {
 const menuItems = (user: AuthUser) => {
   const isSystemAdmin = user.type === "admin";
   const isAdminTeacher = user.type === "teacher" && user.isAdmin;
-  const isRegularTeacher = user.type === "teacher" && !user.isAdmin;
   
   const items = [
     // 시스템 관리자만
     ...(isSystemAdmin ? [
       { value: "password", label: "비밀번호", icon: Key },
-    ] : []),
-    // 관리자 권한 교사와 시스템 관리자
-    ...(isAdminTeacher || isSystemAdmin ? [
       { value: "upload", label: "업로드", icon: Upload },
     ] : []),
-    // 모든 사용자
+    // 모든 사용자 (관리자 교사와 시스템 관리자)
     { value: "data", label: "데이터", icon: Database },
     { value: "points", label: "상점", icon: BarChart },
-    // 관리자 권한 교사와 시스템 관리자
-    ...(isAdminTeacher || isSystemAdmin ? [
-      { value: "counseling", label: "상담", icon: ClipboardCheck },
-    ] : []),
-    // 모든 사용자
+    { value: "counseling", label: "상담", icon: ClipboardCheck },
     { value: "statistics", label: "통계", icon: TrendingUp },
     { value: "leaderboard", label: "순위", icon: Trophy },
     { value: "email-history", label: "이메일", icon: Mail },
-    // 관리자 권한 교사와 시스템 관리자
-    ...(isAdminTeacher || isSystemAdmin ? [
-      { value: "email-templates", label: "템플릿", icon: FileText },
-    ] : []),
+    { value: "email-templates", label: "템플릿", icon: FileText },
     // 시스템 관리자만
     ...(isSystemAdmin ? [
       { value: "export", label: "백업", icon: PackageOpen },
@@ -85,7 +74,8 @@ const AdminDashboard = () => {
     }
     
     const parsedUser = JSON.parse(authUser);
-    if (parsedUser.type !== "admin" && parsedUser.type !== "teacher") {
+    // 시스템 관리자 또는 관리자 권한이 있는 교사만 접근 가능
+    if (parsedUser.type !== "admin" && !(parsedUser.type === "teacher" && parsedUser.isAdmin)) {
       navigate("/");
       return;
     }
