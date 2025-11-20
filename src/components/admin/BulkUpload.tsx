@@ -237,6 +237,14 @@ const BulkUpload = () => {
               return cleaned;
             });
 
+            console.log('Cleaned records for', table, ':', cleanRecords);
+            console.log('Current user ID:', user.id);
+
+            // Re-set session before insert to ensure RLS is active
+            if (table === 'teacher_groups' || table === 'student_groups') {
+              await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+            }
+
             // Insert using upsert for students, teachers, departments
             let result;
             if (table === 'students') {
