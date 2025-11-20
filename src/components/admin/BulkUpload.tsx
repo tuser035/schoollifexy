@@ -224,6 +224,10 @@ const BulkUpload = () => {
                 else if (trimmedKey === 'admin_id' && (table === 'teacher_groups' || table === 'student_groups')) {
                   return;
                 }
+                // Handle UUID fields - convert empty strings to null
+                else if ((trimmedKey === 'teacher_id' || trimmedKey === 'admin_id' || trimmedKey === 'uploaded_by' || trimmedKey === 'sender_id') && value === '') {
+                  cleaned[trimmedKey] = null;
+                }
                 else {
                   cleaned[trimmedKey] = value;
                 }
