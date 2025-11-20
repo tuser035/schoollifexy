@@ -248,6 +248,57 @@ ${schemaSQL}`;
           </Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>전체 테이블 스키마 내보내기</CardTitle>
+          <CardDescription>
+            데이터베이스의 모든 테이블 구조를 SQL 파일로 내보냅니다
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+            <h3 className="font-semibold text-sm">스키마 파일에 포함:</h3>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>모든 테이블의 구조 정의 (CREATE TABLE)</li>
+              <li>컬럼 이름, 데이터 타입, 제약조건</li>
+              <li>기본값(DEFAULT) 설정</li>
+              <li>NOT NULL 제약조건</li>
+            </ul>
+          </div>
+
+          <div className="bg-primary/5 p-4 rounded-lg space-y-2 border border-primary/20">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              💡 안내사항
+            </h3>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>실제 데이터는 포함되지 않으며, 테이블 구조만 내보냅니다</li>
+              <li>다른 데이터베이스에 동일한 구조를 생성할 때 사용할 수 있습니다</li>
+              <li>스키마 문서화 및 백업 용도로 활용 가능합니다</li>
+            </ul>
+          </div>
+
+          <Button
+            onClick={exportSchema}
+            disabled={isExportingSchema}
+            variant="outline"
+            className="w-full"
+            size="lg"
+          >
+            {isExportingSchema ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                스키마 내보내는 중...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-5 w-5" />
+                전체 스키마 내보내기
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };
