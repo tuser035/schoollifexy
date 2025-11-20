@@ -166,7 +166,7 @@ const BulkUpload = () => {
             const cleanRecords = records.map(record => {
               const cleaned: any = {};
               Object.keys(record).forEach(key => {
-                const value = record[key];
+                let value = record[key];
                 const trimmedKey = key.trim();
                 
                 // Skip 'id' field for merits, demerits, monthly to avoid duplicate key errors
@@ -174,18 +174,30 @@ const BulkUpload = () => {
                   return;
                 }
                 
-                // Convert empty strings to null
-                if (value === '' || value === null) {
-                  cleaned[trimmedKey] = null;
+                // Skip admin_id field for teacher_groups and student_groups - will be set to current user
+                if (trimmedKey === 'admin_id' && (table === 'teacher_groups' || table === 'student_groups')) {
+                  return;
                 }
+                
+                // Trim string values
+                if (typeof value === 'string') {
+                  value = value.trim();
+                }
+                
+                // Convert empty strings, null, undefined to null
+                if (value === '' || value === null || value === undefined) {
+                  cleaned[trimmedKey] = null;
+                  return;
+                }
+                
                 // Parse image_url field for merits, demerits, monthly tables
-                else if (trimmedKey === 'image_url' && (table === 'merits' || table === 'demerits' || table === 'monthly')) {
+                if (trimmedKey === 'image_url' && (table === 'merits' || table === 'demerits' || table === 'monthly')) {
                   try {
                     // Check if it's a JSON string array
                     if (typeof value === 'string' && value.startsWith('[')) {
                       // Parse JSON string to actual array
                       cleaned[trimmedKey] = JSON.parse(value);
-                    } else if (typeof value === 'string' && value.trim() !== '') {
+                    } else if (typeof value === 'string') {
                       // Single URL string, convert to array
                       cleaned[trimmedKey] = [value];
                     } else {
@@ -217,14 +229,6 @@ const BulkUpload = () => {
                   } else {
                     cleaned[trimmedKey] = null;
                   }
-                }
-                // Skip admin_id field for teacher_groups and student_groups - will be set to current user
-                else if (trimmedKey === 'admin_id' && (table === 'teacher_groups' || table === 'student_groups')) {
-                  return;
-                }
-                // Handle UUID fields - convert empty strings to null
-                else if ((trimmedKey === 'teacher_id' || trimmedKey === 'admin_id' || trimmedKey === 'uploaded_by' || trimmedKey === 'sender_id') && value === '') {
-                  cleaned[trimmedKey] = null;
                 }
                 else {
                   cleaned[trimmedKey] = value;
