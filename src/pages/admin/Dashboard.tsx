@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, ArrowLeft } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -148,6 +148,7 @@ const AdminDashboard = () => {
             <div className="flex gap-1 sm:gap-2">
               {user.type === "teacher" && (
                 <Button onClick={() => navigate("/teacher/dashboard")} variant="outline" size="sm">
+                  <ArrowLeft className="w-4 h-4 mr-1" />
                   돌아가기
                 </Button>
               )}
