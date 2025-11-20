@@ -197,6 +197,28 @@ const BulkUpload = () => {
                     console.error('Failed to parse image_url:', value, e);
                     cleaned[trimmedKey] = null;
                   }
+                }
+                // Parse teacher_ids field for teacher_groups table
+                else if (trimmedKey === 'teacher_ids' && table === 'teacher_groups') {
+                  if (typeof value === 'string') {
+                    // Split comma-separated string into array
+                    cleaned[trimmedKey] = value.split(',').map(id => id.trim()).filter(id => id);
+                  } else if (Array.isArray(value)) {
+                    cleaned[trimmedKey] = value;
+                  } else {
+                    cleaned[trimmedKey] = null;
+                  }
+                }
+                // Parse student_ids field for student_groups table
+                else if (trimmedKey === 'student_ids' && table === 'student_groups') {
+                  if (typeof value === 'string') {
+                    // Split comma-separated string into array
+                    cleaned[trimmedKey] = value.split(',').map(id => id.trim()).filter(id => id);
+                  } else if (Array.isArray(value)) {
+                    cleaned[trimmedKey] = value;
+                  } else {
+                    cleaned[trimmedKey] = null;
+                  }
                 } else {
                   cleaned[trimmedKey] = value;
                 }
