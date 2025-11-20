@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import AdminLogin from "@/components/auth/AdminLogin";
+import SystemAdminLogin from "@/components/auth/SystemAdminLogin";
 import { School } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -21,6 +23,7 @@ const backgroundImages = [
 const Index = () => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showSystemAdminDialog, setShowSystemAdminDialog] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -65,8 +68,9 @@ const Index = () => {
                   SchoolLife.
                 </span>
                 <span 
-                  onClick={() => navigate("/manual")}
+                  onClick={() => setShowSystemAdminDialog(true)}
                   className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent cursor-pointer hover:opacity-70 transition-opacity underline decoration-2"
+                  title="시스템 관리자 로그인"
                 >
                   KR
                 </span>
@@ -110,6 +114,18 @@ const Index = () => {
           </div>
         </Card>
       </div>
+
+      {/* System Admin Login Dialog */}
+      <Dialog open={showSystemAdminDialog} onOpenChange={setShowSystemAdminDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              시스템 관리자 로그인
+            </DialogTitle>
+          </DialogHeader>
+          <SystemAdminLogin onSuccess={() => setShowSystemAdminDialog(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
