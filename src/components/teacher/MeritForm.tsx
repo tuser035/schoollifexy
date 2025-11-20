@@ -250,6 +250,11 @@ const MeritForm = () => {
 
       const user = JSON.parse(authUser);
 
+      // Set teacher session for RLS policies
+      await supabase.rpc('set_teacher_session', {
+        teacher_id_input: user.id
+      });
+
       let imageUrls: string[] = [];
 
       // Upload images if exist
