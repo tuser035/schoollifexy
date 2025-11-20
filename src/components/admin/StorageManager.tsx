@@ -37,7 +37,18 @@ const StorageManager = () => {
         return;
       }
 
-      // Set admin session for RLS
+      // 관리자용 storage 파일 목록 조회 함수 호출
+      const { data: storageFiles, error: storageError } = await supabase.rpc(
+        "admin_get_storage_files",
+        {
+          admin_id_input: parsedUser.id,
+          bucket_name_input: "evidence-photos"
+        }
+      );
+
+      if (storageError) throw storageError;
+
+      // 파일 메타데이터 조회
       const { error: sessionError } = await supabase.rpc("set_admin_session", {
         admin_id_input: parsedUser.id
       });
@@ -46,30 +57,25 @@ const StorageManager = () => {
         console.error("세션 설정 오류:", sessionError);
       }
 
-      // file_metadata 테이블에서 파일 정보 가져오기
       const { data: metadata, error: metadataError } = await supabase
         .from("file_metadata")
-        .select("*")
-        .eq("bucket_name", "evidence-photos")
-        .order("created_at", { ascending: false });
+        .select("storage_path, original_filename")
+        .eq("bucket_name", "evidence-photos");
 
-      if (metadataError) throw metadataError;
+      if (metadataError) {
+        console.error("메타데이터 조회 오류:", metadataError);
+      }
 
-      // 메타데이터를 FileWithMetadata 형식으로 변환
-      const filesWithMetadata: FileWithMetadata[] = (metadata || []).map(m => ({
-        id: m.id,
-        name: m.storage_path,
-        bucket_id: m.bucket_name,
-        created_at: m.uploaded_at || m.created_at || new Date().toISOString(),
-        updated_at: m.created_at || new Date().toISOString(),
-        last_accessed_at: m.uploaded_at || m.created_at || new Date().toISOString(),
-        owner: m.uploaded_by || null,
+      // 메타데이터와 파일 정보 매칭
+      const metadataMap = new Map(
+        metadata?.map(m => [m.storage_path, m.original_filename]) || []
+      );
+
+      const filesWithMetadata: FileWithMetadata[] = (storageFiles || []).map(file => ({
+        ...file,
+        metadata: file.metadata as Record<string, any>,
         buckets: null,
-        metadata: {
-          size: m.file_size || 0,
-          mimetype: m.mime_type || 'application/octet-stream'
-        },
-        originalFilename: m.original_filename
+        originalFilename: metadataMap.get(file.name)
       }));
 
       setFiles(filesWithMetadata);

@@ -778,6 +778,19 @@ export type Database = {
           teacher_name: string
         }[]
       }
+      admin_get_storage_files: {
+        Args: { admin_id_input: string; bucket_name_input: string }
+        Returns: {
+          bucket_id: string
+          created_at: string
+          id: string
+          last_accessed_at: string
+          metadata: Json
+          name: string
+          owner: string
+          updated_at: string
+        }[]
+      }
       admin_get_student_groups: {
         Args: { admin_id_input: string }
         Returns: {
