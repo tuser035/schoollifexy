@@ -15,6 +15,7 @@ interface AuditLog {
   id: string;
   created_at: string;
   user_id: string;
+  user_name?: string;
   user_type: string;
   action_type: string;
   table_name: string;
@@ -289,7 +290,8 @@ const DatabaseLogs = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-xs font-mono">{log.user_id?.substring(0, 8)}...</span>
+                          <span className="text-sm">{log.user_name || '-'}</span>
+                          <span className="text-xs font-mono text-muted-foreground">{log.user_id?.substring(0, 8)}...</span>
                           <Badge variant="outline" className="text-xs w-fit mt-1">
                             {log.user_type}
                           </Badge>
