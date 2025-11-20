@@ -904,6 +904,36 @@ export type Database = {
               teacher_email: string
             }[]
           }
+      admin_insert_career_counseling: {
+        Args: {
+          admin_id_input: string
+          attachment_url_input?: string
+          content_input: string
+          counseling_date_input: string
+          counselor_name_input: string
+          student_id_input: string
+        }
+        Returns: string
+      }
+      admin_insert_department: {
+        Args: { admin_id_input: string; code_input: string; name_input: string }
+        Returns: string
+      }
+      admin_insert_email_history: {
+        Args: {
+          admin_id_input: string
+          body_input: string
+          recipient_email_input: string
+          recipient_name_input: string
+          recipient_student_id_input: string
+          resend_email_id_input?: string
+          sender_id_input: string
+          sender_name_input: string
+          sender_type_input: string
+          subject_input: string
+        }
+        Returns: string
+      }
       admin_insert_email_template: {
         Args: {
           admin_id_input: string
@@ -911,6 +941,28 @@ export type Database = {
           subject_input: string
           template_type_input: string
           title_input: string
+        }
+        Returns: string
+      }
+      admin_insert_email_template_bulk: {
+        Args: {
+          admin_id_input: string
+          body_input: string
+          subject_input: string
+          template_type_input: string
+          title_input: string
+        }
+        Returns: string
+      }
+      admin_insert_file_metadata: {
+        Args: {
+          admin_id_input: string
+          bucket_name_input: string
+          file_size_input?: number
+          mime_type_input?: string
+          original_filename_input: string
+          storage_path_input: string
+          uploaded_by_input?: string
         }
         Returns: string
       }
