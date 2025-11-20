@@ -31,22 +31,37 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-const menuItems = (userType: "admin" | "teacher") => {
+const menuItems = (user: AuthUser) => {
+  const isSystemAdmin = user.type === "admin";
+  const isAdminTeacher = user.type === "teacher" && user.isAdmin;
+  const isRegularTeacher = user.type === "teacher" && !user.isAdmin;
+  
   const items = [
-    ...(userType === "admin" ? [
+    // 시스템 관리자만
+    ...(isSystemAdmin ? [
       { value: "password", label: "비밀번호", icon: Key },
+    ] : []),
+    // 관리자 권한 교사와 시스템 관리자
+    ...(isAdminTeacher || isSystemAdmin ? [
       { value: "upload", label: "업로드", icon: Upload },
     ] : []),
+    // 모든 사용자
     { value: "data", label: "데이터", icon: Database },
     { value: "points", label: "상점", icon: BarChart },
-    ...(userType === "admin" ? [
+    // 관리자 권한 교사와 시스템 관리자
+    ...(isAdminTeacher || isSystemAdmin ? [
       { value: "counseling", label: "상담", icon: ClipboardCheck },
     ] : []),
+    // 모든 사용자
     { value: "statistics", label: "통계", icon: TrendingUp },
     { value: "leaderboard", label: "순위", icon: Trophy },
     { value: "email-history", label: "이메일", icon: Mail },
-    ...(userType === "admin" ? [
+    // 관리자 권한 교사와 시스템 관리자
+    ...(isAdminTeacher || isSystemAdmin ? [
       { value: "email-templates", label: "템플릿", icon: FileText },
+    ] : []),
+    // 시스템 관리자만
+    ...(isSystemAdmin ? [
       { value: "export", label: "백업", icon: PackageOpen },
       { value: "auto-backup", label: "자동백업", icon: Settings },
       { value: "storage", label: "파일", icon: FolderOpen },
@@ -77,7 +92,8 @@ const AdminDashboard = () => {
     
     setUser(parsedUser);
     // 기본 탭 설정
-    const defaultTab = parsedUser.type === "teacher" ? "data" : "password";
+    const isSystemAdmin = parsedUser.type === "admin";
+    const defaultTab = isSystemAdmin ? "password" : "data";
     setActiveTab(defaultTab);
   }, [navigate]);
 
@@ -171,7 +187,7 @@ const AdminDashboard = () => {
               <SidebarGroup>
                 <SidebarGroupContent>
                   <SidebarMenu className="gap-1">
-                    {menuItems(user.type === "student" ? "teacher" : user.type).map((item) => {
+                    {menuItems(user).map((item) => {
                       const Icon = item.icon;
                       return (
                         <SidebarMenuItem key={item.value}>

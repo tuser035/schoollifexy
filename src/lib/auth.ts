@@ -9,6 +9,7 @@ export interface AuthUser {
   studentId?: string;
   email?: string;
   isHomeroom?: boolean;
+  isAdmin?: boolean;
   grade?: number;
   class?: number;
 }
@@ -72,6 +73,7 @@ export const loginTeacher = async (phone: string, password: string) => {
       name: userData.name,
       email: userData.email,
       isHomeroom: userData.is_homeroom,
+      isAdmin: userData.is_admin,
       grade: userData.grade,
       class: userData.class,
     };
