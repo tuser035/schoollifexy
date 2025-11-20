@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload } from "lucide-react";
+import { Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type TableType = "edufine" | "students" | "teachers" | "merits" | "demerits" | "departments";
 
@@ -55,6 +57,47 @@ const tables: TableConfig[] = [
 
 const BulkUpload = () => {
   const [uploading, setUploading] = useState<TableType | null>(null);
+  const [selectedTable, setSelectedTable] = useState<TableType | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAllData = async () => {
+    if (!selectedTable) {
+      toast.error("테이블을 선택해주세요");
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        throw new Error("로그인이 필요합니다");
+      }
+      
+      const user = JSON.parse(authUser);
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
+      // Delete all records from the selected table
+      const { error } = await supabase
+        .from(selectedTable as any)
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (error) {
+        console.error("삭제 오류:", error);
+        throw new Error("데이터 삭제 중 오류가 발생했습니다");
+      }
+
+      toast.success(`${tables.find(t => t.table === selectedTable)?.name} 테이블의 모든 데이터가 삭제되었습니다`);
+      setShowDeleteDialog(false);
+      setSelectedTable(null);
+    } catch (error) {
+      console.error("Error deleting data:", error);
+      toast.error(error instanceof Error ? error.message : "데이터 삭제 실패");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleFileUpload = async (table: TableType, file: File) => {
     setUploading(table);
@@ -400,6 +443,47 @@ const BulkUpload = () => {
 
   return (
     <div className="space-y-4">
+      {/* 데이터 삭제 섹션 */}
+      <Card className="border-destructive">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-destructive" />
+            테이블 데이터 삭제
+          </CardTitle>
+          <CardDescription>
+            선택한 테이블의 모든 데이터를 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="text-sm font-medium mb-2 block">삭제할 테이블 선택</label>
+              <Select value={selectedTable || ""} onValueChange={(value) => setSelectedTable(value as TableType)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="테이블을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tables.map((table) => (
+                    <SelectItem key={table.table} value={table.table}>
+                      {table.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              disabled={!selectedTable || deleting}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              데이터 모두 삭제
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* CSV 업로드 섹션 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {tables.map((config) => (
           <Card key={config.table} className={`border-2 ${config.color}`}>
@@ -440,6 +524,35 @@ const BulkUpload = () => {
           </Card>
         ))}
       </div>
+
+      {/* 삭제 확인 다이얼로그 */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>정말로 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                <strong className="text-destructive">
+                  {selectedTable && tables.find(t => t.table === selectedTable)?.name}
+                </strong> 테이블의 모든 데이터가 영구적으로 삭제됩니다.
+              </p>
+              <p className="text-destructive font-semibold">
+                이 작업은 되돌릴 수 없습니다!
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllData}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "삭제 중..." : "삭제"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
