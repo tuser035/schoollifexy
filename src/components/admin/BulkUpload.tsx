@@ -411,36 +411,36 @@ const BulkUpload = () => {
             } else {
               // For other tables - INSERT 직전 최종 UUID 필드 검증
               const finalCleanRecords = cleanRecords.map(record => {
-                const final = { ...record };
+                const final: any = {};
                 
-                // 모든 필드를 순회하면서 UUID 필드 검증
-                Object.keys(final).forEach(key => {
-                  // UUID 필드로 의심되는 필드들 (id로 끝나거나 특정 이름)
-                  const isUuidField = key.endsWith('_id') || 
-                                     ['teacher_id', 'admin_id', 'student_id', 'uploaded_by', 'sender_id', 'id'].includes(key);
+                // 모든 필드를 순회하면서 처리
+                Object.keys(record).forEach(key => {
+                  let value = record[key];
+                  
+                  // UUID 필드인지 확인 (_id로 끝나는 필드)
+                  const isUuidField = key.endsWith('_id') || key === 'id';
                   
                   if (isUuidField) {
-                    let value = final[key];
-                    
-                    // 문자열인 경우 trim
-                    if (typeof value === 'string') {
-                      value = value.trim();
-                    }
-                    
-                    // 빈 값이거나 공백만 있는 경우 null로 변환
-                    if (!value || value === '' || value === null || value === undefined ||
-                        (typeof value === 'string' && (value.trim() === '' || value === '""' || value === "''"))) {
+                    // UUID 필드는 빈 값을 무조건 null로 변환
+                    if (value === null || 
+                        value === undefined || 
+                        value === '' ||
+                        (typeof value === 'string' && value.trim() === '')) {
                       final[key] = null;
                     } else {
-                      final[key] = value;
+                      // 유효한 값이면 그대로 사용
+                      final[key] = typeof value === 'string' ? value.trim() : value;
                     }
+                  } else {
+                    // UUID 필드가 아닌 경우는 그대로 복사
+                    final[key] = value;
                   }
                 });
                 
                 return final;
               });
               
-              console.log(`[${table}] Final cleaned records before insert:`, JSON.stringify(finalCleanRecords, null, 2));
+              console.log(`[${table}] Insert 직전 최종 레코드:`, JSON.stringify(finalCleanRecords, null, 2));
               result = await supabase.from(table).insert(finalCleanRecords);
             }
             
