@@ -252,11 +252,6 @@ const BulkUpload = () => {
                 onConflict: 'teacher_email',
                 ignoreDuplicates: false 
               });
-            } else if (table === 'departments') {
-              result = await supabase.from(table).upsert(cleanRecords, { 
-                onConflict: 'code',
-                ignoreDuplicates: false 
-              });
             } else if (table === 'teacher_groups') {
               // Use RPC function for teacher groups to handle RLS properly
               const results = [];
@@ -278,6 +273,87 @@ const BulkUpload = () => {
                   admin_id_input: user.id,
                   group_name_input: record.group_name,
                   student_ids_input: record.student_ids
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
+            } else if (table === 'departments') {
+              // Use RPC function for departments to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_department', {
+                  admin_id_input: user.id,
+                  code_input: record.code,
+                  name_input: record.name
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
+            } else if (table === 'career_counseling') {
+              // Use RPC function for career counseling to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_career_counseling', {
+                  admin_id_input: user.id,
+                  student_id_input: record.student_id,
+                  counselor_name_input: record.counselor_name,
+                  counseling_date_input: record.counseling_date,
+                  content_input: record.content,
+                  attachment_url_input: record.attachment_url || null
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
+            } else if (table === 'email_templates') {
+              // Use RPC function for email templates to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_email_template_bulk', {
+                  admin_id_input: user.id,
+                  title_input: record.title,
+                  subject_input: record.subject,
+                  body_input: record.body,
+                  template_type_input: record.template_type || 'email'
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
+            } else if (table === 'email_history') {
+              // Use RPC function for email history to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_email_history', {
+                  admin_id_input: user.id,
+                  sender_id_input: record.sender_id || user.id,
+                  sender_name_input: record.sender_name,
+                  sender_type_input: record.sender_type,
+                  recipient_email_input: record.recipient_email,
+                  recipient_name_input: record.recipient_name,
+                  recipient_student_id_input: record.recipient_student_id || null,
+                  subject_input: record.subject,
+                  body_input: record.body,
+                  resend_email_id_input: record.resend_email_id || null
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
+            } else if (table === 'file_metadata') {
+              // Use RPC function for file metadata to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_file_metadata', {
+                  admin_id_input: user.id,
+                  bucket_name_input: record.bucket_name,
+                  storage_path_input: record.storage_path,
+                  original_filename_input: record.original_filename,
+                  mime_type_input: record.mime_type || null,
+                  file_size_input: record.file_size ? parseInt(record.file_size) : null,
+                  uploaded_by_input: record.uploaded_by || user.id
                 });
                 if (error) throw error;
                 results.push(data);
