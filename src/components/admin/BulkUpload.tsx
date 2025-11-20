@@ -219,10 +219,21 @@ const BulkUpload = () => {
                   } else {
                     cleaned[trimmedKey] = null;
                   }
-                } else {
+                }
+                // Skip admin_id field for teacher_groups and student_groups - will be set to current user
+                else if (trimmedKey === 'admin_id' && (table === 'teacher_groups' || table === 'student_groups')) {
+                  return;
+                }
+                else {
                   cleaned[trimmedKey] = value;
                 }
               });
+              
+              // Set admin_id to current user for teacher_groups and student_groups
+              if (table === 'teacher_groups' || table === 'student_groups') {
+                cleaned.admin_id = user.id;
+              }
+              
               return cleaned;
             });
 
