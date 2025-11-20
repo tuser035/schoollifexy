@@ -283,9 +283,17 @@ const StorageManager = () => {
                     <TableRow key={file.id}>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
-                          <span className="text-sm">{file.originalFilename || file.name}</span>
+                          <span className="text-sm">
+                            {file.originalFilename ? (
+                              <>
+                                <span className="font-semibold">원본 파일명:</span> {file.originalFilename}
+                              </>
+                            ) : (
+                              file.name
+                            )}
+                          </span>
                           {file.originalFilename && (
-                            <span className="text-xs text-muted-foreground">({file.name})</span>
+                            <span className="text-xs text-muted-foreground">저장 경로: {file.name}</span>
                           )}
                         </div>
                       </TableCell>
