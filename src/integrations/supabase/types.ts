@@ -623,6 +623,19 @@ export type Database = {
         Args: { admin_id_input: string; teacher_email_input: string }
         Returns: boolean
       }
+      admin_get_all_counseling_records: {
+        Args: { admin_id_input: string }
+        Returns: {
+          attachment_url: string
+          content: string
+          counseling_date: string
+          counselor_name: string
+          created_at: string
+          id: string
+          student_id: string
+          student_name: string
+        }[]
+      }
       admin_get_counseling_records: {
         Args: { admin_id_input: string; student_id_input: string }
         Returns: {
