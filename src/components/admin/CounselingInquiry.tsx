@@ -409,7 +409,7 @@ const CounselingInquiry = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {studentName === "전체 학생" && <TableHead>학생</TableHead>}
+                    {!studentId && <TableHead>학생</TableHead>}
                     <TableHead>상담일</TableHead>
                     <TableHead>상담사</TableHead>
                     <TableHead>상담내용 미리보기</TableHead>
@@ -420,7 +420,7 @@ const CounselingInquiry = () => {
                 <TableBody>
                   {records.map((record: any) => (
                     <TableRow key={record.id}>
-                      {studentName === "전체 학생" && (
+                      {!studentId && (
                         <TableCell className="whitespace-nowrap">
                           {record.studentName} ({record.studentId})
                         </TableCell>
