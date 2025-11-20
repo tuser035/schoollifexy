@@ -607,6 +607,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_all_from_table: {
+        Args: { admin_id_input: string; table_name_input: string }
+        Returns: number
+      }
       admin_delete_email_template: {
         Args: { admin_id_input: string; template_id_input: string }
         Returns: boolean

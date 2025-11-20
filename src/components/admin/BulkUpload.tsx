@@ -111,20 +111,19 @@ const BulkUpload = () => {
       }
       
       const user = JSON.parse(authUser);
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
-      // Delete all records from the selected table
-      const { error } = await supabase
-        .from(selectedTable as any)
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
+      // Call RPC function to delete all data from the selected table
+      const { data, error } = await supabase.rpc("admin_delete_all_from_table", {
+        admin_id_input: user.id,
+        table_name_input: selectedTable
+      });
 
       if (error) {
         console.error("삭제 오류:", error);
-        throw new Error("데이터 삭제 중 오류가 발생했습니다");
+        throw error;
       }
 
-      toast.success(`${tables.find(t => t.table === selectedTable)?.name} 테이블의 모든 데이터가 삭제되었습니다`);
+      toast.success(`${tables.find(t => t.table === selectedTable)?.name} 테이블의 ${data}개 데이터가 삭제되었습니다`);
       setShowDeleteDialog(false);
       setSelectedTable(null);
     } catch (error) {
