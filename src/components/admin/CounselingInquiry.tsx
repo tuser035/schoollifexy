@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Pencil, Trash2, Download } from "lucide-react";
+import { FileText, Pencil, Trash2, Download, X } from "lucide-react";
 
 interface CounselingRecord {
   id: string;
@@ -39,27 +39,65 @@ const CounselingInquiry = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleQuery = async () => {
-    if (!searchInput.trim()) {
-      toast.error("학번, 이름 또는 학년반번호를 입력해주세요");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
       const authUser = localStorage.getItem("auth_user");
       if (!authUser) {
         toast.error("관리자 인증이 필요합니다");
+        setIsLoading(false);
         return;
       }
 
       const parsedUser = JSON.parse(authUser);
       if ((parsedUser.type !== "admin" && parsedUser.type !== "teacher") || !parsedUser.id) {
         toast.error("권한이 필요합니다");
+        setIsLoading(false);
         return;
       }
 
       const input = searchInput.trim();
+      
+      // If input is empty, fetch all counseling records
+      if (!input) {
+        const { data: allRecords, error: allRecordsError } = await supabase
+          .from('career_counseling')
+          .select(`
+            id,
+            counselor_name,
+            counseling_date,
+            content,
+            created_at,
+            attachment_url,
+            student_id,
+            students!inner (
+              student_id,
+              name
+            )
+          `)
+          .order('counseling_date', { ascending: false });
+
+        if (allRecordsError) {
+          console.error('All records query error:', allRecordsError);
+          toast.error("전체 상담기록 조회 중 오류가 발생했습니다");
+          setIsLoading(false);
+          return;
+        }
+
+        // Transform the data to include student info in the record
+        const transformedRecords = (allRecords || []).map((record: any) => ({
+          ...record,
+          studentName: record.students?.name || '-',
+          studentId: record.students?.student_id || '-'
+        }));
+
+        setRecords(transformedRecords);
+        setStudentName("전체 학생");
+        setStudentId("");
+        toast.success(`총 ${transformedRecords.length}건의 상담기록을 조회했습니다`);
+        setIsLoading(false);
+        return;
+      }
       let searchText = null;
       let searchGrade = null;
       let searchClass = null;
@@ -331,13 +369,30 @@ const CounselingInquiry = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
-            <Input
-              placeholder="학번, 이름 또는 학년반번호 (예: 3817, 한정훈, 386)"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
-              className="max-w-xs"
-            />
+            <div className="relative max-w-xs">
+              <Input
+                placeholder="학번, 이름 또는 학년반번호 (예: 3817, 한정훈, 386)"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
+                className="pr-8"
+              />
+              {searchInput && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-2 hover:bg-transparent"
+                  onClick={() => {
+                    setSearchInput("");
+                    setStudentId("");
+                    setStudentName("");
+                    setRecords([]);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <Button onClick={handleQuery} disabled={isLoading}>
               {isLoading ? "조회 중..." : "조회"}
             </Button>
@@ -345,19 +400,6 @@ const CounselingInquiry = () => {
               <Button onClick={handleExportCSV} variant="outline">
                 <Download className="w-4 h-4 mr-2" />
                 CSV 내보내기
-              </Button>
-            )}
-            {searchInput && (
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchInput("");
-                  setStudentId("");
-                  setStudentName("");
-                  setRecords([]);
-                }}
-              >
-                초기화
               </Button>
             )}
           </div>
@@ -373,6 +415,7 @@ const CounselingInquiry = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {studentName === "전체 학생" && <TableHead>학생</TableHead>}
                     <TableHead>상담일</TableHead>
                     <TableHead>상담사</TableHead>
                     <TableHead>상담내용 미리보기</TableHead>
@@ -381,8 +424,13 @@ const CounselingInquiry = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {records.map((record) => (
+                  {records.map((record: any) => (
                     <TableRow key={record.id}>
+                      {studentName === "전체 학생" && (
+                        <TableCell className="whitespace-nowrap">
+                          {record.studentName} ({record.studentId})
+                        </TableCell>
+                      )}
                       <TableCell className="whitespace-nowrap">
                         {new Date(record.counseling_date).toLocaleDateString('ko-KR')}
                       </TableCell>
