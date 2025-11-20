@@ -169,6 +169,11 @@ const BulkUpload = () => {
                 const value = record[key];
                 const trimmedKey = key.trim();
                 
+                // Skip 'id' field for merits, demerits, monthly to avoid duplicate key errors
+                if (trimmedKey === 'id' && (table === 'merits' || table === 'demerits' || table === 'monthly')) {
+                  return;
+                }
+                
                 // Convert empty strings to null
                 if (value === '' || value === null) {
                   cleaned[trimmedKey] = null;
