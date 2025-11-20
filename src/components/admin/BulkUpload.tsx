@@ -409,20 +409,30 @@ const BulkUpload = () => {
               }
               result = { data: results, error: null };
             } else {
-              // For other tables - directly insert with additional UUID field validation
-              // Final cleanup: ensure all UUID fields are either valid UUIDs or null
+              // For other tables - INSERT 직전 최종 UUID 필드 검증
               const finalCleanRecords = cleanRecords.map(record => {
                 const final = { ...record };
-                // List of UUID fields across all tables
-                const uuidFields = ['teacher_id', 'admin_id', 'student_id', 'uploaded_by', 'sender_id'];
                 
-                uuidFields.forEach(field => {
-                  if (field in final) {
-                    const value = final[field];
-                    // If the value is empty string, null, undefined, or whitespace, set to null
-                    if (value === '' || value === null || value === undefined || 
-                        (typeof value === 'string' && value.trim() === '')) {
-                      final[field] = null;
+                // 모든 필드를 순회하면서 UUID 필드 검증
+                Object.keys(final).forEach(key => {
+                  // UUID 필드로 의심되는 필드들 (id로 끝나거나 특정 이름)
+                  const isUuidField = key.endsWith('_id') || 
+                                     ['teacher_id', 'admin_id', 'student_id', 'uploaded_by', 'sender_id', 'id'].includes(key);
+                  
+                  if (isUuidField) {
+                    let value = final[key];
+                    
+                    // 문자열인 경우 trim
+                    if (typeof value === 'string') {
+                      value = value.trim();
+                    }
+                    
+                    // 빈 값이거나 공백만 있는 경우 null로 변환
+                    if (!value || value === '' || value === null || value === undefined ||
+                        (typeof value === 'string' && (value.trim() === '' || value === '""' || value === "''"))) {
+                      final[key] = null;
+                    } else {
+                      final[key] = value;
                     }
                   }
                 });
@@ -430,7 +440,7 @@ const BulkUpload = () => {
                 return final;
               });
               
-              console.log('Final cleaned records before insert:', finalCleanRecords);
+              console.log(`[${table}] Final cleaned records before insert:`, JSON.stringify(finalCleanRecords, null, 2));
               result = await supabase.from(table).insert(finalCleanRecords);
             }
             
