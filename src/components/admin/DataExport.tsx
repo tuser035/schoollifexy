@@ -46,6 +46,15 @@ const DataExport = () => {
       let successCount = 0;
       let errorCount = 0;
 
+      // 테이블별 컬럼 순서 정의 (업로드 순서와 일치)
+      const tableColumns: Record<string, string[]> = {
+        students: ["student_id", "name", "grade", "class", "number", "dept_code", "student_call", "gmail", "parents_call1", "parents_call2"],
+        teachers: ["teacher_email", "name", "grade", "class", "dept_code", "call_t", "is_homeroom", "department", "subject"],
+        merits: ["student_id", "teacher_id", "category", "reason", "score", "image_url", "created_at"],
+        demerits: ["student_id", "teacher_id", "category", "reason", "score", "image_url", "created_at"],
+        departments: ["code", "name"],
+      };
+
       for (const tableName of tables) {
         try {
           const { data, error } = await supabase
@@ -59,9 +68,23 @@ const DataExport = () => {
           }
 
           if (data && data.length > 0) {
+            // 특정 테이블은 컬럼 순서를 맞춤
+            let processedData = data;
+            if (tableColumns[tableName]) {
+              processedData = data.map(row => {
+                const orderedRow: any = {};
+                tableColumns[tableName].forEach(col => {
+                  if (col in row) {
+                    orderedRow[col] = row[col];
+                  }
+                });
+                return orderedRow;
+              });
+            }
+
             // BOM 추가 (한글 깨짐 방지)
             const BOM = "\uFEFF";
-            const csv = Papa.unparse(data);
+            const csv = Papa.unparse(processedData);
             zip.file(`${tableName}.csv`, BOM + csv);
             successCount++;
           } else {
