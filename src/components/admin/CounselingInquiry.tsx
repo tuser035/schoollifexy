@@ -60,21 +60,10 @@ const CounselingInquiry = () => {
       
       // If input is empty, fetch all counseling records
       if (!input) {
+        // First, get all counseling records
         const { data: allRecords, error: allRecordsError } = await supabase
           .from('career_counseling')
-          .select(`
-            id,
-            counselor_name,
-            counseling_date,
-            content,
-            created_at,
-            attachment_url,
-            student_id,
-            students!inner (
-              student_id,
-              name
-            )
-          `)
+          .select('*')
           .order('counseling_date', { ascending: false });
 
         if (allRecordsError) {
@@ -84,12 +73,36 @@ const CounselingInquiry = () => {
           return;
         }
 
-        // Transform the data to include student info in the record
-        const transformedRecords = (allRecords || []).map((record: any) => ({
-          ...record,
-          studentName: record.students?.name || '-',
-          studentId: record.students?.student_id || '-'
-        }));
+        // Get all unique student IDs
+        const studentIds = [...new Set(allRecords?.map((r: any) => r.student_id).filter(Boolean))] as string[];
+
+        // Fetch student information for all student IDs
+        const { data: studentsData, error: studentsError } = await supabase.rpc('admin_get_students', {
+          admin_id_input: parsedUser.id,
+          search_text: null,
+          search_grade: null,
+          search_class: null
+        });
+
+        if (studentsError) {
+          console.error('Students query error:', studentsError);
+        }
+
+        // Create a map of student_id to student info
+        const studentMap = new Map();
+        studentsData?.forEach((student: any) => {
+          studentMap.set(student.student_id, student);
+        });
+
+        // Transform the data to include student info
+        const transformedRecords = (allRecords || []).map((record: any) => {
+          const student = studentMap.get(record.student_id);
+          return {
+            ...record,
+            studentName: student?.name || '-',
+            studentId: record.student_id || '-'
+          };
+        });
 
         setRecords(transformedRecords);
         setStudentName("전체 학생");
