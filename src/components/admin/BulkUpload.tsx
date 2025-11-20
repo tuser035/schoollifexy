@@ -167,8 +167,34 @@ const BulkUpload = () => {
               const cleaned: any = {};
               Object.keys(record).forEach(key => {
                 const value = record[key];
+                const trimmedKey = key.trim();
+                
                 // Convert empty strings to null
-                cleaned[key.trim()] = value === '' || value === null ? null : value;
+                if (value === '' || value === null) {
+                  cleaned[trimmedKey] = null;
+                  return;
+                }
+                
+                // Parse image_url field for merits, demerits, monthly tables
+                if (trimmedKey === 'image_url' && (table === 'merits' || table === 'demerits' || table === 'monthly')) {
+                  try {
+                    // Check if it's a JSON string array
+                    if (typeof value === 'string' && value.startsWith('[')) {
+                      // Parse JSON string to actual array
+                      cleaned[trimmedKey] = JSON.parse(value);
+                    } else if (typeof value === 'string' && value.trim() !== '') {
+                      // Single URL string, convert to array
+                      cleaned[trimmedKey] = [value];
+                    } else {
+                      cleaned[trimmedKey] = null;
+                    }
+                  } catch (e) {
+                    console.error('Failed to parse image_url:', value, e);
+                    cleaned[trimmedKey] = null;
+                  }
+                } else {
+                  cleaned[trimmedKey] = value;
+                }
               });
               return cleaned;
             });
