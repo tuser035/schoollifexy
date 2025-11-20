@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, Undo } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, Undo, BarChart2 } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -9,6 +9,7 @@ import DataInquiry from "@/components/admin/DataInquiry";
 import PointsInquiry from "@/components/admin/PointsInquiry";
 import CounselingInquiry from "@/components/admin/CounselingInquiry";
 import StatisticsChart from "@/components/admin/StatisticsChart";
+import GradeStatistics from "@/components/admin/GradeStatistics";
 import StorageManager from "@/components/admin/StorageManager";
 import StudentLeaderboard from "@/components/admin/StudentLeaderboard";
 import { EmailHistory } from "@/components/admin/EmailHistory";
@@ -45,7 +46,8 @@ const menuItems = (user: AuthUser) => {
     { value: "data", label: "데이터", icon: Database },
     { value: "points", label: "상점", icon: BarChart },
     { value: "counseling", label: "상담", icon: ClipboardCheck },
-    { value: "statistics", label: "통계", icon: TrendingUp },
+    { value: "statistics", label: "학급통계", icon: TrendingUp },
+    { value: "grade-statistics", label: "학년통계", icon: BarChart2 },
     { value: "leaderboard", label: "순위", icon: Trophy },
     { value: "email-history", label: "이메일", icon: Mail },
     { value: "email-templates", label: "템플릿", icon: FileText },
@@ -109,6 +111,8 @@ const AdminDashboard = () => {
         return <CounselingInquiry />;
       case "statistics":
         return <StatisticsChart />;
+      case "grade-statistics":
+        return <GradeStatistics />;
       case "leaderboard":
         return <StudentLeaderboard />;
       case "email-history":
