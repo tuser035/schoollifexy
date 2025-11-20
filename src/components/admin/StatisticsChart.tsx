@@ -147,7 +147,7 @@ const StatisticsChart = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((c) => (
+                  {Array.from({ length: 9 }, (_, i) => i + 1).map((c) => (
                     <SelectItem key={c} value={c.toString()}>
                       {c}반
                     </SelectItem>
