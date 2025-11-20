@@ -787,6 +787,7 @@ export type Database = {
           last_accessed_at: string
           metadata: Json
           name: string
+          original_filename: string
           owner: string
           updated_at: string
         }[]

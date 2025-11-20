@@ -37,7 +37,7 @@ const StorageManager = () => {
         return;
       }
 
-      // 관리자용 storage 파일 목록 조회 함수 호출
+      // 관리자용 storage 파일 목록 조회 함수 호출 (원본 파일명 포함)
       const { data: storageFiles, error: storageError } = await supabase.rpc(
         "admin_get_storage_files",
         {
@@ -48,34 +48,12 @@ const StorageManager = () => {
 
       if (storageError) throw storageError;
 
-      // 파일 메타데이터 조회
-      const { error: sessionError } = await supabase.rpc("set_admin_session", {
-        admin_id_input: parsedUser.id
-      });
-
-      if (sessionError) {
-        console.error("세션 설정 오류:", sessionError);
-      }
-
-      const { data: metadata, error: metadataError } = await supabase
-        .from("file_metadata")
-        .select("storage_path, original_filename")
-        .eq("bucket_name", "evidence-photos");
-
-      if (metadataError) {
-        console.error("메타데이터 조회 오류:", metadataError);
-      }
-
-      // 메타데이터와 파일 정보 매칭
-      const metadataMap = new Map(
-        metadata?.map(m => [m.storage_path, m.original_filename]) || []
-      );
-
+      // 파일 정보를 적절한 형식으로 변환
       const filesWithMetadata: FileWithMetadata[] = (storageFiles || []).map(file => ({
         ...file,
         metadata: file.metadata as Record<string, any>,
         buckets: null,
-        originalFilename: metadataMap.get(file.name)
+        originalFilename: file.original_filename
       }));
 
       setFiles(filesWithMetadata);
