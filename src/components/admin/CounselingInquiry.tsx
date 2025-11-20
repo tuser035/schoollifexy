@@ -58,18 +58,12 @@ const CounselingInquiry = () => {
 
       const input = searchInput.trim();
       
-      // If input is empty, fetch all counseling records with student info using foreign key join
+      // If input is empty, fetch all counseling records using RPC function
       if (!input) {
         const { data: allRecords, error: allRecordsError } = await supabase
-          .from('career_counseling')
-          .select(`
-            *,
-            students!career_counseling_student_id_fkey (
-              student_id,
-              name
-            )
-          `)
-          .order('counseling_date', { ascending: false });
+          .rpc('admin_get_all_counseling_records', {
+            admin_id_input: parsedUser.id
+          });
 
         if (allRecordsError) {
           console.error('All records query error:', allRecordsError);
@@ -78,11 +72,11 @@ const CounselingInquiry = () => {
           return;
         }
 
-        // Transform the data to include student info
+        // Transform the data to match the component's expected structure
         const transformedRecords = (allRecords || []).map((record: any) => ({
           ...record,
-          studentName: record.students?.name || '-',
-          studentId: record.students?.student_id || '-'
+          studentName: record.student_name || '-',
+          studentId: record.student_id || '-'
         }));
 
         setRecords(transformedRecords);
