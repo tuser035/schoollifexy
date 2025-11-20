@@ -1026,6 +1026,7 @@ export type Database = {
           table_name: string
           user_agent: string
           user_id: string
+          user_name: string
           user_type: string
         }[]
       }
