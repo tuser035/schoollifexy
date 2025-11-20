@@ -95,9 +95,18 @@ const CounselingInquiry = () => {
       let searchText = null;
       let searchGrade = null;
       let searchClass = null;
+      let isClassSearch = false;
 
+      // 학년반 형식 체크 (예: 38 = 3학년 8반)
+      if (/^\d{2}$/.test(input)) {
+        const grade = parseInt(input[0]);
+        const classNum = parseInt(input[1]);
+        searchGrade = grade;
+        searchClass = classNum;
+        isClassSearch = true;
+      }
       // 학년반번호 형식 체크 (예: 386 = 3학년 8반 6번)
-      if (/^\d{3,4}$/.test(input)) {
+      else if (/^\d{3,4}$/.test(input)) {
         const grade = parseInt(input[0]);
         let classNum, number;
         
@@ -138,6 +147,46 @@ const CounselingInquiry = () => {
         setRecords([]);
         setStudentName("");
         setStudentId("");
+        return;
+      }
+
+      // 학년반 전체 조회인 경우
+      if (isClassSearch) {
+        // 모든 상담 기록 조회
+        const { data: allRecords, error: allRecordsError } = await supabase
+          .rpc('admin_get_all_counseling_records', {
+            admin_id_input: parsedUser.id
+          });
+
+        if (allRecordsError) {
+          console.error('All records query error:', allRecordsError);
+          toast.error("상담기록 조회 중 오류가 발생했습니다");
+          setIsLoading(false);
+          return;
+        }
+
+        // 해당 학년반 학생들의 student_id 목록
+        const classStudentIds = studentsData.map(s => s.student_id);
+
+        // 해당 학년반 학생들의 상담 기록만 필터링
+        const filteredRecords = (allRecords || [])
+          .filter((record: any) => classStudentIds.includes(record.student_id))
+          .map((record: any) => ({
+            ...record,
+            studentName: record.student_name || '-',
+            studentId: record.student_id || '-'
+          }));
+
+        setRecords(filteredRecords);
+        setStudentName(`${searchGrade}학년 ${searchClass}반 전체`);
+        setStudentId("");
+
+        if (filteredRecords.length === 0) {
+          toast.info("상담 기록이 없습니다");
+        } else {
+          toast.success(`${filteredRecords.length}건의 상담 기록을 찾았습니다`);
+        }
+        setIsLoading(false);
         return;
       }
 
@@ -365,7 +414,7 @@ const CounselingInquiry = () => {
           <div className="flex gap-4">
             <div className="relative max-w-xs">
               <Input
-                placeholder="학번, 이름 또는 학년반번호 (예: 3817, 한정훈, 386)"
+                placeholder="학번, 이름, 학년반, 학년반번호 (예: 38, 386)"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
@@ -409,7 +458,7 @@ const CounselingInquiry = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {studentName === "전체 학생" && <TableHead>학생</TableHead>}
+                    {(studentName.includes("전체") || studentName.includes("학년")) && <TableHead>학생</TableHead>}
                     <TableHead>상담일</TableHead>
                     <TableHead>상담사</TableHead>
                     <TableHead>상담내용 미리보기</TableHead>
@@ -420,7 +469,7 @@ const CounselingInquiry = () => {
                 <TableBody>
                   {records.map((record: any) => (
                     <TableRow key={record.id}>
-                      {studentName === "전체 학생" && (
+                      {(studentName.includes("전체") || studentName.includes("학년")) && (
                         <TableCell className="whitespace-nowrap">
                           {record.studentName} ({record.studentId})
                         </TableCell>
