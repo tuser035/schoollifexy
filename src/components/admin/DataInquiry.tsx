@@ -836,8 +836,39 @@ const DataInquiry = () => {
     let csvHeader: string;
     let csvRows: string[];
 
-    // 이달의 학생 테이블의 경우 상세 내역 포함
-    if (selectedTable === "monthly" && monthlyRawData.length > 0) {
+    // 학생 테이블의 경우 업로드 순서와 일치하도록 특별 처리
+    if (selectedTable === "students") {
+      csvHeader = "student_id,name,grade,class,number,dept_code,student_call,gmail,parents_call1,parents_call2";
+      csvRows = data.map(row => {
+        const student_id = row["학번"] || "";
+        const name = row["이름"] || "";
+        const grade = row["학년"] || "";
+        const classNum = row["반"] || "";
+        const number = row["번호"] || "";
+        const dept_code = row["학과"] || "";
+        const student_call = row["전화번호"] || "";
+        const gmail = row["이메일"] || "";
+        const parents_call1 = row["학부모전화1"] || "";
+        const parents_call2 = row["학부모전화2"] || "";
+        
+        return `${student_id},${name},${grade},${classNum},${number},${dept_code},${student_call},${gmail},${parents_call1},${parents_call2}`;
+      });
+    } else if (selectedTable === "teachers") {
+      csvHeader = "teacher_email,name,grade,class,dept_code,call_t,is_homeroom,department,subject";
+      csvRows = data.map(row => {
+        const teacher_email = row["이메일"] || "";
+        const name = row["이름"] || "";
+        const grade = row["학년"] !== "-" ? row["학년"] : "";
+        const classNum = row["반"] !== "-" ? row["반"] : "";
+        const dept_code = row["학과"] || "";
+        const call_t = row["전화번호"] || "";
+        const is_homeroom = row["담임여부"] === "담임" ? "true" : "false";
+        const department = row["부서"] || "";
+        const subject = row["담당교과"] || "";
+        
+        return `${teacher_email},${name},${grade},${classNum},${dept_code},${call_t},${is_homeroom},${department},${subject}`;
+      });
+    } else if (selectedTable === "monthly" && monthlyRawData.length > 0) {
       csvHeader = "날짜,학생,학번,추천교사,구분,사유,증빙사진,상담첨부파일";
       csvRows = monthlyRawData.map(row => {
         const date = new Date(row.created_at).toLocaleDateString('ko-KR');
