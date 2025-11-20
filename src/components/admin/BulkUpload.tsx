@@ -184,7 +184,18 @@ const BulkUpload = () => {
                   value = value.trim();
                 }
                 
-                // Convert empty strings, null, undefined to null
+                // UUID fields that must be null if empty (not empty string)
+                const uuidFields = ['teacher_id', 'admin_id', 'student_id', 'uploaded_by', 'sender_id'];
+                if (uuidFields.includes(trimmedKey)) {
+                  // For UUID fields, convert any falsy value or empty string to null
+                  if (!value || value === '' || value === null || value === undefined || 
+                      (typeof value === 'string' && value.trim() === '')) {
+                    cleaned[trimmedKey] = null;
+                    return;
+                  }
+                }
+                
+                // Convert empty strings, null, undefined to null for other fields
                 if (value === '' || value === null || value === undefined) {
                   cleaned[trimmedKey] = null;
                   return;
