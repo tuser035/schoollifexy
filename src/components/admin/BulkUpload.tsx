@@ -240,12 +240,7 @@ const BulkUpload = () => {
             console.log('Cleaned records for', table, ':', cleanRecords);
             console.log('Current user ID:', user.id);
 
-            // Re-set session before insert to ensure RLS is active
-            if (table === 'teacher_groups' || table === 'student_groups') {
-              await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-            }
-
-            // Insert using upsert for students, teachers, departments
+            // Insert using different methods based on table type
             let result;
             if (table === 'students') {
               result = await supabase.from(table).upsert(cleanRecords, { 
@@ -262,6 +257,32 @@ const BulkUpload = () => {
                 onConflict: 'code',
                 ignoreDuplicates: false 
               });
+            } else if (table === 'teacher_groups') {
+              // Use RPC function for teacher groups to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_teacher_group', {
+                  admin_id_input: user.id,
+                  group_name_input: record.group_name,
+                  teacher_ids_input: record.teacher_ids
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
+            } else if (table === 'student_groups') {
+              // Use RPC function for student groups to handle RLS properly
+              const results = [];
+              for (const record of cleanRecords) {
+                const { data, error } = await supabase.rpc('admin_insert_student_group', {
+                  admin_id_input: user.id,
+                  group_name_input: record.group_name,
+                  student_ids_input: record.student_ids
+                });
+                if (error) throw error;
+                results.push(data);
+              }
+              result = { data: results, error: null };
             } else {
               // For other tables - just insert
               result = await supabase.from(table).insert(cleanRecords);
