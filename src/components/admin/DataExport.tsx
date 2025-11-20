@@ -289,7 +289,6 @@ ${schemaSQL}`;
           <Button
             onClick={exportSchema}
             disabled={isExportingSchema}
-            variant="outline"
             className="w-full"
             size="lg"
           >
