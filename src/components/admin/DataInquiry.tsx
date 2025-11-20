@@ -73,6 +73,8 @@ const DataInquiry = () => {
   const [isDeleteGroupDialogOpen, setIsDeleteGroupDialogOpen] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState<{ id: string; name: string } | null>(null);
   const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [editingTeacher, setEditingTeacher] = useState<any>(null);
   const [isSavingTeacher, setIsSavingTeacher] = useState(false);
   const [isAddTeacherDialogOpen, setIsAddTeacherDialogOpen] = useState(false);
@@ -2045,7 +2047,8 @@ const DataInquiry = () => {
           "교사": row.teacher_name || "-",
           "카테고리": row.category,
           "사유": row.reason || "-",
-          "점수": row.score
+          "점수": row.score,
+          "증빙사진": row.image_url
         }));
 
       } else if (selectedTable === "demerits") {
@@ -2155,7 +2158,8 @@ const DataInquiry = () => {
           "교사": row.teacher_name || "-",
           "카테고리": row.category,
           "사유": row.reason || "-",
-          "점수": row.score
+          "점수": row.score,
+          "증빙사진": row.image_url
         }));
 
       } else if (selectedTable === "monthly") {
@@ -2811,6 +2815,7 @@ const DataInquiry = () => {
                         {columns.filter(col => col !== 'student_id' && col !== 'student_name').map((col) => {
                           const value = row[col]?.toString() || "-";
                           const isPhotoColumn = col === "증명사진";
+                          const isEvidenceColumn = col === "증빙사진";
                           const isPhoneColumn = col === "전화번호" || col === "학부모전화1" || col === "학부모전화2";
                           const isEmailColumn = col === "이메일" || col.toLowerCase().includes("email");
                           const isValidPhone = value !== "-" && value.trim() !== "";
@@ -2823,7 +2828,7 @@ const DataInquiry = () => {
                           
                           return (
                             <TableCell key={col} className={
-                              col === "증명사진" ? "whitespace-nowrap p-2" : 
+                              col === "증명사진" || col === "증빙사진" ? "whitespace-nowrap p-2" : 
                               col === "이름" ? "whitespace-nowrap max-w-[80px] sm:max-w-[100px] md:max-w-[120px] truncate" : 
                               col === "학년" || col === "반" || col === "번호" ? "whitespace-nowrap text-center p-2" : 
                               "whitespace-nowrap"
@@ -2848,6 +2853,24 @@ const DataInquiry = () => {
                                     <div className="text-xs sm:text-sm font-semibold">{studentGrade}-{studentClass}-{studentNumber}</div>
                                     <div className="text-xs sm:text-sm truncate max-w-[60px] sm:max-w-[80px] md:max-w-[100px]">{studentName}</div>
                                   </div>
+                                </div>
+                              ) : isEvidenceColumn ? (
+                                <div className="flex justify-center">
+                                  {value && row[col] && Array.isArray(row[col]) && row[col].length > 0 ? (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setSelectedImages(row[col]);
+                                        setIsImageDialogOpen(true);
+                                      }}
+                                    >
+                                      <Camera className="h-4 w-4 mr-1" />
+                                      보기 ({row[col].length})
+                                    </Button>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">없음</span>
+                                  )}
                                 </div>
                               ) : isPhoneColumn && isValidPhone ? (
                                 <button
@@ -4420,6 +4443,35 @@ const DataInquiry = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 증빙사진 보기 다이얼로그 */}
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>증빙사진</DialogTitle>
+            <DialogDescription>
+              등록된 증빙사진을 확인할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+            {selectedImages.map((imageUrl, index) => (
+              <div key={index} className="border rounded-lg p-2">
+                <img 
+                  src={imageUrl} 
+                  alt={`증빙사진 ${index + 1}`}
+                  className="w-full h-auto rounded"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
+                />
+                <div className="text-center mt-2 text-sm text-muted-foreground">
+                  사진 {index + 1}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
