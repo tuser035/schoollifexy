@@ -258,7 +258,7 @@ ${schemaSQL}`;
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-            <h3 className="font-semibold text-sm">스키마 파일에 포함:</h3>
+            <h3 className="font-semibold text-sm">포함되는 스키마:</h3>
             <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
               <li>모든 테이블의 구조 정의 (CREATE TABLE)</li>
               <li>컬럼 이름, 데이터 타입, 제약조건</li>
