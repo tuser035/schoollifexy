@@ -168,34 +168,33 @@ const MonthlyForm = () => {
 
       let imageUrls: string[] = [];
 
-      // Upload images if exist
+      // Upload images using edge function
       if (imageFiles.length > 0) {
         for (const imageFile of imageFiles) {
-          const fileExt = imageFile.name.split('.').pop();
-          const fileName = `${user.id}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          const filePath = `${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('evidence-photos')
-            .upload(filePath, imageFile);
-
-          if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('evidence-photos')
-            .getPublicUrl(filePath);
-
-          imageUrls.push(publicUrl);
-
-          // 파일 메타데이터 저장
-          await supabase.from('file_metadata').insert({
-            storage_path: filePath,
-            original_filename: imageFile.name,
-            file_size: imageFile.size,
-            mime_type: imageFile.type,
-            bucket_name: 'evidence-photos',
-            uploaded_by: user.id
+          // Convert file to base64
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(imageFile);
           });
+
+          // Upload via edge function
+          const { data, error: uploadError } = await supabase.functions.invoke('upload-evidence-photo', {
+            body: {
+              teacher_id: user.id,
+              filename: imageFile.name,
+              file_base64: base64,
+              content_type: imageFile.type,
+              file_size: imageFile.size,
+            }
+          });
+
+          if (uploadError || !data?.ok) {
+            console.error('Upload error:', uploadError || data?.error);
+            throw new Error(uploadError?.message || data?.error || '업로드 실패');
+          }
+
+          imageUrls.push(data.publicUrl);
         }
       }
 
