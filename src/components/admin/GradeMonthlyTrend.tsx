@@ -30,19 +30,22 @@ const GradeMonthlyTrend = () => {
         return;
       }
 
-      // Set admin session
+      // Get all students using RPC function
+      const { data: students, error: studentsError } = await supabase.rpc('admin_get_students', {
+        admin_id_input: parsedUser.id,
+        search_text: null,
+        search_grade: null,
+        search_class: null
+      });
+
+      if (studentsError) throw studentsError;
+
+      // Set session for RLS
       if (parsedUser.type === "admin") {
         await supabase.rpc("set_admin_session", { admin_id_input: parsedUser.id });
       } else {
         await supabase.rpc("set_teacher_session", { teacher_id_input: parsedUser.id });
       }
-
-      // Get all students grouped by grade
-      const { data: students, error: studentsError } = await supabase
-        .from("students")
-        .select("student_id, grade");
-
-      if (studentsError) throw studentsError;
 
       // Get merits for the year
       const { data: merits, error: meritsError } = await supabase
