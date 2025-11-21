@@ -1200,6 +1200,22 @@ export type Database = {
         }
         Returns: string
       }
+      reset_admin_teacher_password_by_phone: {
+        Args: {
+          admin_id_input: string
+          new_password: string
+          phone_input: string
+        }
+        Returns: boolean
+      }
+      reset_teacher_password_by_phone: {
+        Args: {
+          admin_id_input: string
+          new_password: string
+          phone_input: string
+        }
+        Returns: boolean
+      }
       set_admin_session: {
         Args: { admin_id_input: string }
         Returns: undefined

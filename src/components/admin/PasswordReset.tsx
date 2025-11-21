@@ -113,6 +113,12 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!currentUser) {
+      toast.error("사용자 정보를 찾을 수 없습니다");
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -125,34 +131,17 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
         });
         result = { data, error };
       } else if (userType === "teacher") {
-        const { data: teacher, error: fetchError } = await supabase
-          .from("teachers")
-          .select("id")
-          .eq("call_t", identifier)
-          .maybeSingle();
-        
-        if (fetchError) throw fetchError;
-        if (!teacher) throw new Error("해당 전화번호로 등록된 교사를 찾을 수 없습니다");
-        
-        const { data, error } = await supabase.rpc("update_teacher_password", {
-          teacher_id_input: teacher.id,
+        const { data, error } = await supabase.rpc("reset_teacher_password_by_phone", {
+          admin_id_input: currentUser.id,
+          phone_input: identifier,
           new_password: newPassword,
         });
         result = { data, error };
       } else {
-        // 관리자는 교사 테이블에서 is_admin=true인 사용자의 전화번호로 조회
-        const { data: teacher, error: fetchError } = await supabase
-          .from("teachers")
-          .select("id")
-          .eq("call_t", identifier)
-          .eq("is_admin", true)
-          .maybeSingle();
-        
-        if (fetchError) throw fetchError;
-        if (!teacher) throw new Error("해당 전화번호로 등록된 관리자를 찾을 수 없습니다");
-        
-        const { data, error } = await supabase.rpc("update_teacher_password", {
-          teacher_id_input: teacher.id,
+        // 관리자 (교사 테이블의 is_admin=true)
+        const { data, error } = await supabase.rpc("reset_admin_teacher_password_by_phone", {
+          admin_id_input: currentUser.id,
+          phone_input: identifier,
           new_password: newPassword,
         });
         result = { data, error };
