@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, AlertCircle, Star, LogOut } from "lucide-react";
+import { Award, AlertCircle, Star, LogOut, Shield } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import MeritForm from "@/components/teacher/MeritForm";
 import DemeritForm from "@/components/teacher/DemeritForm";
@@ -51,7 +51,8 @@ const TeacherDashboard = () => {
           <div className="flex gap-2">
           {user.isAdmin && (
             <Button onClick={() => navigate("/admin/dashboard")} variant="outline">
-              데이터 보기
+              <Shield className="w-4 h-4 mr-2" />
+              관리자 대시보드
             </Button>
           )}
             <Button onClick={handleLogout} variant="outline">
