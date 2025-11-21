@@ -50,8 +50,8 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
   const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
-    if (userType === "teacher") {
-      // 교사일 경우 전화번호 포맷팅 적용
+    if (userType === "teacher" || userType === "admin") {
+      // 교사 또는 관리자일 경우 전화번호 포맷팅 적용
       setIdentifier(formatPhoneNumber(value));
     } else {
       setIdentifier(value);
@@ -139,16 +139,18 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
         });
         result = { data, error };
       } else {
-        const { data: admin } = await supabase
-          .from("admins")
+        // 관리자는 교사 테이블에서 is_admin=true인 사용자의 전화번호로 조회
+        const { data: teacher } = await supabase
+          .from("teachers")
           .select("id")
-          .eq("email", identifier)
+          .eq("call_t", identifier)
+          .eq("is_admin", true)
           .single();
         
-        if (!admin) throw new Error("관리자를 찾을 수 없습니다");
+        if (!teacher) throw new Error("관리자를 찾을 수 없습니다");
         
-        const { data, error } = await supabase.rpc("update_admin_password", {
-          admin_id_input: admin.id,
+        const { data, error } = await supabase.rpc("update_teacher_password", {
+          teacher_id_input: teacher.id,
           new_password: newPassword,
         });
         result = { data, error };
@@ -193,6 +195,7 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
                     <SelectContent>
                       <SelectItem value="student">학생</SelectItem>
                       <SelectItem value="teacher">교사</SelectItem>
+                      <SelectItem value="admin">관리자</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -201,7 +204,7 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
                   <Label>
                     {userType === "student" && "학생 ID"}
                     {userType === "teacher" && "전화번호"}
-                    {userType === "admin" && "이메일"}
+                    {userType === "admin" && "전화번호"}
                   </Label>
                   <Input
                     value={identifier}
@@ -209,7 +212,7 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
                     placeholder={
                       userType === "student" ? "예: 10101" :
                       userType === "teacher" ? "예: 010-1234-5678" :
-                      "예: admin@school.com"
+                      "예: 010-1234-5678"
                     }
                     required
                   />
@@ -284,6 +287,7 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
                 <SelectContent>
                   <SelectItem value="student">학생</SelectItem>
                   <SelectItem value="teacher">교사</SelectItem>
+                  <SelectItem value="admin">관리자</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -292,7 +296,7 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
               <Label>
                 {userType === "student" && "학생 ID"}
                 {userType === "teacher" && "전화번호"}
-                {userType === "admin" && "이메일"}
+                {userType === "admin" && "전화번호"}
               </Label>
               <Input
                 value={identifier}
@@ -300,7 +304,7 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
                 placeholder={
                   userType === "student" ? "예: 10101" :
                   userType === "teacher" ? "예: 010-1234-5678" :
-                  "예: admin@school.com"
+                  "예: 010-1234-5678"
                 }
                 required
               />
