@@ -193,7 +193,6 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
                     <SelectContent>
                       <SelectItem value="student">학생</SelectItem>
                       <SelectItem value="teacher">교사</SelectItem>
-                      <SelectItem value="admin">관리자</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -285,7 +284,6 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
                 <SelectContent>
                   <SelectItem value="student">학생</SelectItem>
                   <SelectItem value="teacher">교사</SelectItem>
-                  <SelectItem value="admin">관리자</SelectItem>
                 </SelectContent>
               </Select>
             </div>
