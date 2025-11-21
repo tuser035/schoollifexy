@@ -2,10 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
-import { Download } from "lucide-react";
+import { Download, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const GradeMonthlyTrend = () => {
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
@@ -13,6 +17,9 @@ const GradeMonthlyTrend = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [chartType, setChartType] = useState<"bar" | "line">("line");
   const [dataType, setDataType] = useState<"merits" | "demerits" | "total">("total");
+  const [useCustomRange, setUseCustomRange] = useState(false);
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
 
   const handleQuery = async () => {
     setIsLoading(true);
@@ -47,21 +54,28 @@ const GradeMonthlyTrend = () => {
         await supabase.rpc("set_teacher_session", { teacher_id_input: parsedUser.id });
       }
 
-      // Get merits for the year
+      // Get merits for the date range
+      const startDateStr = useCustomRange && startDate 
+        ? format(startDate, "yyyy-MM-dd") 
+        : `${year}-01-01`;
+      const endDateStr = useCustomRange && endDate 
+        ? format(endDate, "yyyy-MM-dd") 
+        : `${year}-12-31`;
+
       const { data: merits, error: meritsError } = await supabase
         .from("merits")
         .select("student_id, score, created_at")
-        .gte("created_at", `${year}-01-01`)
-        .lte("created_at", `${year}-12-31`);
+        .gte("created_at", startDateStr)
+        .lte("created_at", endDateStr);
 
       if (meritsError) throw meritsError;
 
-      // Get demerits for the year
+      // Get demerits for the date range
       const { data: demerits, error: demeritsError } = await supabase
         .from("demerits")
         .select("student_id, score, created_at")
-        .gte("created_at", `${year}-01-01`)
-        .lte("created_at", `${year}-12-31`);
+        .gte("created_at", startDateStr)
+        .lte("created_at", endDateStr);
 
       if (demeritsError) throw demeritsError;
 
@@ -197,20 +211,94 @@ const GradeMonthlyTrend = () => {
         <CardContent className="space-y-4">
           <div className="flex gap-4 flex-wrap items-end">
             <div className="space-y-2">
-              <label className="text-sm font-medium">연도</label>
-              <Select value={year} onValueChange={setYear}>
-                <SelectTrigger className="w-[120px]">
+              <label className="text-sm font-medium">기간 선택 방식</label>
+              <Select 
+                value={useCustomRange ? "custom" : "year"} 
+                onValueChange={(value) => setUseCustomRange(value === "custom")}
+              >
+                <SelectTrigger className="w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                    <SelectItem key={y} value={y.toString()}>
-                      {y}년
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="year">연도별</SelectItem>
+                  <SelectItem value="custom">기간 설정</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {!useCustomRange ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">연도</label>
+                <Select value={year} onValueChange={setYear}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                      <SelectItem key={y} value={y.toString()}>
+                        {y}년
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">시작일</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[140px] justify-start text-left font-normal",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, "yyyy-MM-dd") : "선택"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">종료일</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[140px] justify-start text-left font-normal",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, "yyyy-MM-dd") : "선택"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </>
+            )}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">데이터 유형</label>
