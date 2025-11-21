@@ -39,12 +39,15 @@ const menuItems = (user: AuthUser) => {
   const items = [
     // 시스템 관리자만
     ...(isSystemAdmin ? [
-      { value: "password", label: "비밀번호", icon: Key },
-      { value: "my-password", label: "내 비밀번호", icon: Key },
       { value: "upload", label: "업로드", icon: Upload },
     ] : []),
     // 모든 사용자 (관리자 교사와 시스템 관리자)
     { value: "data", label: "데이터", icon: Database },
+    { value: "password", label: "비밀번호 재설정", icon: Key },
+    // 시스템 관리자만
+    ...(isSystemAdmin ? [
+      { value: "my-password", label: "내 비밀번호", icon: Key },
+    ] : []),
     { value: "points", label: "상점", icon: BarChart },
     { value: "counseling", label: "상담", icon: ClipboardCheck },
     { value: "statistics", label: "통계", icon: TrendingUp },
@@ -85,7 +88,7 @@ const AdminDashboard = () => {
     setUser(parsedUser);
     // 기본 탭 설정
     const isSystemAdmin = parsedUser.type === "admin";
-    const defaultTab = isSystemAdmin ? "password" : "data";
+    const defaultTab = isSystemAdmin ? "upload" : "data";
     setActiveTab(defaultTab);
   }, [navigate]);
 
