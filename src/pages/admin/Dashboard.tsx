@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, Undo } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
-import AdminPasswordChange from "@/components/admin/AdminPasswordChange";
 import BulkUpload from "@/components/admin/BulkUpload";
 import DataInquiry from "@/components/admin/DataInquiry";
 import PointsInquiry from "@/components/admin/PointsInquiry";
@@ -44,10 +43,6 @@ const menuItems = (user: AuthUser) => {
     // 모든 사용자 (관리자 교사와 시스템 관리자)
     { value: "data", label: "데이터", icon: Database },
     { value: "password", label: "비밀번호 재설정", icon: Key },
-    // 시스템 관리자만
-    ...(isSystemAdmin ? [
-      { value: "my-password", label: "내 비밀번호", icon: Key },
-    ] : []),
     { value: "points", label: "상점", icon: BarChart },
     { value: "counseling", label: "상담", icon: ClipboardCheck },
     { value: "statistics", label: "통계", icon: TrendingUp },
@@ -103,11 +98,7 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "password":
-        return <PasswordReset />;
-      case "my-password":
-        return user.type === "admin" ? (
-          <AdminPasswordChange adminId={user.id} adminEmail={user.email || ""} />
-        ) : null;
+        return <PasswordReset currentUser={user} />;
       case "upload":
         return <BulkUpload />;
       case "data":
