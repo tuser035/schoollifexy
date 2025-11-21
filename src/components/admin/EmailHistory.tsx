@@ -208,15 +208,15 @@ export const EmailHistory = () => {
       </Card>
 
       <Dialog open={!!selectedEmail} onOpenChange={() => setSelectedEmail(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="pr-12">
             <DialogTitle>이메일 상세 내용</DialogTitle>
             <DialogDescription>
               {selectedEmail && format(new Date(selectedEmail.sent_at), "yyyy-MM-dd HH:mm", { locale: ko })}
             </DialogDescription>
           </DialogHeader>
           {selectedEmail && (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto pr-2">
               <div>
                 <Label>발신자</Label>
                 <p className="text-sm">
