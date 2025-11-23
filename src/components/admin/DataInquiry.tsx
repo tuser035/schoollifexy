@@ -2656,7 +2656,7 @@ const DataInquiry = () => {
                           type="checkbox"
                           checked={selectedStudents.size > 0 && selectedStudents.size === data.length}
                           onChange={(e) => handleToggleAllStudents(e.target.checked)}
-                          className="cursor-pointer"
+                          className="cursor-pointer w-4 h-4"
                         />
                       </TableHead>
                     )}
@@ -2670,7 +2670,7 @@ const DataInquiry = () => {
                             monthlyRawData.length
                           )}
                           onChange={(e) => handleSelectAll(e.target.checked)}
-                          className="cursor-pointer"
+                          className="cursor-pointer w-4 h-4"
                         />
                       </TableHead>
                     )}
@@ -2829,7 +2829,7 @@ const DataInquiry = () => {
                               type="checkbox"
                               checked={selectedStudents.has(row["학번"])}
                               onChange={(e) => handleToggleStudent(row["학번"], e.target.checked)}
-                              className="cursor-pointer"
+                              className="cursor-pointer w-4 h-4"
                             />
                           </TableCell>
                         )}
@@ -2839,7 +2839,7 @@ const DataInquiry = () => {
                               type="checkbox"
                               checked={selectedIds.has(rawData.id)}
                               onChange={(e) => handleSelectOne(rawData.id, e.target.checked)}
-                              className="cursor-pointer"
+                              className="cursor-pointer w-4 h-4"
                             />
                           </TableCell>
                         )}
