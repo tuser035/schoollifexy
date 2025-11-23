@@ -70,22 +70,22 @@ const TeacherDashboard = () => {
               value="merit"
               className="data-[state=active]:bg-merit-blue data-[state=active]:text-white"
             >
-              <Award className="w-4 h-4 mr-2" />
-              상점 부여
+              <Award className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">상점 부여</span>
             </TabsTrigger>
             <TabsTrigger 
               value="demerit"
               className="data-[state=active]:bg-demerit-orange data-[state=active]:text-white"
             >
-              <AlertCircle className="w-4 h-4 mr-2" />
-              벌점 부여
+              <AlertCircle className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">벌점 부여</span>
             </TabsTrigger>
             <TabsTrigger 
               value="monthly"
               className="data-[state=active]:bg-monthly-green data-[state=active]:text-white"
             >
-              <Star className="w-4 h-4 mr-2" />
-              이달의 학생
+              <Star className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">이달의 학생</span>
             </TabsTrigger>
           </TabsList>
 
