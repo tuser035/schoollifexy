@@ -160,11 +160,11 @@ const StudentDashboard = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-foreground">학생 대시보드</h1>
-            <p className="text-muted-foreground">{user.name}님 ({user.studentId})</p>
+            <p className="text-muted-foreground break-words max-w-[200px] sm:max-w-none">{user.name}님 ({user.studentId})</p>
           </div>
-          <Button onClick={handleLogout} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" />
-            로그아웃
+          <Button onClick={handleLogout} variant="outline" size="sm">
+            <LogOut className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">로그아웃</span>
           </Button>
         </div>
       </header>
@@ -251,9 +251,18 @@ const StudentDashboard = () => {
             ) : (
               <Tabs defaultValue="merits" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="merits">상점</TabsTrigger>
-                  <TabsTrigger value="demerits">벌점</TabsTrigger>
-                  <TabsTrigger value="monthly">이달의 학생</TabsTrigger>
+                  <TabsTrigger value="merits">
+                    <Award className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">상점</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="demerits">
+                    <AlertCircle className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">벌점</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="monthly">
+                    <Star className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">이달의 학생</span>
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="merits">
