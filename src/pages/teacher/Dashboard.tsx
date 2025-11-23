@@ -43,7 +43,7 @@ const TeacherDashboard = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-foreground">교사 대시보드</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground break-words max-w-[200px] sm:max-w-none">
               {user.name}님 환영합니다
               {user.isHomeroom && user.grade && user.class && ` (${user.grade}-${user.class})`}
             </p>
