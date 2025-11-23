@@ -50,14 +50,14 @@ const TeacherDashboard = () => {
           </div>
           <div className="flex gap-2">
           {user.isAdmin && (
-            <Button onClick={() => navigate("/admin/dashboard")} variant="outline">
-              <Shield className="w-4 h-4 mr-2" />
-              관리자 대시보드
+            <Button onClick={() => navigate("/admin/dashboard")} variant="outline" size="sm">
+              <Shield className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">관리자 대시보드</span>
             </Button>
           )}
-            <Button onClick={handleLogout} variant="outline">
-              <LogOut className="w-4 h-4 mr-2" />
-              로그아웃
+            <Button onClick={handleLogout} variant="outline" size="sm">
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">로그아웃</span>
             </Button>
           </div>
         </div>
