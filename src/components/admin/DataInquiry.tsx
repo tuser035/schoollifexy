@@ -2448,7 +2448,7 @@ const DataInquiry = () => {
                 }
               }}
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
-              className="max-w-xs"
+              className="w-full sm:max-w-xs"
               maxLength={100}
               type="search"
               inputMode="search"

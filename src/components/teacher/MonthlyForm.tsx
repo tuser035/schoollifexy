@@ -240,7 +240,7 @@ const MonthlyForm = () => {
             placeholder="학생 이름, 학번으로 검색..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-9 w-full sm:max-w-md"
           />
         </div>
         {filteredStudents.length > 0 && (
