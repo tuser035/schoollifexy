@@ -52,17 +52,17 @@ const Index = () => {
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl">
-          <div className="p-8">
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 via-orange-500 to-green-600 flex items-center justify-center">
-                  <School className="w-12 h-12 text-white" strokeWidth={2} />
+          <div className="p-4 sm:p-8">
+            <div className="text-center mb-4 sm:mb-8">
+              <div className="flex justify-center mb-3 sm:mb-6">
+                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-600 via-orange-500 to-green-600 flex items-center justify-center">
+                  <School className="w-8 h-8 sm:w-12 sm:h-12 text-white" strokeWidth={2} />
                 </div>
               </div>
-              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
+              <h1 className="text-[1.75rem] sm:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
                 스쿨라이프.KR
               </h1>
-              <p className="text-2xl font-semibold">
+              <p className="text-lg sm:text-2xl font-semibold">
                 <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
                   SchoolLife.
                 </span>
@@ -77,7 +77,7 @@ const Index = () => {
             </div>
 
             <Tabs defaultValue="student" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
                 <TabsTrigger 
                   value="student"
                   className="data-[state=active]:bg-student data-[state=active]:text-white"
