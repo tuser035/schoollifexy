@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, AlertCircle, Star, LogOut, Shield } from "lucide-react";
+import { Award, AlertCircle, Star, LogOut, Shield, Users, Mail } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import MeritForm from "@/components/teacher/MeritForm";
 import DemeritForm from "@/components/teacher/DemeritForm";
 import MonthlyForm from "@/components/teacher/MonthlyForm";
+import StudentGroupManager from "@/components/teacher/StudentGroupManager";
+import BulkEmailSender from "@/components/teacher/BulkEmailSender";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -65,20 +67,20 @@ const TeacherDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="merit" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger 
               value="merit"
               className="data-[state=active]:bg-merit-blue data-[state=active]:text-white"
             >
               <Award className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">상점 부여</span>
+              <span className="hidden sm:inline">상점</span>
             </TabsTrigger>
             <TabsTrigger 
               value="demerit"
               className="data-[state=active]:bg-demerit-orange data-[state=active]:text-white"
             >
               <AlertCircle className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">벌점 부여</span>
+              <span className="hidden sm:inline">벌점</span>
             </TabsTrigger>
             <TabsTrigger 
               value="monthly"
@@ -86,6 +88,14 @@ const TeacherDashboard = () => {
             >
               <Star className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">이달의 학생</span>
+            </TabsTrigger>
+            <TabsTrigger value="groups">
+              <Users className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">학생 그룹</span>
+            </TabsTrigger>
+            <TabsTrigger value="bulk-email">
+              <Mail className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">일괄 발송</span>
             </TabsTrigger>
           </TabsList>
 
@@ -120,6 +130,14 @@ const TeacherDashboard = () => {
                 <MonthlyForm />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="groups">
+            <StudentGroupManager />
+          </TabsContent>
+
+          <TabsContent value="bulk-email">
+            <BulkEmailSender />
           </TabsContent>
         </Tabs>
       </main>
