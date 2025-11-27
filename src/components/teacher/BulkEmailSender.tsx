@@ -173,12 +173,12 @@ const BulkEmailSender = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
           일괄 메시지 발송
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4">
         <div>
           <Label>학생 그룹 선택</Label>
           <Select value={selectedGroup} onValueChange={setSelectedGroup}>
@@ -218,23 +218,24 @@ const BulkEmailSender = () => {
         </div>
 
         <div>
-          <Label>제목</Label>
+          <Label className="text-sm">제목</Label>
           <Textarea
             placeholder="이메일 제목을 입력하세요"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             rows={2}
+            className="text-sm"
           />
         </div>
 
         <div>
-          <Label>내용</Label>
+          <Label className="text-sm">내용</Label>
           <Textarea
             placeholder="이메일 내용을 입력하세요"
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            rows={10}
-            className="font-mono"
+            rows={8}
+            className="font-mono text-sm"
           />
         </div>
 
@@ -242,13 +243,13 @@ const BulkEmailSender = () => {
           onClick={handleSend}
           disabled={isSending || !selectedGroup}
           className="w-full"
-          size="lg"
+          size="default"
         >
           <Send className="w-4 h-4 mr-2" />
           {isSending ? "발송 중..." : "일괄 발송"}
         </Button>
 
-        <div className="text-sm text-muted-foreground space-y-1">
+        <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
           <p>• Gmail 주소가 등록된 학생에게만 발송됩니다</p>
           <p>• 발송 후 이메일 히스토리에서 결과를 확인할 수 있습니다</p>
           <p>• Rate limit 방지를 위해 0.5초 간격으로 발송됩니다</p>

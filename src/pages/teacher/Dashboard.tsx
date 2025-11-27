@@ -67,37 +67,39 @@ const TeacherDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="merit" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger 
-              value="merit"
-              className="data-[state=active]:bg-merit-blue data-[state=active]:text-white"
-            >
-              <Award className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">상점</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="demerit"
-              className="data-[state=active]:bg-demerit-orange data-[state=active]:text-white"
-            >
-              <AlertCircle className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">벌점</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="monthly"
-              className="data-[state=active]:bg-monthly-green data-[state=active]:text-white"
-            >
-              <Star className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">이달의 학생</span>
-            </TabsTrigger>
-            <TabsTrigger value="groups">
-              <Users className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">학생 그룹</span>
-            </TabsTrigger>
-            <TabsTrigger value="bulk-email">
-              <Mail className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">일괄 발송</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="mb-6 overflow-x-auto">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5">
+              <TabsTrigger 
+                value="merit"
+                className="data-[state=active]:bg-merit-blue data-[state=active]:text-white whitespace-nowrap"
+              >
+                <Award className="w-4 h-4 mr-2" />
+                <span>상점</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="demerit"
+                className="data-[state=active]:bg-demerit-orange data-[state=active]:text-white whitespace-nowrap"
+              >
+                <AlertCircle className="w-4 h-4 mr-2" />
+                <span>벌점</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="monthly"
+                className="data-[state=active]:bg-monthly-green data-[state=active]:text-white whitespace-nowrap"
+              >
+                <Star className="w-4 h-4 mr-2" />
+                <span>이달의학생</span>
+              </TabsTrigger>
+              <TabsTrigger value="groups" className="whitespace-nowrap">
+                <Users className="w-4 h-4 mr-2" />
+                <span>그룹</span>
+              </TabsTrigger>
+              <TabsTrigger value="bulk-email" className="whitespace-nowrap">
+                <Mail className="w-4 h-4 mr-2" />
+                <span>일괄발송</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="merit">
             <Card>
