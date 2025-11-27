@@ -164,20 +164,20 @@ const StudentGroupManager = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
             학생 선택
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
-              <Label>학년</Label>
+              <Label className="text-sm">학년</Label>
               <Select value={searchGrade} onValueChange={setSearchGrade}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -189,9 +189,9 @@ const StudentGroupManager = () => {
               </Select>
             </div>
             <div>
-              <Label>반</Label>
+              <Label className="text-sm">반</Label>
               <Select value={searchClass} onValueChange={setSearchClass}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -233,14 +233,19 @@ const StudentGroupManager = () => {
           </div>
 
           <div className="space-y-2">
-            <Label>그룹 이름</Label>
-            <div className="flex gap-2">
+            <Label className="text-sm">그룹 이름</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 placeholder="예: 1학년 전체, 축구부 등"
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
+                className="text-sm"
               />
-              <Button onClick={handleSaveGroup} disabled={isLoading}>
+              <Button 
+                onClick={handleSaveGroup} 
+                disabled={isLoading}
+                className="w-full sm:w-auto"
+              >
                 <Save className="w-4 h-4 mr-2" />
                 저장
               </Button>
@@ -251,7 +256,7 @@ const StudentGroupManager = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>저장된 그룹 ({groups.length})</CardTitle>
+          <CardTitle className="text-base sm:text-lg">저장된 그룹 ({groups.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -263,11 +268,11 @@ const StudentGroupManager = () => {
               groups.map(group => (
                 <div
                   key={group.id}
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-accent gap-2"
                 >
                   <div className="flex-1">
-                    <p className="font-medium">{group.group_name}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base">{group.group_name}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       {group.student_ids.length}명 • {new Date(group.created_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -276,6 +281,7 @@ const StudentGroupManager = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleLoadGroup(group)}
+                      className="flex-1 sm:flex-none"
                     >
                       불러오기
                     </Button>
