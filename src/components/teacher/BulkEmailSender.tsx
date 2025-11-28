@@ -171,88 +171,92 @@ const BulkEmailSender = () => {
   const selectedGroupData = groups.find(g => g.id === selectedGroup);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
           일괄 메시지 발송
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 sm:space-y-4">
-        <div>
-          <Label>학생 그룹 선택</Label>
-          <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-            <SelectTrigger>
-              <SelectValue placeholder="그룹을 선택하세요" />
-            </SelectTrigger>
-            <SelectContent>
-              {groups.map(group => (
-                <SelectItem key={group.id} value={group.id}>
-                  {group.group_name} ({group.student_ids.length}명)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedGroupData && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {selectedGroupData.student_ids.length}명의 학생에게 발송됩니다
-            </p>
-          )}
+      <CardContent className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto space-y-3 pb-4 -mx-6 px-6">
+          <div>
+            <Label className="text-sm sm:text-base">학생 그룹 선택</Label>
+            <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+              <SelectTrigger className="h-11 text-sm">
+                <SelectValue placeholder="그룹을 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {groups.map(group => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.group_name} ({group.student_ids.length}명)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedGroupData && (
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
+                {selectedGroupData.student_ids.length}명의 학생에게 발송됩니다
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label className="text-sm sm:text-base">템플릿 선택 (선택사항)</Label>
+            <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
+              <SelectTrigger className="h-11 text-sm">
+                <SelectValue placeholder="템플릿을 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">직접 작성</SelectItem>
+                {templates.map(template => (
+                  <SelectItem key={template.id} value={template.id}>
+                    {template.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-sm sm:text-base">제목</Label>
+            <Textarea
+              placeholder="이메일 제목을 입력하세요"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              rows={2}
+              className="text-sm resize-none min-h-[60px]"
+            />
+          </div>
+
+          <div>
+            <Label className="text-sm sm:text-base">내용</Label>
+            <Textarea
+              placeholder="이메일 내용을 입력하세요"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={6}
+              className="font-mono text-sm resize-none min-h-[120px] sm:min-h-[160px]"
+            />
+          </div>
+
+          <div className="text-xs text-muted-foreground space-y-1 pt-2">
+            <p>• Gmail 주소가 등록된 학생에게만 발송됩니다</p>
+            <p>• 발송 후 이메일 히스토리에서 결과를 확인할 수 있습니다</p>
+            <p>• Rate limit 방지를 위해 0.5초 간격으로 발송됩니다</p>
+          </div>
         </div>
 
-        <div>
-          <Label>템플릿 선택 (선택사항)</Label>
-          <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
-            <SelectTrigger>
-              <SelectValue placeholder="템플릿을 선택하세요" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">직접 작성</SelectItem>
-              {templates.map(template => (
-                <SelectItem key={template.id} value={template.id}>
-                  {template.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label className="text-sm">제목</Label>
-          <Textarea
-            placeholder="이메일 제목을 입력하세요"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            rows={2}
-            className="text-sm"
-          />
-        </div>
-
-        <div>
-          <Label className="text-sm">내용</Label>
-          <Textarea
-            placeholder="이메일 내용을 입력하세요"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={8}
-            className="font-mono text-sm"
-          />
-        </div>
-
-        <Button
-          onClick={handleSend}
-          disabled={isSending || !selectedGroup}
-          className="w-full"
-          size="default"
-        >
-          <Send className="w-4 h-4 mr-2" />
-          {isSending ? "발송 중..." : "일괄 발송"}
-        </Button>
-
-        <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
-          <p>• Gmail 주소가 등록된 학생에게만 발송됩니다</p>
-          <p>• 발송 후 이메일 히스토리에서 결과를 확인할 수 있습니다</p>
-          <p>• Rate limit 방지를 위해 0.5초 간격으로 발송됩니다</p>
+        <div className="flex-shrink-0 pt-4 -mx-6 px-6 border-t bg-background">
+          <Button
+            onClick={handleSend}
+            disabled={isSending || !selectedGroup}
+            className="w-full h-11 text-sm sm:text-base font-medium"
+            size="default"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            {isSending ? "발송 중..." : "일괄 발송"}
+          </Button>
         </div>
       </CardContent>
     </Card>
