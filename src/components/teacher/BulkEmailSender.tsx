@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mail } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Send, Mail, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,6 +36,9 @@ const BulkEmailSender = () => {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadGroups();
@@ -86,6 +90,21 @@ const BulkEmailSender = () => {
       setSubject(template.subject);
       setBody(template.body);
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setAttachments(prev => [...prev, ...newFiles]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSend = async () => {
@@ -160,6 +179,7 @@ const BulkEmailSender = () => {
       setSelectedTemplate("");
       setSubject("");
       setBody("");
+      setAttachments([]);
     } catch (error: any) {
       console.error("Error sending bulk email:", error);
       toast.error("이메일 발송 실패: " + error.message);
@@ -240,6 +260,28 @@ const BulkEmailSender = () => {
             />
           </div>
 
+          {attachments.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-sm sm:text-base">첨부파일</Label>
+              <div className="space-y-1.5">
+                {attachments.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between bg-muted px-3 py-2 rounded-md text-xs sm:text-sm">
+                    <span className="truncate flex-1 mr-2">{file.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={() => removeAttachment(index)}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="text-xs text-muted-foreground space-y-1 pt-2">
             <p>• Gmail 주소가 등록된 학생에게만 발송됩니다</p>
             <p>• 발송 후 이메일 히스토리에서 결과를 확인할 수 있습니다</p>
@@ -247,16 +289,36 @@ const BulkEmailSender = () => {
           </div>
         </div>
 
-        <div className="flex-shrink-0 pt-4 -mx-6 px-6 border-t bg-background">
-          <Button
-            onClick={handleSend}
-            disabled={isSending || !selectedGroup}
-            className="w-full h-11 text-sm sm:text-base font-medium"
-            size="default"
-          >
-            <Send className="w-4 h-4 mr-2" />
-            {isSending ? "발송 중..." : "일괄 발송"}
-          </Button>
+        <div className="flex-shrink-0 pt-3 pb-2 -mx-6 px-6 border-t bg-card sticky bottom-0 z-10 shadow-lg">
+          <div className="flex gap-2">
+            <Input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+              disabled={isUploading}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSending || isUploading}
+              className="flex-1 h-11 text-sm sm:text-base font-medium"
+            >
+              <Paperclip className="w-4 h-4 mr-2" />
+              파일첨부
+            </Button>
+            <Button
+              onClick={handleSend}
+              disabled={isSending || !selectedGroup || isUploading}
+              className="flex-1 h-11 text-sm sm:text-base font-medium"
+              size="default"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              {isSending ? "발송 중..." : "일괄 발송"}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
