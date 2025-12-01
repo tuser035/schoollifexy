@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Mail, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -200,7 +199,7 @@ const BulkEmailSender = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col min-h-0">
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <div className="flex-1 overflow-y-scroll -mx-6 px-6">
           <div className="space-y-3 pb-4">
           <div>
             <Label className="text-sm sm:text-base">학생 그룹 선택</Label>
@@ -289,8 +288,8 @@ const BulkEmailSender = () => {
             <p>• 발송 후 이메일 히스토리에서 결과를 확인할 수 있습니다</p>
             <p>• Rate limit 방지를 위해 0.5초 간격으로 발송됩니다</p>
           </div>
-          </div>
-        </ScrollArea>
+        </div>
+        </div>
 
         <div className="flex-shrink-0 pt-3 pb-2 -mx-6 px-6 border-t bg-card sticky bottom-0 z-10 shadow-lg">
           <div className="flex gap-2">
