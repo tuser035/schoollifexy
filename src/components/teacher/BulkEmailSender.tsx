@@ -191,15 +191,15 @@ const BulkEmailSender = () => {
   const selectedGroupData = groups.find(g => g.id === selectedGroup);
 
   return (
-    <Card className="h-full overflow-y-scroll">
-      <CardHeader className="sticky top-0 bg-card z-20 border-b">
+    <Card className="h-full flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
           일괄 메시지 발송
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-6">
-        <div className="space-y-3 pb-20">
+      <CardContent className="flex-1 min-h-0 flex flex-col p-6">
+        <div className="flex-1 overflow-y-auto space-y-3 pb-4 -mx-6 px-6">
           <div>
             <Label className="text-sm sm:text-base">학생 그룹 선택</Label>
             <Select value={selectedGroup} onValueChange={setSelectedGroup}>
@@ -289,7 +289,7 @@ const BulkEmailSender = () => {
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 pt-3 pb-2 px-6 border-t bg-card z-30 shadow-lg">
+        <div className="flex-shrink-0 pt-4 -mx-6 px-6 border-t bg-card">
           <div className="flex gap-2">
             <Input
               ref={fileInputRef}
