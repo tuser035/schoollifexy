@@ -1,8 +1,5 @@
 project_id = "yavewuildzgbdyfvkwhk"
 
-[functions.google-calendar]
-verify_jwt = false
-
 [functions.upload-student-photo]
 verify_jwt = false
 
@@ -17,5 +14,3 @@ verify_jwt = false
 
 [functions.upload-evidence-photo]
 verify_jwt = false
-
-
