@@ -85,6 +85,11 @@ const BulkEmailSender = () => {
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId);
+    if (templateId === "__none__") {
+      setSubject("");
+      setBody("");
+      return;
+    }
     const template = templates.find(t => t.id === templateId);
     if (template) {
       setSubject(template.subject);
@@ -228,7 +233,7 @@ const BulkEmailSender = () => {
                 <SelectValue placeholder="템플릿을 선택하세요" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">직접 작성</SelectItem>
+                <SelectItem value="__none__">직접 작성</SelectItem>
                 {templates.map(template => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.title}
