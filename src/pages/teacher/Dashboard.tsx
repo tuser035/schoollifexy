@@ -10,6 +10,7 @@ import DemeritForm from "@/components/teacher/DemeritForm";
 import MonthlyForm from "@/components/teacher/MonthlyForm";
 import StudentGroupManager from "@/components/teacher/StudentGroupManager";
 import BulkEmailSender from "@/components/teacher/BulkEmailSender";
+import TeacherRecordsList from "@/components/teacher/TeacherRecordsList";
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
@@ -142,6 +143,9 @@ const TeacherDashboard = () => {
             <BulkEmailSender />
           </TabsContent>
         </Tabs>
+
+        {/* 교사가 부여한 기록 목록 */}
+        <TeacherRecordsList teacherId={user.id} />
       </main>
     </div>
   );
