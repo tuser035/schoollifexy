@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Award, AlertCircle, Star, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Award, AlertCircle, Star, Pencil, Trash2, RefreshCw, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -46,11 +46,18 @@ interface TeacherRecordsListProps {
   teacherId: string;
 }
 
+const PAGE_SIZE = 5;
+
 const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
   const [merits, setMerits] = useState<MeritRecord[]>([]);
   const [demerits, setDemerits] = useState<DemeritRecord[]>([]);
   const [monthly, setMonthly] = useState<MonthlyRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Display count state for pagination
+  const [meritsDisplayCount, setMeritsDisplayCount] = useState(PAGE_SIZE);
+  const [demeritsDisplayCount, setDemeritsDisplayCount] = useState(PAGE_SIZE);
+  const [monthlyDisplayCount, setMonthlyDisplayCount] = useState(PAGE_SIZE);
   
   // Edit dialog state
   const [editDialog, setEditDialog] = useState<{
@@ -88,7 +95,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         `)
         .eq("teacher_id", teacherId)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(50);
 
       if (meritsError) throw meritsError;
 
@@ -118,7 +125,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         `)
         .eq("teacher_id", teacherId)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(50);
 
       if (demeritsError) throw demeritsError;
 
@@ -149,7 +156,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         `)
         .eq("teacher_id", teacherId)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(50);
 
       if (monthlyError) throw monthlyError;
 
@@ -281,7 +288,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {merits.map((record) => (
+                  {merits.slice(0, meritsDisplayCount).map((record) => (
                     <TableRow key={record.id}>
                       <TableCell className="text-xs py-2">{record.student_name}</TableCell>
                       <TableCell className="text-xs py-2">{record.category}</TableCell>
@@ -310,6 +317,17 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                   ))}
                 </TableBody>
               </Table>
+              {merits.length > meritsDisplayCount && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 text-xs text-muted-foreground"
+                  onClick={() => setMeritsDisplayCount((prev) => prev + PAGE_SIZE)}
+                >
+                  <ChevronDown className="w-3 h-3 mr-1" />
+                  ... 더보기 ({merits.length - meritsDisplayCount}건)
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
@@ -345,7 +363,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {demerits.map((record) => (
+                  {demerits.slice(0, demeritsDisplayCount).map((record) => (
                     <TableRow key={record.id}>
                       <TableCell className="text-xs py-2">{record.student_name}</TableCell>
                       <TableCell className="text-xs py-2">{record.category}</TableCell>
@@ -374,6 +392,17 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                   ))}
                 </TableBody>
               </Table>
+              {demerits.length > demeritsDisplayCount && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 text-xs text-muted-foreground"
+                  onClick={() => setDemeritsDisplayCount((prev) => prev + PAGE_SIZE)}
+                >
+                  <ChevronDown className="w-3 h-3 mr-1" />
+                  ... 더보기 ({demerits.length - demeritsDisplayCount}건)
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
@@ -409,7 +438,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {monthly.map((record) => (
+                  {monthly.slice(0, monthlyDisplayCount).map((record) => (
                     <TableRow key={record.id}>
                       <TableCell className="text-xs py-2">{record.student_name}</TableCell>
                       <TableCell className="text-xs py-2">{record.category}</TableCell>
@@ -440,6 +469,17 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                   ))}
                 </TableBody>
               </Table>
+              {monthly.length > monthlyDisplayCount && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 text-xs text-muted-foreground"
+                  onClick={() => setMonthlyDisplayCount((prev) => prev + PAGE_SIZE)}
+                >
+                  <ChevronDown className="w-3 h-3 mr-1" />
+                  ... 더보기 ({monthly.length - monthlyDisplayCount}건)
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
