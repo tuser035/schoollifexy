@@ -71,6 +71,9 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
     try {
       setLoading(true);
 
+      // Set teacher session for RLS
+      await supabase.rpc("set_teacher_session", { teacher_id_input: teacherId });
+
       // Load merits
       const { data: meritsData, error: meritsError } = await supabase
         .from("merits")
