@@ -4,10 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ImageIcon, Download } from "lucide-react";
+import { ImageIcon, Download, Pencil, Trash2 } from "lucide-react";
 
 interface StudentPoint {
   student_id: string;
@@ -16,6 +19,16 @@ interface StudentPoint {
   demerits: number;
   monthly: number;
   total: number;
+}
+
+interface DetailRecord {
+  id?: string;
+  created_at: string;
+  teacher_name: string;
+  category: string;
+  reason: string;
+  score?: number;
+  image_url?: string[];
 }
 
 const PointsInquiry = () => {
@@ -28,6 +41,17 @@ const PointsInquiry = () => {
   const [details, setDetails] = useState<any[] | { merits: any[], demerits: any[] }>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  
+  // Edit dialog state
+  const [editDialog, setEditDialog] = useState<{
+    open: boolean;
+    type: "merit" | "demerit" | "monthly";
+    record: DetailRecord | null;
+  }>({ open: false, type: "merit", record: null });
+  const [editCategory, setEditCategory] = useState("");
+  const [editReason, setEditReason] = useState("");
+  const [editScore, setEditScore] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const setUserSession = async () => {
@@ -177,6 +201,84 @@ const PointsInquiry = () => {
   const handleImageClick = (imageUrl: string) => {
     setSelectedImage(imageUrl);
     setIsImageDialogOpen(true);
+  };
+
+  const handleEdit = (type: "merit" | "demerit" | "monthly", record: any) => {
+    setEditDialog({ open: true, type, record });
+    setEditCategory(record.category || "");
+    setEditReason(record.reason || "");
+    setEditScore(record.score || 1);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editDialog.record || !editDialog.record.id) return;
+
+    try {
+      setIsSaving(true);
+      const { type, record } = editDialog;
+
+      if (type === "merit") {
+        const { error } = await supabase
+          .from("merits")
+          .update({ category: editCategory, reason: editReason, score: editScore })
+          .eq("id", record.id);
+        if (error) throw error;
+      } else if (type === "demerit") {
+        const { error } = await supabase
+          .from("demerits")
+          .update({ category: editCategory, reason: editReason, score: editScore })
+          .eq("id", record.id);
+        if (error) throw error;
+      } else if (type === "monthly") {
+        const { error } = await supabase
+          .from("monthly")
+          .update({ category: editCategory, reason: editReason })
+          .eq("id", record.id);
+        if (error) throw error;
+      }
+
+      toast.success("수정되었습니다");
+      setEditDialog({ open: false, type: "merit", record: null });
+      
+      // Refresh details
+      if (selectedStudent) {
+        handleShowDetail(selectedStudent, detailType);
+      }
+    } catch (error: any) {
+      console.error("Error updating record:", error);
+      toast.error("수정 실패: " + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (type: "merit" | "demerit" | "monthly", id: string) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    try {
+      if (type === "merit") {
+        const { error } = await supabase.from("merits").delete().eq("id", id);
+        if (error) throw error;
+      } else if (type === "demerit") {
+        const { error } = await supabase.from("demerits").delete().eq("id", id);
+        if (error) throw error;
+      } else if (type === "monthly") {
+        const { error } = await supabase.from("monthly").delete().eq("id", id);
+        if (error) throw error;
+      }
+
+      toast.success("삭제되었습니다");
+      
+      // Refresh details
+      if (selectedStudent) {
+        handleShowDetail(selectedStudent, detailType);
+      }
+      // Also refresh main list
+      handleQuery();
+    } catch (error: any) {
+      console.error("Error deleting record:", error);
+      toast.error("삭제 실패: " + error.message);
+    }
   };
 
   return (
