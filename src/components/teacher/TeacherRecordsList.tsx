@@ -15,6 +15,9 @@ interface MeritRecord {
   id: string;
   student_id: string;
   student_name: string;
+  student_grade: number;
+  student_class: number;
+  student_number: number;
   category: string;
   reason: string;
   score: number;
@@ -25,6 +28,9 @@ interface DemeritRecord {
   id: string;
   student_id: string;
   student_name: string;
+  student_grade: number;
+  student_class: number;
+  student_number: number;
   category: string;
   reason: string;
   score: number;
@@ -35,6 +41,9 @@ interface MonthlyRecord {
   id: string;
   student_id: string;
   student_name: string;
+  student_grade: number;
+  student_class: number;
+  student_number: number;
   category: string;
   reason: string;
   year: number;
@@ -91,7 +100,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
           reason,
           score,
           created_at,
-          students!merits_student_id_fkey(name)
+          students!merits_student_id_fkey(name, grade, class, number)
         `)
         .eq("teacher_id", teacherId)
         .order("created_at", { ascending: false })
@@ -104,6 +113,9 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
           id: m.id,
           student_id: m.student_id,
           student_name: m.students?.name || "-",
+          student_grade: m.students?.grade || 0,
+          student_class: m.students?.class || 0,
+          student_number: m.students?.number || 0,
           category: m.category,
           reason: m.reason || "",
           score: m.score,
@@ -121,7 +133,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
           reason,
           score,
           created_at,
-          students!demerits_student_id_fkey(name)
+          students!demerits_student_id_fkey(name, grade, class, number)
         `)
         .eq("teacher_id", teacherId)
         .order("created_at", { ascending: false })
@@ -134,6 +146,9 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
           id: d.id,
           student_id: d.student_id,
           student_name: d.students?.name || "-",
+          student_grade: d.students?.grade || 0,
+          student_class: d.students?.class || 0,
+          student_number: d.students?.number || 0,
           category: d.category,
           reason: d.reason || "",
           score: d.score,
@@ -152,7 +167,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
           year,
           month,
           created_at,
-          students!monthly_student_id_fkey(name)
+          students!monthly_student_id_fkey(name, grade, class, number)
         `)
         .eq("teacher_id", teacherId)
         .order("created_at", { ascending: false })
@@ -165,6 +180,9 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
           id: mo.id,
           student_id: mo.student_id,
           student_name: mo.students?.name || "-",
+          student_grade: mo.students?.grade || 0,
+          student_class: mo.students?.class || 0,
+          student_number: mo.students?.number || 0,
           category: mo.category || "",
           reason: mo.reason || "",
           year: mo.year,
@@ -282,7 +300,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">학생</TableHead>
-                    <TableHead className="text-xs">분류</TableHead>
+                    <TableHead className="text-xs">분류/사유</TableHead>
                     <TableHead className="text-xs text-center">점수</TableHead>
                     <TableHead className="text-xs text-right">관리</TableHead>
                   </TableRow>
@@ -290,8 +308,14 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                 <TableBody>
                   {merits.slice(0, meritsDisplayCount).map((record) => (
                     <TableRow key={record.id}>
-                      <TableCell className="text-xs py-2">{record.student_name}</TableCell>
-                      <TableCell className="text-xs py-2">{record.category}</TableCell>
+                      <TableCell className="text-xs py-2">
+                        <div className="font-medium">{record.student_name}</div>
+                        <div className="text-muted-foreground">{record.student_grade}-{record.student_class}-{record.student_number}</div>
+                      </TableCell>
+                      <TableCell className="text-xs py-2">
+                        <div>{record.category}</div>
+                        {record.reason && <div className="text-muted-foreground truncate max-w-[100px]">{record.reason}</div>}
+                      </TableCell>
                       <TableCell className="text-xs py-2 text-center">{record.score}</TableCell>
                       <TableCell className="text-right py-2">
                         <div className="flex justify-end gap-1">
@@ -357,7 +381,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">학생</TableHead>
-                    <TableHead className="text-xs">분류</TableHead>
+                    <TableHead className="text-xs">분류/사유</TableHead>
                     <TableHead className="text-xs text-center">점수</TableHead>
                     <TableHead className="text-xs text-right">관리</TableHead>
                   </TableRow>
@@ -365,8 +389,14 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                 <TableBody>
                   {demerits.slice(0, demeritsDisplayCount).map((record) => (
                     <TableRow key={record.id}>
-                      <TableCell className="text-xs py-2">{record.student_name}</TableCell>
-                      <TableCell className="text-xs py-2">{record.category}</TableCell>
+                      <TableCell className="text-xs py-2">
+                        <div className="font-medium">{record.student_name}</div>
+                        <div className="text-muted-foreground">{record.student_grade}-{record.student_class}-{record.student_number}</div>
+                      </TableCell>
+                      <TableCell className="text-xs py-2">
+                        <div>{record.category}</div>
+                        {record.reason && <div className="text-muted-foreground truncate max-w-[100px]">{record.reason}</div>}
+                      </TableCell>
                       <TableCell className="text-xs py-2 text-center">{record.score}</TableCell>
                       <TableCell className="text-right py-2">
                         <div className="flex justify-end gap-1">
@@ -432,7 +462,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">학생</TableHead>
-                    <TableHead className="text-xs">분류</TableHead>
+                    <TableHead className="text-xs">분류/사유</TableHead>
                     <TableHead className="text-xs text-center">년/월</TableHead>
                     <TableHead className="text-xs text-right">관리</TableHead>
                   </TableRow>
@@ -440,8 +470,14 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
                 <TableBody>
                   {monthly.slice(0, monthlyDisplayCount).map((record) => (
                     <TableRow key={record.id}>
-                      <TableCell className="text-xs py-2">{record.student_name}</TableCell>
-                      <TableCell className="text-xs py-2">{record.category}</TableCell>
+                      <TableCell className="text-xs py-2">
+                        <div className="font-medium">{record.student_name}</div>
+                        <div className="text-muted-foreground">{record.student_grade}-{record.student_class}-{record.student_number}</div>
+                      </TableCell>
+                      <TableCell className="text-xs py-2">
+                        <div>{record.category}</div>
+                        {record.reason && <div className="text-muted-foreground truncate max-w-[100px]">{record.reason}</div>}
+                      </TableCell>
                       <TableCell className="text-xs py-2 text-center">
                         {record.year}/{record.month}
                       </TableCell>
