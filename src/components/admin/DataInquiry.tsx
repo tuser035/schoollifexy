@@ -1270,12 +1270,12 @@ const DataInquiry = () => {
         name_input: editingTeacher.name,
         call_t_input: editingTeacher.phone,
         teacher_email_input: editingTeacher.email,
-        grade_input: editingTeacher.grade,
-        class_input: editingTeacher.class,
+        grade_input: editingTeacher.grade !== null && editingTeacher.grade !== undefined ? Number(editingTeacher.grade) : 0,
+        class_input: editingTeacher.class !== null && editingTeacher.class !== undefined ? Number(editingTeacher.class) : 0,
         department_input: editingTeacher.department || '',
         subject_input: editingTeacher.subject || '',
-        is_homeroom_input: editingTeacher.isHomeroom,
-        is_admin_input: editingTeacher.isAdmin || false
+        is_homeroom_input: editingTeacher.isHomeroom === true,
+        is_admin_input: editingTeacher.isAdmin === true
       });
 
       if (error) throw error;
