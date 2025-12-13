@@ -179,22 +179,30 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
       const { type, record } = editDialog;
 
       if (type === "merit") {
-        const { error } = await supabase
-          .from("merits")
-          .update({ category: editCategory, reason: editReason, score: editScore })
-          .eq("id", record.id);
+        const { error } = await supabase.rpc("teacher_update_merit", {
+          teacher_id_input: teacherId,
+          merit_id_input: record.id,
+          category_input: editCategory,
+          reason_input: editReason,
+          score_input: editScore,
+        });
         if (error) throw error;
       } else if (type === "demerit") {
-        const { error } = await supabase
-          .from("demerits")
-          .update({ category: editCategory, reason: editReason, score: editScore })
-          .eq("id", record.id);
+        const { error } = await supabase.rpc("teacher_update_demerit", {
+          teacher_id_input: teacherId,
+          demerit_id_input: record.id,
+          category_input: editCategory,
+          reason_input: editReason,
+          score_input: editScore,
+        });
         if (error) throw error;
       } else if (type === "monthly") {
-        const { error } = await supabase
-          .from("monthly")
-          .update({ category: editCategory, reason: editReason })
-          .eq("id", record.id);
+        const { error } = await supabase.rpc("teacher_update_monthly", {
+          teacher_id_input: teacherId,
+          monthly_id_input: record.id,
+          category_input: editCategory,
+          reason_input: editReason,
+        });
         if (error) throw error;
       }
 
@@ -214,13 +222,22 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
 
     try {
       if (type === "merit") {
-        const { error } = await supabase.from("merits").delete().eq("id", id);
+        const { error } = await supabase.rpc("teacher_delete_merit", {
+          teacher_id_input: teacherId,
+          merit_id_input: id,
+        });
         if (error) throw error;
       } else if (type === "demerit") {
-        const { error } = await supabase.from("demerits").delete().eq("id", id);
+        const { error } = await supabase.rpc("teacher_delete_demerit", {
+          teacher_id_input: teacherId,
+          demerit_id_input: id,
+        });
         if (error) throw error;
       } else if (type === "monthly") {
-        const { error } = await supabase.from("monthly").delete().eq("id", id);
+        const { error } = await supabase.rpc("teacher_delete_monthly", {
+          teacher_id_input: teacherId,
+          monthly_id_input: id,
+        });
         if (error) throw error;
       }
 
