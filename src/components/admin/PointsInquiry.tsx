@@ -397,13 +397,14 @@ const PointsInquiry = () => {
                           <TableHead>카테고리</TableHead>
                           <TableHead>사유</TableHead>
                           <TableHead>점수</TableHead>
-                          <TableHead>증빙 사진</TableHead>
+                          <TableHead>증빙</TableHead>
+                          <TableHead className="text-right">관리</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {!Array.isArray(details) && details?.merits?.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            <TableCell colSpan={7} className="text-center text-muted-foreground">
                               상점 내역이 없습니다
                             </TableCell>
                           </TableRow>
@@ -422,12 +423,31 @@ const PointsInquiry = () => {
                                     size="sm"
                                     onClick={() => handleImageClick(detail.image_url)}
                                   >
-                                    <ImageIcon className="h-4 w-4 mr-1" />
-                                    보기
+                                    <ImageIcon className="h-4 w-4" />
                                   </Button>
                                 ) : (
-                                  <span className="text-muted-foreground text-sm">없음</span>
+                                  <span className="text-muted-foreground text-sm">-</span>
                                 )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => handleEdit("merit", detail)}
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                    onClick={() => handleDelete("merit", detail.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))
@@ -447,13 +467,14 @@ const PointsInquiry = () => {
                           <TableHead>카테고리</TableHead>
                           <TableHead>사유</TableHead>
                           <TableHead>점수</TableHead>
-                          <TableHead>증빙 사진</TableHead>
+                          <TableHead>증빙</TableHead>
+                          <TableHead className="text-right">관리</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {!Array.isArray(details) && details?.demerits?.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            <TableCell colSpan={7} className="text-center text-muted-foreground">
                               벌점 내역이 없습니다
                             </TableCell>
                           </TableRow>
@@ -472,12 +493,31 @@ const PointsInquiry = () => {
                                     size="sm"
                                     onClick={() => handleImageClick(detail.image_url)}
                                   >
-                                    <ImageIcon className="h-4 w-4 mr-1" />
-                                    보기
+                                    <ImageIcon className="h-4 w-4" />
                                   </Button>
                                 ) : (
-                                  <span className="text-muted-foreground text-sm">없음</span>
+                                  <span className="text-muted-foreground text-sm">-</span>
                                 )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                    onClick={() => handleEdit("demerit", detail)}
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                    onClick={() => handleDelete("demerit", detail.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))
@@ -496,13 +536,14 @@ const PointsInquiry = () => {
                       <TableHead>교사</TableHead>
                       <TableHead>구분</TableHead>
                       <TableHead>사유</TableHead>
-                      <TableHead>증빙 사진</TableHead>
+                      <TableHead>증빙</TableHead>
+                      <TableHead className="text-right">관리</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {Array.isArray(details) && details?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
                           이달의 학생 추천 내역이 없습니다
                         </TableCell>
                       </TableRow>
@@ -520,12 +561,31 @@ const PointsInquiry = () => {
                                 size="sm"
                                 onClick={() => handleImageClick(detail.image_url)}
                               >
-                                <ImageIcon className="h-4 w-4 mr-1" />
-                                보기
+                                <ImageIcon className="h-4 w-4" />
                               </Button>
                             ) : (
-                              <span className="text-muted-foreground text-sm">없음</span>
+                              <span className="text-muted-foreground text-sm">-</span>
                             )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={() => handleEdit("monthly", detail)}
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                onClick={() => handleDelete("monthly", detail.id)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -553,6 +613,41 @@ const PointsInquiry = () => {
               />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ open: false, type: "merit", record: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editDialog.type === "merit" ? "상점" : editDialog.type === "demerit" ? "벌점" : "이달의학생"} 수정
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>카테고리</Label>
+              <Input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} />
+            </div>
+            <div>
+              <Label>사유</Label>
+              <Textarea value={editReason} onChange={(e) => setEditReason(e.target.value)} />
+            </div>
+            {editDialog.type !== "monthly" && (
+              <div>
+                <Label>점수</Label>
+                <Input type="number" value={editScore} onChange={(e) => setEditScore(parseInt(e.target.value) || 1)} min={1} />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialog({ open: false, type: "merit", record: null })}>
+              취소
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={isSaving}>
+              {isSaving ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
