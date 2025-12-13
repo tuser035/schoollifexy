@@ -87,24 +87,11 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
     try {
       setLoading(true);
 
-      // Set teacher session for RLS
-      await supabase.rpc("set_teacher_session", { teacher_id_input: teacherId });
-
-      // Load merits
-      const { data: meritsData, error: meritsError } = await supabase
-        .from("merits")
-        .select(`
-          id,
-          student_id,
-          category,
-          reason,
-          score,
-          created_at,
-          students!merits_student_id_fkey(name, grade, class, number)
-        `)
-        .eq("teacher_id", teacherId)
-        .order("created_at", { ascending: false })
-        .limit(50);
+      // Load merits using RPC function
+      const { data: meritsData, error: meritsError } = await supabase.rpc(
+        "teacher_get_own_merits",
+        { teacher_id_input: teacherId }
+      );
 
       if (meritsError) throw meritsError;
 
@@ -112,10 +99,10 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         (meritsData || []).map((m: any) => ({
           id: m.id,
           student_id: m.student_id,
-          student_name: m.students?.name || "-",
-          student_grade: m.students?.grade || 0,
-          student_class: m.students?.class || 0,
-          student_number: m.students?.number || 0,
+          student_name: m.student_name,
+          student_grade: m.student_grade,
+          student_class: m.student_class,
+          student_number: m.student_number,
           category: m.category,
           reason: m.reason || "",
           score: m.score,
@@ -123,21 +110,11 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         }))
       );
 
-      // Load demerits
-      const { data: demeritsData, error: demeritsError } = await supabase
-        .from("demerits")
-        .select(`
-          id,
-          student_id,
-          category,
-          reason,
-          score,
-          created_at,
-          students!demerits_student_id_fkey(name, grade, class, number)
-        `)
-        .eq("teacher_id", teacherId)
-        .order("created_at", { ascending: false })
-        .limit(50);
+      // Load demerits using RPC function
+      const { data: demeritsData, error: demeritsError } = await supabase.rpc(
+        "teacher_get_own_demerits",
+        { teacher_id_input: teacherId }
+      );
 
       if (demeritsError) throw demeritsError;
 
@@ -145,10 +122,10 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         (demeritsData || []).map((d: any) => ({
           id: d.id,
           student_id: d.student_id,
-          student_name: d.students?.name || "-",
-          student_grade: d.students?.grade || 0,
-          student_class: d.students?.class || 0,
-          student_number: d.students?.number || 0,
+          student_name: d.student_name,
+          student_grade: d.student_grade,
+          student_class: d.student_class,
+          student_number: d.student_number,
           category: d.category,
           reason: d.reason || "",
           score: d.score,
@@ -156,22 +133,11 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         }))
       );
 
-      // Load monthly
-      const { data: monthlyData, error: monthlyError } = await supabase
-        .from("monthly")
-        .select(`
-          id,
-          student_id,
-          category,
-          reason,
-          year,
-          month,
-          created_at,
-          students!monthly_student_id_fkey(name, grade, class, number)
-        `)
-        .eq("teacher_id", teacherId)
-        .order("created_at", { ascending: false })
-        .limit(50);
+      // Load monthly using RPC function
+      const { data: monthlyData, error: monthlyError } = await supabase.rpc(
+        "teacher_get_own_monthly",
+        { teacher_id_input: teacherId }
+      );
 
       if (monthlyError) throw monthlyError;
 
@@ -179,10 +145,10 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         (monthlyData || []).map((mo: any) => ({
           id: mo.id,
           student_id: mo.student_id,
-          student_name: mo.students?.name || "-",
-          student_grade: mo.students?.grade || 0,
-          student_class: mo.students?.class || 0,
-          student_number: mo.students?.number || 0,
+          student_name: mo.student_name,
+          student_grade: mo.student_grade,
+          student_class: mo.student_class,
+          student_number: mo.student_number,
           category: mo.category || "",
           reason: mo.reason || "",
           year: mo.year,

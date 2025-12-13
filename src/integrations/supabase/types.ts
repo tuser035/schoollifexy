@@ -1278,6 +1278,52 @@ export type Database = {
         Args: { password_input: string; student_id_input: string }
         Returns: Json
       }
+      teacher_get_own_demerits: {
+        Args: { teacher_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          reason: string
+          score: number
+          student_class: number
+          student_grade: number
+          student_id: string
+          student_name: string
+          student_number: number
+        }[]
+      }
+      teacher_get_own_merits: {
+        Args: { teacher_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          reason: string
+          score: number
+          student_class: number
+          student_grade: number
+          student_id: string
+          student_name: string
+          student_number: number
+        }[]
+      }
+      teacher_get_own_monthly: {
+        Args: { teacher_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          month: number
+          reason: string
+          student_class: number
+          student_grade: number
+          student_id: string
+          student_name: string
+          student_number: number
+          year: number
+        }[]
+      }
       teacher_login: {
         Args: { password_input: string; phone_input: string }
         Returns: Json
