@@ -1278,6 +1278,18 @@ export type Database = {
         Args: { password_input: string; student_id_input: string }
         Returns: Json
       }
+      teacher_delete_demerit: {
+        Args: { demerit_id_input: string; teacher_id_input: string }
+        Returns: boolean
+      }
+      teacher_delete_merit: {
+        Args: { merit_id_input: string; teacher_id_input: string }
+        Returns: boolean
+      }
+      teacher_delete_monthly: {
+        Args: { monthly_id_input: string; teacher_id_input: string }
+        Returns: boolean
+      }
       teacher_get_own_demerits: {
         Args: { teacher_id_input: string }
         Returns: {
@@ -1327,6 +1339,35 @@ export type Database = {
       teacher_login: {
         Args: { password_input: string; phone_input: string }
         Returns: Json
+      }
+      teacher_update_demerit: {
+        Args: {
+          category_input: string
+          demerit_id_input: string
+          reason_input: string
+          score_input: number
+          teacher_id_input: string
+        }
+        Returns: boolean
+      }
+      teacher_update_merit: {
+        Args: {
+          category_input: string
+          merit_id_input: string
+          reason_input: string
+          score_input: number
+          teacher_id_input: string
+        }
+        Returns: boolean
+      }
+      teacher_update_monthly: {
+        Args: {
+          category_input: string
+          monthly_id_input: string
+          reason_input: string
+          teacher_id_input: string
+        }
+        Returns: boolean
       }
       update_admin_password: {
         Args: { admin_id_input: string; new_password: string }
