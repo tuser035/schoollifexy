@@ -864,6 +864,25 @@ export type Database = {
             Args: {
               admin_id_input: string
               search_class?: number
+              search_grade?: number
+              search_text?: string
+            }
+            Returns: {
+              call_t: string
+              class: number
+              department: string
+              dept_name: string
+              grade: number
+              is_homeroom: boolean
+              name: string
+              subject: string
+              teacher_email: string
+            }[]
+          }
+        | {
+            Args: {
+              admin_id_input: string
+              search_class?: number
               search_department?: string
               search_dept_name?: string
               search_grade?: number
@@ -881,25 +900,6 @@ export type Database = {
               is_homeroom: boolean
               name: string
               photo_url: string
-              subject: string
-              teacher_email: string
-            }[]
-          }
-        | {
-            Args: {
-              admin_id_input: string
-              search_class?: number
-              search_grade?: number
-              search_text?: string
-            }
-            Returns: {
-              call_t: string
-              class: number
-              department: string
-              dept_name: string
-              grade: number
-              is_homeroom: boolean
-              name: string
               subject: string
               teacher_email: string
             }[]
@@ -999,7 +999,6 @@ export type Database = {
               department_input?: string
               dept_code_input?: string
               grade_input?: number
-              is_admin_input?: boolean
               is_homeroom_input?: boolean
               name_input: string
               subject_input?: string
@@ -1015,6 +1014,7 @@ export type Database = {
               department_input?: string
               dept_code_input?: string
               grade_input?: number
+              is_admin_input?: boolean
               is_homeroom_input?: boolean
               name_input: string
               subject_input?: string
@@ -1065,7 +1065,6 @@ export type Database = {
               class_input: number
               department_input: string
               grade_input: number
-              is_admin_input?: boolean
               is_homeroom_input: boolean
               name_input: string
               original_email_input: string
@@ -1081,6 +1080,7 @@ export type Database = {
               class_input: number
               department_input: string
               grade_input: number
+              is_admin_input?: boolean
               is_homeroom_input: boolean
               name_input: string
               original_email_input: string
