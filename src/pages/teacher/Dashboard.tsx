@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, AlertCircle, Star, LogOut, Shield, Users, Mail } from "lucide-react";
+import { Award, AlertCircle, Star, LogOut, Shield, Users, Mail, History } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import MeritForm from "@/components/teacher/MeritForm";
 import DemeritForm from "@/components/teacher/DemeritForm";
 import MonthlyForm from "@/components/teacher/MonthlyForm";
 import StudentGroupManager from "@/components/teacher/StudentGroupManager";
 import BulkEmailSender from "@/components/teacher/BulkEmailSender";
+import EmailHistory from "@/components/teacher/EmailHistory";
 import TeacherRecordsList from "@/components/teacher/TeacherRecordsList";
 
 const TeacherDashboard = () => {
@@ -69,7 +70,7 @@ const TeacherDashboard = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="merit" className="w-full">
           <div className="mb-6 overflow-x-auto">
-            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-6">
               <TabsTrigger 
                 value="merit"
                 className="data-[state=active]:bg-merit-blue data-[state=active]:text-white whitespace-nowrap"
@@ -98,6 +99,10 @@ const TeacherDashboard = () => {
               <TabsTrigger value="bulk-email" className="whitespace-nowrap">
                 <Mail className="w-4 h-4 mr-2" />
                 <span>일괄발송</span>
+              </TabsTrigger>
+              <TabsTrigger value="email-history" className="whitespace-nowrap">
+                <History className="w-4 h-4 mr-2" />
+                <span>발송이력</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -141,6 +146,10 @@ const TeacherDashboard = () => {
 
           <TabsContent value="bulk-email">
             <BulkEmailSender />
+          </TabsContent>
+
+          <TabsContent value="email-history">
+            <EmailHistory />
           </TabsContent>
         </Tabs>
 
