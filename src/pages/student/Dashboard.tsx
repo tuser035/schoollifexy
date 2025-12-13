@@ -343,7 +343,6 @@ const StudentDashboard = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>날짜</TableHead>
-                          <TableHead>교사</TableHead>
                           <TableHead>카테고리</TableHead>
                           <TableHead>사유</TableHead>
                           <TableHead>점수</TableHead>
@@ -353,7 +352,7 @@ const StudentDashboard = () => {
                       <TableBody>
                         {demerits.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            <TableCell colSpan={5} className="text-center text-muted-foreground">
                               벌점 내역이 없습니다
                             </TableCell>
                           </TableRow>
@@ -361,7 +360,6 @@ const StudentDashboard = () => {
                           demerits.map((demerit, idx) => (
                             <TableRow key={idx}>
                               <TableCell>{new Date(demerit.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{demerit.teacher_name || "-"}</TableCell>
                               <TableCell>{demerit.category}</TableCell>
                               <TableCell>{demerit.reason || "-"}</TableCell>
                               <TableCell className="text-demerit-orange font-medium">{demerit.score}</TableCell>
