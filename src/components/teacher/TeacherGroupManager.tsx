@@ -342,17 +342,17 @@ const TeacherGroupManager = () => {
     try {
       if (!user) return;
 
-      await supabase.rpc('set_teacher_session', { teacher_id_input: user.id });
+      const newName = editingGroupName.trim();
 
-      const { error } = await supabase
-        .from("teacher_groups")
-        .update({ group_name: editingGroupName.trim() })
-        .eq("id", groupId)
-        .eq("admin_id", user.id);
+      // RPC 함수를 사용하여 그룹 이름 수정
+      const { data, error } = await supabase.rpc('teacher_update_own_teacher_group_name', {
+        teacher_id_input: user.id,
+        group_id_input: groupId,
+        group_name_input: newName,
+      });
 
       if (error) throw error;
 
-      const newName = editingGroupName.trim();
       setGroups(prev => prev.map(g => 
         g.id === groupId ? { ...g, group_name: newName } : g
       ));
