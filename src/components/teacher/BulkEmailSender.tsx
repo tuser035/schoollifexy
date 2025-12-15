@@ -307,8 +307,9 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
       setUploadProgress(Math.round((i / totalFiles) * 100));
 
       const timestamp = Date.now();
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const filePath = `bulk-email/${user.id}/${timestamp}_${safeName}`;
+      const fileExt = file.name.split('.').pop() || 'file';
+      const randomId = Math.random().toString(36).substring(2, 10);
+      const filePath = `bulk-email/${user.id}/${timestamp}_${randomId}.${fileExt}`;
 
       const { data, error } = await supabase.storage
         .from('email-attachments')
