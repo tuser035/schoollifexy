@@ -1290,6 +1290,10 @@ export type Database = {
         Args: { monthly_id_input: string; teacher_id_input: string }
         Returns: boolean
       }
+      teacher_delete_own_teacher_group: {
+        Args: { group_id_input: string; teacher_id_input: string }
+        Returns: boolean
+      }
       teacher_get_email_history: {
         Args: { teacher_id_input: string }
         Returns: {
