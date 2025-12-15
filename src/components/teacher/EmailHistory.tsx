@@ -1,19 +1,27 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Mail, RefreshCw, ChevronDown, Users, GraduationCap } from "lucide-react";
+import { Mail, RefreshCw, ChevronDown, Users, GraduationCap, CalendarIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay, isWithinInterval } from "date-fns";
+import { ko } from "date-fns/locale";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import { cn } from "@/lib/utils";
 
 interface EmailRecord {
   id: string;
@@ -36,6 +44,8 @@ const EmailHistory = () => {
   const [activeTab, setActiveTab] = useState("student");
   const [selectedEmail, setSelectedEmail] = useState<EmailRecord | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     const authUser = localStorage.getItem("auth_user");
@@ -104,9 +114,40 @@ const EmailHistory = () => {
     setDetailDialogOpen(true);
   };
 
+  const handleClearDateFilter = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
+  };
+
+  // 날짜 필터링 적용
+  const filteredEmails = useMemo(() => {
+    if (!startDate && !endDate) return emails;
+    
+    return emails.filter(email => {
+      const emailDate = new Date(email.sent_at);
+      
+      if (startDate && endDate) {
+        return isWithinInterval(emailDate, {
+          start: startOfDay(startDate),
+          end: endOfDay(endDate)
+        });
+      }
+      
+      if (startDate) {
+        return emailDate >= startOfDay(startDate);
+      }
+      
+      if (endDate) {
+        return emailDate <= endOfDay(endDate);
+      }
+      
+      return true;
+    });
+  }, [emails, startDate, endDate]);
+
   // 학생/교사 구분
-  const studentEmails = emails.filter(e => e.recipient_student_id !== null);
-  const teacherEmails = emails.filter(e => e.recipient_student_id === null);
+  const studentEmails = filteredEmails.filter(e => e.recipient_student_id !== null);
+  const teacherEmails = filteredEmails.filter(e => e.recipient_student_id === null);
 
   const renderEmailTable = (
     emailList: EmailRecord[], 
@@ -115,7 +156,9 @@ const EmailHistory = () => {
   ) => {
     if (emailList.length === 0) {
       return (
-        <div className="text-center py-8 text-muted-foreground text-sm">발송한 이메일이 없습니다</div>
+        <div className="text-center py-8 text-muted-foreground text-sm">
+          {startDate || endDate ? "해당 기간에 발송한 이메일이 없습니다" : "발송한 이메일이 없습니다"}
+        </div>
       );
     }
 
@@ -178,6 +221,69 @@ const EmailHistory = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
+          {/* 날짜 필터 */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-8 text-xs justify-start",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="w-3 h-3 mr-1" />
+                  {startDate ? format(startDate, "yyyy-MM-dd", { locale: ko }) : "시작일"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  locale={ko}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <span className="text-xs text-muted-foreground">~</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-8 text-xs justify-start",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="w-3 h-3 mr-1" />
+                  {endDate ? format(endDate, "yyyy-MM-dd", { locale: ko }) : "종료일"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  locale={ko}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            {(startDate || endDate) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={handleClearDateFilter}
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            )}
+          </div>
+
           {loading ? (
             <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
           ) : (
