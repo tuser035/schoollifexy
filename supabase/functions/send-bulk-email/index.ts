@@ -153,7 +153,8 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Resend API로 메일 발송
         const { data: emailData, error: emailError } = await resend.emails.send({
-          from: fromEmail,
+          from: `School Point <${fromEmail}>`,
+          reply_to: "gyeongjuhs@naver.com", // 답장 시 이 주소로 발송됨
           to: student.email,
           subject: subject,
           html: htmlBody,
