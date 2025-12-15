@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Save, Trash2 } from "lucide-react";
+import { Users, Save, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,6 +31,7 @@ const StudentGroupManager = () => {
   const [groupName, setGroupName] = useState("");
   const [searchGrade, setSearchGrade] = useState<string>("");
   const [searchClass, setSearchClass] = useState<string>("");
+  const [searchName, setSearchName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadedGroupStudents, setLoadedGroupStudents] = useState<Student[]>([]);
   const [loadedGroupName, setLoadedGroupName] = useState<string>("");
@@ -87,11 +88,23 @@ const StudentGroupManager = () => {
     );
   };
 
+  // 이름 검색 필터링
+  const filteredStudents = students.filter(s => {
+    if (!searchName.trim()) return true;
+    const term = searchName.trim().toLowerCase();
+    return s.name.toLowerCase().includes(term) || s.student_id.includes(term);
+  });
+
   const handleSelectAll = () => {
-    if (selectedStudents.length === students.length) {
-      setSelectedStudents([]);
+    const allFilteredIds = filteredStudents.map(s => s.student_id);
+    const allSelected = allFilteredIds.every(id => selectedStudents.includes(id));
+    
+    if (allSelected) {
+      // 현재 필터된 학생들만 선택 해제
+      setSelectedStudents(prev => prev.filter(id => !allFilteredIds.includes(id)));
     } else {
-      setSelectedStudents(students.map(s => s.student_id));
+      // 현재 필터된 학생들 추가 (기존 선택 유지)
+      setSelectedStudents(prev => [...new Set([...prev, ...allFilteredIds])]);
     }
   };
 
@@ -281,17 +294,35 @@ const StudentGroupManager = () => {
             </div>
           </div>
 
+          {/* 이름 검색 */}
+          <div>
+            <Label className="text-sm">학생 이름 검색</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="학생 이름으로 검색..."
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <Button variant="outline" size="sm" onClick={handleSelectAll}>
-              {selectedStudents.length === students.length ? "전체 해제" : "전체 선택"}
+              {selectedStudents.length === filteredStudents.length && filteredStudents.length > 0 ? "전체 해제" : "전체 선택"}
             </Button>
             <span className="text-sm text-muted-foreground">
-              {selectedStudents.length}명 선택됨
+              {selectedStudents.length}명 선택됨 / {filteredStudents.length}명 표시
             </span>
           </div>
 
           <div className="max-h-96 overflow-y-auto border rounded-lg p-4 space-y-2">
-            {students.map(student => (
+            {filteredStudents.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                {searchName ? "검색 결과가 없습니다" : "학생이 없습니다"}
+              </p>
+            ) : filteredStudents.map(student => (
               <div
                 key={student.student_id}
                 className="flex items-center space-x-2 p-2 hover:bg-accent rounded"
