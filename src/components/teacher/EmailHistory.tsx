@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Mail, RefreshCw, ChevronDown } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Mail, RefreshCw, ChevronDown, Users, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -12,6 +13,7 @@ interface EmailRecord {
   id: string;
   recipient_name: string;
   recipient_email: string;
+  recipient_student_id: string | null;
   subject: string;
   body: string;
   sent_at: string;
@@ -22,8 +24,10 @@ const PAGE_SIZE = 5;
 const EmailHistory = () => {
   const [emails, setEmails] = useState<EmailRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
+  const [studentDisplayCount, setStudentDisplayCount] = useState(PAGE_SIZE);
+  const [teacherDisplayCount, setTeacherDisplayCount] = useState(PAGE_SIZE);
   const [userId, setUserId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("student");
 
   useEffect(() => {
     const authUser = localStorage.getItem("auth_user");
@@ -42,9 +46,17 @@ const EmailHistory = () => {
 
       const user = JSON.parse(authUser);
 
-      const { data, error } = await supabase.rpc("teacher_get_email_history", {
-        teacher_id_input: user.id
-      });
+      // teacher_get_email_history가 recipient_student_id를 반환하도록 수정 필요
+      // 임시로 직접 쿼리 사용
+      await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      
+      const { data, error } = await supabase
+        .from("email_history")
+        .select("id, recipient_name, recipient_email, recipient_student_id, subject, body, sent_at")
+        .eq("sender_id", user.id)
+        .eq("sender_type", "teacher")
+        .order("sent_at", { ascending: false })
+        .limit(100);
 
       if (error) throw error;
       setEmails(data || []);
@@ -81,6 +93,61 @@ const EmailHistory = () => {
     }
   };
 
+  // 학생/교사 구분
+  const studentEmails = emails.filter(e => e.recipient_student_id !== null);
+  const teacherEmails = emails.filter(e => e.recipient_student_id === null);
+
+  const renderEmailTable = (
+    emailList: EmailRecord[], 
+    displayCount: number, 
+    setDisplayCount: React.Dispatch<React.SetStateAction<number>>
+  ) => {
+    if (emailList.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground text-sm">발송한 이메일이 없습니다</div>
+      );
+    }
+
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-xs">발송일시</TableHead>
+              <TableHead className="text-xs">수신자</TableHead>
+              <TableHead className="text-xs">제목</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {emailList.slice(0, displayCount).map((email) => (
+              <TableRow key={email.id}>
+                <TableCell className="text-xs py-2">{formatDate(email.sent_at)}</TableCell>
+                <TableCell className="text-xs py-2">
+                  <div>{email.recipient_name}</div>
+                  <div className="text-muted-foreground text-[10px]">{email.recipient_email}</div>
+                </TableCell>
+                <TableCell className="text-xs py-2">
+                  <div className="truncate max-w-[200px]">{email.subject}</div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        {emailList.length > displayCount && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-2 text-xs text-muted-foreground"
+            onClick={() => setDisplayCount((prev) => prev + PAGE_SIZE)}
+          >
+            <ChevronDown className="w-3 h-3 mr-1" />
+            ... 더보기 ({emailList.length - displayCount}건)
+          </Button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -97,45 +164,25 @@ const EmailHistory = () => {
       <CardContent className="pt-0">
         {loading ? (
           <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
-        ) : emails.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">발송한 이메일이 없습니다</div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">발송일시</TableHead>
-                  <TableHead className="text-xs">수신자</TableHead>
-                  <TableHead className="text-xs">제목</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {emails.slice(0, displayCount).map((email) => (
-                  <TableRow key={email.id}>
-                    <TableCell className="text-xs py-2">{formatDate(email.sent_at)}</TableCell>
-                    <TableCell className="text-xs py-2">
-                      <div>{email.recipient_name}</div>
-                      <div className="text-muted-foreground text-[10px]">{email.recipient_email}</div>
-                    </TableCell>
-                    <TableCell className="text-xs py-2">
-                      <div className="truncate max-w-[200px]">{email.subject}</div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {emails.length > displayCount && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full mt-2 text-xs text-muted-foreground"
-                onClick={() => setDisplayCount((prev) => prev + PAGE_SIZE)}
-              >
-                <ChevronDown className="w-3 h-3 mr-1" />
-                ... 더보기 ({emails.length - displayCount}건)
-              </Button>
-            )}
-          </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="w-full mb-3">
+              <TabsTrigger value="student" className="flex-1 text-xs gap-1">
+                <GraduationCap className="w-3 h-3" />
+                학생 ({studentEmails.length})
+              </TabsTrigger>
+              <TabsTrigger value="teacher" className="flex-1 text-xs gap-1">
+                <Users className="w-3 h-3" />
+                교사 ({teacherEmails.length})
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="student" className="mt-0">
+              {renderEmailTable(studentEmails, studentDisplayCount, setStudentDisplayCount)}
+            </TabsContent>
+            <TabsContent value="teacher" className="mt-0">
+              {renderEmailTable(teacherEmails, teacherDisplayCount, setTeacherDisplayCount)}
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>
