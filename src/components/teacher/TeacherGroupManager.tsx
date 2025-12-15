@@ -57,6 +57,10 @@ const TeacherGroupManager = () => {
         search_text: searchName || null,
         search_grade: null,
         search_class: null,
+        search_department: null,
+        search_subject: null,
+        search_dept_name: null,
+        search_homeroom: null,
       });
 
       if (error) throw error;
@@ -223,6 +227,10 @@ const TeacherGroupManager = () => {
         search_text: null,
         search_grade: null,
         search_class: null,
+        search_department: null,
+        search_subject: null,
+        search_dept_name: null,
+        search_homeroom: null,
       });
 
       if (error) throw error;
