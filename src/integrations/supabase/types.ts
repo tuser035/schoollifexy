@@ -1403,6 +1403,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      teacher_update_own_teacher_group_name: {
+        Args: {
+          group_id_input: string
+          group_name_input: string
+          teacher_id_input: string
+        }
+        Returns: boolean
+      }
       update_admin_password: {
         Args: { admin_id_input: string; new_password: string }
         Returns: boolean
