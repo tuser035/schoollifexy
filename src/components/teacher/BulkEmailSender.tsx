@@ -86,11 +86,21 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
         delete: "교사 그룹이 삭제되었습니다",
       },
     },
+    {
+      channelName: "bulk-email-templates",
+      table: "email_templates",
+      labels: {
+        insert: "새 템플릿이 추가되었습니다",
+        update: "템플릿이 수정되었습니다",
+        delete: "템플릿이 삭제되었습니다",
+      },
+    },
   ] : [];
 
   const handleRefresh = useCallback(() => {
     loadStudentGroups();
     loadTeacherGroups();
+    loadTemplates();
   }, []);
 
   useRealtimeSync({
