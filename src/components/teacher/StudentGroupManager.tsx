@@ -84,6 +84,57 @@ const StudentGroupManager = () => {
     loadGroups();
   }, [searchGrade, searchClass]);
 
+  // 페이지 포커스 시 그룹 목록 새로고침
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadGroups();
+      }
+    };
+
+    const handleFocus = () => {
+      loadGroups();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  // 실시간 구독으로 다른 브라우저에서의 변경 감지
+  useEffect(() => {
+    const authUser = localStorage.getItem("auth_user");
+    if (!authUser) return;
+
+    const user = JSON.parse(authUser);
+
+    const channel = supabase
+      .channel('student_groups_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'student_groups',
+          filter: `admin_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Student groups changed:', payload);
+          // 변경 감지 시 그룹 목록 새로고침
+          loadGroups();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const handleStudentToggle = (studentId: string) => {
     setSelectedStudents(prev =>
       prev.includes(studentId)
