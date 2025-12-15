@@ -205,6 +205,9 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
 
         const { data: teachersData, error } = await supabase.rpc("admin_get_teachers", {
           admin_id_input: user.id,
+          search_text: null,
+          search_grade: null,
+          search_class: null,
         });
 
         if (error) throw error;
@@ -335,6 +338,9 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
 
         const { data: teachersData, error: teachersError } = await supabase.rpc("admin_get_teachers", {
           admin_id_input: user.id,
+          search_text: null,
+          search_grade: null,
+          search_class: null,
         });
 
         if (teachersError) throw teachersError;

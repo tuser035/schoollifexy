@@ -55,6 +55,8 @@ const TeacherGroupManager = () => {
       const { data, error } = await supabase.rpc("admin_get_teachers", {
         admin_id_input: user.id,
         search_text: searchName || null,
+        search_grade: null,
+        search_class: null,
       });
 
       if (error) throw error;
@@ -218,6 +220,9 @@ const TeacherGroupManager = () => {
       
       const { data, error } = await supabase.rpc("admin_get_teachers", {
         admin_id_input: user.id,
+        search_text: null,
+        search_grade: null,
+        search_class: null,
       });
 
       if (error) throw error;
