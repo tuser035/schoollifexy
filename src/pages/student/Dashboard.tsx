@@ -41,6 +41,94 @@ const StudentDashboard = () => {
     fetchStudentData(parsedUser.studentId);
   }, [navigate]);
 
+  // 페이지 포커스 시 데이터 새로고침
+  useEffect(() => {
+    if (!user?.studentId) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStudentData(user.studentId);
+      }
+    };
+
+    const handleFocus = () => {
+      fetchStudentData(user.studentId);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user?.studentId]);
+
+  // 실시간 구독으로 상벌점 변경 감지
+  useEffect(() => {
+    if (!user?.studentId) return;
+
+    // 상점 테이블 실시간 구독
+    const meritsChannel = supabase
+      .channel('student_merits_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'merits',
+          filter: `student_id=eq.${user.studentId}`
+        },
+        (payload) => {
+          console.log('Student merits changed:', payload);
+          fetchStudentData(user.studentId);
+        }
+      )
+      .subscribe();
+
+    // 벌점 테이블 실시간 구독
+    const demeritsChannel = supabase
+      .channel('student_demerits_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'demerits',
+          filter: `student_id=eq.${user.studentId}`
+        },
+        (payload) => {
+          console.log('Student demerits changed:', payload);
+          fetchStudentData(user.studentId);
+        }
+      )
+      .subscribe();
+
+    // 이달의 학생 테이블 실시간 구독
+    const monthlyChannel = supabase
+      .channel('student_monthly_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'monthly',
+          filter: `student_id=eq.${user.studentId}`
+        },
+        (payload) => {
+          console.log('Student monthly changed:', payload);
+          fetchStudentData(user.studentId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(meritsChannel);
+      supabase.removeChannel(demeritsChannel);
+      supabase.removeChannel(monthlyChannel);
+    };
+  }, [user?.studentId]);
+
   const fetchStudentData = async (studentId: string) => {
     setIsLoading(true);
     try {
