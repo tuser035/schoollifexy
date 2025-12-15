@@ -1297,6 +1297,7 @@ export type Database = {
           id: string
           recipient_email: string
           recipient_name: string
+          recipient_student_id: string
           sent_at: string
           subject: string
         }[]
