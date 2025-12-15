@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Save, Trash2, Search, Pencil, Check, X } from "lucide-react";
+import { Users, Save, Trash2, Search, Pencil, Check, X, UserPlus, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,6 +37,8 @@ const StudentGroupManager = () => {
   const [loadedGroupName, setLoadedGroupName] = useState<string>("");
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [editingGroupName, setEditingGroupName] = useState<string>("");
+  const [editingMembersGroupId, setEditingMembersGroupId] = useState<string | null>(null);
+  const [editingMembersGroup, setEditingMembersGroup] = useState<StudentGroup | null>(null);
   const loadStudents = async () => {
     try {
       const authUser = localStorage.getItem("auth_user");
@@ -258,6 +260,63 @@ const StudentGroupManager = () => {
     }
   };
 
+  const handleStartEditMembers = (group: StudentGroup) => {
+    setEditingMembersGroupId(group.id);
+    setEditingMembersGroup(group);
+    setSelectedStudents(group.student_ids);
+  };
+
+  const handleCancelEditMembers = () => {
+    setEditingMembersGroupId(null);
+    setEditingMembersGroup(null);
+    setSelectedStudents([]);
+  };
+
+  const handleSaveEditMembers = async () => {
+    if (!editingMembersGroup) return;
+
+    if (selectedStudents.length === 0) {
+      toast.error("최소 1명 이상의 학생을 선택하세요");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      // Set session for RLS
+      await supabase.rpc('set_teacher_session', { teacher_id_input: user.id });
+
+      const { error } = await supabase
+        .from("student_groups")
+        .update({ student_ids: selectedStudents })
+        .eq("id", editingMembersGroup.id)
+        .eq("admin_id", user.id);
+
+      if (error) throw error;
+
+      // 로컬 상태 업데이트
+      setGroups(prev => prev.map(g => 
+        g.id === editingMembersGroup.id 
+          ? { ...g, student_ids: selectedStudents } 
+          : g
+      ));
+
+      toast.success(`그룹 "${editingMembersGroup.group_name}" 멤버가 수정되었습니다 (${selectedStudents.length}명)`);
+      setEditingMembersGroupId(null);
+      setEditingMembersGroup(null);
+      setSelectedStudents([]);
+    } catch (error: any) {
+      console.error("Error updating group members:", error);
+      toast.error("그룹 멤버 수정 실패: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* 불러온 그룹 학생 명단 */}
@@ -299,6 +358,44 @@ const StudentGroupManager = () => {
                 </tbody>
               </table>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 멤버 수정 모드 표시 */}
+      {editingMembersGroup && (
+        <Card className="border-orange-500/50 bg-orange-50 dark:bg-orange-950/20">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-orange-600 dark:text-orange-400">
+                <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+                "{editingMembersGroup.group_name}" 멤버 수정 중
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleCancelEditMembers}
+                  className="border-orange-500/50"
+                >
+                  취소
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleSaveEditMembers}
+                  disabled={isLoading}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  저장
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              아래에서 학생을 선택/해제하여 그룹 멤버를 수정하세요. 현재 {selectedStudents.length}명 선택됨
+            </p>
           </CardContent>
         </Card>
       )}
@@ -375,7 +472,11 @@ const StudentGroupManager = () => {
             ) : filteredStudents.map(student => (
               <div
                 key={student.student_id}
-                className="flex items-center space-x-2 p-2 hover:bg-accent rounded"
+                className={`flex items-center space-x-2 p-2 hover:bg-accent rounded ${
+                  editingMembersGroup && selectedStudents.includes(student.student_id) 
+                    ? "bg-orange-100 dark:bg-orange-900/30" 
+                    : ""
+                }`}
               >
                 <Checkbox
                   checked={selectedStudents.includes(student.student_id)}
@@ -388,25 +489,28 @@ const StudentGroupManager = () => {
             ))}
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm">그룹 이름</Label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                placeholder="예: 1학년 전체, 축구부 등"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                className="text-sm"
-              />
-              <Button 
-                onClick={handleSaveGroup} 
-                disabled={isLoading}
-                className="w-full sm:w-auto"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                저장
-              </Button>
+          {/* 새 그룹 저장 - 멤버 수정 모드가 아닐 때만 표시 */}
+          {!editingMembersGroup && (
+            <div className="space-y-2">
+              <Label className="text-sm">그룹 이름</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  placeholder="예: 1학년 전체, 축구부 등"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  className="text-sm"
+                />
+                <Button 
+                  onClick={handleSaveGroup} 
+                  disabled={isLoading}
+                  className="w-full sm:w-auto"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  저장
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -473,21 +577,31 @@ const StudentGroupManager = () => {
                       {group.student_ids.length}명 • {new Date(group.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleLoadGroup(group)}
                       className="flex-1 sm:flex-none"
-                      disabled={editingGroupId === group.id}
+                      disabled={editingGroupId === group.id || editingMembersGroupId !== null}
                     >
                       불러오기
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => handleStartEditMembers(group)}
+                      className="flex-1 sm:flex-none text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700 dark:text-orange-400 dark:border-orange-700 dark:hover:bg-orange-950"
+                      disabled={editingGroupId === group.id || editingMembersGroupId !== null}
+                    >
+                      <UserPlus className="w-4 h-4 mr-1" />
+                      멤버수정
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleDeleteGroup(group.id, group.group_name)}
-                      disabled={editingGroupId === group.id}
+                      disabled={editingGroupId === group.id || editingMembersGroupId !== null}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
