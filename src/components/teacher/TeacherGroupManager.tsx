@@ -170,7 +170,7 @@ const TeacherGroupManager = () => {
       setIsLoading(true);
       if (!user) return;
 
-      const { error } = await supabase.rpc("admin_insert_teacher_group", {
+      const { data: newGroupId, error } = await supabase.rpc("admin_insert_teacher_group", {
         admin_id_input: user.id,
         group_name_input: groupName,
         teacher_ids_input: selectedTeachers,
@@ -178,10 +178,18 @@ const TeacherGroupManager = () => {
 
       if (error) throw error;
 
+      // 저장된 그룹을 즉시 목록에 추가
+      const newGroup: TeacherGroup = {
+        id: newGroupId,
+        group_name: groupName,
+        teacher_ids: selectedTeachers,
+        created_at: new Date().toISOString(),
+      };
+      setGroups(prev => [newGroup, ...prev]);
+
       toast.success(`그룹 "${groupName}" 저장 완료 (${selectedTeachers.length}명)`);
       setGroupName("");
       setSelectedTeachers([]);
-      loadGroups();
     } catch (error: any) {
       console.error("Error saving group:", error);
       toast.error("그룹 저장 실패: " + error.message);
