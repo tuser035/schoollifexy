@@ -210,8 +210,7 @@ const BulkEmailSender = () => {
         { duration: 5000 }
       );
 
-      // 초기화
-      setSelectedGroup("");
+      // 내용만 초기화 (그룹은 유지)
       setSelectedTemplate("");
       setSubject("");
       setBody("");
