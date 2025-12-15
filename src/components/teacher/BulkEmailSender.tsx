@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Mail, Paperclip, X, AlertTriangle, GraduationCap, Users } from "lucide-react";
+import { Send, Mail, Paperclip, X, AlertTriangle, GraduationCap, Users, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +62,8 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [recipientsWithoutEmail, setRecipientsWithoutEmail] = useState<string[]>([]);
   const [validEmailCount, setValidEmailCount] = useState<number>(0);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadingFileName, setUploadingFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const authUser = localStorage.getItem("auth_user");
@@ -296,8 +299,13 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     if (attachments.length === 0) return undefined;
 
     const uploadedFiles: Array<{ url: string; name: string }> = [];
+    const totalFiles = attachments.length;
 
-    for (const file of attachments) {
+    for (let i = 0; i < attachments.length; i++) {
+      const file = attachments[i];
+      setUploadingFileName(file.name);
+      setUploadProgress(Math.round((i / totalFiles) * 100));
+
       const timestamp = Date.now();
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const filePath = `bulk-email/${user.id}/${timestamp}_${safeName}`;
@@ -322,7 +330,12 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
         url: urlData.publicUrl,
         name: file.name,
       });
+
+      setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
     }
+
+    setUploadingFileName("");
+    setUploadProgress(0);
 
     // 단일 파일인 경우
     if (uploadedFiles.length === 1) {
@@ -637,12 +650,31 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
                       size="sm"
                       className="h-6 w-6 p-0"
                       onClick={() => removeAttachment(index)}
+                      disabled={isUploading}
                     >
                       <X className="w-3 h-3" />
                     </Button>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {isUploading && (
+            <div className="space-y-2 p-3 bg-muted/50 rounded-lg border">
+              <div className="flex items-center gap-2 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <span className="font-medium">파일 업로드 중...</span>
+              </div>
+              {uploadingFileName && (
+                <p className="text-xs text-muted-foreground truncate">
+                  {uploadingFileName}
+                </p>
+              )}
+              <Progress value={uploadProgress} className="h-2" />
+              <p className="text-xs text-muted-foreground text-right">
+                {uploadProgress}%
+              </p>
             </div>
           )}
 
