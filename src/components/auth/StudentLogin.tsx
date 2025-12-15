@@ -48,7 +48,7 @@ const StudentLogin = () => {
         <Input
           id="student-password"
           type="password"
-          placeholder="초기 비밀번호: 12345678"
+          placeholder="초기 비밀번호: 1"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
