@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageIcon, Download, Pencil, Trash2 } from "lucide-react";
+import { useRealtimeSync, POINTS_TABLES } from "@/hooks/use-realtime-sync";
 
 interface StudentPoint {
   student_id: string;
@@ -72,100 +73,22 @@ const PointsInquiry = () => {
     setUserSession();
   }, []);
 
-  // 페이지 포커스 시 데이터 새로고침
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && students.length > 0) {
-        handleQuery();
-      }
-    };
-
-    const handleFocus = () => {
-      if (students.length > 0) {
-        handleQuery();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
+  // 실시간 동기화 커스텀 훅 사용
+  const handleRefresh = useCallback(() => {
+    if (students.length > 0) {
+      handleQuery();
+    }
   }, [students.length, grade, classNum]);
 
-  // 실시간 동기화 - merits, demerits, monthly 테이블
-  useEffect(() => {
-    const meritsChannel = supabase
-      .channel('admin_merits_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'merits' },
-        (payload) => {
-          console.log('Admin - Merits changed:', payload);
-          if (students.length > 0) {
-            handleQuery();
-          }
-          if (payload.eventType === 'INSERT') {
-            toast.info('🔄 상점이 추가되었습니다');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 상점이 수정되었습니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 상점이 삭제되었습니다');
-          }
-        }
-      )
-      .subscribe();
-
-    const demeritsChannel = supabase
-      .channel('admin_demerits_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'demerits' },
-        (payload) => {
-          console.log('Admin - Demerits changed:', payload);
-          if (students.length > 0) {
-            handleQuery();
-          }
-          if (payload.eventType === 'INSERT') {
-            toast.info('🔄 벌점이 추가되었습니다');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 벌점이 수정되었습니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 벌점이 삭제되었습니다');
-          }
-        }
-      )
-      .subscribe();
-
-    const monthlyChannel = supabase
-      .channel('admin_monthly_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'monthly' },
-        (payload) => {
-          console.log('Admin - Monthly changed:', payload);
-          if (students.length > 0) {
-            handleQuery();
-          }
-          if (payload.eventType === 'INSERT') {
-            toast.info('🔄 이달의 학생이 추가되었습니다');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 이달의 학생이 수정되었습니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 이달의 학생이 삭제되었습니다');
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(meritsChannel);
-      supabase.removeChannel(demeritsChannel);
-      supabase.removeChannel(monthlyChannel);
-    };
-  }, [students.length, grade, classNum]);
+  useRealtimeSync({
+    tables: POINTS_TABLES.map(t => ({
+      ...t,
+      channelName: `points_inquiry_${t.table}`,
+    })),
+    onRefresh: handleRefresh,
+    enabled: students.length > 0,
+    dependencies: [students.length, grade, classNum],
+  });
 
   const exportToCSV = () => {
     if (students.length === 0) {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Medal, Award, TrendingUp, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
 interface StudentRank {
   student_id: string;
@@ -219,98 +220,48 @@ const StudentLeaderboard = () => {
     }
   }, [selectedStudent]);
 
-  // 페이지 포커스 시 데이터 새로고침
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        loadLeaderboard();
-      }
-    };
+  // 실시간 동기화 커스텀 훅 사용
+  const handleRefresh = useCallback(() => {
+    loadLeaderboard();
+    if (selectedStudent) {
+      loadMonthlyTrend(selectedStudent);
+    }
+  }, [filterType, selectedGrade, selectedClass, sortBy, selectedStudent]);
 
-    const handleFocus = () => {
-      loadLeaderboard();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [filterType, selectedGrade, selectedClass, sortBy]);
-
-  // 실시간 동기화 - merits, demerits, monthly 테이블
-  useEffect(() => {
-    const meritsChannel = supabase
-      .channel('leaderboard_merits_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'merits' },
-        (payload) => {
-          console.log('Leaderboard - Merits changed:', payload);
-          loadLeaderboard();
-          if (selectedStudent) {
-            loadMonthlyTrend(selectedStudent);
-          }
-          if (payload.eventType === 'INSERT') {
-            toast.info('🔄 상점이 추가되어 순위가 갱신됩니다');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 상점이 수정되어 순위가 갱신됩니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 상점이 삭제되어 순위가 갱신됩니다');
-          }
-        }
-      )
-      .subscribe();
-
-    const demeritsChannel = supabase
-      .channel('leaderboard_demerits_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'demerits' },
-        (payload) => {
-          console.log('Leaderboard - Demerits changed:', payload);
-          loadLeaderboard();
-          if (selectedStudent) {
-            loadMonthlyTrend(selectedStudent);
-          }
-          if (payload.eventType === 'INSERT') {
-            toast.info('🔄 벌점이 추가되어 순위가 갱신됩니다');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 벌점이 수정되어 순위가 갱신됩니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 벌점이 삭제되어 순위가 갱신됩니다');
-          }
-        }
-      )
-      .subscribe();
-
-    const monthlyChannel = supabase
-      .channel('leaderboard_monthly_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'monthly' },
-        (payload) => {
-          console.log('Leaderboard - Monthly changed:', payload);
-          loadLeaderboard();
-          if (payload.eventType === 'INSERT') {
-            toast.info('🔄 이달의 학생이 추가되어 순위가 갱신됩니다');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 이달의 학생이 수정되어 순위가 갱신됩니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 이달의 학생이 삭제되어 순위가 갱신됩니다');
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(meritsChannel);
-      supabase.removeChannel(demeritsChannel);
-      supabase.removeChannel(monthlyChannel);
-    };
-  }, [selectedStudent]);
+  useRealtimeSync({
+    tables: [
+      {
+        table: 'merits',
+        channelName: 'leaderboard_merits',
+        labels: {
+          insert: '🔄 상점이 추가되어 순위가 갱신됩니다',
+          update: '🔄 상점이 수정되어 순위가 갱신됩니다',
+          delete: '🔄 상점이 삭제되어 순위가 갱신됩니다',
+        },
+      },
+      {
+        table: 'demerits',
+        channelName: 'leaderboard_demerits',
+        labels: {
+          insert: '🔄 벌점이 추가되어 순위가 갱신됩니다',
+          update: '🔄 벌점이 수정되어 순위가 갱신됩니다',
+          delete: '🔄 벌점이 삭제되어 순위가 갱신됩니다',
+        },
+      },
+      {
+        table: 'monthly',
+        channelName: 'leaderboard_monthly',
+        labels: {
+          insert: '🔄 이달의 학생이 추가되어 순위가 갱신됩니다',
+          update: '🔄 이달의 학생이 수정되어 순위가 갱신됩니다',
+          delete: '🔄 이달의 학생이 삭제되어 순위가 갱신됩니다',
+        },
+      },
+    ],
+    onRefresh: handleRefresh,
+    enabled: true,
+    dependencies: [selectedStudent],
+  });
 
   return (
     <div className="space-y-4">
