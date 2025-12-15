@@ -21,6 +21,7 @@ interface SendBulkEmailRequest {
   subject: string;
   body: string;
   students: Student[];
+  recipientType?: "student" | "teacher"; // 수신자 유형 (학생/교사)
   attachmentInfo?: {
     url?: string;
     name?: string;
@@ -41,9 +42,9 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { adminId, subject, body, students, attachmentInfo }: SendBulkEmailRequest = await req.json();
+    const { adminId, subject, body, students, recipientType, attachmentInfo }: SendBulkEmailRequest = await req.json();
 
-    console.log("Bulk email request:", { adminId, subject, studentCount: students.length });
+    console.log("Bulk email request:", { adminId, subject, studentCount: students.length, recipientType });
 
     // 먼저 교사인지 확인
     let senderName = "Unknown";
@@ -179,11 +180,12 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         // 이메일 히스토리 기록
+        // 교사에게 발송 시 recipient_student_id는 null로 저장
         emailHistoryRecords.push({
           sender_id: adminId,
           sender_name: senderName,
           sender_type: senderType,
-          recipient_student_id: student.studentId,
+          recipient_student_id: recipientType === "teacher" ? null : student.studentId,
           recipient_email: student.email,
           recipient_name: student.name,
           subject: subject,
