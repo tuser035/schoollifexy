@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,57 @@ const CounselingInquiry = () => {
   const [recordToDelete, setRecordToDelete] = useState<CounselingRecord | null>(null);
   const [editAttachmentFile, setEditAttachmentFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // 페이지 포커스 시 데이터 새로고침
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && records.length > 0) {
+        handleQuery();
+      }
+    };
+
+    const handleFocus = () => {
+      if (records.length > 0) {
+        handleQuery();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [records.length, searchInput]);
+
+  // 실시간 동기화 - career_counseling 테이블
+  useEffect(() => {
+    const counselingChannel = supabase
+      .channel('counseling_inquiry_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'career_counseling' },
+        (payload) => {
+          console.log('CounselingInquiry - Counseling changed:', payload);
+          if (records.length > 0) {
+            handleQuery();
+          }
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 상담 기록이 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 상담 기록이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 상담 기록이 삭제되었습니다');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(counselingChannel);
+    };
+  }, [records.length, searchInput]);
 
   const handleQuery = async () => {
     setIsLoading(true);
