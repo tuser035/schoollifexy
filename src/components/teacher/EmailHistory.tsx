@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Mail, RefreshCw, ChevronDown, Users, GraduationCap, CalendarIcon, X } from "lucide-react";
+import { Mail, RefreshCw, ChevronDown, Users, GraduationCap, CalendarIcon, X, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay, endOfDay, isWithinInterval } from "date-fns";
@@ -119,6 +119,54 @@ const EmailHistory = () => {
     setEndDate(undefined);
   };
 
+  // CSV 내보내기
+  const handleExportCSV = () => {
+    const currentEmails = activeTab === "student" ? studentEmails : teacherEmails;
+    
+    if (currentEmails.length === 0) {
+      toast.error("내보낼 데이터가 없습니다");
+      return;
+    }
+
+    // CSV 헤더
+    const headers = ["발송일시", "수신자", "이메일", "제목", "본문"];
+    
+    // CSV 데이터 생성
+    const csvData = currentEmails.map(email => [
+      formatDate(email.sent_at),
+      email.recipient_name,
+      email.recipient_email,
+      email.subject,
+      // 본문에서 HTML 태그 제거 및 특수문자 처리
+      email.body.replace(/<[^>]*>/g, "").replace(/"/g, '""')
+    ]);
+
+    // CSV 문자열 생성
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    // BOM 추가 (한글 깨짐 방지)
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
+    
+    // 다운로드
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    const dateStr = format(new Date(), "yyyyMMdd_HHmm");
+    const typeStr = activeTab === "student" ? "학생" : "교사";
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `발송이력_${typeStr}_${dateStr}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success(`${currentEmails.length}건의 이력을 내보냈습니다`);
+  };
+
   // 날짜 필터링 적용
   const filteredEmails = useMemo(() => {
     if (!startDate && !endDate) return emails;
@@ -215,9 +263,20 @@ const EmailHistory = () => {
               <Mail className="w-4 h-4" />
               발송 이력
             </div>
-            <Button variant="ghost" size="sm" onClick={loadEmails} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportCSV} 
+                disabled={loading || filteredEmails.length === 0}
+                title="CSV 내보내기"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={loadEmails} disabled={loading}>
+                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
