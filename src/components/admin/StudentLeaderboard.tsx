@@ -219,6 +219,99 @@ const StudentLeaderboard = () => {
     }
   }, [selectedStudent]);
 
+  // 페이지 포커스 시 데이터 새로고침
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadLeaderboard();
+      }
+    };
+
+    const handleFocus = () => {
+      loadLeaderboard();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [filterType, selectedGrade, selectedClass, sortBy]);
+
+  // 실시간 동기화 - merits, demerits, monthly 테이블
+  useEffect(() => {
+    const meritsChannel = supabase
+      .channel('leaderboard_merits_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'merits' },
+        (payload) => {
+          console.log('Leaderboard - Merits changed:', payload);
+          loadLeaderboard();
+          if (selectedStudent) {
+            loadMonthlyTrend(selectedStudent);
+          }
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 상점이 추가되어 순위가 갱신됩니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 상점이 수정되어 순위가 갱신됩니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 상점이 삭제되어 순위가 갱신됩니다');
+          }
+        }
+      )
+      .subscribe();
+
+    const demeritsChannel = supabase
+      .channel('leaderboard_demerits_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'demerits' },
+        (payload) => {
+          console.log('Leaderboard - Demerits changed:', payload);
+          loadLeaderboard();
+          if (selectedStudent) {
+            loadMonthlyTrend(selectedStudent);
+          }
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 벌점이 추가되어 순위가 갱신됩니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 벌점이 수정되어 순위가 갱신됩니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 벌점이 삭제되어 순위가 갱신됩니다');
+          }
+        }
+      )
+      .subscribe();
+
+    const monthlyChannel = supabase
+      .channel('leaderboard_monthly_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'monthly' },
+        (payload) => {
+          console.log('Leaderboard - Monthly changed:', payload);
+          loadLeaderboard();
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 이달의 학생이 추가되어 순위가 갱신됩니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 이달의 학생이 수정되어 순위가 갱신됩니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 이달의 학생이 삭제되어 순위가 갱신됩니다');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(meritsChannel);
+      supabase.removeChannel(demeritsChannel);
+      supabase.removeChannel(monthlyChannel);
+    };
+  }, [selectedStudent]);
+
   return (
     <div className="space-y-4">
       <Card>
