@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useRealtimeSync, EMAIL_HISTORY_TABLE } from "@/hooks/use-realtime-sync";
 
 interface EmailHistoryRecord {
   id: string;
@@ -74,60 +75,23 @@ export const EmailHistory = () => {
     loadHistory();
   }, []);
 
-  // 페이지 포커스 시 데이터 새로고침
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && history.length > 0) {
-        loadHistory();
-      }
-    };
-
-    const handleFocus = () => {
-      if (history.length > 0) {
-        loadHistory();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
+  // 실시간 동기화 커스텀 훅 사용
+  const handleRefresh = useCallback(() => {
+    if (history.length > 0) {
+      loadHistory();
+    }
   }, [history.length, searchText, selectedGrade, selectedClass]);
 
-  // 실시간 동기화 - email_history 테이블
-  useEffect(() => {
-    const emailChannel = supabase
-      .channel('admin_email_history_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'email_history' },
-        (payload) => {
-          console.log('EmailHistory - Email changed:', payload);
-          if (history.length > 0) {
-            loadHistory();
-          }
-          if (payload.eventType === 'INSERT') {
-            toast({
-              title: "🔄 이메일이 발송되었습니다",
-              description: "목록이 자동으로 갱신됩니다",
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            toast({
-              title: "🔄 이메일 정보가 수정되었습니다",
-              description: "목록이 자동으로 갱신됩니다",
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(emailChannel);
-    };
-  }, [history.length, searchText, selectedGrade, selectedClass]);
+  useRealtimeSync({
+    tables: EMAIL_HISTORY_TABLE.map(t => ({
+      ...t,
+      channelName: `email_history_${t.table}`,
+    })),
+    onRefresh: handleRefresh,
+    enabled: history.length > 0,
+    dependencies: [history.length, searchText, selectedGrade, selectedClass],
+    useShadcnToast: true,
+  });
 
   const handleSearch = () => {
     loadHistory();
