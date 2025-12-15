@@ -508,7 +508,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
                 ) : (
                   <>
                     {templates.filter(t => 
-                      t.title === "전공심화동아리 담당교사" || t.title === "친목회 알림"
+                      t.title === "교사 친목회" || t.title === "전공심화동아리 담임"
                     ).map(template => (
                       <SelectItem key={template.id} value={template.id}>
                         {template.title}
