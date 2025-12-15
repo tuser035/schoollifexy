@@ -74,6 +74,61 @@ export const EmailHistory = () => {
     loadHistory();
   }, []);
 
+  // 페이지 포커스 시 데이터 새로고침
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && history.length > 0) {
+        loadHistory();
+      }
+    };
+
+    const handleFocus = () => {
+      if (history.length > 0) {
+        loadHistory();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [history.length, searchText, selectedGrade, selectedClass]);
+
+  // 실시간 동기화 - email_history 테이블
+  useEffect(() => {
+    const emailChannel = supabase
+      .channel('admin_email_history_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'email_history' },
+        (payload) => {
+          console.log('EmailHistory - Email changed:', payload);
+          if (history.length > 0) {
+            loadHistory();
+          }
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "🔄 이메일이 발송되었습니다",
+              description: "목록이 자동으로 갱신됩니다",
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            toast({
+              title: "🔄 이메일 정보가 수정되었습니다",
+              description: "목록이 자동으로 갱신됩니다",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(emailChannel);
+    };
+  }, [history.length, searchText, selectedGrade, selectedClass]);
+
   const handleSearch = () => {
     loadHistory();
   };
