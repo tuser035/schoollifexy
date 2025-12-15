@@ -88,6 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const emailResponse = await resend.emails.send({
           from: `School Point <${fromEmail}>`,
+          replyTo: "gyeongjuhs@naver.com", // 답장 시 이 주소로 발송됨
           to: [student.gmail],
           subject: template.subject,
           html: template.body,
