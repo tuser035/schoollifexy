@@ -8,7 +8,7 @@ import { logout, type AuthUser } from "@/lib/auth";
 import MeritForm from "@/components/teacher/MeritForm";
 import DemeritForm from "@/components/teacher/DemeritForm";
 import MonthlyForm from "@/components/teacher/MonthlyForm";
-import StudentGroupManager from "@/components/teacher/StudentGroupManager";
+import GroupTabs from "@/components/teacher/GroupTabs";
 import BulkEmailSender from "@/components/teacher/BulkEmailSender";
 import EmailHistory from "@/components/teacher/EmailHistory";
 import TeacherRecordsList from "@/components/teacher/TeacherRecordsList";
@@ -142,7 +142,7 @@ const TeacherDashboard = () => {
           </TabsContent>
 
           <TabsContent value="groups">
-            <StudentGroupManager />
+            <GroupTabs />
           </TabsContent>
 
           <TabsContent value="bulk-email">
