@@ -176,12 +176,12 @@ const StudentGroupManager = () => {
           <div className="grid grid-cols-2 gap-2 sm:gap-4">
             <div>
               <Label className="text-sm">학년</Label>
-              <Select value={searchGrade} onValueChange={setSearchGrade}>
+              <Select value={searchGrade || "all"} onValueChange={(v) => setSearchGrade(v === "all" ? "" : v)}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
                   <SelectItem value="1">1학년</SelectItem>
                   <SelectItem value="2">2학년</SelectItem>
                   <SelectItem value="3">3학년</SelectItem>
@@ -190,12 +190,12 @@ const StudentGroupManager = () => {
             </div>
             <div>
               <Label className="text-sm">반</Label>
-              <Select value={searchClass} onValueChange={setSearchClass}>
+              <Select value={searchClass || "all"} onValueChange={(v) => setSearchClass(v === "all" ? "" : v)}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                     <SelectItem key={num} value={num.toString()}>
                       {num}반
