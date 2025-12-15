@@ -70,18 +70,24 @@ const EmailHistory = () => {
 
       const user = JSON.parse(authUser);
 
-      await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
-      
-      const { data, error } = await supabase
-        .from("email_history")
-        .select("id, recipient_name, recipient_email, recipient_student_id, subject, body, sent_at")
-        .eq("sender_id", user.id)
-        .eq("sender_type", "teacher")
-        .order("sent_at", { ascending: false })
-        .limit(100);
+      const { data, error } = await supabase.rpc("teacher_get_email_history", {
+        teacher_id_input: user.id
+      });
 
       if (error) throw error;
-      setEmails(data || []);
+      
+      // RPC 반환 타입에 맞게 변환
+      const emailData: EmailRecord[] = (data || []).map((item: any) => ({
+        id: item.id,
+        recipient_name: item.recipient_name,
+        recipient_email: item.recipient_email,
+        recipient_student_id: item.recipient_student_id ?? null,
+        subject: item.subject,
+        body: item.body,
+        sent_at: item.sent_at
+      }));
+      
+      setEmails(emailData);
     } catch (error: any) {
       console.error("Error loading email history:", error);
       toast.error("이메일 이력 조회 실패: " + error.message);
