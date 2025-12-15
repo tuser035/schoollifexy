@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Send, Mail, Paperclip, X } from "lucide-react";
+import { Send, Mail, Paperclip, X, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
@@ -27,6 +28,9 @@ interface Student {
   student_id: string;
   name: string;
   gmail: string;
+  grade?: number;
+  class?: number;
+  number?: number;
 }
 
 interface BulkEmailSenderProps {
@@ -43,6 +47,8 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
   const [isSending, setIsSending] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [studentsWithoutEmail, setStudentsWithoutEmail] = useState<Student[]>([]);
+  const [validEmailCount, setValidEmailCount] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 실시간 동기화를 위한 테이블 구독 설정
@@ -120,6 +126,44 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     } catch (error: any) {
       console.error("Error loading templates:", error);
       toast.error("템플릿 목록 조회 실패: " + error.message);
+    }
+  };
+
+  // 그룹 선택 시 이메일 없는 학생 확인
+  const handleGroupSelect = async (groupId: string) => {
+    setSelectedGroup(groupId);
+    setStudentsWithoutEmail([]);
+    setValidEmailCount(0);
+
+    if (!groupId) return;
+
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      const { data: studentsData, error } = await supabase.rpc(
+        "teacher_get_students_by_ids",
+        {
+          teacher_id_input: user.id,
+          student_ids_input: group.student_ids,
+        }
+      );
+
+      if (error) throw error;
+
+      if (studentsData) {
+        const withoutEmail = studentsData.filter((s: Student) => !s.gmail || !s.gmail.includes("@"));
+        const withEmail = studentsData.filter((s: Student) => s.gmail && s.gmail.includes("@"));
+        setStudentsWithoutEmail(withoutEmail);
+        setValidEmailCount(withEmail.length);
+      }
+    } catch (error: any) {
+      console.error("Error checking student emails:", error);
     }
   };
 
@@ -258,7 +302,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
         <div className="flex-1 overflow-y-auto space-y-3 pb-4 -mx-6 px-6">
           <div>
             <Label className="text-sm sm:text-base">학생 그룹 선택</Label>
-            <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+            <Select value={selectedGroup} onValueChange={handleGroupSelect}>
               <SelectTrigger className="h-11 text-sm">
                 <SelectValue placeholder="그룹을 선택하세요" />
               </SelectTrigger>
@@ -272,10 +316,27 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
             </Select>
             {selectedGroupData && (
               <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
-                {selectedGroupData.student_ids.length}명의 학생에게 발송됩니다
+                {validEmailCount > 0 
+                  ? `${validEmailCount}명에게 발송됩니다`
+                  : `${selectedGroupData.student_ids.length}명의 학생`}
               </p>
             )}
           </div>
+
+          {/* 이메일 없는 학생 경고 */}
+          {studentsWithoutEmail.length > 0 && (
+            <Alert variant="destructive" className="bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="text-amber-800 dark:text-amber-200">
+                <p className="font-medium mb-1">
+                  이메일 주소가 없는 학생 ({studentsWithoutEmail.length}명)
+                </p>
+                <p className="text-xs">
+                  {studentsWithoutEmail.map(s => s.name).join(", ")}
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div>
             <Label className="text-sm sm:text-base">템플릿 선택 (선택사항)</Label>
