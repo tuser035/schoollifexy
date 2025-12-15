@@ -41,12 +41,8 @@ const TeacherLogin = () => {
       localStorage.setItem("auth_user", JSON.stringify(user));
       toast.success(`환영합니다, ${user.name}님!`);
       
-      // is_admin이 true면 관리자 대시보드로 이동
-      if (user.isAdmin) {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/teacher/dashboard");
-      }
+      // 교사는 항상 교사 대시보드로 이동 (관리자 권한 여부 무관)
+      navigate("/teacher/dashboard");
     } catch (error: any) {
       toast.error(error.message || "로그인에 실패했습니다.");
     } finally {
