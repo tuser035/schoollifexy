@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { logout, type AuthUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Papa from "papaparse";
+import { useRealtimeSync, type TableSubscription } from "@/hooks/use-realtime-sync";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -23,6 +24,48 @@ const StudentDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+
+  const fetchStudentData = useCallback(async (studentId: string) => {
+    setIsLoading(true);
+    try {
+      const { data: meritsData, error: meritsError } = await supabase.rpc(
+        "student_get_merits",
+        { student_id_input: studentId }
+      );
+
+      if (meritsError) throw meritsError;
+
+      const { data: demeritsData, error: demeritsError } = await supabase.rpc(
+        "student_get_demerits",
+        { student_id_input: studentId }
+      );
+
+      if (demeritsError) throw demeritsError;
+
+      const { data: monthlyData, error: monthlyError } = await supabase.rpc(
+        "student_get_monthly",
+        { student_id_input: studentId }
+      );
+
+      if (monthlyError) throw monthlyError;
+
+      setMerits(meritsData || []);
+      setDemerits(demeritsData || []);
+      setMonthly(monthlyData || []);
+
+      const meritsSum = (meritsData || []).reduce((sum: number, m: any) => sum + (m.score || 0), 0);
+      const demeritsSum = (demeritsData || []).reduce((sum: number, d: any) => sum + (d.score || 0), 0);
+      const monthlyCount = (monthlyData || []).length;
+
+      setMeritsTotal(meritsSum);
+      setDemeritsTotal(demeritsSum);
+      setMonthlyTotal(monthlyCount);
+    } catch (error: any) {
+      toast.error(error.message || "데이터를 불러오는데 실패했습니다");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const authUser = localStorage.getItem("auth_user");
@@ -39,162 +82,54 @@ const StudentDashboard = () => {
     
     setUser(parsedUser);
     fetchStudentData(parsedUser.studentId);
-  }, [navigate]);
+  }, [navigate, fetchStudentData]);
 
-  // 페이지 포커스 시 데이터 새로고침
-  useEffect(() => {
-    if (!user?.studentId) return;
+  // 학생별 실시간 구독 테이블 설정
+  const studentTables: TableSubscription[] = user?.studentId ? [
+    {
+      table: 'merits',
+      channelName: `student_merits_${user.studentId}`,
+      filter: `student_id=eq.${user.studentId}`,
+      labels: {
+        insert: '🎉 새로운 상점이 부여되었습니다!',
+        update: '🔄 상점 내역이 수정되었습니다',
+        delete: '🔄 상점 내역이 삭제되었습니다',
+      },
+    },
+    {
+      table: 'demerits',
+      channelName: `student_demerits_${user.studentId}`,
+      filter: `student_id=eq.${user.studentId}`,
+      labels: {
+        insert: '⚠️ 새로운 벌점이 부여되었습니다',
+        update: '🔄 벌점 내역이 수정되었습니다',
+        delete: '🔄 벌점 내역이 삭제되었습니다',
+      },
+    },
+    {
+      table: 'monthly',
+      channelName: `student_monthly_${user.studentId}`,
+      filter: `student_id=eq.${user.studentId}`,
+      labels: {
+        insert: '🌟 이달의 학생으로 추천되었습니다!',
+        update: '🔄 이달의 학생 내역이 수정되었습니다',
+        delete: '🔄 이달의 학생 내역이 삭제되었습니다',
+      },
+    },
+  ] : [];
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+  // useRealtimeSync 훅 사용
+  useRealtimeSync({
+    tables: studentTables,
+    onRefresh: () => {
+      if (user?.studentId) {
         fetchStudentData(user.studentId);
       }
-    };
+    },
+    enabled: !!user?.studentId,
+    dependencies: [user?.studentId],
+  });
 
-    const handleFocus = () => {
-      fetchStudentData(user.studentId);
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [user?.studentId]);
-
-  // 실시간 구독으로 상벌점 변경 감지
-  useEffect(() => {
-    if (!user?.studentId) return;
-
-    // 상점 테이블 실시간 구독
-    const meritsChannel = supabase
-      .channel('student_merits_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'merits',
-          filter: `student_id=eq.${user.studentId}`
-        },
-        (payload) => {
-          console.log('Student merits changed:', payload);
-          fetchStudentData(user.studentId);
-          if (payload.eventType === 'INSERT') {
-            toast.success('🎉 새로운 상점이 부여되었습니다!');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 상점 내역이 수정되었습니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 상점 내역이 삭제되었습니다');
-          }
-        }
-      )
-      .subscribe();
-
-    // 벌점 테이블 실시간 구독
-    const demeritsChannel = supabase
-      .channel('student_demerits_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'demerits',
-          filter: `student_id=eq.${user.studentId}`
-        },
-        (payload) => {
-          console.log('Student demerits changed:', payload);
-          fetchStudentData(user.studentId);
-          if (payload.eventType === 'INSERT') {
-            toast.warning('⚠️ 새로운 벌점이 부여되었습니다');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 벌점 내역이 수정되었습니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 벌점 내역이 삭제되었습니다');
-          }
-        }
-      )
-      .subscribe();
-
-    // 이달의 학생 테이블 실시간 구독
-    const monthlyChannel = supabase
-      .channel('student_monthly_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'monthly',
-          filter: `student_id=eq.${user.studentId}`
-        },
-        (payload) => {
-          console.log('Student monthly changed:', payload);
-          fetchStudentData(user.studentId);
-          if (payload.eventType === 'INSERT') {
-            toast.success('🌟 이달의 학생으로 추천되었습니다!');
-          } else if (payload.eventType === 'UPDATE') {
-            toast.info('🔄 이달의 학생 내역이 수정되었습니다');
-          } else if (payload.eventType === 'DELETE') {
-            toast.info('🔄 이달의 학생 내역이 삭제되었습니다');
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(meritsChannel);
-      supabase.removeChannel(demeritsChannel);
-      supabase.removeChannel(monthlyChannel);
-    };
-  }, [user?.studentId]);
-
-  const fetchStudentData = async (studentId: string) => {
-    setIsLoading(true);
-    try {
-      // Fetch merits using RPC
-      const { data: meritsData, error: meritsError } = await supabase.rpc(
-        "student_get_merits",
-        { student_id_input: studentId }
-      );
-
-      if (meritsError) throw meritsError;
-
-      // Fetch demerits using RPC
-      const { data: demeritsData, error: demeritsError } = await supabase.rpc(
-        "student_get_demerits",
-        { student_id_input: studentId }
-      );
-
-      if (demeritsError) throw demeritsError;
-
-      // Fetch monthly using RPC
-      const { data: monthlyData, error: monthlyError } = await supabase.rpc(
-        "student_get_monthly",
-        { student_id_input: studentId }
-      );
-
-      if (monthlyError) throw monthlyError;
-
-      setMerits(meritsData || []);
-      setDemerits(demeritsData || []);
-      setMonthly(monthlyData || []);
-
-      // Calculate totals
-      const meritsSum = (meritsData || []).reduce((sum, m) => sum + (m.score || 0), 0);
-      const demeritsSum = (demeritsData || []).reduce((sum, d) => sum + (d.score || 0), 0);
-      const monthlyCount = (monthlyData || []).length;
-
-      setMeritsTotal(meritsSum);
-      setDemeritsTotal(demeritsSum);
-      setMonthlyTotal(monthlyCount);
-    } catch (error: any) {
-      toast.error(error.message || "데이터를 불러오는데 실패했습니다");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleLogout = () => {
     logout();
