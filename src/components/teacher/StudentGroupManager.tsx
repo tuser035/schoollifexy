@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Save, Trash2, Search } from "lucide-react";
+import { Users, Save, Trash2, Search, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,6 +35,8 @@ const StudentGroupManager = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadedGroupStudents, setLoadedGroupStudents] = useState<Student[]>([]);
   const [loadedGroupName, setLoadedGroupName] = useState<string>("");
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState<string>("");
   const loadStudents = async () => {
     try {
       const authUser = localStorage.getItem("auth_user");
@@ -208,6 +210,49 @@ const StudentGroupManager = () => {
     setGroupName("");
   };
 
+  const handleStartEditGroup = (group: StudentGroup) => {
+    setEditingGroupId(group.id);
+    setEditingGroupName(group.group_name);
+  };
+
+  const handleCancelEditGroup = () => {
+    setEditingGroupId(null);
+    setEditingGroupName("");
+  };
+
+  const handleSaveEditGroup = async (groupId: string) => {
+    if (!editingGroupName.trim()) {
+      toast.error("그룹 이름을 입력하세요");
+      return;
+    }
+
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      // Set session for RLS
+      await supabase.rpc('set_teacher_session', { teacher_id_input: user.id });
+
+      const { error } = await supabase
+        .from("student_groups")
+        .update({ group_name: editingGroupName.trim() })
+        .eq("id", groupId)
+        .eq("admin_id", user.id);
+
+      if (error) throw error;
+
+      toast.success("그룹 이름이 변경되었습니다");
+      setEditingGroupId(null);
+      setEditingGroupName("");
+      loadGroups();
+    } catch (error: any) {
+      console.error("Error updating group:", error);
+      toast.error("그룹 이름 변경 실패: " + error.message);
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* 불러온 그룹 학생 명단 */}
@@ -377,7 +422,48 @@ const StudentGroupManager = () => {
                   className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-accent gap-2"
                 >
                   <div className="flex-1">
-                    <p className="font-medium text-sm sm:text-base">{group.group_name}</p>
+                    {editingGroupId === group.id ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editingGroupName}
+                          onChange={(e) => setEditingGroupName(e.target.value)}
+                          className="h-8 text-sm"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveEditGroup(group.id);
+                            if (e.key === 'Escape') handleCancelEditGroup();
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSaveEditGroup(group.id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Check className="w-4 h-4 text-green-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCancelEditGroup}
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="w-4 h-4 text-red-600" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm sm:text-base">{group.group_name}</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleStartEditGroup(group)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Pencil className="w-3 h-3 text-muted-foreground hover:text-foreground" />
+                        </Button>
+                      </div>
+                    )}
                     <p className="text-xs sm:text-sm text-muted-foreground">
                       {group.student_ids.length}명 • {new Date(group.created_at).toLocaleDateString()}
                     </p>
@@ -388,6 +474,7 @@ const StudentGroupManager = () => {
                       size="sm"
                       onClick={() => handleLoadGroup(group)}
                       className="flex-1 sm:flex-none"
+                      disabled={editingGroupId === group.id}
                     >
                       불러오기
                     </Button>
@@ -395,6 +482,7 @@ const StudentGroupManager = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteGroup(group.id, group.group_name)}
+                      disabled={editingGroupId === group.id}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
