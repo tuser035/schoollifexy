@@ -219,13 +219,11 @@ const TeacherGroupManager = () => {
     try {
       if (!user) return;
 
-      await supabase.rpc('set_teacher_session', { teacher_id_input: user.id });
-
-      const { error } = await supabase
-        .from("teacher_groups")
-        .delete()
-        .eq("id", groupToDelete.id)
-        .eq("admin_id", user.id);
+      // RPC 함수를 사용하여 그룹 삭제
+      const { data, error } = await supabase.rpc('teacher_delete_own_teacher_group', {
+        teacher_id_input: user.id,
+        group_id_input: groupToDelete.id,
+      });
 
       if (error) throw error;
 
