@@ -190,6 +190,145 @@ const DataInquiry = () => {
     }
   }, [selectedTable]);
 
+  // 페이지 포커스 시 데이터 새로고침
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && data.length > 0) {
+        handleQuery({ showToast: false });
+      }
+    };
+
+    const handleFocus = () => {
+      if (data.length > 0) {
+        handleQuery({ showToast: false });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [data.length, selectedTable, searchTerm]);
+
+  // 실시간 동기화 - students, teachers, merits, demerits, monthly 테이블
+  useEffect(() => {
+    const studentsChannel = supabase
+      .channel('datainquiry_students_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'students' },
+        (payload) => {
+          console.log('DataInquiry - Students changed:', payload);
+          if (selectedTable === 'students' && data.length > 0) {
+            handleQuery({ showToast: false });
+          }
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 학생이 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 학생 정보가 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 학생이 삭제되었습니다');
+          }
+        }
+      )
+      .subscribe();
+
+    const teachersChannel = supabase
+      .channel('datainquiry_teachers_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'teachers' },
+        (payload) => {
+          console.log('DataInquiry - Teachers changed:', payload);
+          if (selectedTable === 'teachers' && data.length > 0) {
+            handleQuery({ showToast: false });
+          }
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 교사가 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 교사 정보가 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 교사가 삭제되었습니다');
+          }
+        }
+      )
+      .subscribe();
+
+    const meritsChannel = supabase
+      .channel('datainquiry_merits_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'merits' },
+        (payload) => {
+          console.log('DataInquiry - Merits changed:', payload);
+          if (selectedTable === 'merits' && data.length > 0) {
+            handleQuery({ showToast: false });
+          }
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 상점이 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 상점이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 상점이 삭제되었습니다');
+          }
+        }
+      )
+      .subscribe();
+
+    const demeritsChannel = supabase
+      .channel('datainquiry_demerits_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'demerits' },
+        (payload) => {
+          console.log('DataInquiry - Demerits changed:', payload);
+          if (selectedTable === 'demerits' && data.length > 0) {
+            handleQuery({ showToast: false });
+          }
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 벌점이 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 벌점이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 벌점이 삭제되었습니다');
+          }
+        }
+      )
+      .subscribe();
+
+    const monthlyChannel = supabase
+      .channel('datainquiry_monthly_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'monthly' },
+        (payload) => {
+          console.log('DataInquiry - Monthly changed:', payload);
+          if (selectedTable === 'monthly' && data.length > 0) {
+            handleQuery({ showToast: false });
+          }
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 이달의 학생이 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 이달의 학생이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 이달의 학생이 삭제되었습니다');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(studentsChannel);
+      supabase.removeChannel(teachersChannel);
+      supabase.removeChannel(meritsChannel);
+      supabase.removeChannel(demeritsChannel);
+      supabase.removeChannel(monthlyChannel);
+    };
+  }, [selectedTable, data.length]);
+
   // 템플릿 로드
   const loadTemplates = async () => {
     try {
