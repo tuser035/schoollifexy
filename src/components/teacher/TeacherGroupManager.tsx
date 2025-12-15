@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Save, Trash2, Search, Pencil, Check, X, UserPlus, UserMinus } from "lucide-react";
+import { Users, Save, Trash2, Search, Pencil, Check, X, UserPlus, UserMinus, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
@@ -44,6 +44,8 @@ const TeacherGroupManager = () => {
   const [editingMembersGroupId, setEditingMembersGroupId] = useState<string | null>(null);
   const [editingMembersGroup, setEditingMembersGroup] = useState<TeacherGroup | null>(null);
   const [viewingGroupOnly, setViewingGroupOnly] = useState(false);
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
+  const [expandedGroupMembers, setExpandedGroupMembers] = useState<Teacher[]>([]);
 
   const authUser = localStorage.getItem("auth_user");
   const user = authUser ? JSON.parse(authUser) : null;
@@ -263,6 +265,40 @@ const TeacherGroupManager = () => {
     setSelectedTeachers([]);
     setGroupName("");
     setViewingGroupOnly(false);
+  };
+
+  const handleToggleGroupExpand = async (group: TeacherGroup) => {
+    if (expandedGroupId === group.id) {
+      setExpandedGroupId(null);
+      setExpandedGroupMembers([]);
+      return;
+    }
+
+    try {
+      if (!user) return;
+      
+      const { data, error } = await supabase.rpc("admin_get_teachers", {
+        admin_id_input: user.id,
+        search_text: null,
+        search_grade: null,
+        search_class: null,
+        search_department: null,
+        search_subject: null,
+        search_dept_name: null,
+        search_homeroom: null,
+      });
+
+      if (error) throw error;
+      
+      const groupTeachers = (data || []).filter((t: Teacher) => 
+        group.teacher_ids.includes(t.teacher_email)
+      );
+      setExpandedGroupId(group.id);
+      setExpandedGroupMembers(groupTeachers);
+    } catch (error: any) {
+      console.error("Error loading group teachers:", error);
+      toast.error("그룹 멤버 조회 실패: " + error.message);
+    }
   };
 
   const handleStartEditGroup = (group: TeacherGroup) => {
@@ -543,81 +579,110 @@ const TeacherGroupManager = () => {
             ) : (
               <div className="space-y-2">
                 {groups.map(group => (
-                  <div
-                    key={group.id}
-                    className="flex items-center justify-between p-3 bg-accent/50 rounded-lg"
-                  >
-                    {editingGroupId === group.id ? (
-                      <div className="flex items-center gap-2 flex-1 mr-2">
-                        <Input
-                          value={editingGroupName}
-                          onChange={(e) => setEditingGroupName(e.target.value)}
-                          className="h-8 text-sm"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSaveEditGroup(group.id);
-                            if (e.key === "Escape") handleCancelEditGroup();
-                          }}
-                          autoFocus
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSaveEditGroup(group.id)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Check className="w-4 h-4 text-green-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleCancelEditGroup}
-                          className="h-8 w-8 p-0"
-                        >
-                          <X className="w-4 h-4 text-red-600" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleLoadGroup(group)}
-                          className="flex-1 text-left hover:text-primary transition-colors"
-                        >
-                          <span className="font-medium text-sm sm:text-base">
-                            {group.group_name}
-                          </span>
-                          <span className="text-muted-foreground text-xs sm:text-sm ml-2">
-                            ({group.teacher_ids.length}명)
-                          </span>
-                        </button>
-                        <div className="flex gap-1">
+                  <div key={group.id} className="bg-accent/50 rounded-lg overflow-hidden">
+                    <div className="flex items-center justify-between p-3">
+                      {editingGroupId === group.id ? (
+                        <div className="flex items-center gap-2 flex-1 mr-2">
+                          <Input
+                            value={editingGroupName}
+                            onChange={(e) => setEditingGroupName(e.target.value)}
+                            className="h-8 text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveEditGroup(group.id);
+                              if (e.key === "Escape") handleCancelEditGroup();
+                            }}
+                            autoFocus
+                          />
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleStartEditGroup(group)}
+                            onClick={() => handleSaveEditGroup(group.id)}
                             className="h-8 w-8 p-0"
-                            title="이름 수정"
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Check className="w-4 h-4 text-green-600" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleStartEditMembers(group)}
+                            onClick={handleCancelEditGroup}
                             className="h-8 w-8 p-0"
-                            title="멤버 수정"
                           >
-                            <UserMinus className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteGroup(group.id, group.group_name)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
+                            <X className="w-4 h-4 text-red-600" />
                           </Button>
                         </div>
-                      </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleToggleGroupExpand(group)}
+                            className="flex-1 text-left hover:text-primary transition-colors flex items-center gap-2"
+                          >
+                            {expandedGroupId === group.id ? (
+                              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            )}
+                            <span className="font-medium text-sm sm:text-base">
+                              {group.group_name}
+                            </span>
+                            <span className="text-muted-foreground text-xs sm:text-sm">
+                              ({group.teacher_ids.length}명)
+                            </span>
+                          </button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleStartEditGroup(group)}
+                              className="h-8 w-8 p-0"
+                              title="이름 수정"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleStartEditMembers(group)}
+                              className="h-8 w-8 p-0"
+                              title="멤버 수정"
+                            >
+                              <UserMinus className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteGroup(group.id, group.group_name)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* 확장된 멤버 목록 */}
+                    {expandedGroupId === group.id && (
+                      <div className="px-3 pb-3 pt-0">
+                        <div className="bg-background/80 rounded-md p-2 space-y-1 max-h-48 overflow-y-auto">
+                          {expandedGroupMembers.length === 0 ? (
+                            <p className="text-center text-muted-foreground text-sm py-2">
+                              멤버 정보를 불러오는 중...
+                            </p>
+                          ) : (
+                            expandedGroupMembers.map((teacher, idx) => (
+                              <div 
+                                key={teacher.teacher_email} 
+                                className="flex items-center justify-between text-sm py-1 px-2 hover:bg-accent/50 rounded"
+                              >
+                                <span className="font-medium">{idx + 1}. {teacher.name}</span>
+                                <span className="text-muted-foreground text-xs">
+                                  {teacher.department || "-"} / {teacher.subject || "-"}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
