@@ -243,10 +243,15 @@ const StudentGroupManager = () => {
 
       if (error) throw error;
 
-      toast.success("그룹 이름이 변경되었습니다");
+      // 즉시 로컬 상태 업데이트하여 변경된 이름 표시
+      const newName = editingGroupName.trim();
+      setGroups(prev => prev.map(g => 
+        g.id === groupId ? { ...g, group_name: newName } : g
+      ));
+
+      toast.success(`그룹 이름이 "${newName}"(으)로 변경되었습니다`);
       setEditingGroupId(null);
       setEditingGroupName("");
-      loadGroups();
     } catch (error: any) {
       console.error("Error updating group:", error);
       toast.error("그룹 이름 변경 실패: " + error.message);
