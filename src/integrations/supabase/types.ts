@@ -1336,6 +1336,14 @@ export type Database = {
           year: number
         }[]
       }
+      teacher_get_students_by_ids: {
+        Args: { student_ids_input: string[]; teacher_id_input: string }
+        Returns: {
+          gmail: string
+          name: string
+          student_id: string
+        }[]
+      }
       teacher_login: {
         Args: { password_input: string; phone_input: string }
         Returns: Json

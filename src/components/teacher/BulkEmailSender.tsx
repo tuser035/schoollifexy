@@ -165,11 +165,14 @@ const BulkEmailSender = () => {
         return;
       }
 
-      // 학생 ID로 학생 정보 조회
-      const { data: studentsData, error: studentsError } = await supabase
-        .from("students")
-        .select("student_id, name, gmail")
-        .in("student_id", group.student_ids);
+      // 학생 ID로 학생 정보 조회 (RPC 함수 사용)
+      const { data: studentsData, error: studentsError } = await supabase.rpc(
+        "teacher_get_students_by_ids",
+        {
+          teacher_id_input: user.id,
+          student_ids_input: group.student_ids,
+        }
+      );
 
       if (studentsError) throw studentsError;
 
