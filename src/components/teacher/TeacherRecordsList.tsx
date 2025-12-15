@@ -83,6 +83,92 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
     loadRecords();
   }, [teacherId]);
 
+  // 페이지 포커스 시 데이터 새로고침
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadRecords();
+      }
+    };
+
+    const handleFocus = () => {
+      loadRecords();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [teacherId]);
+
+  // 실시간 구독으로 상벌점 변경 감지
+  useEffect(() => {
+    if (!teacherId) return;
+
+    // 상점 테이블 실시간 구독
+    const meritsChannel = supabase
+      .channel('merits_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'merits',
+          filter: `teacher_id=eq.${teacherId}`
+        },
+        (payload) => {
+          console.log('Merits changed:', payload);
+          loadRecords();
+        }
+      )
+      .subscribe();
+
+    // 벌점 테이블 실시간 구독
+    const demeritsChannel = supabase
+      .channel('demerits_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'demerits',
+          filter: `teacher_id=eq.${teacherId}`
+        },
+        (payload) => {
+          console.log('Demerits changed:', payload);
+          loadRecords();
+        }
+      )
+      .subscribe();
+
+    // 이달의 학생 테이블 실시간 구독
+    const monthlyChannel = supabase
+      .channel('monthly_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'monthly',
+          filter: `teacher_id=eq.${teacherId}`
+        },
+        (payload) => {
+          console.log('Monthly changed:', payload);
+          loadRecords();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(meritsChannel);
+      supabase.removeChannel(demeritsChannel);
+      supabase.removeChannel(monthlyChannel);
+    };
+  }, [teacherId]);
+
   const loadRecords = async () => {
     try {
       setLoading(true);
