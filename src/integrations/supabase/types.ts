@@ -513,6 +513,36 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       teacher_groups: {
         Row: {
           admin_id: string
@@ -862,6 +892,16 @@ export type Database = {
           student_id: string
         }[]
       }
+      admin_get_system_settings: {
+        Args: { admin_id_input: string }
+        Returns: {
+          description: string
+          id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string
+        }[]
+      }
       admin_get_teachers: {
         Args: {
           admin_id_input: string
@@ -1041,6 +1081,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_system_setting: {
+        Args: {
+          admin_id_input: string
+          setting_key_input: string
+          setting_value_input: string
+        }
+        Returns: boolean
+      }
       admin_update_teacher:
         | {
             Args: {
@@ -1123,6 +1171,10 @@ export type Database = {
           created_at: string
           id: string
         }[]
+      }
+      get_system_setting: {
+        Args: { setting_key_input: string }
+        Returns: string
       }
       insert_counseling_record: {
         Args: {
