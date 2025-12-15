@@ -286,6 +286,59 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
+  // 첨부파일 업로드 함수
+  const uploadAttachments = async (): Promise<{
+    url?: string;
+    name?: string;
+    isZip?: boolean;
+    files?: Array<{ url: string; name: string }>;
+  } | undefined> => {
+    if (attachments.length === 0) return undefined;
+
+    const uploadedFiles: Array<{ url: string; name: string }> = [];
+
+    for (const file of attachments) {
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `bulk-email/${user.id}/${timestamp}_${safeName}`;
+
+      const { data, error } = await supabase.storage
+        .from('email-attachments')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        console.error('File upload error:', error);
+        throw new Error(`파일 업로드 실패: ${file.name}`);
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('email-attachments')
+        .getPublicUrl(filePath);
+
+      uploadedFiles.push({
+        url: urlData.publicUrl,
+        name: file.name,
+      });
+    }
+
+    // 단일 파일인 경우
+    if (uploadedFiles.length === 1) {
+      return {
+        url: uploadedFiles[0].url,
+        name: uploadedFiles[0].name,
+        isZip: false,
+      };
+    }
+
+    // 여러 파일인 경우
+    return {
+      files: uploadedFiles,
+    };
+  };
+
   const handleSend = async () => {
     if (!selectedGroup) {
       toast.error("그룹을 선택하세요");
@@ -300,6 +353,17 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     try {
       setIsSending(true);
       if (!user) return;
+
+      // 첨부파일 업로드
+      let attachmentInfo;
+      if (attachments.length > 0) {
+        setIsUploading(true);
+        try {
+          attachmentInfo = await uploadAttachments();
+        } finally {
+          setIsUploading(false);
+        }
+      }
 
       if (recipientType === "student") {
         // 학생 일괄 발송
@@ -349,6 +413,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
               name: s.name,
               email: s.gmail,
             })),
+            attachmentInfo,
           },
         });
 
@@ -402,6 +467,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
               email: t.teacher_email,
             })),
             recipientType: "teacher", // 교사 발송임을 표시
+            attachmentInfo,
           },
         });
 
