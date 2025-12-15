@@ -122,6 +122,13 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         (payload) => {
           console.log('Merits changed:', payload);
           loadRecords();
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 상점이 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 상점이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 상점이 삭제되었습니다');
+          }
         }
       )
       .subscribe();
@@ -140,6 +147,13 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         (payload) => {
           console.log('Demerits changed:', payload);
           loadRecords();
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 벌점이 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 벌점이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 벌점이 삭제되었습니다');
+          }
         }
       )
       .subscribe();
@@ -158,6 +172,13 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         (payload) => {
           console.log('Monthly changed:', payload);
           loadRecords();
+          if (payload.eventType === 'INSERT') {
+            toast.info('🔄 이달의 학생이 추가되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 이달의 학생이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 이달의 학생이 삭제되었습니다');
+          }
         }
       )
       .subscribe();

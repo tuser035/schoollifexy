@@ -82,6 +82,13 @@ const StudentDashboard = () => {
         (payload) => {
           console.log('Student merits changed:', payload);
           fetchStudentData(user.studentId);
+          if (payload.eventType === 'INSERT') {
+            toast.success('🎉 새로운 상점이 부여되었습니다!');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 상점 내역이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 상점 내역이 삭제되었습니다');
+          }
         }
       )
       .subscribe();
@@ -100,6 +107,13 @@ const StudentDashboard = () => {
         (payload) => {
           console.log('Student demerits changed:', payload);
           fetchStudentData(user.studentId);
+          if (payload.eventType === 'INSERT') {
+            toast.warning('⚠️ 새로운 벌점이 부여되었습니다');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 벌점 내역이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 벌점 내역이 삭제되었습니다');
+          }
         }
       )
       .subscribe();
@@ -118,6 +132,13 @@ const StudentDashboard = () => {
         (payload) => {
           console.log('Student monthly changed:', payload);
           fetchStudentData(user.studentId);
+          if (payload.eventType === 'INSERT') {
+            toast.success('🌟 이달의 학생으로 추천되었습니다!');
+          } else if (payload.eventType === 'UPDATE') {
+            toast.info('🔄 이달의 학생 내역이 수정되었습니다');
+          } else if (payload.eventType === 'DELETE') {
+            toast.info('🔄 이달의 학생 내역이 삭제되었습니다');
+          }
         }
       )
       .subscribe();

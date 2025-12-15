@@ -126,6 +126,15 @@ const StudentGroupManager = () => {
           console.log('Student groups changed:', payload);
           // 변경 감지 시 그룹 목록 새로고침
           loadGroups();
+          // 토스트 알림 표시
+          const eventType = payload.eventType;
+          if (eventType === 'INSERT') {
+            toast.info('🔄 새 그룹이 추가되었습니다');
+          } else if (eventType === 'UPDATE') {
+            toast.info('🔄 그룹이 수정되었습니다');
+          } else if (eventType === 'DELETE') {
+            toast.info('🔄 그룹이 삭제되었습니다');
+          }
         }
       )
       .subscribe();
