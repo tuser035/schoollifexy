@@ -77,14 +77,10 @@ const TeacherGroupManager = () => {
     try {
       if (!user) return;
       
-      // teacher_groups 테이블에서 직접 조회
-      await supabase.rpc('set_teacher_session', { teacher_id_input: user.id });
-      
-      const { data, error } = await supabase
-        .from("teacher_groups")
-        .select("*")
-        .eq("admin_id", user.id)
-        .order("created_at", { ascending: false });
+      // RPC 함수를 사용하여 교사 그룹 조회
+      const { data, error } = await supabase.rpc("teacher_get_own_teacher_groups", {
+        teacher_id_input: user.id,
+      });
 
       if (error) throw error;
       setGroups(data || []);

@@ -1347,6 +1347,16 @@ export type Database = {
           year: number
         }[]
       }
+      teacher_get_own_teacher_groups: {
+        Args: { teacher_id_input: string }
+        Returns: {
+          created_at: string
+          group_name: string
+          id: string
+          teacher_ids: string[]
+          updated_at: string
+        }[]
+      }
       teacher_get_students_by_ids: {
         Args: { student_ids_input: string[]; teacher_id_input: string }
         Returns: {
