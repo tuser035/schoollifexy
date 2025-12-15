@@ -146,7 +146,7 @@ const TeacherDashboard = () => {
           </TabsContent>
 
           <TabsContent value="bulk-email">
-            <BulkEmailSender key={activeTab === "bulk-email" ? Date.now() : "bulk-email"} />
+            <BulkEmailSender isActive={activeTab === "bulk-email"} />
           </TabsContent>
 
           <TabsContent value="email-history">

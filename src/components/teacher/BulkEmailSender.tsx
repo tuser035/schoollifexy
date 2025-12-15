@@ -29,7 +29,11 @@ interface Student {
   gmail: string;
 }
 
-const BulkEmailSender = () => {
+interface BulkEmailSenderProps {
+  isActive?: boolean;
+}
+
+const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
   const [groups, setGroups] = useState<StudentGroup[]>([]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string>("");
@@ -67,6 +71,14 @@ const BulkEmailSender = () => {
     onRefresh: handleRefresh,
     enabled: !!user,
   });
+
+  // 탭 활성화 시 그룹 목록 새로고침
+  useEffect(() => {
+    if (isActive) {
+      loadGroups();
+      loadTemplates();
+    }
+  }, [isActive]);
 
   useEffect(() => {
     loadGroups();
