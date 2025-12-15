@@ -158,12 +158,21 @@ const BulkEmailSender = () => {
 
       const user = JSON.parse(authUser);
 
-      // 선택된 그룹의 학생 정보 조회
-      const group = groups.find(g => g.id === selectedGroup);
+      // 발송 전 최신 그룹 데이터를 DB에서 직접 조회
+      const { data: latestGroups, error: groupsError } = await supabase.rpc("admin_get_student_groups", {
+        admin_id_input: user.id,
+      });
+
+      if (groupsError) throw groupsError;
+
+      const group = latestGroups?.find((g: StudentGroup) => g.id === selectedGroup);
       if (!group) {
         toast.error("그룹을 찾을 수 없습니다");
         return;
       }
+
+      // 최신 그룹 데이터로 state 업데이트
+      setGroups(latestGroups || []);
 
       // 학생 ID로 학생 정보 조회 (RPC 함수 사용)
       const { data: studentsData, error: studentsError } = await supabase.rpc(
