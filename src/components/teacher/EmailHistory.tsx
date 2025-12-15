@@ -3,6 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Mail, RefreshCw, ChevronDown, Users, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +34,8 @@ const EmailHistory = () => {
   const [teacherDisplayCount, setTeacherDisplayCount] = useState(PAGE_SIZE);
   const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("student");
+  const [selectedEmail, setSelectedEmail] = useState<EmailRecord | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   useEffect(() => {
     const authUser = localStorage.getItem("auth_user");
@@ -46,8 +54,6 @@ const EmailHistory = () => {
 
       const user = JSON.parse(authUser);
 
-      // teacher_get_email_history가 recipient_student_id를 반환하도록 수정 필요
-      // 임시로 직접 쿼리 사용
       await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
       
       const { data, error } = await supabase
@@ -93,6 +99,11 @@ const EmailHistory = () => {
     }
   };
 
+  const handleEmailClick = (email: EmailRecord) => {
+    setSelectedEmail(email);
+    setDetailDialogOpen(true);
+  };
+
   // 학생/교사 구분
   const studentEmails = emails.filter(e => e.recipient_student_id !== null);
   const teacherEmails = emails.filter(e => e.recipient_student_id === null);
@@ -120,7 +131,11 @@ const EmailHistory = () => {
           </TableHeader>
           <TableBody>
             {emailList.slice(0, displayCount).map((email) => (
-              <TableRow key={email.id}>
+              <TableRow 
+                key={email.id} 
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => handleEmailClick(email)}
+              >
                 <TableCell className="text-xs py-2">{formatDate(email.sent_at)}</TableCell>
                 <TableCell className="text-xs py-2">
                   <div>{email.recipient_name}</div>
@@ -149,43 +164,82 @@ const EmailHistory = () => {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between text-base">
-          <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            발송 이력
-          </div>
-          <Button variant="ghost" size="sm" onClick={loadEmails} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {loading ? (
-          <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
-        ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full mb-3">
-              <TabsTrigger value="student" className="flex-1 text-xs gap-1">
-                <GraduationCap className="w-3 h-3" />
-                학생 ({studentEmails.length})
-              </TabsTrigger>
-              <TabsTrigger value="teacher" className="flex-1 text-xs gap-1">
-                <Users className="w-3 h-3" />
-                교사 ({teacherEmails.length})
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="student" className="mt-0">
-              {renderEmailTable(studentEmails, studentDisplayCount, setStudentDisplayCount)}
-            </TabsContent>
-            <TabsContent value="teacher" className="mt-0">
-              {renderEmailTable(teacherEmails, teacherDisplayCount, setTeacherDisplayCount)}
-            </TabsContent>
-          </Tabs>
-        )}
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between text-base">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              발송 이력
+            </div>
+            <Button variant="ghost" size="sm" onClick={loadEmails} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {loading ? (
+            <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
+          ) : (
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full mb-3">
+                <TabsTrigger value="student" className="flex-1 text-xs gap-1">
+                  <GraduationCap className="w-3 h-3" />
+                  학생 ({studentEmails.length})
+                </TabsTrigger>
+                <TabsTrigger value="teacher" className="flex-1 text-xs gap-1">
+                  <Users className="w-3 h-3" />
+                  교사 ({teacherEmails.length})
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="student" className="mt-0">
+                {renderEmailTable(studentEmails, studentDisplayCount, setStudentDisplayCount)}
+              </TabsContent>
+              <TabsContent value="teacher" className="mt-0">
+                {renderEmailTable(teacherEmails, teacherDisplayCount, setTeacherDisplayCount)}
+              </TabsContent>
+            </Tabs>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 이메일 상세보기 모달 */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Mail className="w-4 h-4" />
+              이메일 상세보기
+            </DialogTitle>
+          </DialogHeader>
+          {selectedEmail && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
+                <span className="text-muted-foreground">발송일시</span>
+                <span>{formatDate(selectedEmail.sent_at)}</span>
+                
+                <span className="text-muted-foreground">수신자</span>
+                <span>{selectedEmail.recipient_name}</span>
+                
+                <span className="text-muted-foreground">이메일</span>
+                <span className="text-primary">{selectedEmail.recipient_email}</span>
+                
+                <span className="text-muted-foreground">제목</span>
+                <span className="font-medium">{selectedEmail.subject}</span>
+              </div>
+              
+              <div className="border-t pt-4">
+                <span className="text-sm text-muted-foreground block mb-2">본문</span>
+                <div 
+                  className="text-sm bg-muted/30 rounded-lg p-4 whitespace-pre-wrap break-words"
+                  dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
