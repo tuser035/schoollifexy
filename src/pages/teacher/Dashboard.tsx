@@ -16,6 +16,7 @@ import TeacherRecordsList from "@/components/teacher/TeacherRecordsList";
 const TeacherDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [activeTab, setActiveTab] = useState("merit");
 
   useEffect(() => {
     const authUser = localStorage.getItem("auth_user");
@@ -68,7 +69,7 @@ const TeacherDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="merit" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="mb-6 overflow-x-auto">
             <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-6">
               <TabsTrigger 
@@ -145,7 +146,7 @@ const TeacherDashboard = () => {
           </TabsContent>
 
           <TabsContent value="bulk-email">
-            <BulkEmailSender />
+            <BulkEmailSender key={activeTab === "bulk-email" ? Date.now() : "bulk-email"} />
           </TabsContent>
 
           <TabsContent value="email-history">
