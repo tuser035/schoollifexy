@@ -289,7 +289,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 첨부파일 업로드 함수
+  // 첨부파일 업로드 함수 - Edge Function을 통해 Service Role로 업로드
   const uploadAttachments = async (): Promise<{
     url?: string;
     name?: string;
@@ -306,29 +306,31 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
       setUploadingFileName(file.name);
       setUploadProgress(Math.round((i / totalFiles) * 100));
 
-      const timestamp = Date.now();
-      const fileExt = file.name.split('.').pop() || 'file';
-      const randomId = Math.random().toString(36).substring(2, 10);
-      const filePath = `bulk-email/${user.id}/${timestamp}_${randomId}.${fileExt}`;
+      // 파일을 base64로 변환
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-      const { data, error } = await supabase.storage
-        .from('email-attachments')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
+      // Edge Function을 통해 업로드 (Service Role 사용)
+      const { data, error } = await supabase.functions.invoke('upload-email-attachment', {
+        body: {
+          user_id: user.id,
+          filename: file.name,
+          file_base64: base64,
+          content_type: file.type || 'application/octet-stream',
+        },
+      });
 
-      if (error) {
-        console.error('File upload error:', error);
+      if (error || !data?.ok) {
+        console.error('File upload error:', error || data?.error);
         throw new Error(`파일 업로드 실패: ${file.name}`);
       }
 
-      const { data: urlData } = supabase.storage
-        .from('email-attachments')
-        .getPublicUrl(filePath);
-
       uploadedFiles.push({
-        url: urlData.publicUrl,
+        url: data.publicUrl,
         name: file.name,
       });
 
