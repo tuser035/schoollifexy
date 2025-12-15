@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, Save, Trash2, Search, Pencil, Check, X, UserPlus, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
 
 interface Student {
   student_id: string;
@@ -39,12 +40,14 @@ const StudentGroupManager = () => {
   const [editingGroupName, setEditingGroupName] = useState<string>("");
   const [editingMembersGroupId, setEditingMembersGroupId] = useState<string | null>(null);
   const [editingMembersGroup, setEditingMembersGroup] = useState<StudentGroup | null>(null);
+
+  // 실시간 동기화를 위한 사용자 정보
+  const authUser = localStorage.getItem("auth_user");
+  const user = authUser ? JSON.parse(authUser) : null;
+
   const loadStudents = async () => {
     try {
-      const authUser = localStorage.getItem("auth_user");
-      if (!authUser) return;
-
-      const user = JSON.parse(authUser);
+      if (!user) return;
       
       const { data, error } = await supabase.rpc("admin_get_students", {
         admin_id_input: user.id,
@@ -62,10 +65,7 @@ const StudentGroupManager = () => {
 
   const loadGroups = async () => {
     try {
-      const authUser = localStorage.getItem("auth_user");
-      if (!authUser) return;
-
-      const user = JSON.parse(authUser);
+      if (!user) return;
       
       const { data, error } = await supabase.rpc("admin_get_student_groups", {
         admin_id_input: user.id,
@@ -79,70 +79,34 @@ const StudentGroupManager = () => {
     }
   };
 
+  // 실시간 동기화를 위한 테이블 구독 설정
+  const groupTables: TableSubscription[] = user ? [
+    {
+      channelName: "student-group-manager",
+      table: "student_groups",
+      filter: `admin_id=eq.${user.id}`,
+      labels: {
+        insert: "🔄 새 그룹이 추가되었습니다",
+        update: "🔄 그룹이 수정되었습니다",
+        delete: "🔄 그룹이 삭제되었습니다",
+      },
+    },
+  ] : [];
+
+  const handleRefresh = useCallback(() => {
+    loadGroups();
+  }, []);
+
+  useRealtimeSync({
+    tables: groupTables,
+    onRefresh: handleRefresh,
+    enabled: !!user,
+  });
+
   useEffect(() => {
     loadStudents();
     loadGroups();
   }, [searchGrade, searchClass]);
-
-  // 페이지 포커스 시 그룹 목록 새로고침
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        loadGroups();
-      }
-    };
-
-    const handleFocus = () => {
-      loadGroups();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
-
-  // 실시간 구독으로 다른 브라우저에서의 변경 감지
-  useEffect(() => {
-    const authUser = localStorage.getItem("auth_user");
-    if (!authUser) return;
-
-    const user = JSON.parse(authUser);
-
-    const channel = supabase
-      .channel('student_groups_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'student_groups',
-          filter: `admin_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Student groups changed:', payload);
-          // 변경 감지 시 그룹 목록 새로고침
-          loadGroups();
-          // 토스트 알림 표시
-          const eventType = payload.eventType;
-          if (eventType === 'INSERT') {
-            toast.info('🔄 새 그룹이 추가되었습니다');
-          } else if (eventType === 'UPDATE') {
-            toast.info('🔄 그룹이 수정되었습니다');
-          } else if (eventType === 'DELETE') {
-            toast.info('🔄 그룹이 삭제되었습니다');
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   const handleStudentToggle = (studentId: string) => {
     setSelectedStudents(prev =>
