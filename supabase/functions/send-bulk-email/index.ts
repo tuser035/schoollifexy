@@ -45,31 +45,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Bulk email request:", { adminId, subject, studentCount: students.length });
 
-    // 관리자/교사 확인
-    const { data: admin, error: adminError } = await supabase
-      .from("admins")
-      .select("email")
+    // 먼저 교사인지 확인
+    let senderName = "Unknown";
+    let senderType = "teacher";
+
+    const { data: teacher, error: teacherError } = await supabase
+      .from("teachers")
+      .select("name")
       .eq("id", adminId)
       .maybeSingle();
 
-    let senderName = "Unknown";
-    let senderType = "admin";
-
-    if (adminError || !admin) {
-      // Try teacher
-      const { data: teacher, error: teacherError } = await supabase
-        .from("teachers")
-        .select("name")
+    if (teacherError || !teacher) {
+      // 교사가 아니면 관리자인지 확인
+      const { data: admin, error: adminError } = await supabase
+        .from("admins")
+        .select("email")
         .eq("id", adminId)
         .maybeSingle();
 
-      if (teacherError || !teacher) {
+      if (adminError || !admin) {
         throw new Error("권한이 없습니다");
       }
+      senderName = admin.email;
+      senderType = "admin";
+    } else {
       senderName = teacher.name;
       senderType = "teacher";
-    } else {
-      senderName = admin.email;
     }
 
     if (!students || students.length === 0) {
