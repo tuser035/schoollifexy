@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Mail, RefreshCw, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
 interface EmailRecord {
   id: string;
@@ -22,12 +23,18 @@ const EmailHistory = () => {
   const [emails, setEmails] = useState<EmailRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    const authUser = localStorage.getItem("auth_user");
+    if (authUser) {
+      const user = JSON.parse(authUser);
+      setUserId(user.id);
+    }
     loadEmails();
   }, []);
 
-  const loadEmails = async () => {
+  const loadEmails = useCallback(async () => {
     try {
       setLoading(true);
       const authUser = localStorage.getItem("auth_user");
@@ -47,7 +54,24 @@ const EmailHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // 실시간 동기화
+  useRealtimeSync({
+    tables: userId ? [
+      {
+        table: "email_history",
+        channelName: `teacher-email-history-${userId}`,
+        filter: `sender_id=eq.${userId}`,
+        labels: {
+          insert: "🔄 새 이메일이 발송되었습니다"
+        }
+      }
+    ] : [],
+    onRefresh: loadEmails,
+    enabled: !!userId,
+    dependencies: [userId]
+  });
 
   const formatDate = (dateString: string) => {
     try {
