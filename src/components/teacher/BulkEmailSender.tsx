@@ -116,6 +116,9 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
   // 수신자 유형 변경 시 선택 초기화
   useEffect(() => {
     setSelectedGroup("");
+    setSelectedTemplate("");
+    setSubject("");
+    setBody("");
     setRecipientsWithoutEmail([]);
     setValidEmailCount(0);
   }, [recipientType]);
@@ -485,11 +488,27 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">직접 작성</SelectItem>
-                {templates.map(template => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.title}
-                  </SelectItem>
-                ))}
+                {recipientType === "student" ? (
+                  <>
+                    {templates.filter(t => 
+                      t.title === "가정통신문" || t.title === "사제동행 디지털 챌린지"
+                    ).map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.title}
+                      </SelectItem>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {templates.filter(t => 
+                      t.title === "전공심화동아리 담당교사" || t.title === "친목회 알림"
+                    ).map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.title}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
