@@ -352,8 +352,13 @@ const TeacherGroupManager = () => {
     }
   };
 
-  // 부서 목록 추출
-  const departments = [...new Set(teachers.map(t => t.department).filter(Boolean))];
+  // 고정 부서 목록
+  const departments = [
+    "교무기획부", "교육과정부", "교육연구부", "교육정보부", 
+    "도제교육부", "산학협력부", "진로직업부", "취업지원부", 
+    "환경체육부", "학생생활안전부", "행정실", "교무행정", 
+    "전임코치", "도제전담", "취업지원", "사감", "당직실"
+  ];
 
   return (
     <div className="space-y-4 sm:space-y-6">
