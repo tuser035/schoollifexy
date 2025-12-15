@@ -40,6 +40,7 @@ const StudentGroupManager = () => {
   const [editingGroupName, setEditingGroupName] = useState<string>("");
   const [editingMembersGroupId, setEditingMembersGroupId] = useState<string | null>(null);
   const [editingMembersGroup, setEditingMembersGroup] = useState<StudentGroup | null>(null);
+  const [viewingGroupOnly, setViewingGroupOnly] = useState(false);
 
   // 실시간 동기화를 위한 사용자 정보
   const authUser = localStorage.getItem("auth_user");
@@ -116,12 +117,24 @@ const StudentGroupManager = () => {
     );
   };
 
-  // 이름 검색 필터링
-  const filteredStudents = students.filter(s => {
-    if (!searchName.trim()) return true;
+  // 이름 검색 필터링 및 그룹 멤버 전용 모드
+  const filteredStudents = (() => {
+    // 그룹 멤버만 보기 모드일 때는 loadedGroupStudents만 표시
+    if (viewingGroupOnly && loadedGroupStudents.length > 0) {
+      if (!searchName.trim()) return loadedGroupStudents;
+      const term = searchName.trim().toLowerCase();
+      return loadedGroupStudents.filter(s => 
+        s.name.toLowerCase().includes(term) || s.student_id.includes(term)
+      );
+    }
+    
+    // 일반 모드
+    if (!searchName.trim()) return students;
     const term = searchName.trim().toLowerCase();
-    return s.name.toLowerCase().includes(term) || s.student_id.includes(term);
-  });
+    return students.filter(s => 
+      s.name.toLowerCase().includes(term) || s.student_id.includes(term)
+    );
+  })();
 
   const handleSelectAll = () => {
     const allFilteredIds = filteredStudents.map(s => s.student_id);
@@ -222,7 +235,13 @@ const StudentGroupManager = () => {
         group.student_ids.includes(s.student_id)
       );
       setLoadedGroupStudents(groupStudents);
-      toast.success(`그룹 "${group.group_name}" 불러오기 완료 (${groupStudents.length}명)`);
+      // 그룹 멤버만 표시 모드 활성화
+      setViewingGroupOnly(true);
+      // 필터 초기화
+      setSearchGrade("");
+      setSearchClass("");
+      setSearchName("");
+      toast.success(`"${group.group_name}" 그룹 멤버 ${groupStudents.length}명 표시`);
     } catch (error: any) {
       console.error("Error loading group students:", error);
       toast.error("그룹 학생 조회 실패: " + error.message);
@@ -234,6 +253,7 @@ const StudentGroupManager = () => {
     setLoadedGroupName("");
     setSelectedStudents([]);
     setGroupName("");
+    setViewingGroupOnly(false);
   };
 
   const handleStartEditGroup = (group: StudentGroup) => {
@@ -343,48 +363,6 @@ const StudentGroupManager = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* 불러온 그룹 학생 명단 */}
-      {loadedGroupStudents.length > 0 && (
-        <Card className="border-primary/50 bg-primary/5">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-primary">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-                "{loadedGroupName}" 그룹 명단 ({loadedGroupStudents.length}명)
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={handleClearLoadedGroup}>
-                닫기
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-64 overflow-y-auto border rounded-lg bg-background">
-              <table className="w-full text-sm">
-                <thead className="bg-muted sticky top-0">
-                  <tr>
-                    <th className="p-2 text-left">학년</th>
-                    <th className="p-2 text-left">반</th>
-                    <th className="p-2 text-left">번호</th>
-                    <th className="p-2 text-left">이름</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadedGroupStudents
-                    .sort((a, b) => a.grade - b.grade || a.class - b.class || a.number - b.number)
-                    .map((student, idx) => (
-                    <tr key={student.student_id} className={idx % 2 === 0 ? "bg-background" : "bg-muted/30"}>
-                      <td className="p-2">{student.grade}</td>
-                      <td className="p-2">{student.class}</td>
-                      <td className="p-2">{student.number}</td>
-                      <td className="p-2 font-medium">{student.name}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* 멤버 수정 모드 표시 */}
       {editingMembersGroup && (
@@ -426,44 +404,58 @@ const StudentGroupManager = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-            학생 선택
+          <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+              {viewingGroupOnly ? `"${loadedGroupName}" 그룹 멤버` : "학생 선택"}
+            </div>
+            {viewingGroupOnly && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleClearLoadedGroup}
+              >
+                전체 학생 보기
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 sm:space-y-4">
-          <div className="grid grid-cols-2 gap-2 sm:gap-4">
-            <div>
-              <Label className="text-sm">학년</Label>
-              <Select value={searchGrade || "all"} onValueChange={(v) => setSearchGrade(v === "all" ? "" : v)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="전체" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  <SelectItem value="1">1학년</SelectItem>
-                  <SelectItem value="2">2학년</SelectItem>
-                  <SelectItem value="3">3학년</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* 그룹 멤버 보기 모드가 아닐 때만 필터 표시 */}
+          {!viewingGroupOnly && (
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+              <div>
+                <Label className="text-sm">학년</Label>
+                <Select value={searchGrade || "all"} onValueChange={(v) => setSearchGrade(v === "all" ? "" : v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="전체" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="1">1학년</SelectItem>
+                    <SelectItem value="2">2학년</SelectItem>
+                    <SelectItem value="3">3학년</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm">반</Label>
+                <Select value={searchClass || "all"} onValueChange={(v) => setSearchClass(v === "all" ? "" : v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="전체" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num}반
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <Label className="text-sm">반</Label>
-              <Select value={searchClass || "all"} onValueChange={(v) => setSearchClass(v === "all" ? "" : v)}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="전체" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num}반
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          )}
 
           {/* 이름 검색 */}
           <div>
@@ -480,11 +472,13 @@ const StudentGroupManager = () => {
           </div>
 
           <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+            <Button variant="outline" size="sm" onClick={handleSelectAll} disabled={viewingGroupOnly}>
               {selectedStudents.length === filteredStudents.length && filteredStudents.length > 0 ? "전체 해제" : "전체 선택"}
             </Button>
             <span className="text-sm text-muted-foreground">
-              {selectedStudents.length}명 선택됨 / {filteredStudents.length}명 표시
+              {viewingGroupOnly 
+                ? `${filteredStudents.length}명 (그룹 멤버)` 
+                : `${selectedStudents.length}명 선택됨 / ${filteredStudents.length}명 표시`}
             </span>
           </div>
 
@@ -493,22 +487,34 @@ const StudentGroupManager = () => {
               <p className="text-center text-muted-foreground py-4">
                 {searchName ? "검색 결과가 없습니다" : "학생이 없습니다"}
               </p>
-            ) : filteredStudents.map(student => (
+            ) : [...filteredStudents]
+              .sort((a, b) => a.grade - b.grade || a.class - b.class || a.number - b.number)
+              .map(student => (
               <div
                 key={student.student_id}
                 className={`flex items-center space-x-2 p-2 hover:bg-accent rounded ${
                   editingMembersGroup && selectedStudents.includes(student.student_id) 
                     ? "bg-orange-100 dark:bg-orange-900/30" 
+                    : viewingGroupOnly
+                    ? "bg-primary/5"
                     : ""
                 }`}
               >
-                <Checkbox
-                  checked={selectedStudents.includes(student.student_id)}
-                  onCheckedChange={() => handleStudentToggle(student.student_id)}
-                />
-                <span className="flex-1">
-                  {student.grade}-{student.class}-{student.number} {student.name}
-                </span>
+                {viewingGroupOnly ? (
+                  <span className="flex-1">
+                    {student.grade}-{student.class}-{student.number} {student.name}
+                  </span>
+                ) : (
+                  <>
+                    <Checkbox
+                      checked={selectedStudents.includes(student.student_id)}
+                      onCheckedChange={() => handleStudentToggle(student.student_id)}
+                    />
+                    <span className="flex-1">
+                      {student.grade}-{student.class}-{student.number} {student.name}
+                    </span>
+                  </>
+                )}
               </div>
             ))}
           </div>
