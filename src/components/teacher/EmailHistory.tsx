@@ -34,15 +34,10 @@ const EmailHistory = () => {
       if (!authUser) return;
 
       const user = JSON.parse(authUser);
-      
-      await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
 
-      const { data, error } = await supabase
-        .from("email_history")
-        .select("id, recipient_name, recipient_email, subject, body, sent_at")
-        .eq("sender_id", user.id)
-        .order("sent_at", { ascending: false })
-        .limit(100);
+      const { data, error } = await supabase.rpc("teacher_get_email_history", {
+        teacher_id_input: user.id
+      });
 
       if (error) throw error;
       setEmails(data || []);

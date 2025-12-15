@@ -1290,6 +1290,17 @@ export type Database = {
         Args: { monthly_id_input: string; teacher_id_input: string }
         Returns: boolean
       }
+      teacher_get_email_history: {
+        Args: { teacher_id_input: string }
+        Returns: {
+          body: string
+          id: string
+          recipient_email: string
+          recipient_name: string
+          sent_at: string
+          subject: string
+        }[]
+      }
       teacher_get_own_demerits: {
         Args: { teacher_id_input: string }
         Returns: {
