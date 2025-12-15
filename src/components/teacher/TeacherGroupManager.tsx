@@ -212,8 +212,16 @@ const TeacherGroupManager = () => {
 
       if (error) throw error;
 
+      // 삭제된 그룹을 즉시 목록에서 제거
+      setGroups(prev => prev.filter(g => g.id !== groupId));
+      
+      // 확장된 그룹이 삭제된 경우 닫기
+      if (expandedGroupId === groupId) {
+        setExpandedGroupId(null);
+        setExpandedGroupMembers([]);
+      }
+
       toast.success(`그룹 "${groupName}" 삭제 완료`);
-      loadGroups();
     } catch (error: any) {
       console.error("Error deleting group:", error);
       toast.error("그룹 삭제 실패: " + error.message);
