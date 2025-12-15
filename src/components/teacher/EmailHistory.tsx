@@ -17,7 +17,7 @@ interface EmailRecord {
   sent_at: string;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 const EmailHistory = () => {
   const [emails, setEmails] = useState<EmailRecord[]>([]);
