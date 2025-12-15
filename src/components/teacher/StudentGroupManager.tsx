@@ -5,7 +5,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Save, Trash2, Search, Pencil, Check, X, UserPlus, UserMinus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Users, Save, Trash2, Search, Pencil, Check, X, UserPlus, UserMinus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
@@ -41,6 +51,8 @@ const StudentGroupManager = () => {
   const [editingMembersGroupId, setEditingMembersGroupId] = useState<string | null>(null);
   const [editingMembersGroup, setEditingMembersGroup] = useState<StudentGroup | null>(null);
   const [viewingGroupOnly, setViewingGroupOnly] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [groupToDelete, setGroupToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // 실시간 동기화를 위한 사용자 정보
   const authUser = localStorage.getItem("auth_user");
@@ -187,8 +199,13 @@ const StudentGroupManager = () => {
     }
   };
 
-  const handleDeleteGroup = async (groupId: string, groupName: string) => {
-    if (!confirm(`"${groupName}" 그룹을 삭제하시겠습니까?`)) return;
+  const handleOpenDeleteDialog = (groupId: string, groupName: string) => {
+    setGroupToDelete({ id: groupId, name: groupName });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!groupToDelete) return;
 
     try {
       const authUser = localStorage.getItem("auth_user");
@@ -199,16 +216,21 @@ const StudentGroupManager = () => {
       const { error } = await supabase
         .from("student_groups")
         .delete()
-        .eq("id", groupId)
+        .eq("id", groupToDelete.id)
         .eq("admin_id", user.id);
 
       if (error) throw error;
 
-      toast.success(`그룹 "${groupName}" 삭제 완료`);
-      loadGroups();
+      // 삭제된 그룹을 즉시 목록에서 제거
+      setGroups(prev => prev.filter(g => g.id !== groupToDelete.id));
+
+      toast.success(`그룹 "${groupToDelete.name}" 삭제 완료`);
     } catch (error: any) {
       console.error("Error deleting group:", error);
       toast.error("그룹 삭제 실패: " + error.message);
+    } finally {
+      setDeleteDialogOpen(false);
+      setGroupToDelete(null);
     }
   };
 
@@ -630,7 +652,7 @@ const StudentGroupManager = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDeleteGroup(group.id, group.group_name)}
+                      onClick={() => handleOpenDeleteDialog(group.id, group.group_name)}
                       disabled={editingGroupId === group.id || editingMembersGroupId !== null}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -642,6 +664,33 @@ const StudentGroupManager = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* 삭제 확인 다이얼로그 */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              그룹 삭제 확인
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <span className="font-semibold text-foreground">"{groupToDelete?.name}"</span> 그룹을 삭제하시겠습니까?
+              <br />
+              <span className="text-destructive">이 작업은 되돌릴 수 없습니다.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
