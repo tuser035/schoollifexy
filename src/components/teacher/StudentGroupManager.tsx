@@ -32,7 +32,8 @@ const StudentGroupManager = () => {
   const [searchGrade, setSearchGrade] = useState<string>("");
   const [searchClass, setSearchClass] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const [loadedGroupStudents, setLoadedGroupStudents] = useState<Student[]>([]);
+  const [loadedGroupName, setLoadedGroupName] = useState<string>("");
   const loadStudents = async () => {
     try {
       const authUser = localStorage.getItem("auth_user");
@@ -157,14 +158,88 @@ const StudentGroupManager = () => {
     }
   };
 
-  const handleLoadGroup = (group: StudentGroup) => {
+  const handleLoadGroup = async (group: StudentGroup) => {
     setSelectedStudents(group.student_ids);
     setGroupName(group.group_name);
-    toast.success(`그룹 "${group.group_name}" 불러오기 완료`);
+    setLoadedGroupName(group.group_name);
+    
+    // 그룹에 속한 학생들의 상세 정보 조회
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+      
+      const { data, error } = await supabase.rpc("admin_get_students", {
+        admin_id_input: user.id,
+      });
+
+      if (error) throw error;
+      
+      // 그룹에 속한 학생들만 필터링
+      const groupStudents = (data || []).filter((s: Student) => 
+        group.student_ids.includes(s.student_id)
+      );
+      setLoadedGroupStudents(groupStudents);
+      toast.success(`그룹 "${group.group_name}" 불러오기 완료 (${groupStudents.length}명)`);
+    } catch (error: any) {
+      console.error("Error loading group students:", error);
+      toast.error("그룹 학생 조회 실패: " + error.message);
+    }
+  };
+
+  const handleClearLoadedGroup = () => {
+    setLoadedGroupStudents([]);
+    setLoadedGroupName("");
+    setSelectedStudents([]);
+    setGroupName("");
   };
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* 불러온 그룹 학생 명단 */}
+      {loadedGroupStudents.length > 0 && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-primary">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                "{loadedGroupName}" 그룹 명단 ({loadedGroupStudents.length}명)
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={handleClearLoadedGroup}>
+                닫기
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="max-h-64 overflow-y-auto border rounded-lg bg-background">
+              <table className="w-full text-sm">
+                <thead className="bg-muted sticky top-0">
+                  <tr>
+                    <th className="p-2 text-left">학년</th>
+                    <th className="p-2 text-left">반</th>
+                    <th className="p-2 text-left">번호</th>
+                    <th className="p-2 text-left">이름</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadedGroupStudents
+                    .sort((a, b) => a.grade - b.grade || a.class - b.class || a.number - b.number)
+                    .map((student, idx) => (
+                    <tr key={student.student_id} className={idx % 2 === 0 ? "bg-background" : "bg-muted/30"}>
+                      <td className="p-2">{student.grade}</td>
+                      <td className="p-2">{student.class}</td>
+                      <td className="p-2">{student.number}</td>
+                      <td className="p-2 font-medium">{student.name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
