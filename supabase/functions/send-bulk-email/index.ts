@@ -46,6 +46,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Bulk email request:", { adminId, subject, studentCount: students.length, recipientType });
 
+    // 답장 이메일 주소 가져오기
+    const { data: replyToSetting } = await supabase.rpc("get_system_setting", {
+      setting_key_input: "reply_to_email"
+    });
+    const replyToEmail = replyToSetting || "gyeongjuhs@naver.com";
+    console.log("Reply-to email:", replyToEmail);
+
     // 먼저 교사인지 확인
     let senderName = "Unknown";
     let senderType = "teacher";
@@ -145,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
               <p style="margin: 0 0 10px 0;"><strong>School Point 학생 관리 시스템</strong></p>
               <p style="margin: 0 0 5px 0;">이 메일은 귀하가 등록한 학생 정보를 기반으로 발송되었습니다.</p>
-              <p style="margin: 0 0 5px 0;">문의사항: gyeongjuhs@naver.com</p>
+              <p style="margin: 0 0 5px 0;">문의사항: ${replyToEmail}</p>
               <p style="margin: 0;">수신을 원하지 않으시면 학교에 연락해 주세요.</p>
             </div>
           </div>
@@ -154,7 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Resend API로 메일 발송
         const { data: emailData, error: emailError } = await resend.emails.send({
           from: `School Point <${fromEmail}>`,
-          reply_to: "gyeongjuhs@naver.com", // 답장 시 이 주소로 발송됨
+          reply_to: replyToEmail,
           to: student.email,
           subject: subject,
           html: htmlBody,

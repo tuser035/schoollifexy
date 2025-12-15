@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -17,6 +17,7 @@ import DataExport from "@/components/admin/DataExport";
 import AutoBackupSettings from "@/components/admin/AutoBackupSettings";
 import { SecurityLogs } from "@/components/admin/SecurityLogs";
 import DatabaseLogs from "@/components/admin/DatabaseLogs";
+import SystemSettings from "@/components/admin/SystemSettings";
 import {
   Sidebar,
   SidebarContent,
@@ -51,6 +52,7 @@ const menuItems = (user: AuthUser) => {
     { value: "email-templates", label: "템플릿", icon: FileText },
     // 시스템 관리자만
     ...(isSystemAdmin ? [
+      { value: "system-settings", label: "시스템설정", icon: Cog },
       { value: "export", label: "백업", icon: PackageOpen },
       { value: "auto-backup", label: "자동백업", icon: Settings },
       { value: "storage", label: "파일", icon: FolderOpen },
@@ -115,6 +117,8 @@ const AdminDashboard = () => {
         return <EmailHistory />;
       case "email-templates":
         return <EmailTemplateManager />;
+      case "system-settings":
+        return <SystemSettings />;
       case "export":
         return <DataExport />;
       case "auto-backup":

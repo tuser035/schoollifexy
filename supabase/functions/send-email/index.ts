@@ -26,12 +26,19 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     const { adminId, templateId, recipientType, grade, class: classNum }: SendEmailRequest = await req.json();
 
     console.log("Send email request:", { adminId, templateId, recipientType, grade, class: classNum });
+
+    // 답장 이메일 주소 가져오기
+    const { data: replyToSetting } = await supabase.rpc("get_system_setting", {
+      setting_key_input: "reply_to_email"
+    });
+    const replyToEmail = replyToSetting || "gyeongjuhs@naver.com";
+    console.log("Reply-to email:", replyToEmail);
 
     // 관리자 확인
     const { data: admin, error: adminError } = await supabase
@@ -88,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         const emailResponse = await resend.emails.send({
           from: `School Point <${fromEmail}>`,
-          replyTo: "gyeongjuhs@naver.com", // 답장 시 이 주소로 발송됨
+          replyTo: replyToEmail,
           to: [student.gmail],
           subject: template.subject,
           html: template.body,
