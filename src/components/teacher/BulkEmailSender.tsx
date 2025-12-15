@@ -97,10 +97,12 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     },
   ] : [];
 
-  const handleRefresh = useCallback(() => {
-    loadStudentGroups();
-    loadTeacherGroups();
-    loadTemplates();
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      loadStudentGroups(),
+      loadTeacherGroups(),
+      loadTemplates(),
+    ]);
   }, []);
 
   useRealtimeSync({
@@ -108,6 +110,19 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     onRefresh: handleRefresh,
     enabled: !!user,
   });
+
+  // 선택된 그룹이 목록에 없으면 초기화
+  useEffect(() => {
+    if (selectedGroup) {
+      if (recipientType === "student") {
+        const exists = studentGroups.some(g => g.id === selectedGroup);
+        if (!exists) setSelectedGroup("");
+      } else {
+        const exists = teacherGroups.some(g => g.id === selectedGroup);
+        if (!exists) setSelectedGroup("");
+      }
+    }
+  }, [studentGroups, teacherGroups, recipientType, selectedGroup]);
 
   useEffect(() => {
     if (isActive) {
