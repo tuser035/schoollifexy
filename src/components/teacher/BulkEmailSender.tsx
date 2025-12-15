@@ -346,6 +346,7 @@ const BulkEmailSender = () => {
               파일첨부
             </Button>
             <Button
+              type="button"
               onClick={handleSend}
               disabled={isSending || !selectedGroup || isUploading}
               className="flex-1 h-11 text-sm sm:text-base font-medium"
