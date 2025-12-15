@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Send, Mail, Paperclip, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
 
 interface StudentGroup {
   id: string;
@@ -39,6 +40,33 @@ const BulkEmailSender = () => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 실시간 동기화를 위한 테이블 구독 설정
+  const authUser = localStorage.getItem("auth_user");
+  const user = authUser ? JSON.parse(authUser) : null;
+
+  const groupTables: TableSubscription[] = user ? [
+    {
+      channelName: "bulk-email-groups",
+      table: "student_groups",
+      filter: `admin_id=eq.${user.id}`,
+      labels: {
+        insert: "새 그룹이 추가되었습니다",
+        update: "그룹 정보가 수정되었습니다",
+        delete: "그룹이 삭제되었습니다",
+      },
+    },
+  ] : [];
+
+  const handleRefresh = useCallback(() => {
+    loadGroups();
+  }, []);
+
+  useRealtimeSync({
+    tables: groupTables,
+    onRefresh: handleRefresh,
+    enabled: !!user,
+  });
 
   useEffect(() => {
     loadGroups();
