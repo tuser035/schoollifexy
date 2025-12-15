@@ -38,6 +38,7 @@ interface Student {
 }
 
 interface Teacher {
+  id: string;
   name: string;
   teacher_email: string;
 }
@@ -243,7 +244,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
 
         if (teachersData) {
           const groupTeachers = teachersData.filter((t: Teacher) => 
-            group.teacher_ids.includes(t.teacher_email)
+            group.teacher_ids.includes(t.id)
           );
           const withoutEmail = groupTeachers.filter((t: Teacher) => !t.teacher_email || !t.teacher_email.includes("@"));
           const withEmail = groupTeachers.filter((t: Teacher) => t.teacher_email && t.teacher_email.includes("@"));
@@ -379,7 +380,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
         if (teachersError) throw teachersError;
 
         const groupTeachers = teachersData?.filter((t: Teacher) => 
-          group.teacher_ids.includes(t.teacher_email)
+          group.teacher_ids.includes(t.id)
         ) || [];
 
         const validTeachers = groupTeachers.filter((t: Teacher) => t.teacher_email && t.teacher_email.includes("@"));
@@ -396,7 +397,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
             subject: subject,
             body: body,
             students: validTeachers.map((t: Teacher) => ({
-              studentId: t.teacher_email, // teacher_email을 ID로 사용
+              studentId: t.id, // 교사 UUID를 ID로 사용
               name: t.name,
               email: t.teacher_email,
             })),

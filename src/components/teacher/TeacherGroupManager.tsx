@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
 
 interface Teacher {
-  id?: string;
+  id: string;
   name: string;
   call_t: string;
   teacher_email: string;
@@ -130,11 +130,11 @@ const TeacherGroupManager = () => {
     loadGroups();
   }, [searchName]);
 
-  const handleTeacherToggle = (teacherEmail: string) => {
+  const handleTeacherToggle = (teacherId: string) => {
     setSelectedTeachers(prev =>
-      prev.includes(teacherEmail)
-        ? prev.filter(email => email !== teacherEmail)
-        : [...prev, teacherEmail]
+      prev.includes(teacherId)
+        ? prev.filter(id => id !== teacherId)
+        : [...prev, teacherId]
     );
   };
 
@@ -155,13 +155,13 @@ const TeacherGroupManager = () => {
   })();
 
   const handleSelectAll = () => {
-    const allFilteredEmails = filteredTeachers.map(t => t.teacher_email);
-    const allSelected = allFilteredEmails.every(email => selectedTeachers.includes(email));
+    const allFilteredIds = filteredTeachers.map(t => t.id);
+    const allSelected = allFilteredIds.every(id => selectedTeachers.includes(id));
     
     if (allSelected) {
-      setSelectedTeachers(prev => prev.filter(email => !allFilteredEmails.includes(email)));
+      setSelectedTeachers(prev => prev.filter(id => !allFilteredIds.includes(id)));
     } else {
-      setSelectedTeachers(prev => [...new Set([...prev, ...allFilteredEmails])]);
+      setSelectedTeachers(prev => [...new Set([...prev, ...allFilteredIds])]);
     }
   };
 
@@ -268,7 +268,7 @@ const TeacherGroupManager = () => {
       if (error) throw error;
       
       const groupTeachers = (data || []).filter((t: Teacher) => 
-        group.teacher_ids.includes(t.teacher_email)
+        group.teacher_ids.includes(t.id)
       );
       setLoadedGroupTeachers(groupTeachers);
       setViewingGroupOnly(true);
@@ -313,7 +313,7 @@ const TeacherGroupManager = () => {
       if (error) throw error;
       
       const groupTeachers = (data || []).filter((t: Teacher) => 
-        group.teacher_ids.includes(t.teacher_email)
+        group.teacher_ids.includes(t.id)
       );
       setExpandedGroupId(group.id);
       setExpandedGroupMembers(groupTeachers);
@@ -537,9 +537,9 @@ const TeacherGroupManager = () => {
               </p>
             ) : filteredTeachers.map(teacher => (
               <div
-                key={teacher.teacher_email}
+                key={teacher.id}
                 className={`flex items-center space-x-2 p-2 hover:bg-accent rounded ${
-                  editingMembersGroup && selectedTeachers.includes(teacher.teacher_email) 
+                  editingMembersGroup && selectedTeachers.includes(teacher.id) 
                     ? "bg-orange-100 dark:bg-orange-900/30" 
                     : viewingGroupOnly
                     ? "bg-primary/5"
@@ -547,13 +547,13 @@ const TeacherGroupManager = () => {
                 }`}
               >
                 <Checkbox
-                  id={teacher.teacher_email}
-                  checked={selectedTeachers.includes(teacher.teacher_email)}
-                  onCheckedChange={() => handleTeacherToggle(teacher.teacher_email)}
+                  id={teacher.id}
+                  checked={selectedTeachers.includes(teacher.id)}
+                  onCheckedChange={() => handleTeacherToggle(teacher.id)}
                   disabled={viewingGroupOnly && !editingMembersGroup}
                 />
                 <label
-                  htmlFor={teacher.teacher_email}
+                  htmlFor={teacher.id}
                   className="text-xs sm:text-sm cursor-pointer flex-1"
                 >
                   <span className="font-medium">{teacher.name}</span>
