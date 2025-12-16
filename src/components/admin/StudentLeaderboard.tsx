@@ -861,7 +861,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
                   value={counselorName}
                   onChange={(e) => setCounselorName(e.target.value)}
                   placeholder="상담자 이름을 입력하세요"
-                  className="h-9 sm:h-10 text-sm"
+                  className="h-9 sm:h-10 text-sm pl-1.5"
                 />
               </div>
 
@@ -874,7 +874,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
                   onChange={(e) => setCounselingContent(e.target.value)}
                   placeholder="상담 내용을 입력하세요"
                   rows={4}
-                  className="text-sm resize-none"
+                  className="text-sm resize-none pl-1.5"
                 />
               </div>
 
