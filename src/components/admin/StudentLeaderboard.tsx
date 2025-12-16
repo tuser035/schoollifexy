@@ -33,7 +33,7 @@ interface MonthlyTrend {
 
 interface CounselingModalData {
   student: StudentRank;
-  scoreType: "merits" | "demerits" | "monthly";
+  scoreType: "merits" | "demerits" | "monthly" | "total";
   score: number;
 }
 
@@ -229,7 +229,7 @@ const StudentLeaderboard = () => {
   };
 
   // 상담 모달 열기
-  const openCounselingModal = (student: StudentRank, scoreType: "merits" | "demerits" | "monthly", score: number) => {
+  const openCounselingModal = (student: StudentRank, scoreType: "merits" | "demerits" | "monthly" | "total", score: number) => {
     setCounselingModal({ student, scoreType, score });
     setCounselorName("");
     setCounselingContent("");
@@ -248,11 +248,12 @@ const StudentLeaderboard = () => {
   };
 
   // 점수 유형 한글명
-  const getScoreTypeName = (type: "merits" | "demerits" | "monthly") => {
+  const getScoreTypeName = (type: "merits" | "demerits" | "monthly" | "total") => {
     switch (type) {
       case "merits": return "상점";
       case "demerits": return "벌점";
-      case "monthly": return "이달의 학생";
+      case "monthly": return "이달의학생";
+      case "total": return "순점수";
     }
   };
 
@@ -530,7 +531,11 @@ const StudentLeaderboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant={getTotalBadgeVariant(student.total)}>
+                        <Badge 
+                          variant={getTotalBadgeVariant(student.total)}
+                          className={index < 10 ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}
+                          onClick={index < 10 ? () => openCounselingModal(student, "total", student.total) : undefined}
+                        >
                           {student.total}
                         </Badge>
                       </TableCell>
@@ -590,7 +595,7 @@ const StudentLeaderboard = () => {
       <Dialog open={!!counselingModal} onOpenChange={(open) => !open && closeCounselingModal()}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>상담 기록 등록</DialogTitle>
+            <DialogTitle>{counselingModal ? `${getScoreTypeName(counselingModal.scoreType)} 상담기록등록` : "상담 기록 등록"}</DialogTitle>
           </DialogHeader>
           
           {counselingModal && (
