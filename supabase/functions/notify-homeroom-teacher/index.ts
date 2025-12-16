@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 interface NotifyRequest {
-  notificationType: "demerit" | "monthly" | "merit"; // 알림 유형
+  notificationType: "demerit" | "monthly" | "merit" | "merit_delete" | "demerit_delete" | "monthly_delete"; // 알림 유형
   studentName: string;
   studentGrade: number;
   studentClass: number;
@@ -237,6 +237,164 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
             </div>
             ` : ''}
+            <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+              이 메일은 School Life 시스템에서 자동으로 발송되었습니다.<br>
+              문의사항이 있으시면 gyeongjuhs@naver.com로 연락해 주세요.
+            </p>
+          </div>
+        </div>
+      `;
+    } else if (notificationType === "merit_delete") {
+      // 상점 삭제 알림
+      emailSubject = `🗑️ [상점 삭제] ${studentGrade}학년 ${studentClass}반 ${studentName} 학생 상점 삭제 안내`;
+      
+      emailHtml = `
+        <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 20px; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 20px;">🗑️ 학생 상점 삭제 알림</h1>
+          </div>
+          
+          <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
+            <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              담당 학급 학생의 <strong style="color: #6b7280;">상점이 삭제</strong>되었음을 알려드립니다.
+            </p>
+            
+            <div style="background: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; width: 100px;">학생</td>
+                  <td style="padding: 8px 0; color: #111827; font-weight: 600;">
+                    ${studentName} (${studentGrade}학년 ${studentClass}반 ${studentNumber}번)
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">항목</td>
+                  <td style="padding: 8px 0; color: #111827; text-decoration: line-through;">${category || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">사유</td>
+                  <td style="padding: 8px 0; color: #111827; text-decoration: line-through;">${(reason || '-').replace(/\n/g, '<br>')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">삭제된 상점</td>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 700; font-size: 18px; text-decoration: line-through;">${score || 0}점</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">삭제 교사</td>
+                  <td style="padding: 8px 0; color: #111827;">${teacherName || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">삭제 일시</td>
+                  <td style="padding: 8px 0; color: #111827;">${currentDate}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+              이 메일은 School Life 시스템에서 자동으로 발송되었습니다.<br>
+              문의사항이 있으시면 gyeongjuhs@naver.com로 연락해 주세요.
+            </p>
+          </div>
+        </div>
+      `;
+    } else if (notificationType === "demerit_delete") {
+      // 벌점 삭제 알림
+      emailSubject = `🗑️ [벌점 삭제] ${studentGrade}학년 ${studentClass}반 ${studentName} 학생 벌점 삭제 안내`;
+      
+      emailHtml = `
+        <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 20px; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 20px;">🗑️ 학생 벌점 삭제 알림</h1>
+          </div>
+          
+          <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
+            <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              담당 학급 학생의 <strong style="color: #6b7280;">벌점이 삭제</strong>되었음을 알려드립니다.
+            </p>
+            
+            <div style="background: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; width: 100px;">학생</td>
+                  <td style="padding: 8px 0; color: #111827; font-weight: 600;">
+                    ${studentName} (${studentGrade}학년 ${studentClass}반 ${studentNumber}번)
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">항목</td>
+                  <td style="padding: 8px 0; color: #111827; text-decoration: line-through;">${category || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">사유</td>
+                  <td style="padding: 8px 0; color: #111827; text-decoration: line-through;">${(reason || '-').replace(/\n/g, '<br>')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">삭제된 벌점</td>
+                  <td style="padding: 8px 0; color: #6b7280; font-weight: 700; font-size: 18px; text-decoration: line-through;">${score || 0}점</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">삭제 교사</td>
+                  <td style="padding: 8px 0; color: #111827;">${teacherName || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">삭제 일시</td>
+                  <td style="padding: 8px 0; color: #111827;">${currentDate}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+              이 메일은 School Life 시스템에서 자동으로 발송되었습니다.<br>
+              문의사항이 있으시면 gyeongjuhs@naver.com로 연락해 주세요.
+            </p>
+          </div>
+        </div>
+      `;
+    } else if (notificationType === "monthly_delete") {
+      // 이달의학생 삭제 알림
+      emailSubject = `🗑️ [이달의학생 삭제] ${studentGrade}학년 ${studentClass}반 ${studentName} 학생 선정 취소 안내`;
+      
+      emailHtml = `
+        <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 20px; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 20px;">🗑️ 이달의학생 삭제 알림</h1>
+          </div>
+          
+          <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
+            <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              담당 학급 학생의 <strong style="color: #6b7280;">이달의학생 선정이 취소</strong>되었음을 알려드립니다.
+            </p>
+            
+            <div style="background: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; width: 100px;">학생</td>
+                  <td style="padding: 8px 0; color: #111827; font-weight: 600;">
+                    ${studentName} (${studentGrade}학년 ${studentClass}반 ${studentNumber}번)
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">분류</td>
+                  <td style="padding: 8px 0; color: #111827; text-decoration: line-through;">${category || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">사유</td>
+                  <td style="padding: 8px 0; color: #111827; text-decoration: line-through;">${(reason || '-').replace(/\n/g, '<br>')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">삭제 교사</td>
+                  <td style="padding: 8px 0; color: #111827;">${teacherName || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">삭제 일시</td>
+                  <td style="padding: 8px 0; color: #111827;">${currentDate}</td>
+                </tr>
+              </table>
+            </div>
+            
             <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
               이 메일은 School Life 시스템에서 자동으로 발송되었습니다.<br>
               문의사항이 있으시면 gyeongjuhs@naver.com로 연락해 주세요.
