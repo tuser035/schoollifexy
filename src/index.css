@@ -54,6 +54,14 @@ All colors MUST be HSL.
     --teacher-blue: 220 100% 50%;
     --student-orange: 25 100% 50%;
     --admin-green: 142 80% 45%;
+    
+    /* Tab Colors */
+    --groups-purple: 270 70% 55%;
+    --groups-purple-hover: 270 70% 47%;
+    --bulk-email-pink: 330 80% 60%;
+    --bulk-email-pink-hover: 330 80% 52%;
+    --email-history-teal: 180 70% 45%;
+    --email-history-teal-hover: 180 70% 37%;
 
     --sidebar-background: 0 0% 98%;
 
@@ -116,6 +124,14 @@ All colors MUST be HSL.
     --teacher-blue: 220 100% 50%;
     --student-orange: 25 100% 50%;
     --admin-green: 142 80% 45%;
+    
+    /* Tab Colors */
+    --groups-purple: 270 70% 60%;
+    --groups-purple-hover: 270 70% 68%;
+    --bulk-email-pink: 330 80% 65%;
+    --bulk-email-pink-hover: 330 80% 73%;
+    --email-history-teal: 180 70% 50%;
+    --email-history-teal-hover: 180 70% 58%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

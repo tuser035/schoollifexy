@@ -93,15 +93,24 @@ const TeacherDashboard = () => {
                 <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>이달의학생</span>
               </TabsTrigger>
-              <TabsTrigger value="groups" className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger 
+                value="groups" 
+                className="data-[state=active]:bg-groups-purple data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
+              >
                 <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>그룹</span>
               </TabsTrigger>
-              <TabsTrigger value="bulk-email" className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger 
+                value="bulk-email" 
+                className="data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
+              >
                 <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>일괄발송</span>
               </TabsTrigger>
-              <TabsTrigger value="email-history" className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger 
+                value="email-history" 
+                className="data-[state=active]:bg-email-history-teal data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
+              >
                 <History className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>발송이력</span>
               </TabsTrigger>

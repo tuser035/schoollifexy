@@ -65,6 +65,18 @@ export default {
         teacher: "hsl(var(--teacher-blue))",
         student: "hsl(var(--student-orange))",
         admin: "hsl(var(--admin-green))",
+        groups: {
+          purple: "hsl(var(--groups-purple))",
+          "purple-hover": "hsl(var(--groups-purple-hover))",
+        },
+        "bulk-email": {
+          pink: "hsl(var(--bulk-email-pink))",
+          "pink-hover": "hsl(var(--bulk-email-pink-hover))",
+        },
+        "email-history": {
+          teal: "hsl(var(--email-history-teal))",
+          "teal-hover": "hsl(var(--email-history-teal-hover))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
