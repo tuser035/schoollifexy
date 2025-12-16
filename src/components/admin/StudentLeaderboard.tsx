@@ -431,7 +431,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
             
             ${attachmentFile ? `
             <div class="section">
-              <div class="section-label">첨부파일</div>
+              <div class="section-label">선물도서</div>
               <div class="section-content">${attachmentFile.name}</div>
             </div>
             ` : ''}
@@ -902,9 +902,9 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
                 />
               </div>
 
-              {/* 첨부파일 */}
+              {/* 선물도서 */}
               <div className="space-y-1.5 sm:space-y-2">
-                <Label className="text-sm">첨부파일</Label>
+                <Label className="text-sm">선물도서</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     ref={fileInputRef}
