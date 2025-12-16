@@ -151,25 +151,26 @@ const EmailTemplateManager = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>이메일/메신저 템플릿 관리</CardTitle>
-            <CardDescription>학부모 상담용 이메일 및 메신저 템플릿을 저장하고 관리합니다</CardDescription>
+      <CardHeader className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="min-w-0">
+            <CardTitle className="text-base sm:text-lg">템플릿 관리</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">이메일 및 메신저 템플릿을 관리합니다</CardDescription>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)}>
-              <TabsList>
-                <TabsTrigger value="all">전체</TabsTrigger>
-                <TabsTrigger value="email">이메일</TabsTrigger>
-                <TabsTrigger value="messenger">메신저</TabsTrigger>
+              <TabsList className="h-8">
+                <TabsTrigger value="all" className="text-xs px-2">전체</TabsTrigger>
+                <TabsTrigger value="email" className="text-xs px-2">이메일</TabsTrigger>
+                <TabsTrigger value="messenger" className="text-xs px-2">메신저</TabsTrigger>
               </TabsList>
             </Tabs>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => handleDialogClose()}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  새 템플릿
+                <Button size="sm" onClick={() => handleDialogClose()}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">새 템플릿</span>
+                  <span className="sm:hidden">추가</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
