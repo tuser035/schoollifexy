@@ -201,26 +201,26 @@ const StudentDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">학생 대시보드</h1>
-            <p className="text-muted-foreground break-words max-w-[200px] sm:max-w-none">{user.name}님 ({user.studentId})</p>
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground">학생 대시보드</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground break-words max-w-[180px] sm:max-w-none">{user.name}님 ({user.studentId})</p>
           </div>
-          <Button onClick={handleLogout} variant="outline" size="sm">
-            <LogOut className="w-4 h-4 sm:mr-2" />
+          <Button onClick={handleLogout} variant="outline" size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
+            <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
             <span className="hidden sm:inline">로그아웃</span>
           </Button>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Total Score Card */}
-        <Card className="mb-6 border-2">
-          <CardContent className="pt-6">
+        <Card className="mb-4 sm:mb-6 border-2">
+          <CardContent className="pt-4 sm:pt-6">
             <div className="text-center">
-              <p className="text-muted-foreground mb-2">총 상벌점</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">총 상벌점</p>
               <div
-                className={`text-6xl font-bold ${
+                className={`text-4xl sm:text-6xl font-bold ${
                   meritsTotal - demeritsTotal > 0
                     ? "text-merit-blue"
                     : meritsTotal - demeritsTotal < 0
@@ -231,135 +231,138 @@ const StudentDashboard = () => {
                 {isLoading ? "..." : meritsTotal - demeritsTotal > 0 ? "+" : ""}
                 {isLoading ? "" : meritsTotal - demeritsTotal}
               </div>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">
                 상점 {meritsTotal}점 - 벌점 {demeritsTotal}점
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 grid-cols-3">
           <Card className="border-merit-blue">
-            <CardHeader className="bg-merit-blue-light">
-              <CardTitle className="flex items-center text-merit-blue">
-                <Award className="w-5 h-5 mr-2" />
-                상점
+            <CardHeader className="bg-merit-blue-light p-3 sm:p-6">
+              <CardTitle className="flex items-center text-merit-blue text-sm sm:text-base">
+                <Award className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">상점</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="text-4xl font-bold text-merit-blue">
+            <CardContent className="pt-3 sm:pt-6 p-3 sm:p-6">
+              <div className="text-2xl sm:text-4xl font-bold text-merit-blue">
                 {isLoading ? "..." : meritsTotal}
               </div>
-              <p className="text-muted-foreground mt-2">총 상점</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">총 상점</p>
             </CardContent>
           </Card>
 
           <Card className="border-demerit-orange">
-            <CardHeader className="bg-demerit-orange-light">
-              <CardTitle className="flex items-center text-demerit-orange">
-                <AlertCircle className="w-5 h-5 mr-2" />
-                벌점
+            <CardHeader className="bg-demerit-orange-light p-3 sm:p-6">
+              <CardTitle className="flex items-center text-demerit-orange text-sm sm:text-base">
+                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">벌점</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="text-4xl font-bold text-demerit-orange">
+            <CardContent className="pt-3 sm:pt-6 p-3 sm:p-6">
+              <div className="text-2xl sm:text-4xl font-bold text-demerit-orange">
                 {isLoading ? "..." : demeritsTotal}
               </div>
-              <p className="text-muted-foreground mt-2">총 벌점</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">총 벌점</p>
             </CardContent>
           </Card>
 
           <Card className="border-monthly-green">
-            <CardHeader className="bg-monthly-green-light">
-              <CardTitle className="flex items-center text-monthly-green">
-                <Star className="w-5 h-5 mr-2" />
-                이달의 학생
+            <CardHeader className="bg-monthly-green-light p-3 sm:p-6">
+              <CardTitle className="flex items-center text-monthly-green text-sm sm:text-base">
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">이달의 학생</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="text-4xl font-bold text-monthly-green">
+            <CardContent className="pt-3 sm:pt-6 p-3 sm:p-6">
+              <div className="text-2xl sm:text-4xl font-bold text-monthly-green">
                 {isLoading ? "..." : monthlyTotal}
               </div>
-              <p className="text-muted-foreground mt-2">추천 횟수</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">추천 횟수</p>
             </CardContent>
           </Card>
         </div>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>상세 내역</CardTitle>
+        <Card className="mt-4 sm:mt-6">
+          <CardHeader className="pb-2 sm:pb-6 p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">상세 내역</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
             {isLoading ? (
-              <p className="text-muted-foreground">로딩 중...</p>
+              <p className="text-muted-foreground text-sm">로딩 중...</p>
             ) : (
               <Tabs defaultValue="merits" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="merits">
-                    <Award className="w-4 h-4 sm:mr-2" />
+                <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10">
+                  <TabsTrigger value="merits" className="text-xs sm:text-sm px-1 sm:px-3">
+                    <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
                     <span className="hidden sm:inline">상점</span>
                   </TabsTrigger>
-                  <TabsTrigger value="demerits">
-                    <AlertCircle className="w-4 h-4 sm:mr-2" />
+                  <TabsTrigger value="demerits" className="text-xs sm:text-sm px-1 sm:px-3">
+                    <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
                     <span className="hidden sm:inline">벌점</span>
                   </TabsTrigger>
-                  <TabsTrigger value="monthly">
-                    <Star className="w-4 h-4 sm:mr-2" />
+                  <TabsTrigger value="monthly" className="text-xs sm:text-sm px-1 sm:px-3">
+                    <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
                     <span className="hidden sm:inline">이달의 학생</span>
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="merits">
-                  <div className="flex justify-end mb-4">
+                  <div className="flex justify-end mb-2 sm:mb-4">
                     <Button 
                       onClick={() => downloadCSV(merits, 'merits')}
                       variant="outline"
                       size="sm"
                       disabled={merits.length === 0}
+                      className="h-8 text-xs sm:text-sm"
                     >
-                      <Download className="w-4 h-4 mr-2" />
-                      CSV 다운로드
+                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">CSV 다운로드</span>
+                      <span className="sm:hidden">CSV</span>
                     </Button>
                   </div>
-                  <div className="border rounded-lg overflow-auto">
+                  <div className="border rounded-lg overflow-auto max-h-[400px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>날짜</TableHead>
-                          <TableHead>교사</TableHead>
-                          <TableHead>카테고리</TableHead>
-                          <TableHead>사유</TableHead>
-                          <TableHead>점수</TableHead>
-                          <TableHead>증빙 사진</TableHead>
+                          <TableHead className="text-xs sm:text-sm">날짜</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden sm:table-cell">교사</TableHead>
+                          <TableHead className="text-xs sm:text-sm">카테고리</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
+                          <TableHead className="text-xs sm:text-sm">점수</TableHead>
+                          <TableHead className="text-xs sm:text-sm">사진</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {merits.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
                               상점 내역이 없습니다
                             </TableCell>
                           </TableRow>
                         ) : (
                           merits.map((merit, idx) => (
                             <TableRow key={idx}>
-                              <TableCell>{new Date(merit.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{merit.teacher_name || "-"}</TableCell>
-                              <TableCell>{merit.category}</TableCell>
-                              <TableCell>{merit.reason || "-"}</TableCell>
-                              <TableCell className="text-merit-blue font-medium">{merit.score}</TableCell>
-                              <TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(merit.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{merit.teacher_name || "-"}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{merit.category}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{merit.reason || "-"}</TableCell>
+                              <TableCell className="text-merit-blue font-medium text-xs sm:text-sm py-2 sm:py-4">{merit.score}</TableCell>
+                              <TableCell className="py-2 sm:py-4">
                                 {merit.image_url && merit.image_url.length > 0 ? (
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleImageClick(merit.image_url[0])}
+                                    className="h-7 sm:h-8 px-2 text-xs"
                                   >
-                                    <ImageIcon className="h-4 w-4 mr-1" />
-                                    보기
+                                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                    <span className="hidden sm:inline">보기</span>
                                   </Button>
                                 ) : (
-                                  <span className="text-muted-foreground text-sm">없음</span>
+                                  <span className="text-muted-foreground text-xs">없음</span>
                                 )}
                               </TableCell>
                             </TableRow>
@@ -371,54 +374,57 @@ const StudentDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="demerits">
-                  <div className="flex justify-end mb-4">
+                  <div className="flex justify-end mb-2 sm:mb-4">
                     <Button 
                       onClick={() => downloadCSV(demerits, 'demerits')}
                       variant="outline"
                       size="sm"
                       disabled={demerits.length === 0}
+                      className="h-8 text-xs sm:text-sm"
                     >
-                      <Download className="w-4 h-4 mr-2" />
-                      CSV 다운로드
+                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">CSV 다운로드</span>
+                      <span className="sm:hidden">CSV</span>
                     </Button>
                   </div>
-                  <div className="border rounded-lg overflow-auto">
+                  <div className="border rounded-lg overflow-auto max-h-[400px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>날짜</TableHead>
-                          <TableHead>카테고리</TableHead>
-                          <TableHead>사유</TableHead>
-                          <TableHead>점수</TableHead>
-                          <TableHead>증빙 사진</TableHead>
+                          <TableHead className="text-xs sm:text-sm">날짜</TableHead>
+                          <TableHead className="text-xs sm:text-sm">카테고리</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
+                          <TableHead className="text-xs sm:text-sm">점수</TableHead>
+                          <TableHead className="text-xs sm:text-sm">사진</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {demerits.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            <TableCell colSpan={5} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
                               벌점 내역이 없습니다
                             </TableCell>
                           </TableRow>
                         ) : (
                           demerits.map((demerit, idx) => (
                             <TableRow key={idx}>
-                              <TableCell>{new Date(demerit.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{demerit.category}</TableCell>
-                              <TableCell>{demerit.reason || "-"}</TableCell>
-                              <TableCell className="text-demerit-orange font-medium">{demerit.score}</TableCell>
-                              <TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(demerit.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{demerit.category}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{demerit.reason || "-"}</TableCell>
+                              <TableCell className="text-demerit-orange font-medium text-xs sm:text-sm py-2 sm:py-4">{demerit.score}</TableCell>
+                              <TableCell className="py-2 sm:py-4">
                                 {demerit.image_url && demerit.image_url.length > 0 ? (
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleImageClick(demerit.image_url[0])}
+                                    className="h-7 sm:h-8 px-2 text-xs"
                                   >
-                                    <ImageIcon className="h-4 w-4 mr-1" />
-                                    보기
+                                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                    <span className="hidden sm:inline">보기</span>
                                   </Button>
                                 ) : (
-                                  <span className="text-muted-foreground text-sm">없음</span>
+                                  <span className="text-muted-foreground text-xs">없음</span>
                                 )}
                               </TableCell>
                             </TableRow>
@@ -430,54 +436,57 @@ const StudentDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="monthly">
-                  <div className="flex justify-end mb-4">
+                  <div className="flex justify-end mb-2 sm:mb-4">
                     <Button 
                       onClick={() => downloadCSV(monthly, 'monthly')}
                       variant="outline"
                       size="sm"
                       disabled={monthly.length === 0}
+                      className="h-8 text-xs sm:text-sm"
                     >
-                      <Download className="w-4 h-4 mr-2" />
-                      CSV 다운로드
+                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">CSV 다운로드</span>
+                      <span className="sm:hidden">CSV</span>
                     </Button>
                   </div>
-                  <div className="border rounded-lg overflow-auto">
+                  <div className="border rounded-lg overflow-auto max-h-[400px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>날짜</TableHead>
-                          <TableHead>교사</TableHead>
-                          <TableHead>구분</TableHead>
-                          <TableHead>사유</TableHead>
-                          <TableHead>증빙 사진</TableHead>
+                          <TableHead className="text-xs sm:text-sm">날짜</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden sm:table-cell">교사</TableHead>
+                          <TableHead className="text-xs sm:text-sm">구분</TableHead>
+                          <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
+                          <TableHead className="text-xs sm:text-sm">사진</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {monthly.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            <TableCell colSpan={5} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
                               이달의 학생 추천 내역이 없습니다
                             </TableCell>
                           </TableRow>
                         ) : (
                           monthly.map((item, idx) => (
                             <TableRow key={idx}>
-                              <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell>{item.teacher_name || "-"}</TableCell>
-                              <TableCell>{item.category || "-"}</TableCell>
-                              <TableCell>{item.reason || "-"}</TableCell>
-                              <TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{item.teacher_name || "-"}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{item.category || "-"}</TableCell>
+                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{item.reason || "-"}</TableCell>
+                              <TableCell className="py-2 sm:py-4">
                                 {item.image_url && item.image_url.length > 0 ? (
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleImageClick(item.image_url[0])}
+                                    className="h-7 sm:h-8 px-2 text-xs"
                                   >
-                                    <ImageIcon className="h-4 w-4 mr-1" />
-                                    보기
+                                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                    <span className="hidden sm:inline">보기</span>
                                   </Button>
                                 ) : (
-                                  <span className="text-muted-foreground text-sm">없음</span>
+                                  <span className="text-muted-foreground text-xs">없음</span>
                                 )}
                               </TableCell>
                             </TableRow>
@@ -495,12 +504,12 @@ const StudentDashboard = () => {
 
       {/* Image Preview Dialog */}
       <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-3xl max-h-[90vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle>증빙 사진</DialogTitle>
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] p-4 sm:p-6 flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-base sm:text-lg">증빙 사진</DialogTitle>
           </DialogHeader>
           {selectedImage && (
-            <div className="w-full flex items-center justify-center">
+            <div className="flex-1 overflow-auto flex items-center justify-center [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
               <img
                 src={selectedImage}
                 alt="증빙 사진"
