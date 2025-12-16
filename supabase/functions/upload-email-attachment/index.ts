@@ -62,9 +62,11 @@ Deno.serve(async (req) => {
     const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
     const timestamp = Date.now()
     const randomId = Math.random().toString(36).substring(2, 10)
-    // 원본 파일명을 경로에 포함 (특수문자 제거)
-    const safeFilename = filename.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
-    const path = `bulk-email/${user_id}/${timestamp}_${randomId}_${safeFilename}`
+    // 파일 확장자 추출
+    const fileExt = filename.split('.').pop() || 'file'
+    // 원본 파일명을 Base64로 인코딩하여 경로에 포함 (ASCII만 사용)
+    const encodedFilename = btoa(encodeURIComponent(filename)).replace(/[+/=]/g, '_')
+    const path = `bulk-email/${user_id}/${timestamp}_${randomId}_${encodedFilename}.${fileExt}`
 
     // MIME type mapping for unsupported types
     const mimeTypeMap: Record<string, string> = {

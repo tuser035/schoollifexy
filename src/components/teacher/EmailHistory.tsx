@@ -483,21 +483,35 @@ const EmailHistory = () => {
                   <div className="space-y-2">
                     {selectedEmail.attachment_urls.map((url, index) => {
                       // URL에서 원본 파일명 추출
-                      // 형식: bulk-email/{user_id}/{timestamp}_{randomId}_{originalFilename}
+                      // 새 형식: bulk-email/{user_id}/{timestamp}_{randomId}_{base64EncodedFilename}.{ext}
+                      // 이전 형식: bulk-email/{user_id}/{timestamp}_{randomId}_{originalFilename}
                       const urlParts = url.split('/');
                       const storedFileName = urlParts.pop() || '';
                       
-                      // timestamp_randomId_ 패턴 이후의 원본 파일명 추출
-                      // timestamp(13자리)_randomId(8자리)_ = 22자 이후가 원본 파일명
-                      const parts = storedFileName.split('_');
                       let displayName: string;
-                      if (parts.length >= 3) {
-                        // 첫 두 부분(timestamp, randomId)을 제외한 나머지가 원본 파일명
-                        displayName = parts.slice(2).join('_');
-                      } else {
+                      try {
+                        // timestamp_randomId_encodedFilename.ext 패턴에서 파일명 추출
+                        const parts = storedFileName.split('_');
+                        if (parts.length >= 3) {
+                          // 첫 두 부분(timestamp, randomId)을 제외한 나머지
+                          const encodedPart = parts.slice(2).join('_');
+                          // 확장자 제거 (.ext 부분)
+                          const withoutExt = encodedPart.replace(/\.[^.]+$/, '');
+                          // Base64 디코딩 시도 (새 형식)
+                          try {
+                            const decoded = decodeURIComponent(atob(withoutExt.replace(/_/g, '=')));
+                            displayName = decoded;
+                          } catch {
+                            // 이전 형식 (직접 파일명 포함)
+                            displayName = decodeURIComponent(encodedPart);
+                          }
+                        } else {
+                          displayName = storedFileName;
+                        }
+                      } catch {
                         displayName = storedFileName;
                       }
-                      displayName = decodeURIComponent(displayName) || `첨부파일_${index + 1}`;
+                      displayName = displayName || `첨부파일_${index + 1}`;
                       
                       // 파일 확장자로 이미지 여부 판단
                       const ext = displayName.split('.').pop()?.toLowerCase() || '';
