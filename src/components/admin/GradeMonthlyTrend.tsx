@@ -204,9 +204,9 @@ const GradeMonthlyTrend = () => {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-email-history-teal/30">
         <CardHeader>
-          <CardTitle>학년별 월별 추이</CardTitle>
+          <CardTitle className="text-email-history-teal">학년별 월별 추이</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 flex-wrap items-end">
@@ -327,12 +327,12 @@ const GradeMonthlyTrend = () => {
               </Select>
             </div>
 
-            <Button onClick={handleQuery} disabled={isLoading}>
+            <Button onClick={handleQuery} disabled={isLoading} className="bg-email-history-teal hover:bg-email-history-teal-hover">
               {isLoading ? "조회 중..." : "조회"}
             </Button>
 
             {chartData.length > 0 && (
-              <Button variant="outline" onClick={exportToCSV}>
+              <Button variant="outline" onClick={exportToCSV} className="border-email-history-teal/50 text-email-history-teal hover:bg-email-history-teal/10">
                 <Download className="h-4 w-4 mr-2" />
                 CSV 내보내기
               </Button>

@@ -167,9 +167,9 @@ const GradeStatistics = () => {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-groups-purple/30">
         <CardHeader>
-          <CardTitle>학년별 상점/벌점 통계</CardTitle>
+          <CardTitle className="text-groups-purple">학년별 상점/벌점 통계</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 flex-wrap items-end">
@@ -276,12 +276,12 @@ const GradeStatistics = () => {
               </Select>
             </div>
 
-            <Button onClick={handleQuery} disabled={isLoading}>
+            <Button onClick={handleQuery} disabled={isLoading} className="bg-groups-purple hover:bg-groups-purple-hover">
               {isLoading ? "조회 중..." : "조회"}
             </Button>
 
             {chartData.length > 0 && (
-              <Button variant="outline" onClick={exportToCSV}>
+              <Button variant="outline" onClick={exportToCSV} className="border-groups-purple/50 text-groups-purple hover:bg-groups-purple/10">
                 <Download className="h-4 w-4 mr-2" />
                 CSV 내보내기
               </Button>
