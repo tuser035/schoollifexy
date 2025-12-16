@@ -128,13 +128,14 @@ export const EmailHistory = () => {
     }
 
     // CSV 헤더
-    const headers = ["발송일시", "발신자", "발신자유형", "수신자", "수신이메일", "제목", "읽음상태", "읽은시간"];
+    const headers = ["발송일시", "발신자", "발신자유형", "수신자유형", "수신자", "수신이메일", "제목", "읽음상태", "읽은시간"];
     
     // CSV 데이터 생성
     const csvData = history.map((record) => [
       format(new Date(record.sent_at), "yyyy-MM-dd HH:mm:ss"),
       record.sender_name,
       record.sender_type === "admin" ? "관리자" : "교사",
+      record.recipient_student_id ? "학생" : "교사",
       record.recipient_name,
       record.recipient_email,
       `"${record.subject.replace(/"/g, '""')}"`,
@@ -244,6 +245,7 @@ export const EmailHistory = () => {
                 <TableRow>
                   <TableHead>발송일시</TableHead>
                   <TableHead>발신자</TableHead>
+                  <TableHead>수신자유형</TableHead>
                   <TableHead>수신자</TableHead>
                   <TableHead>이메일</TableHead>
                   <TableHead>제목</TableHead>
@@ -254,7 +256,7 @@ export const EmailHistory = () => {
               <TableBody>
                 {history.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       이메일 발송 이력이 없습니다
                     </TableCell>
                   </TableRow>
@@ -266,6 +268,11 @@ export const EmailHistory = () => {
                       </TableCell>
                       <TableCell>
                         {record.sender_name} ({record.sender_type === "admin" ? "관리자" : "교사"})
+                      </TableCell>
+                      <TableCell>
+                        <span className={record.recipient_student_id ? "text-blue-600" : "text-orange-600"}>
+                          {record.recipient_student_id ? "학생" : "교사"}
+                        </span>
                       </TableCell>
                       <TableCell>{record.recipient_name}</TableCell>
                       <TableCell>{record.recipient_email}</TableCell>
