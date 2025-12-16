@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { useRealtimeSync, type TableSubscription } from "@/hooks/use-realtime-sync";
+import MindTalk from "@/components/student/MindTalk";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -200,6 +201,14 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* MindTalk AI 상담 */}
+      <MindTalk
+        studentId={user.studentId}
+        studentName={user.name}
+        studentGrade={user.grade || 1}
+        studentClass={user.class || 1}
+        studentNumber={1}
+      />
       <header className="border-b bg-card">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center">
           <div>

@@ -376,6 +376,60 @@ export type Database = {
           },
         ]
       }
+      mindtalk_alerts: {
+        Row: {
+          created_at: string
+          dangerous_word_count: number
+          id: string
+          last_alert_count: number | null
+          last_alert_sent_at: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dangerous_word_count?: number
+          id?: string
+          last_alert_count?: number | null
+          last_alert_sent_at?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dangerous_word_count?: number
+          id?: string
+          last_alert_count?: number | null
+          last_alert_sent_at?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mindtalk_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          student_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          student_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
       monthly: {
         Row: {
           category: string | null
@@ -1178,6 +1232,10 @@ export type Database = {
           id: string
         }[]
       }
+      get_mindtalk_danger_count: {
+        Args: { student_id_input: string }
+        Returns: number
+      }
       get_system_setting: {
         Args: { setting_key_input: string }
         Returns: string
@@ -1298,6 +1356,15 @@ export type Database = {
           teacher_name: string
         }[]
       }
+      student_get_mindtalk_messages: {
+        Args: { student_id_input: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+        }[]
+      }
       student_get_monthly: {
         Args: { student_id_input: string }
         Returns: {
@@ -1316,6 +1383,14 @@ export type Database = {
       student_login: {
         Args: { password_input: string; student_id_input: string }
         Returns: Json
+      }
+      student_save_mindtalk_message: {
+        Args: {
+          content_input: string
+          role_input: string
+          student_id_input: string
+        }
+        Returns: string
       }
       teacher_delete_demerit: {
         Args: { demerit_id_input: string; teacher_id_input: string }
@@ -1465,6 +1540,18 @@ export type Database = {
           p_record_id: string
         }
         Returns: boolean
+      }
+      update_mindtalk_alert_sent: {
+        Args: { student_id_input: string }
+        Returns: boolean
+      }
+      update_mindtalk_danger_count: {
+        Args: { increment_by?: number; student_id_input: string }
+        Returns: {
+          last_alert_count: number
+          should_alert: boolean
+          total_count: number
+        }[]
       }
       update_student_password: {
         Args: { new_password: string; student_id_input: string }
