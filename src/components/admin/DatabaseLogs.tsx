@@ -272,52 +272,53 @@ const DatabaseLogs = () => {
               로그가 없습니다
             </div>
           ) : (
-            <div className="border rounded-lg overflow-auto max-h-[600px]">
+            <div className="border rounded-lg overflow-auto max-h-[500px]">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[150px]">시간</TableHead>
-                    <TableHead>사용자</TableHead>
-                    <TableHead>작업</TableHead>
-                    <TableHead>테이블</TableHead>
-                    <TableHead>레코드 ID</TableHead>
-                    <TableHead>상태</TableHead>
-                    <TableHead>에러</TableHead>
+                    <TableHead className="w-[70px] text-xs">시간</TableHead>
+                    <TableHead className="w-[70px] text-xs">사용자</TableHead>
+                    <TableHead className="w-[70px] text-xs">작업</TableHead>
+                    <TableHead className="text-xs hidden sm:table-cell">테이블</TableHead>
+                    <TableHead className="w-[50px] text-xs">상태</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredLogs.map((log) => (
                     <TableRow key={log.id}>
-                      <TableCell className="text-xs">
-                        {formatDate(log.created_at)}
+                      <TableCell className="text-[10px] whitespace-nowrap">
+                        {new Date(log.created_at).toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })}
+                        <br />
+                        {new Date(log.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-[10px]">
                         <div className="flex flex-col">
-                          <span className="text-sm">{log.user_name || '-'}</span>
-                          <span className="text-xs font-mono text-muted-foreground">{log.user_id?.substring(0, 8)}...</span>
-                          <Badge variant="outline" className="text-xs w-fit mt-1">
-                            {log.user_type}
-                          </Badge>
+                          <span className="truncate max-w-[60px]">{log.user_name || '-'}</span>
+                          <span className="text-muted-foreground">
+                            {log.user_type === "student" && "학생"}
+                            {log.user_type === "teacher" && "교사"}
+                            {log.user_type === "admin" && "관리자"}
+                            {log.user_type === "system" && "시스템"}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getActionBadgeVariant(log.action_type)}>
-                          {log.action_type}
+                        <Badge variant={getActionBadgeVariant(log.action_type)} className="text-[10px] px-1">
+                          {log.action_type === "insert" && "생성"}
+                          {log.action_type === "update" && "수정"}
+                          {log.action_type === "delete" && "삭제"}
+                          {log.action_type === "login_success" && "로그인"}
+                          {log.action_type === "login_failed" && "실패"}
+                          {!["insert", "update", "delete", "login_success", "login_failed"].includes(log.action_type) && log.action_type}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
+                      <TableCell className="font-mono text-[10px] hidden sm:table-cell">
                         {log.table_name || "-"}
                       </TableCell>
-                      <TableCell className="text-xs font-mono">
-                        {log.record_id ? `${log.record_id.substring(0, 8)}...` : "-"}
-                      </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusBadgeVariant(log.status)}>
-                          {log.status}
+                        <Badge variant={getStatusBadgeVariant(log.status)} className="text-[10px] px-1">
+                          {log.status === "success" ? "성공" : "실패"}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
-                        {log.error_message || "-"}
                       </TableCell>
                     </TableRow>
                   ))}
