@@ -313,6 +313,7 @@ const DemeritForm = () => {
             reason: finalReason,
             score: selectedScore,
             teacherName: user.name || '교사',
+            evidenceUrls: imageUrls.length > 0 ? imageUrls : null,
           }
         });
 
