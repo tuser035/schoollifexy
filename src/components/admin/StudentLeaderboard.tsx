@@ -68,6 +68,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
     studentName: string;
     studentGrade: number;
     studentClass: number;
+    studentDept: string;
   } | null>(null);
 
   const loadLeaderboard = async () => {
@@ -511,13 +512,43 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
 
       toast.success("상담 기록이 등록되었습니다");
       
-      // 이달의학생인 경우 출력 폼 표시
+      // 이달의학생인 경우 학생 학과 조회 후 출력 폼 표시
       if (counselingModal.scoreType === "monthly") {
+        // 학생 학과 조회
+        const { data: studentData } = await supabase.rpc("admin_get_students", {
+          admin_id_input: parsedUser.id,
+          search_text: counselingModal.student.student_id,
+          search_grade: null,
+          search_class: null,
+        });
+        
+        // dept_name에서 dept_code 추출
+        const deptName = studentData?.[0]?.dept_name || "";
+        let deptCode = "";
+        if (deptName.includes("글로벌경영")) deptCode = "G";
+        else if (deptName.includes("관광서비스")) deptCode = "T";
+        else if (deptName.includes("IT융합") || deptName.includes("IT")) deptCode = "I";
+        else if (deptName.includes("유튜브")) deptCode = "Y";
+        else if (deptName.includes("스포츠")) deptCode = "S";
+        
+        // dept_code를 학과명으로 변환
+        const getDeptName = (code: string) => {
+          switch (code) {
+            case "G": return "글로벌경영과";
+            case "T": return "관광서비스과";
+            case "I": return "IT융합정보과";
+            case "Y": return "유튜브창업과";
+            case "S": return "스포츠마케팅과";
+            default: return "";
+          }
+        };
+        
         setPrintFormData({
           open: true,
           studentName: counselingModal.student.name,
           studentGrade: counselingModal.student.grade,
           studentClass: counselingModal.student.class,
+          studentDept: getDeptName(deptCode),
         });
       } else {
         // 다른 점수 유형은 상담 기록 조회로 자동 이동
@@ -918,6 +949,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
           studentName={printFormData.studentName}
           studentGrade={printFormData.studentGrade}
           studentClass={printFormData.studentClass}
+          studentDept={printFormData.studentDept}
         />
       )}
     </div>
