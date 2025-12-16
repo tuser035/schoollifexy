@@ -482,19 +482,59 @@ const EmailHistory = () => {
                   </span>
                   <div className="space-y-2">
                     {selectedEmail.attachment_urls.map((url, index) => {
-                      const fileName = url.split('/').pop() || `첨부파일_${index + 1}`;
+                      // URL에서 원본 파일명 추출
+                      // 형식: bulk-email/{user_id}/{timestamp}_{randomId}_{originalFilename}
+                      const urlParts = url.split('/');
+                      const storedFileName = urlParts.pop() || '';
+                      
+                      // timestamp_randomId_ 패턴 이후의 원본 파일명 추출
+                      // timestamp(13자리)_randomId(8자리)_ = 22자 이후가 원본 파일명
+                      const parts = storedFileName.split('_');
+                      let displayName: string;
+                      if (parts.length >= 3) {
+                        // 첫 두 부분(timestamp, randomId)을 제외한 나머지가 원본 파일명
+                        displayName = parts.slice(2).join('_');
+                      } else {
+                        displayName = storedFileName;
+                      }
+                      displayName = decodeURIComponent(displayName) || `첨부파일_${index + 1}`;
+                      
+                      // 파일 확장자로 이미지 여부 판단
+                      const ext = displayName.split('.').pop()?.toLowerCase() || '';
+                      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext);
+                      
+                      const handleDownload = async () => {
+                        try {
+                          toast.info(`${displayName} 다운로드 중...`);
+                          const response = await fetch(url);
+                          const blob = await response.blob();
+                          const downloadUrl = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = downloadUrl;
+                          link.download = displayName;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(downloadUrl);
+                          toast.success(`${displayName} 다운로드 완료 (브라우저 다운로드 폴더 확인)`);
+                        } catch (error) {
+                          console.error('Download error:', error);
+                          toast.error('다운로드 실패');
+                        }
+                      };
+                      
                       return (
-                        <a
+                        <button
                           key={index}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download
-                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                          onClick={handleDownload}
+                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm w-full text-left"
                         >
-                          <Download className="w-4 h-4 text-primary" />
-                          <span className="truncate flex-1">{decodeURIComponent(fileName)}</span>
-                        </a>
+                          <Download className="w-4 h-4 text-primary flex-shrink-0" />
+                          <span className="truncate flex-1">{displayName}</span>
+                          {isImage && (
+                            <span className="text-[10px] text-muted-foreground px-1 py-0.5 bg-background rounded">이미지</span>
+                          )}
+                        </button>
                       );
                     })}
                   </div>
