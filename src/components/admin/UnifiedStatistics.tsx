@@ -7,10 +7,25 @@ const UnifiedStatistics = () => {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="grade" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="grade">전교생통계</TabsTrigger>
-          <TabsTrigger value="class">학급통계</TabsTrigger>
-          <TabsTrigger value="trend">학년추이</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-muted/50">
+          <TabsTrigger 
+            value="grade" 
+            className="data-[state=active]:bg-groups-purple data-[state=active]:text-white"
+          >
+            전교생통계
+          </TabsTrigger>
+          <TabsTrigger 
+            value="class" 
+            className="data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white"
+          >
+            학급통계
+          </TabsTrigger>
+          <TabsTrigger 
+            value="trend" 
+            className="data-[state=active]:bg-email-history-teal data-[state=active]:text-white"
+          >
+            학년추이
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="grade" className="mt-4">

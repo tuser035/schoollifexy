@@ -191,9 +191,9 @@ const StatisticsChart = () => {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-bulk-email-pink/30">
         <CardHeader>
-          <CardTitle>학급별 월별 상점/벌점 통계</CardTitle>
+          <CardTitle className="text-bulk-email-pink">학급별 월별 상점/벌점 통계</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 flex-wrap items-end">
@@ -332,12 +332,12 @@ const StatisticsChart = () => {
               </Select>
             </div>
 
-            <Button onClick={handleQuery} disabled={isLoading}>
+            <Button onClick={handleQuery} disabled={isLoading} className="bg-bulk-email-pink hover:bg-bulk-email-pink-hover">
               {isLoading ? "조회 중..." : "조회"}
             </Button>
 
             {chartData.length > 0 && (
-              <Button variant="outline" onClick={exportToCSV}>
+              <Button variant="outline" onClick={exportToCSV} className="border-bulk-email-pink/50 text-bulk-email-pink hover:bg-bulk-email-pink/10">
                 <Download className="h-4 w-4 mr-2" />
                 CSV 내보내기
               </Button>
