@@ -166,32 +166,35 @@ const DatabaseLogs = () => {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            <CardTitle>데이터베이스 변경 로그</CardTitle>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => setShowDeleteConfirm(true)} 
-              disabled={isLoading} 
-              variant="destructive"
-              size="sm"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              90일 이상 로그 삭제
-            </Button>
-            <Button onClick={loadLogs} disabled={isLoading} variant="outline" size="sm">
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              새로고침
-            </Button>
+        <CardHeader className="space-y-4">
+          <div className="flex flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <Database className="h-5 w-5 shrink-0" />
+              <CardTitle className="text-lg truncate">데이터베이스 변경 로그</CardTitle>
+            </div>
+            <div className="flex flex-row gap-2 shrink-0">
+              <Button 
+                onClick={() => setShowDeleteConfirm(true)} 
+                disabled={isLoading} 
+                variant="destructive"
+                size="sm"
+                className="text-xs px-2 sm:px-3"
+              >
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">90일 이상 로그 삭제</span>
+              </Button>
+              <Button onClick={loadLogs} disabled={isLoading} variant="outline" size="sm" className="text-xs px-2 sm:px-3">
+                <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">새로고침</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {/* 필터 및 검색 */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-4">
             <div>
-              <Label>테이블</Label>
+              <Label className="text-xs sm:text-sm">테이블</Label>
               <Select value={filterTable} onValueChange={setFilterTable}>
                 <SelectTrigger>
                   <SelectValue placeholder="전체" />
@@ -205,23 +208,23 @@ const DatabaseLogs = () => {
               </Select>
             </div>
             <div>
-              <Label>작업 유형</Label>
+              <Label className="text-xs sm:text-sm">작업 유형</Label>
               <Select value={filterAction} onValueChange={setFilterAction}>
                 <SelectTrigger>
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
-                  <SelectItem value="insert">생성 (INSERT)</SelectItem>
-                  <SelectItem value="update">수정 (UPDATE)</SelectItem>
-                  <SelectItem value="delete">삭제 (DELETE)</SelectItem>
+                  <SelectItem value="insert">생성</SelectItem>
+                  <SelectItem value="update">수정</SelectItem>
+                  <SelectItem value="delete">삭제</SelectItem>
                   <SelectItem value="login_success">로그인 성공</SelectItem>
                   <SelectItem value="login_failed">로그인 실패</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>사용자 유형</Label>
+              <Label className="text-xs sm:text-sm">사용자 유형</Label>
               <Select value={filterUserType} onValueChange={setFilterUserType}>
                 <SelectTrigger>
                   <SelectValue placeholder="전체" />
@@ -236,7 +239,7 @@ const DatabaseLogs = () => {
               </Select>
             </div>
             <div>
-              <Label>표시 개수</Label>
+              <Label className="text-xs sm:text-sm">표시 개수</Label>
               <Select value={limit.toString()} onValueChange={(v) => setLimit(parseInt(v))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -249,12 +252,12 @@ const DatabaseLogs = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>검색</Label>
+            <div className="col-span-2 sm:col-span-1">
+              <Label className="text-xs sm:text-sm">검색</Label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="사용자 ID, 레코드 ID..."
+                  placeholder="검색..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
