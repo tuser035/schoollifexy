@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Printer, Upload, X } from "lucide-react";
+import { Printer, Upload, X, ImageIcon } from "lucide-react";
 
 interface MonthlyStudentPrintFormProps {
   open: boolean;
@@ -26,6 +26,7 @@ const MonthlyStudentPrintForm = ({
 }: MonthlyStudentPrintFormProps) => {
   const [selectedMonth, setSelectedMonth] = useState<string>(String(new Date().getMonth() + 1));
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [name, setName] = useState(studentName);
   const [grade, setGrade] = useState(`${studentGrade}학년`);
   const [classNum, setClassNum] = useState(`${studentClass}반`);
@@ -33,6 +34,7 @@ const MonthlyStudentPrintForm = ({
   const [dreamJob, setDreamJob] = useState("");
   const [introduction, setIntroduction] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +43,17 @@ const MonthlyStudentPrintForm = ({
       const reader = new FileReader();
       reader.onload = () => {
         setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setLogoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -61,7 +74,7 @@ const MonthlyStudentPrintForm = ({
           <style>
             @page {
               size: A4;
-              margin: 20mm;
+              margin: 0;
             }
             * {
               margin: 0;
@@ -72,12 +85,68 @@ const MonthlyStudentPrintForm = ({
               font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
               width: 210mm;
               min-height: 297mm;
-              padding: 20mm;
               background: white;
+              position: relative;
             }
-            .container {
+            .page-wrapper {
               width: 100%;
-              height: 100%;
+              min-height: 297mm;
+              padding: 15mm;
+              position: relative;
+              background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%);
+            }
+            .border-frame {
+              width: 100%;
+              min-height: calc(297mm - 30mm);
+              border: 4px solid #16a34a;
+              border-radius: 20px;
+              padding: 20mm;
+              position: relative;
+              background: white;
+              box-shadow: 0 10px 40px rgba(22, 163, 74, 0.15);
+            }
+            .corner-decoration {
+              position: absolute;
+              width: 60px;
+              height: 60px;
+              border: 4px solid #22c55e;
+            }
+            .corner-tl {
+              top: 10px;
+              left: 10px;
+              border-right: none;
+              border-bottom: none;
+              border-radius: 15px 0 0 0;
+            }
+            .corner-tr {
+              top: 10px;
+              right: 10px;
+              border-left: none;
+              border-bottom: none;
+              border-radius: 0 15px 0 0;
+            }
+            .corner-bl {
+              bottom: 10px;
+              left: 10px;
+              border-right: none;
+              border-top: none;
+              border-radius: 0 0 0 15px;
+            }
+            .corner-br {
+              bottom: 10px;
+              right: 10px;
+              border-left: none;
+              border-top: none;
+              border-radius: 0 0 15px 0;
+            }
+            .logo-section {
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            .logo-section img {
+              max-height: 80px;
+              max-width: 200px;
+              object-fit: contain;
             }
             .title {
               text-align: center;
@@ -85,6 +154,23 @@ const MonthlyStudentPrintForm = ({
               font-weight: bold;
               margin-bottom: 40px;
               color: #16a34a;
+              text-shadow: 2px 2px 4px rgba(22, 163, 74, 0.2);
+            }
+            .title-decoration {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 20px;
+              margin-bottom: 10px;
+            }
+            .title-line {
+              width: 80px;
+              height: 4px;
+              background: linear-gradient(90deg, transparent, #22c55e, transparent);
+            }
+            .star {
+              color: #fbbf24;
+              font-size: 32pt;
             }
             .info-row {
               display: flex;
@@ -95,12 +181,15 @@ const MonthlyStudentPrintForm = ({
             .photo-section {
               width: 240px;
               height: 320px;
-              border: 3px solid #e5e7eb;
+              border: 4px solid #22c55e;
+              border-radius: 15px;
               display: flex;
               align-items: center;
               justify-content: center;
-              background: #f9fafb;
+              background: linear-gradient(145deg, #f9fafb, #f0fdf4);
               flex-shrink: 0;
+              overflow: hidden;
+              box-shadow: 0 8px 20px rgba(22, 163, 74, 0.15);
             }
             .photo-section img {
               width: 100%;
@@ -111,19 +200,29 @@ const MonthlyStudentPrintForm = ({
               flex: 1;
             }
             .detail-item {
-              margin-bottom: 20px;
+              margin-bottom: 25px;
             }
             .detail-label {
               font-size: 24pt;
               color: #6b7280;
               margin-bottom: 8px;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            }
+            .detail-label::before {
+              content: "◆";
+              color: #22c55e;
+              font-size: 16pt;
             }
             .detail-value {
               font-size: 32pt;
               font-weight: 600;
               color: #111827;
-              padding: 10px 15px;
-              border-bottom: 3px solid #16a34a;
+              padding: 12px 18px;
+              border-bottom: 4px solid #22c55e;
+              background: linear-gradient(90deg, #f0fdf4, transparent);
+              border-radius: 8px 8px 0 0;
             }
             .introduction-section {
               margin-top: 30px;
@@ -133,44 +232,78 @@ const MonthlyStudentPrintForm = ({
               font-weight: bold;
               color: #374151;
               margin-bottom: 15px;
+              display: flex;
+              align-items: center;
+              gap: 15px;
+            }
+            .introduction-label::before {
+              content: "★";
+              color: #fbbf24;
+              font-size: 24pt;
             }
             .introduction-content {
               font-size: 28pt;
               line-height: 1.8;
               color: #1f2937;
-              padding: 25px;
-              border: 3px solid #16a34a;
-              border-radius: 10px;
+              padding: 30px;
+              border: 4px solid #22c55e;
+              border-radius: 15px;
               min-height: 200px;
               white-space: pre-wrap;
+              background: linear-gradient(145deg, #ffffff, #f0fdf4);
+              box-shadow: inset 0 2px 10px rgba(22, 163, 74, 0.1);
+            }
+            .footer-decoration {
+              text-align: center;
+              margin-top: 30px;
+              color: #9ca3af;
+              font-size: 14pt;
             }
           </style>
         </head>
         <body>
-          <div class="container">
-            <h1 class="title">${selectedMonth}월의 학생</h1>
-            <div class="info-row">
-              <div class="photo-section">
-                ${photoPreview ? `<img src="${photoPreview}" alt="학생 사진" />` : '<span style="color: #9ca3af; font-size: 10pt;">사진 없음</span>'}
+          <div class="page-wrapper">
+            <div class="border-frame">
+              <div class="corner-decoration corner-tl"></div>
+              <div class="corner-decoration corner-tr"></div>
+              <div class="corner-decoration corner-bl"></div>
+              <div class="corner-decoration corner-br"></div>
+              
+              ${logoPreview ? `<div class="logo-section"><img src="${logoPreview}" alt="학교 로고" /></div>` : ''}
+              
+              <div class="title-decoration">
+                <div class="title-line"></div>
+                <span class="star">★</span>
+                <div class="title-line"></div>
               </div>
-              <div class="details-section">
-                <div class="detail-item">
-                  <div class="detail-label">이름</div>
-                  <div class="detail-value">${name || "-"}</div>
+              <h1 class="title">${selectedMonth}월의 학생</h1>
+              
+              <div class="info-row">
+                <div class="photo-section">
+                  ${photoPreview ? `<img src="${photoPreview}" alt="학생 사진" />` : '<span style="color: #9ca3af; font-size: 14pt;">사진 없음</span>'}
                 </div>
-                <div class="detail-item">
-                  <div class="detail-label">학년/반/학과</div>
-                  <div class="detail-value">${grade} ${classNum}${dept ? ` ${dept}` : ""}</div>
-                </div>
-                <div class="detail-item">
-                  <div class="detail-label">장래희망</div>
-                  <div class="detail-value">${dreamJob || "-"}</div>
+                <div class="details-section">
+                  <div class="detail-item">
+                    <div class="detail-label">이름</div>
+                    <div class="detail-value">${name || "-"}</div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">학년/반/학과</div>
+                    <div class="detail-value">${grade} ${classNum}${dept ? ` ${dept}` : ""}</div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">장래희망</div>
+                    <div class="detail-value">${dreamJob || "-"}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="introduction-section">
-              <div class="introduction-label">자기소개</div>
-              <div class="introduction-content">${introduction || "-"}</div>
+              <div class="introduction-section">
+                <div class="introduction-label">자기소개</div>
+                <div class="introduction-content">${introduction || "-"}</div>
+              </div>
+              <div class="footer-decoration">
+                ━━━ ✿ ━━━
+              </div>
             </div>
           </div>
         </body>
@@ -187,6 +320,7 @@ const MonthlyStudentPrintForm = ({
 
   const handleClose = () => {
     setPhotoPreview(null);
+    setLogoPreview(null);
     setDreamJob("");
     setIntroduction("");
     setDept("");
@@ -201,6 +335,46 @@ const MonthlyStudentPrintForm = ({
         </DialogHeader>
 
         <div className="space-y-6 pt-4" ref={printRef}>
+          {/* 학교 로고 업로드 */}
+          <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
+            <div className="flex-shrink-0">
+              <div
+                className="w-[100px] h-[60px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500 transition-colors overflow-hidden bg-background"
+                onClick={() => logoInputRef.current?.click()}
+              >
+                {logoPreview ? (
+                  <img src={logoPreview} alt="학교 로고" className="w-full h-full object-contain p-1" />
+                ) : (
+                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                )}
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoUpload}
+              />
+            </div>
+            <div className="flex-1">
+              <Label className="text-sm font-medium">학교 로고 (선택)</Label>
+              <p className="text-xs text-muted-foreground mt-1">출력물 상단에 표시됩니다</p>
+            </div>
+            {logoPreview && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => {
+                  setLogoPreview(null);
+                  if (logoInputRef.current) logoInputRef.current.value = "";
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
           {/* 제목 - 월 선택 */}
           <div className="text-center">
             <div className="flex items-center justify-center gap-2">
