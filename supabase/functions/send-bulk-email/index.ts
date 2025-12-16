@@ -150,17 +150,16 @@ const handler = async (req: Request): Promise<Response> => {
             ${attachmentHtml}
             
             <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
-              <p style="margin: 0 0 10px 0;"><strong>School Point 학생 관리 시스템</strong></p>
-              <p style="margin: 0 0 5px 0;">이 메일은 귀하가 등록한 학생 정보를 기반으로 발송되었습니다.</p>
-              <p style="margin: 0 0 5px 0;">문의사항: ${replyToEmail}</p>
-              <p style="margin: 0;">수신을 원하지 않으시면 학교에 연락해 주세요.</p>
+              <p style="margin: 0 0 10px 0;"><strong>School Life 학생 관리 시스템</strong></p>
+              <p style="margin: 0 0 5px 0;">이 메일은 School Life 시스템에서 자동으로 발송되었습니다.</p>
+              <p style="margin: 0 0 5px 0;">문의사항이 있으시면 gyeongjuhs@naver.com로 연락해 주세요.</p>
             </div>
           </div>
         `;
 
         // Resend API로 메일 발송
         const { data: emailData, error: emailError } = await resend.emails.send({
-          from: `School Point <${fromEmail}>`,
+          from: `School Life <${fromEmail}>`,
           reply_to: replyToEmail,
           to: student.email,
           subject: subject,

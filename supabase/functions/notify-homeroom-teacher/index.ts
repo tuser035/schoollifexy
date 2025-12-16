@@ -174,8 +174,8 @@ const handler = async (req: Request): Promise<Response> => {
             ` : ''}
             
             <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-              이 메일은 School Point 시스템에서 자동으로 발송되었습니다.<br>
-              문의사항이 있으시면 교무실로 연락해 주세요.
+              이 메일은 School Life 시스템에서 자동으로 발송되었습니다.<br>
+              문의사항이 있으시면 gyeongjuhs@naver.com로 연락해 주세요.
             </p>
           </div>
         </div>
@@ -238,8 +238,8 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             ` : ''}
             <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-              이 메일은 School Point 시스템에서 자동으로 발송되었습니다.<br>
-              문의사항이 있으시면 교무실로 연락해 주세요.
+              이 메일은 School Life 시스템에서 자동으로 발송되었습니다.<br>
+              문의사항이 있으시면 gyeongjuhs@naver.com로 연락해 주세요.
             </p>
           </div>
         </div>

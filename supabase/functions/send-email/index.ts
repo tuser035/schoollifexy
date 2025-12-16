@@ -94,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       try {
         const emailResponse = await resend.emails.send({
-          from: `School Point <${fromEmail}>`,
+          from: `School Life <${fromEmail}>`,
           replyTo: replyToEmail,
           to: [student.gmail],
           subject: template.subject,
