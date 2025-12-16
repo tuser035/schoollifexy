@@ -582,15 +582,34 @@ const CounselingInquiry = () => {
               {selectedRecord.attachment_url && (
                 <div>
                   <div className="text-sm font-medium text-muted-foreground mb-2">첨부 파일</div>
-                  <a 
-                    href={selectedRecord.attachment_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-primary hover:underline"
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-primary hover:underline"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(selectedRecord.attachment_url!);
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        // URL에서 파일명 추출
+                        const urlParts = selectedRecord.attachment_url!.split('/');
+                        const fileName = decodeURIComponent(urlParts.pop() || '첨부파일');
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        toast.success("파일 다운로드 완료");
+                      } catch (error) {
+                        console.error('Download error:', error);
+                        toast.error("파일 다운로드에 실패했습니다");
+                      }
+                    }}
                   >
-                    <FileText className="w-4 h-4 mr-2" />
+                    <Download className="w-4 h-4 mr-2" />
                     첨부 파일 다운로드
-                  </a>
+                  </Button>
                 </div>
               )}
             </div>
