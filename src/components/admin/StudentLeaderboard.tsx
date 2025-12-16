@@ -614,7 +614,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
       <Dialog open={!!counselingModal} onOpenChange={(open) => !open && closeCounselingModal()}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader className={`${counselingModal ? getScoreTypeColorClass(counselingModal.scoreType) : ""} -mx-6 -mt-6 px-6 py-4 rounded-t-lg`}>
-            <DialogTitle className="text-white">{counselingModal ? `${getScoreTypeName(counselingModal.scoreType)} 상담기록등록` : "상담 기록 등록"}</DialogTitle>
+            <DialogTitle className="text-white">{counselingModal ? `${getScoreTypeName(counselingModal.scoreType)} 상담기록 등록` : "상담기록 등록"}</DialogTitle>
           </DialogHeader>
           
           {counselingModal && (
