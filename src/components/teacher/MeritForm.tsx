@@ -308,6 +308,33 @@ const MeritForm = () => {
       }
 
       toast.success(`${selectedStudent.name} 학생에게 상점 ${selectedScore}점이 부여되었습니다`);
+
+      // 담임 선생님에게 알림 발송 (백그라운드)
+      try {
+        const notifyResponse = await supabase.functions.invoke('notify-homeroom-teacher', {
+          body: {
+            notificationType: 'merit',
+            studentName: selectedStudent.name,
+            studentGrade: selectedStudent.grade,
+            studentClass: selectedStudent.class,
+            studentNumber: selectedStudent.number,
+            category: selectedCategory,
+            reason: finalReason,
+            score: selectedScore,
+            teacherName: user.name,
+            evidenceUrls: imageUrls.length > 0 ? imageUrls : undefined,
+          }
+        });
+        
+        if (notifyResponse.data?.success) {
+          console.log('담임 선생님 알림 발송 성공:', notifyResponse.data);
+        } else {
+          console.log('담임 선생님 알림 발송 실패 또는 대상 없음:', notifyResponse.data);
+        }
+      } catch (notifyError) {
+        console.error('담임 알림 발송 중 오류:', notifyError);
+        // 알림 실패해도 상점 부여는 성공했으므로 에러 무시
+      }
       
       // Reset form
       setSelectedStudent(null);
