@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal, Award, TrendingUp, Download, Upload, Loader2 } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Download, Upload, Loader2, FileDown } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import MonthlyStudentPrintForm from "./MonthlyStudentPrintForm";
@@ -58,7 +58,9 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
   const [counselingContent, setCounselingContent] = useState("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const counselingContentRef = useRef<HTMLDivElement>(null);
   
   // 이달의학생 출력 폼 상태
   const [printFormData, setPrintFormData] = useState<{
@@ -280,7 +282,31 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
     }
   };
 
-  // 상담 등록
+  // PDF 다운로드
+  const downloadPdf = async () => {
+    if (!counselingModal || !counselingContentRef.current) return;
+    
+    setIsDownloadingPdf(true);
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      
+      const element = counselingContentRef.current;
+      const opt = {
+        margin: 10,
+        filename: `${counselingModal.student.name}_${getScoreTypeName(counselingModal.scoreType)}_상담기록.pdf`,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm" as const, format: "a4" as const, orientation: "portrait" as const }
+      };
+      
+      await html2pdf().set(opt).from(element).save();
+      toast.success("PDF가 다운로드되었습니다");
+    } catch (error: any) {
+      toast.error("PDF 다운로드에 실패했습니다");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
   const submitCounseling = async () => {
     if (!counselingModal) return;
     
@@ -632,13 +658,13 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
 
       {/* 상담 모달 */}
       <Dialog open={!!counselingModal} onOpenChange={(open) => !open && closeCounselingModal()}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader className={`${counselingModal ? getScoreTypeColorClass(counselingModal.scoreType) : ""} -mx-6 -mt-6 px-6 py-4 rounded-t-lg`}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+          <DialogHeader className={`${counselingModal ? getScoreTypeColorClass(counselingModal.scoreType) : ""} -mx-6 -mt-6 px-6 py-4 rounded-t-lg flex-shrink-0`}>
             <DialogTitle className="text-white">{counselingModal ? `${getScoreTypeName(counselingModal.scoreType)} 상담기록 등록` : "상담기록 등록"}</DialogTitle>
           </DialogHeader>
           
           {counselingModal && (
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2" ref={counselingContentRef}>
               {/* 자동 입력된 정보 */}
               <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
                 <div>
@@ -709,7 +735,20 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 border-t pt-4 gap-2">
+            <Button 
+              variant="outline" 
+              onClick={downloadPdf} 
+              disabled={isSubmitting || isDownloadingPdf}
+              className="mr-auto"
+            >
+              {isDownloadingPdf ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <FileDown className="h-4 w-4 mr-2" />
+              )}
+              PDF
+            </Button>
             <Button variant="outline" onClick={closeCounselingModal} disabled={isSubmitting}>
               취소
             </Button>
