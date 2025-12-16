@@ -425,18 +425,18 @@ const CounselingInquiry = () => {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>상담 기록 조회</CardTitle>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg">상담 기록 조회</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <div className="relative max-w-xs">
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <div className="relative flex-1 sm:max-w-xs">
               <Input
-                placeholder="학번, 이름, 학년반, 학년반번호 (예: 38, 386)"
+                placeholder="학번, 이름, 학년반 (예: 38, 386)"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
-                className="pr-8"
+                className="pr-8 h-9 text-sm"
               />
               {searchInput && (
                 <Button
@@ -454,83 +454,89 @@ const CounselingInquiry = () => {
                 </Button>
               )}
             </div>
-            <Button onClick={handleQuery} disabled={isLoading}>
-              {isLoading ? "조회 중..." : "조회"}
-            </Button>
-            {records.length > 0 && (
-              <Button onClick={handleExportCSV} variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                CSV 내보내기
+            <div className="flex gap-2">
+              <Button onClick={handleQuery} disabled={isLoading} className="flex-1 sm:flex-none h-9 text-sm">
+                {isLoading ? "조회 중..." : "조회"}
               </Button>
-            )}
+              {records.length > 0 && (
+                <Button onClick={handleExportCSV} variant="outline" className="flex-1 sm:flex-none h-9 text-sm">
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                  <span className="hidden sm:inline">CSV 내보내기</span>
+                  <span className="sm:hidden">CSV</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {studentName && (
-            <div className="text-sm text-muted-foreground">
-              학생: <span className="font-medium text-foreground">{studentName}</span> ({studentId})
+            <div className="text-xs sm:text-sm text-muted-foreground">
+              학생: <span className="font-medium text-foreground">{studentName}</span> {studentId && `(${studentId})`}
             </div>
           )}
 
           {records.length > 0 && (
-            <div className="border rounded-lg overflow-auto max-h-[500px]">
+            <div className="border rounded-lg overflow-auto max-h-[400px] sm:max-h-[500px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {(studentName.includes("전체") || studentName.includes("학년")) && <TableHead>학생</TableHead>}
-                    <TableHead>상담일</TableHead>
-                    <TableHead>상담사</TableHead>
-                    <TableHead>상담내용 미리보기</TableHead>
-                    <TableHead>기록일시</TableHead>
-                    <TableHead>작업</TableHead>
+                    {(studentName.includes("전체") || studentName.includes("학년")) && <TableHead className="text-xs sm:text-sm">학생</TableHead>}
+                    <TableHead className="text-xs sm:text-sm">상담일</TableHead>
+                    <TableHead className="text-xs sm:text-sm hidden sm:table-cell">상담사</TableHead>
+                    <TableHead className="text-xs sm:text-sm hidden md:table-cell">상담내용</TableHead>
+                    <TableHead className="text-xs sm:text-sm hidden lg:table-cell">기록일시</TableHead>
+                    <TableHead className="text-xs sm:text-sm">작업</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {records.map((record: any) => (
                     <TableRow key={record.id}>
                       {(studentName.includes("전체") || studentName.includes("학년")) && (
-                        <TableCell className="whitespace-nowrap">
-                          {record.studentName} ({record.studentId})
+                        <TableCell className="whitespace-nowrap text-xs sm:text-sm py-2 sm:py-4">
+                          {record.studentName}
+                          <span className="hidden sm:inline"> ({record.studentId})</span>
                         </TableCell>
                       )}
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap text-xs sm:text-sm py-2 sm:py-4">
                         {new Date(record.counseling_date).toLocaleDateString('ko-KR')}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">
                         {record.counselor_name}
                       </TableCell>
-                      <TableCell className="max-w-md truncate">
+                      <TableCell className="max-w-[200px] truncate text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell">
                         {record.content.substring(0, 50)}
                         {record.content.length > 50 ? "..." : ""}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap text-xs sm:text-sm py-2 sm:py-4 hidden lg:table-cell">
                         {new Date(record.created_at).toLocaleString('ko-KR')}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2 sm:py-4">
                         <div className="flex gap-1">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleShowDetail(record)}
+                            className="h-7 sm:h-8 px-2 text-xs"
                           >
-                            <FileText className="h-4 w-4 mr-1" />
-                            보기
+                            <FileText className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">보기</span>
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleOpenEditDialog(record)}
+                            className="h-7 sm:h-8 px-2 text-xs"
                           >
-                            <Pencil className="h-4 w-4 mr-1" />
-                            수정
+                            <Pencil className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">수정</span>
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleOpenDeleteDialog(record)}
-                            className="text-destructive hover:text-destructive"
+                            className="h-7 sm:h-8 px-2 text-xs text-destructive hover:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            삭제
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">삭제</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -545,46 +551,46 @@ const CounselingInquiry = () => {
 
       {/* 상담 상세 다이얼로그 */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>진로상담 상세 내역</DialogTitle>
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] flex flex-col p-4 sm:p-6">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-base sm:text-lg">진로상담 상세 내역</DialogTitle>
           </DialogHeader>
           {selectedRecord && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 py-3 sm:py-4 pr-1 sm:pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground">학생</div>
-                  <div className="text-base">{studentName} ({studentId})</div>
+                  <div className="text-xs sm:text-sm font-medium text-muted-foreground">학생</div>
+                  <div className="text-sm sm:text-base">{studentName} {studentId && `(${studentId})`}</div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground">상담사</div>
-                  <div className="text-base">{selectedRecord.counselor_name}</div>
+                  <div className="text-xs sm:text-sm font-medium text-muted-foreground">상담사</div>
+                  <div className="text-sm sm:text-base">{selectedRecord.counselor_name}</div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground">상담일</div>
-                  <div className="text-base">
+                  <div className="text-xs sm:text-sm font-medium text-muted-foreground">상담일</div>
+                  <div className="text-sm sm:text-base">
                     {new Date(selectedRecord.counseling_date).toLocaleDateString('ko-KR')}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground">기록일시</div>
-                  <div className="text-base">
+                  <div className="text-xs sm:text-sm font-medium text-muted-foreground">기록일시</div>
+                  <div className="text-sm sm:text-base">
                     {new Date(selectedRecord.created_at).toLocaleString('ko-KR')}
                   </div>
                 </div>
               </div>
               <div>
-                <div className="text-sm font-medium text-muted-foreground mb-2">상담 내용</div>
-                <div className="border rounded-lg p-4 bg-muted/30 whitespace-pre-wrap">
+                <div className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">상담 내용</div>
+                <div className="border rounded-lg p-3 sm:p-4 bg-muted/30 whitespace-pre-wrap text-sm">
                   {selectedRecord.content}
                 </div>
               </div>
               {selectedRecord.attachment_url && (
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-2">첨부 파일</div>
+                  <div className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">첨부 파일</div>
                   <Button
                     variant="link"
-                    className="p-0 h-auto text-primary hover:underline"
+                    className="p-0 h-auto text-primary hover:underline text-sm"
                     onClick={async () => {
                       try {
                         const response = await fetch(selectedRecord.attachment_url!);
@@ -592,7 +598,6 @@ const CounselingInquiry = () => {
                         const url = window.URL.createObjectURL(blob);
                         const link = document.createElement('a');
                         link.href = url;
-                        // URL에서 파일명 추출
                         const urlParts = selectedRecord.attachment_url!.split('/');
                         const fileName = decodeURIComponent(urlParts.pop() || '첨부파일');
                         link.download = fileName;
@@ -607,7 +612,7 @@ const CounselingInquiry = () => {
                       }
                     }}
                   >
-                    <Download className="w-4 h-4 mr-2" />
+                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     첨부 파일 다운로드
                   </Button>
                 </div>
@@ -619,55 +624,58 @@ const CounselingInquiry = () => {
 
       {/* 수정 다이얼로그 */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>상담 기록 수정</DialogTitle>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] flex flex-col p-4 sm:p-6">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-base sm:text-lg">상담 기록 수정</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-counselor-name">상담사 이름 *</Label>
+          <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 py-3 sm:py-4 pr-1 sm:pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="edit-counselor-name" className="text-xs sm:text-sm">상담사 이름 *</Label>
               <Input
                 id="edit-counselor-name"
                 value={editCounselorName}
                 onChange={(e) => setEditCounselorName(e.target.value)}
                 placeholder="상담사 이름을 입력하세요"
                 maxLength={50}
+                className="h-9 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-counseling-date">상담 날짜 *</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="edit-counseling-date" className="text-xs sm:text-sm">상담 날짜 *</Label>
               <Input
                 id="edit-counseling-date"
                 type="date"
                 value={editCounselingDate}
                 onChange={(e) => setEditCounselingDate(e.target.value)}
+                className="h-9 text-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-counseling-content">상담 내용 *</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="edit-counseling-content" className="text-xs sm:text-sm">상담 내용 *</Label>
               <Textarea
                 id="edit-counseling-content"
                 value={editCounselingContent}
                 onChange={(e) => setEditCounselingContent(e.target.value)}
                 placeholder="진로상담 내용을 상세히 입력하세요"
-                rows={8}
+                rows={6}
                 maxLength={2000}
+                className="text-sm resize-none min-h-[120px] sm:min-h-[150px]"
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {editCounselingContent.length} / 2000자
               </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-attachment">첨부 파일 (선택사항)</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="edit-attachment" className="text-xs sm:text-sm">첨부 파일 (선택사항)</Label>
               {selectedRecord?.attachment_url && !editAttachmentFile && (
-                <div className="text-sm text-muted-foreground mb-2">
+                <div className="text-xs sm:text-sm text-muted-foreground mb-2">
                   <a 
                     href={selectedRecord.attachment_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center text-primary hover:underline"
                   >
-                    <FileText className="w-4 h-4 mr-1" />
+                    <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                     현재 첨부 파일
                   </a>
                 </div>
@@ -677,27 +685,30 @@ const CounselingInquiry = () => {
                 type="file"
                 onChange={(e) => setEditAttachmentFile(e.target.files?.[0] || null)}
                 accept=".pdf,.doc,.docx,.hwp,.jpg,.jpeg,.png"
+                className="h-9 text-sm"
               />
               {editAttachmentFile && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   선택된 파일: {editAttachmentFile.name}
                 </p>
               )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 flex-col-reverse sm:flex-row gap-2 border-t pt-3 sm:pt-4">
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
               disabled={isSaving || isUploading}
+              className="w-full sm:w-auto h-9 text-sm"
             >
               취소
             </Button>
             <Button
               onClick={handleSaveEdit}
               disabled={isSaving || isUploading}
+              className="w-full sm:w-auto h-9 text-sm"
             >
-              {isUploading ? "파일 업로드 중..." : isSaving ? "저장 중..." : "저장"}
+              {isUploading ? "업로드 중..." : isSaving ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -705,14 +716,14 @@ const CounselingInquiry = () => {
 
       {/* 삭제 확인 다이얼로그 */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[95vw] max-w-md p-4 sm:p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle>상담 기록 삭제</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base sm:text-lg">상담 기록 삭제</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs sm:text-sm">
               정말로 이 상담 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
               {recordToDelete && (
-                <div className="mt-4 p-3 bg-muted rounded-md">
-                  <div className="text-sm">
+                <div className="mt-3 sm:mt-4 p-2.5 sm:p-3 bg-muted rounded-md">
+                  <div className="text-xs sm:text-sm">
                     <div className="font-medium text-foreground">
                       상담일: {new Date(recordToDelete.counseling_date).toLocaleDateString('ko-KR')}
                     </div>
@@ -724,12 +735,12 @@ const CounselingInquiry = () => {
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>취소</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto h-9 text-sm mt-0">취소</AlertDialogCancel>
             <AlertDialogAction asChild>
               <Button
                 onClick={handleDeleteRecord}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="w-full sm:w-auto h-9 text-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 삭제
               </Button>
