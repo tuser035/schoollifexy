@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.upload-email-attachment]
 verify_jwt = false
+
+[functions.notify-homeroom-teacher]
+verify_jwt = false

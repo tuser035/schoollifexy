@@ -299,6 +299,33 @@ const DemeritForm = () => {
       }
 
       toast.success(`${selectedStudent.name} 학생에게 벌점 ${selectedScore}점이 부여되었습니다`);
+
+      // 담임 선생님에게 알림 발송
+      try {
+        const { data: notifyResult, error: notifyError } = await supabase.functions.invoke('notify-homeroom-teacher', {
+          body: {
+            studentName: selectedStudent.name,
+            studentGrade: selectedStudent.grade,
+            studentClass: selectedStudent.class,
+            studentNumber: selectedStudent.number,
+            category: selectedCategory,
+            reason: finalReason,
+            score: selectedScore,
+            teacherName: user.name || '교사',
+          }
+        });
+
+        if (notifyError) {
+          console.error('Notify error:', notifyError);
+        } else if (notifyResult?.success) {
+          toast.info(`담임 선생님(${notifyResult.homeroomTeacher})에게 알림이 발송되었습니다`);
+        } else {
+          console.log('Notify result:', notifyResult?.message);
+        }
+      } catch (notifyErr) {
+        console.error('Failed to notify homeroom teacher:', notifyErr);
+        // 알림 실패는 벌점 부여 성공에 영향을 주지 않음
+      }
       
       // Reset form
       setSelectedStudent(null);
