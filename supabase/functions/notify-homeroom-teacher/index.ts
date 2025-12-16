@@ -23,6 +23,7 @@ interface NotifyRequest {
   counselorName?: string; // 상담자 이름 (이달의학생용)
   counselingContent?: string; // 상담 내용 (이달의학생용)
   giftBookUrl?: string; // 선물도서 이미지 URL (이달의학생용)
+  evidenceUrls?: string[]; // 증빙사진 URL 배열 (벌점용)
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -50,6 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
       counselorName,
       counselingContent,
       giftBookUrl,
+      evidenceUrls,
     } = requestData;
 
     console.log("Notify homeroom teacher request:", {
@@ -225,6 +227,16 @@ const handler = async (req: Request): Promise<Response> => {
               </table>
             </div>
             
+            ${evidenceUrls && evidenceUrls.length > 0 ? `
+            <div style="margin-top: 20px;">
+              <h3 style="color: #374151; font-size: 14px; margin-bottom: 10px;">📸 증빙사진</h3>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px; padding: 15px; background: #f9fafb; border-radius: 8px;">
+                ${evidenceUrls.map((url: string, index: number) => `
+                  <img src="${url}" alt="증빙사진 ${index + 1}" style="max-width: 150px; max-height: 150px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                `).join('')}
+              </div>
+            </div>
+            ` : ''}
             <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
               이 메일은 School Point 시스템에서 자동으로 발송되었습니다.<br>
               문의사항이 있으시면 교무실로 연락해 주세요.
