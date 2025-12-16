@@ -365,27 +365,27 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-8">
       {/* 상점 목록 */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-merit-blue flex items-center justify-between text-base">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4" />
+        <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
+          <CardTitle className="text-merit-blue flex items-center justify-between text-sm sm:text-base">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Award className="w-3 h-3 sm:w-4 sm:h-4" />
               내가 부여한 상점
             </div>
-            <Button variant="ghost" size="sm" onClick={loadRecords} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <Button variant="ghost" size="sm" onClick={loadRecords} disabled={loading} className="h-7 w-7 p-0">
+              <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-3 sm:px-6">
           {loading ? (
-            <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
+            <div className="text-center py-4 text-muted-foreground text-xs sm:text-sm">로딩 중...</div>
           ) : merits.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground text-sm">부여한 상점이 없습니다</div>
+            <div className="text-center py-4 text-muted-foreground text-xs sm:text-sm">부여한 상점이 없습니다</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -449,24 +449,24 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
 
       {/* 벌점 목록 */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-demerit-orange flex items-center justify-between text-base">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
+        <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
+          <CardTitle className="text-demerit-orange flex items-center justify-between text-sm sm:text-base">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
               내가 부여한 벌점
             </div>
-            <Button variant="ghost" size="sm" onClick={loadRecords} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <Button variant="ghost" size="sm" onClick={loadRecords} disabled={loading} className="h-7 w-7 p-0">
+              <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-3 sm:px-6">
           {loading ? (
-            <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
+            <div className="text-center py-4 text-muted-foreground text-xs sm:text-sm">로딩 중...</div>
           ) : demerits.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground text-sm">부여한 벌점이 없습니다</div>
+            <div className="text-center py-4 text-muted-foreground text-xs sm:text-sm">부여한 벌점이 없습니다</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -530,24 +530,24 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
 
       {/* 이달의 학생 목록 */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-monthly-green flex items-center justify-between text-base">
-            <div className="flex items-center gap-2">
-              <Star className="w-4 h-4" />
+        <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
+          <CardTitle className="text-monthly-green flex items-center justify-between text-sm sm:text-base">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Star className="w-3 h-3 sm:w-4 sm:h-4" />
               내가 추천한 이달의 학생
             </div>
-            <Button variant="ghost" size="sm" onClick={loadRecords} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <Button variant="ghost" size="sm" onClick={loadRecords} disabled={loading} className="h-7 w-7 p-0">
+              <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 px-3 sm:px-6">
           {loading ? (
-            <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
+            <div className="text-center py-4 text-muted-foreground text-xs sm:text-sm">로딩 중...</div>
           ) : monthly.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground text-sm">추천한 이달의 학생이 없습니다</div>
+            <div className="text-center py-4 text-muted-foreground text-xs sm:text-sm">추천한 이달의 학생이 없습니다</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -613,40 +613,41 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
 
       {/* 편집 다이얼로그 */}
       <Dialog open={editDialog.open} onOpenChange={(open) => !open && setEditDialog({ ...editDialog, open: false })}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-md p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">
               {editDialog.type === "merit" && "상점 수정"}
               {editDialog.type === "demerit" && "벌점 수정"}
               {editDialog.type === "monthly" && "이달의 학생 수정"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div>
-              <Label>분류</Label>
-              <Input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} />
+              <Label className="text-xs sm:text-sm">분류</Label>
+              <Input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="text-sm" />
             </div>
             <div>
-              <Label>사유</Label>
-              <Textarea value={editReason} onChange={(e) => setEditReason(e.target.value)} rows={3} />
+              <Label className="text-xs sm:text-sm">사유</Label>
+              <Textarea value={editReason} onChange={(e) => setEditReason(e.target.value)} rows={3} className="text-sm" />
             </div>
             {editDialog.type !== "monthly" && (
               <div>
-                <Label>점수</Label>
+                <Label className="text-xs sm:text-sm">점수</Label>
                 <Input
                   type="number"
                   min={1}
                   value={editScore}
                   onChange={(e) => setEditScore(parseInt(e.target.value) || 1)}
+                  className="text-sm"
                 />
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialog({ ...editDialog, open: false })}>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditDialog({ ...editDialog, open: false })} className="text-sm h-9">
               취소
             </Button>
-            <Button onClick={handleSaveEdit} disabled={isSaving}>
+            <Button onClick={handleSaveEdit} disabled={isSaving} className="text-sm h-9">
               {isSaving ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>

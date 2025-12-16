@@ -45,22 +45,22 @@ const TeacherDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">교사 대시보드</h1>
-            <p className="text-muted-foreground break-words max-w-[200px] sm:max-w-none">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground">교사 대시보드</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">
               {user.name}님 환영합니다
               {user.isHomeroom && user.grade && user.class && ` (${user.grade}-${user.class})`}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2 flex-shrink-0">
           {user.isAdmin && (
-            <Button onClick={() => navigate("/admin/dashboard")} variant="outline" size="sm">
+            <Button onClick={() => navigate("/admin/dashboard")} variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3">
               <Shield className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">관리자 대시보드</span>
             </Button>
           )}
-            <Button onClick={handleLogout} variant="outline" size="sm">
+            <Button onClick={handleLogout} variant="outline" size="sm" className="h-8 sm:h-9 px-2 sm:px-3">
               <LogOut className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">로그아웃</span>
             </Button>
@@ -68,41 +68,41 @@ const TeacherDashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="mb-6 overflow-x-auto">
+          <div className="mb-4 sm:mb-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
             <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-6">
               <TabsTrigger 
                 value="merit"
-                className="data-[state=active]:bg-merit-blue data-[state=active]:text-white whitespace-nowrap"
+                className="data-[state=active]:bg-merit-blue data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
               >
-                <Award className="w-4 h-4 mr-2" />
+                <Award className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>상점</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="demerit"
-                className="data-[state=active]:bg-demerit-orange data-[state=active]:text-white whitespace-nowrap"
+                className="data-[state=active]:bg-demerit-orange data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
               >
-                <AlertCircle className="w-4 h-4 mr-2" />
+                <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>벌점</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="monthly"
-                className="data-[state=active]:bg-monthly-green data-[state=active]:text-white whitespace-nowrap"
+                className="data-[state=active]:bg-monthly-green data-[state=active]:text-white whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
               >
-                <Star className="w-4 h-4 mr-2" />
+                <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>이달의학생</span>
               </TabsTrigger>
-              <TabsTrigger value="groups" className="whitespace-nowrap">
-                <Users className="w-4 h-4 mr-2" />
+              <TabsTrigger value="groups" className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>그룹</span>
               </TabsTrigger>
-              <TabsTrigger value="bulk-email" className="whitespace-nowrap">
-                <Mail className="w-4 h-4 mr-2" />
+              <TabsTrigger value="bulk-email" className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
+                <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>일괄발송</span>
               </TabsTrigger>
-              <TabsTrigger value="email-history" className="whitespace-nowrap">
-                <History className="w-4 h-4 mr-2" />
+              <TabsTrigger value="email-history" className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3">
+                <History className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 <span>발송이력</span>
               </TabsTrigger>
             </TabsList>
@@ -110,10 +110,10 @@ const TeacherDashboard = () => {
 
           <TabsContent value="merit">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-merit-blue">상점 부여</CardTitle>
+              <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
+                <CardTitle className="text-merit-blue text-base sm:text-lg">상점 부여</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6">
                 <MeritForm />
               </CardContent>
             </Card>
@@ -121,10 +121,10 @@ const TeacherDashboard = () => {
 
           <TabsContent value="demerit">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-demerit-orange">벌점 부여</CardTitle>
+              <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
+                <CardTitle className="text-demerit-orange text-base sm:text-lg">벌점 부여</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6">
                 <DemeritForm />
               </CardContent>
             </Card>
@@ -132,10 +132,10 @@ const TeacherDashboard = () => {
 
           <TabsContent value="monthly">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-monthly-green">이달의 학생 추천</CardTitle>
+              <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
+                <CardTitle className="text-monthly-green text-base sm:text-lg">이달의 학생 추천</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6">
                 <MonthlyForm />
               </CardContent>
             </Card>
