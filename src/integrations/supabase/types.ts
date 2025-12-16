@@ -1333,6 +1333,7 @@ export type Database = {
       teacher_get_email_history: {
         Args: { teacher_id_input: string }
         Returns: {
+          attachment_urls: string[]
           body: string
           id: string
           recipient_email: string
