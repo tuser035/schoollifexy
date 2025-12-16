@@ -587,7 +587,7 @@ const CounselingInquiry = () => {
               </div>
               {selectedRecord.attachment_url && (
                 <div>
-                  <div className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">첨부 파일</div>
+                  <div className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">선물 도서</div>
                   <Button
                     variant="link"
                     className="p-0 h-auto text-primary hover:underline text-sm"
@@ -599,7 +599,7 @@ const CounselingInquiry = () => {
                         const link = document.createElement('a');
                         link.href = url;
                         const urlParts = selectedRecord.attachment_url!.split('/');
-                        const fileName = decodeURIComponent(urlParts.pop() || '첨부파일');
+                        const fileName = decodeURIComponent(urlParts.pop() || '선물도서');
                         link.download = fileName;
                         document.body.appendChild(link);
                         link.click();
@@ -666,7 +666,7 @@ const CounselingInquiry = () => {
               </p>
             </div>
             <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="edit-attachment" className="text-xs sm:text-sm">첨부 파일 (선택사항)</Label>
+              <Label htmlFor="edit-attachment" className="text-xs sm:text-sm">선물 도서 (선택사항)</Label>
               {selectedRecord?.attachment_url && !editAttachmentFile && (
                 <div className="text-xs sm:text-sm text-muted-foreground mb-2">
                   <a 
