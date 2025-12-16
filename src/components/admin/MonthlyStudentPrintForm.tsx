@@ -335,16 +335,30 @@ const MonthlyStudentPrintForm = ({
   `;
 
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+    try {
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        toast.error("팝업이 차단되었습니다. 팝업 차단을 해제해주세요.");
+        return;
+      }
 
-    printWindow.document.write(getPrintHtml());
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
+      printWindow.document.write(getPrintHtml());
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        try {
+          printWindow.print();
+          printWindow.close();
+        } catch (printError) {
+          console.error("Print error:", printError);
+          toast.error("인쇄 중 오류가 발생했습니다. PDF 다운로드를 시도해주세요.");
+          printWindow.close();
+        }
+      }, 250);
+    } catch (error) {
+      console.error("Print window error:", error);
+      toast.error("인쇄 창을 열 수 없습니다. PDF 다운로드를 시도해주세요.");
+    }
   };
 
   const handleClose = () => {
