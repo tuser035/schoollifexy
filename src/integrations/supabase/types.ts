@@ -207,6 +207,7 @@ export type Database = {
       }
       email_history: {
         Row: {
+          attachment_urls: string[] | null
           body: string
           created_at: string | null
           id: string
@@ -223,6 +224,7 @@ export type Database = {
           subject: string
         }
         Insert: {
+          attachment_urls?: string[] | null
           body: string
           created_at?: string | null
           id?: string
@@ -239,6 +241,7 @@ export type Database = {
           subject: string
         }
         Update: {
+          attachment_urls?: string[] | null
           body?: string
           created_at?: string | null
           id?: string
