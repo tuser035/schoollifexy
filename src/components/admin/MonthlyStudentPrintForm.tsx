@@ -102,7 +102,7 @@ const MonthlyStudentPrintForm = ({
           .page-wrapper {
             width: 100%;
             min-height: 297mm;
-            padding: 15mm;
+            padding: 10mm 15mm 15mm 15mm;
             position: relative;
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%);
           }
@@ -152,7 +152,7 @@ const MonthlyStudentPrintForm = ({
           }
           .title {
             text-align: center;
-            font-size: 48pt;
+            font-size: 38.4pt;
             font-weight: bold;
             margin-bottom: 30px;
             color: #16a34a;
