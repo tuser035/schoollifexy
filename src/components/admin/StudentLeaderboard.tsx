@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Medal, Award, TrendingUp, Download, Upload, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
+import MonthlyStudentPrintForm from "./MonthlyStudentPrintForm";
 
 interface StudentRank {
   student_id: string;
@@ -58,6 +59,14 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 이달의학생 출력 폼 상태
+  const [printFormData, setPrintFormData] = useState<{
+    open: boolean;
+    studentName: string;
+    studentGrade: number;
+    studentClass: number;
+  } | null>(null);
 
   const loadLeaderboard = async () => {
     setIsLoading(true);
@@ -339,12 +348,23 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
       if (error) throw error;
 
       toast.success("상담 기록이 등록되었습니다");
-      closeCounselingModal();
       
-      // 상담 기록 조회로 자동 이동
-      if (onNavigateToCounseling) {
-        onNavigateToCounseling();
+      // 이달의학생인 경우 출력 폼 표시
+      if (counselingModal.scoreType === "monthly") {
+        setPrintFormData({
+          open: true,
+          studentName: counselingModal.student.name,
+          studentGrade: counselingModal.student.grade,
+          studentClass: counselingModal.student.class,
+        });
+      } else {
+        // 다른 점수 유형은 상담 기록 조회로 자동 이동
+        if (onNavigateToCounseling) {
+          onNavigateToCounseling();
+        }
       }
+      
+      closeCounselingModal();
     } catch (error: any) {
       toast.error(error.message || "상담 등록에 실패했습니다");
     } finally {
@@ -706,6 +726,17 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 이달의학생 출력 폼 */}
+      {printFormData && (
+        <MonthlyStudentPrintForm
+          open={printFormData.open}
+          onClose={() => setPrintFormData(null)}
+          studentName={printFormData.studentName}
+          studentGrade={printFormData.studentGrade}
+          studentClass={printFormData.studentClass}
+        />
+      )}
     </div>
   );
 };
