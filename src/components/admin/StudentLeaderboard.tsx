@@ -293,6 +293,16 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
     }
   };
 
+  // 점수 유형별 버튼 스타일 클래스
+  const getButtonColorClass = (type: "merits" | "demerits" | "monthly" | "total") => {
+    switch (type) {
+      case "merits": return "border-blue-500 text-blue-600 hover:bg-blue-50";
+      case "demerits": return "border-orange-500 text-orange-600 hover:bg-orange-50";
+      case "monthly": return "border-green-500 text-green-600 hover:bg-green-50";
+      case "total": return "border-purple-500 text-purple-600 hover:bg-purple-50";
+    }
+  };
+
   // PDF 다운로드
   const downloadPdf = async () => {
     if (!counselingModal) return;
@@ -903,7 +913,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
                     variant="outline"
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-8 text-xs sm:text-sm"
+                    className={`h-8 text-xs sm:text-sm ${getButtonColorClass(counselingModal.scoreType)}`}
                   >
                     <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                     파일 선택
