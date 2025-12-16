@@ -280,7 +280,7 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-20 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+        className="fixed top-3 sm:top-4 right-3 sm:right-4 z-50 flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-sm sm:text-base"
       >
         <MessageCircleHeart className="w-5 h-5" />
         <span className="font-medium">MindTalk</span>
