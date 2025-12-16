@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useRealtimeSync, EMAIL_HISTORY_TABLE } from "@/hooks/use-realtime-sync";
+import { Download } from "lucide-react";
 
 interface EmailHistoryRecord {
   id: string;
@@ -104,6 +105,52 @@ export const EmailHistory = () => {
     setTimeout(() => loadHistory(), 100);
   };
 
+  const handleExportCSV = () => {
+    if (history.length === 0) {
+      toast({
+        title: "내보내기 실패",
+        description: "내보낼 데이터가 없습니다",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // CSV 헤더
+    const headers = ["발송일시", "발신자", "발신자유형", "수신자", "수신이메일", "제목", "읽음상태", "읽은시간"];
+    
+    // CSV 데이터 생성
+    const csvData = history.map((record) => [
+      format(new Date(record.sent_at), "yyyy-MM-dd HH:mm:ss"),
+      record.sender_name,
+      record.sender_type === "admin" ? "관리자" : "교사",
+      record.recipient_name,
+      record.recipient_email,
+      `"${record.subject.replace(/"/g, '""')}"`,
+      record.opened ? "읽음" : "미열람",
+      record.opened_at ? format(new Date(record.opened_at), "yyyy-MM-dd HH:mm:ss") : "-",
+    ]);
+
+    // BOM 추가 (한글 인코딩)
+    const BOM = "\uFEFF";
+    const csvContent = BOM + [headers.join(","), ...csvData.map((row) => row.join(","))].join("\n");
+
+    // 다운로드
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `이메일발송이력_${format(new Date(), "yyyyMMdd_HHmmss")}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "내보내기 완료",
+      description: `${history.length}건의 이메일 이력을 CSV로 저장했습니다`,
+    });
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -158,6 +205,10 @@ export const EmailHistory = () => {
               </Button>
               <Button onClick={handleReset} variant="outline" disabled={loading}>
                 초기화
+              </Button>
+              <Button onClick={handleExportCSV} variant="outline" disabled={loading || history.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                CSV
               </Button>
             </div>
           </div>
