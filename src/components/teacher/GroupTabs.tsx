@@ -9,17 +9,17 @@ const GroupTabs = () => {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4">
+      <TabsList className="grid w-full grid-cols-2 mb-4 bg-groups-purple/10">
         <TabsTrigger 
           value="students"
-          className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          className="data-[state=active]:bg-groups-purple data-[state=active]:text-white"
         >
           <GraduationCap className="w-4 h-4 mr-2" />
           학생 선택
         </TabsTrigger>
         <TabsTrigger 
           value="teachers"
-          className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          className="data-[state=active]:bg-groups-purple data-[state=active]:text-white"
         >
           <Users className="w-4 h-4 mr-2" />
           교사 선택

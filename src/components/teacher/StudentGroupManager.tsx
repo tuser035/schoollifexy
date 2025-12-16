@@ -424,10 +424,10 @@ const StudentGroupManager = () => {
         </Card>
       )}
 
-      <Card>
+      <Card className="border-groups-purple/30">
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-groups-purple">
               <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               {viewingGroupOnly ? `"${loadedGroupName}" 그룹 멤버` : "학생 선택"}
             </div>
@@ -555,7 +555,7 @@ const StudentGroupManager = () => {
                 <Button 
                   onClick={handleSaveGroup} 
                   disabled={isLoading}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto bg-groups-purple hover:bg-groups-purple-hover"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   저장
@@ -566,9 +566,9 @@ const StudentGroupManager = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-groups-purple/30">
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">저장된 그룹 ({groups.length})</CardTitle>
+          <CardTitle className="text-base sm:text-lg text-groups-purple">저장된 그룹 ({groups.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
