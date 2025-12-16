@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog } from "lucide-react";
@@ -61,6 +61,66 @@ const menuItems = (user: AuthUser) => {
     ] : []),
   ];
   return items;
+};
+
+// 사이드바 콘텐츠 컴포넌트 (useSidebar 훅 사용을 위해 분리)
+const DashboardContent = ({ 
+  user, 
+  activeTab, 
+  setActiveTab, 
+  renderContent 
+}: { 
+  user: AuthUser; 
+  activeTab: string; 
+  setActiveTab: (tab: string) => void; 
+  renderContent: () => React.ReactNode;
+}) => {
+  const { setOpen } = useSidebar();
+
+  const handleMenuClick = (value: string) => {
+    setActiveTab(value);
+    setOpen(false); // 메뉴 선택 시 사이드바 자동 닫기
+  };
+
+  return (
+    <div className="flex flex-1 w-full">
+      <Sidebar collapsible="icon" className="border-r w-32 data-[state=collapsed]:w-14 landscape:w-48">
+        <SidebarHeader className="border-b p-2">
+          <SidebarTrigger className="ml-auto">
+            <ChevronLeft className="h-4 w-4" />
+          </SidebarTrigger>
+        </SidebarHeader>
+        <SidebarContent className="overflow-y-auto">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {menuItems(user).map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.value}>
+                      <SidebarMenuButton
+                        onClick={() => handleMenuClick(item.value)}
+                        isActive={activeTab === item.value}
+                        tooltip={item.label}
+                        className="w-full text-xs"
+                      >
+                        <Icon className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+
+      <main className="flex-1 p-2 sm:p-4 md:p-8 overflow-auto">
+        {renderContent()}
+      </main>
+    </div>
+  );
 };
 
 const AdminDashboard = () => {
@@ -170,43 +230,12 @@ const AdminDashboard = () => {
           </div>
         </header>
 
-        <div className="flex flex-1 w-full">
-          <Sidebar collapsible="icon" className="border-r w-32 data-[state=collapsed]:w-14 landscape:w-48">
-            <SidebarHeader className="border-b p-2">
-              <SidebarTrigger className="ml-auto">
-                <ChevronLeft className="h-4 w-4" />
-              </SidebarTrigger>
-            </SidebarHeader>
-            <SidebarContent className="overflow-y-auto">
-              <SidebarGroup>
-                <SidebarGroupContent>
-                  <SidebarMenu className="gap-1">
-                    {menuItems(user).map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <SidebarMenuItem key={item.value}>
-                          <SidebarMenuButton
-                            onClick={() => setActiveTab(item.value)}
-                            isActive={activeTab === item.value}
-                            tooltip={item.label}
-                            className="w-full text-xs"
-                          >
-                            <Icon className="h-4 w-4 flex-shrink-0" />
-                            <span className="truncate">{item.label}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </SidebarContent>
-          </Sidebar>
-
-          <main className="flex-1 p-2 sm:p-4 md:p-8 overflow-auto">
-            {renderContent()}
-          </main>
-        </div>
+        <DashboardContent 
+          user={user} 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          renderContent={renderContent} 
+        />
       </div>
     </SidebarProvider>
   );
