@@ -717,8 +717,11 @@ export type Database = {
         Returns: {
           body: string
           id: string
+          opened: boolean
+          opened_at: string
           recipient_email: string
           recipient_name: string
+          recipient_student_id: string
           sender_name: string
           sender_type: string
           sent_at: string
