@@ -16,6 +16,7 @@ interface MonthlyStudentPrintFormProps {
   studentClass: number;
   studentDept?: string;
   initialIntroduction?: string;
+  giftBookUrl?: string | null;
 }
 
 const MonthlyStudentPrintForm = ({
@@ -26,6 +27,7 @@ const MonthlyStudentPrintForm = ({
   studentClass,
   studentDept = "",
   initialIntroduction = "",
+  giftBookUrl = null,
 }: MonthlyStudentPrintFormProps) => {
   const [selectedMonth, setSelectedMonth] = useState<string>(String(new Date().getMonth() + 1));
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -262,6 +264,29 @@ const MonthlyStudentPrintForm = ({
             background: linear-gradient(145deg, #ffffff, #f0fdf4);
             box-shadow: inset 0 2px 10px rgba(22, 163, 74, 0.1);
           }
+          .gift-book-section {
+            margin-top: 20px;
+          }
+          .gift-book-label {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .gift-book-label::before {
+            content: "📚";
+            font-size: 18pt;
+          }
+          .gift-book-image {
+            width: 150px;
+            height: auto;
+            border: 3px solid #22c55e;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+          }
           .footer-decoration {
             text-align: center;
             margin-top: 20px;
@@ -308,6 +333,12 @@ const MonthlyStudentPrintForm = ({
               <div class="introduction-label">자기소개</div>
               <div class="introduction-content">${introduction || "-"}</div>
             </div>
+            ${giftBookUrl ? `
+            <div class="gift-book-section">
+              <div class="gift-book-label">선물 도서</div>
+              <img src="${giftBookUrl}" alt="선물 도서" class="gift-book-image" />
+            </div>
+            ` : ''}
             <div class="footer-decoration">
               ━━━ ✿ ━━━
             </div>
@@ -494,6 +525,20 @@ const MonthlyStudentPrintForm = ({
               className="resize-none text-sm min-h-[100px] sm:min-h-[120px]"
             />
           </div>
+
+          {/* 선물 도서 미리보기 */}
+          {giftBookUrl && (
+            <div>
+              <Label className="text-xs sm:text-sm">선물 도서</Label>
+              <div className="mt-2 p-3 border rounded-lg bg-muted/30">
+                <img 
+                  src={giftBookUrl} 
+                  alt="선물 도서" 
+                  className="w-24 h-auto rounded border shadow-sm"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 버튼 */}
