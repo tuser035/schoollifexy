@@ -3093,15 +3093,18 @@ const DataInquiry = () => {
 
       {/* 진로상담 기록 다이얼로그 */}
       <Dialog open={isCounselingDialogOpen} onOpenChange={setIsCounselingDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] flex flex-col p-4 sm:p-6">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-base sm:text-lg">상담 기록 - {selectedStudent?.학생}</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
               학생의 진로 상담 내용을 기록합니다.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-2" ref={counselingPdfRef}>
-            <div className="space-y-2">
+          <div 
+            className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 py-3 sm:py-4 pr-1 sm:pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full" 
+            ref={counselingPdfRef}
+          >
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="counselor-name" className="text-sm">상담사 이름 *</Label>
               <Input
                 id="counselor-name"
@@ -3109,55 +3112,55 @@ const DataInquiry = () => {
                 onChange={(e) => setCounselorName(e.target.value)}
                 placeholder="상담사 이름을 입력하세요"
                 maxLength={50}
-                className="text-sm"
+                className="text-sm h-9 sm:h-10"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="counseling-date" className="text-sm">상담 날짜 *</Label>
               <Input
                 id="counseling-date"
                 type="date"
                 value={counselingDate}
                 onChange={(e) => setCounselingDate(e.target.value)}
-                className="text-sm"
+                className="text-sm h-9 sm:h-10"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="counseling-content" className="text-sm">상담 내용 *</Label>
               <Textarea
                 id="counseling-content"
                 value={counselingContent}
                 onChange={(e) => setCounselingContent(e.target.value)}
                 placeholder="상담 내용을 상세히 입력하세요"
-                rows={8}
+                rows={6}
                 maxLength={2000}
-                className="text-sm min-h-[150px]"
+                className="text-sm min-h-[120px] sm:min-h-[150px] resize-none"
               />
               <p className="text-xs text-muted-foreground">
                 {counselingContent.length} / 2000자
               </p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label className="text-sm">첨부 파일 (선택사항)</Label>
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-sm"
+                  className="text-xs sm:text-sm h-8"
                   size="sm"
                 >
-                  <FileUp className="w-4 h-4 mr-2" />
+                  <FileUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                   파일
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => cameraInputRef.current?.click()}
-                  className="text-sm"
+                  className="text-xs sm:text-sm h-8"
                   size="sm"
                 >
-                  <Camera className="w-4 h-4 mr-2" />
+                  <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                   카메라
                 </Button>
                 <input
@@ -3202,35 +3205,37 @@ const DataInquiry = () => {
               )}
             </div>
           </div>
-          <DialogFooter className="flex-shrink-0 flex-col sm:flex-row gap-2 border-t pt-4">
+          <DialogFooter className="flex-shrink-0 flex-col-reverse sm:flex-row gap-2 border-t pt-3 sm:pt-4">
             <Button
               variant="outline"
               onClick={downloadCounselingPdf}
               disabled={isSavingCounseling || isDownloadingCounselingPdf}
-              className="w-full sm:w-auto sm:mr-auto"
+              className="w-full sm:w-auto sm:mr-auto h-9 text-sm"
             >
               {isDownloadingCounselingPdf ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 animate-spin" />
               ) : (
-                <FileDown className="w-4 h-4 mr-2" />
+                <FileDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
               )}
               PDF
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsCounselingDialogOpen(false)}
-              disabled={isSavingCounseling}
-              className="w-full sm:w-auto"
-            >
-              취소
-            </Button>
-            <Button 
-              onClick={handleSaveCounseling} 
-              disabled={isSavingCounseling}
-              className="w-full sm:w-auto"
-            >
-              {isSavingCounseling ? "저장 중..." : "저장"}
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => setIsCounselingDialogOpen(false)}
+                disabled={isSavingCounseling}
+                className="flex-1 sm:flex-none h-9 text-sm"
+              >
+                취소
+              </Button>
+              <Button 
+                onClick={handleSaveCounseling} 
+                disabled={isSavingCounseling}
+                className="flex-1 sm:flex-none h-9 text-sm"
+              >
+                {isSavingCounseling ? "저장 중..." : "저장"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
