@@ -549,6 +549,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
                 studentNumber: counselingModal.student.number,
                 counselorName: counselorName,
                 counselingContent: counselingContent,
+                giftBookUrl: attachmentUrl,
               },
             }
           );
