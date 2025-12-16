@@ -187,6 +187,16 @@ const handler = async (req: Request): Promise<Response> => {
           messageId: emailData?.id || "resend-api",
         });
 
+        // 첨부파일 URL 배열 생성
+        let attachmentUrlsArray: string[] | null = null;
+        if (attachmentInfo) {
+          if (attachmentInfo.url) {
+            attachmentUrlsArray = [attachmentInfo.url];
+          } else if (attachmentInfo.files && attachmentInfo.files.length > 0) {
+            attachmentUrlsArray = attachmentInfo.files.map(f => f.url);
+          }
+        }
+
         // 이메일 히스토리 기록
         // 교사에게 발송 시 recipient_student_id는 null로 저장
         emailHistoryRecords.push({
@@ -200,6 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
           body: body,
           sent_at: new Date().toISOString(),
           resend_email_id: emailData?.id || null,
+          attachment_urls: attachmentUrlsArray,
         });
       } catch (error: any) {
         console.error(`Failed to send email to ${student.name}:`, error);

@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Mail, RefreshCw, Users, GraduationCap, CalendarIcon, X, Download } from "lucide-react";
+import { Mail, RefreshCw, Users, GraduationCap, CalendarIcon, X, Download, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay, endOfDay, isWithinInterval } from "date-fns";
@@ -37,6 +37,7 @@ interface EmailRecord {
   subject: string;
   body: string;
   sent_at: string;
+  attachment_urls: string[] | null;
 }
 
 const PAGE_SIZE = 5;
@@ -84,7 +85,8 @@ const EmailHistory = () => {
         recipient_student_id: item.recipient_student_id ?? null,
         subject: item.subject,
         body: item.body,
-        sent_at: item.sent_at
+        sent_at: item.sent_at,
+        attachment_urls: item.attachment_urls ?? null
       }));
       
       setEmails(emailData);
@@ -294,7 +296,12 @@ const EmailHistory = () => {
                   <div className="text-muted-foreground text-[10px]">{email.recipient_email}</div>
                 </TableCell>
                 <TableCell className="text-xs py-2">
-                  <div className="truncate max-w-[200px]">{email.subject}</div>
+                  <div className="flex items-center gap-1">
+                    <span className="truncate max-w-[180px]">{email.subject}</span>
+                    {email.attachment_urls && email.attachment_urls.length > 0 && (
+                      <Paperclip className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -465,6 +472,34 @@ const EmailHistory = () => {
                 <span className="text-muted-foreground">제목</span>
                 <span className="font-medium">{selectedEmail.subject}</span>
               </div>
+
+              {/* 첨부파일 다운로드 */}
+              {selectedEmail.attachment_urls && selectedEmail.attachment_urls.length > 0 && (
+                <div className="border-t pt-4">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
+                    <Paperclip className="w-3 h-3" />
+                    첨부파일 ({selectedEmail.attachment_urls.length}개)
+                  </span>
+                  <div className="space-y-2">
+                    {selectedEmail.attachment_urls.map((url, index) => {
+                      const fileName = url.split('/').pop() || `첨부파일_${index + 1}`;
+                      return (
+                        <a
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+                        >
+                          <Download className="w-4 h-4 text-primary" />
+                          <span className="truncate flex-1">{decodeURIComponent(fileName)}</span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               
               <div className="border-t pt-4">
                 <span className="text-sm text-muted-foreground block mb-2">본문</span>
