@@ -22,6 +22,7 @@ interface NotifyRequest {
   teacherName?: string; // 벌점을 부여한 교사 이름
   counselorName?: string; // 상담자 이름 (이달의학생용)
   counselingContent?: string; // 상담 내용 (이달의학생용)
+  giftBookUrl?: string; // 선물도서 이미지 URL (이달의학생용)
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -48,6 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
       teacherName,
       counselorName,
       counselingContent,
+      giftBookUrl,
     } = requestData;
 
     console.log("Notify homeroom teacher request:", {
@@ -156,6 +158,15 @@ const handler = async (req: Request): Promise<Response> => {
               <h3 style="color: #374151; font-size: 14px; margin-bottom: 10px;">📝 상담 내용</h3>
               <div style="background: #f9fafb; padding: 15px; border-radius: 8px; color: #4b5563; font-size: 14px; line-height: 1.7;">
                 ${counselingContent.replace(/\n/g, '<br>')}
+              </div>
+            </div>
+            ` : ''}
+            
+            ${giftBookUrl ? `
+            <div style="margin-top: 20px;">
+              <h3 style="color: #374151; font-size: 14px; margin-bottom: 10px;">📚 선물도서</h3>
+              <div style="text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px;">
+                <img src="${giftBookUrl}" alt="선물도서" style="max-width: 200px; max-height: 280px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
               </div>
             </div>
             ` : ''}
