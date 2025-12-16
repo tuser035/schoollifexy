@@ -358,23 +358,26 @@ const MonthlyStudentPrintForm = ({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="bg-green-500 -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
-          <DialogTitle className="text-white text-lg">이달의학생 출력 양식</DialogTitle>
+      <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh] flex flex-col p-4 sm:p-6">
+        <DialogHeader className="bg-green-500 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg flex-shrink-0">
+          <DialogTitle className="text-white text-base sm:text-lg">이달의학생 출력 양식</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 pt-4" ref={printRef}>
+        <div 
+          className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 pt-3 sm:pt-4 pr-1 sm:pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full" 
+          ref={printRef}
+        >
           {/* 학교 로고 업로드 */}
-          <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
+          <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
             <div className="flex-shrink-0">
               <div
-                className="w-[100px] h-[60px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500 transition-colors overflow-hidden bg-background"
+                className="w-[80px] h-[50px] sm:w-[100px] sm:h-[60px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500 transition-colors overflow-hidden bg-background"
                 onClick={() => logoInputRef.current?.click()}
               >
                 {logoPreview ? (
                   <img src={logoPreview} alt="학교 로고" className="w-full h-full object-contain p-1" />
                 ) : (
-                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                  <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                 )}
               </div>
               <input
@@ -385,15 +388,15 @@ const MonthlyStudentPrintForm = ({
                 onChange={handleLogoUpload}
               />
             </div>
-            <div className="flex-1">
-              <Label className="text-sm font-medium">학교 로고 (선택)</Label>
-              <p className="text-xs text-muted-foreground mt-1">출력물 상단에 표시됩니다</p>
+            <div className="flex-1 min-w-0">
+              <Label className="text-xs sm:text-sm font-medium">학교 로고 (선택)</Label>
+              <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1">출력물 상단에 표시됩니다</p>
             </div>
             {logoPreview && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive"
+                className="text-destructive hover:text-destructive h-8 w-8 p-0 flex-shrink-0"
                 onClick={() => {
                   setLogoPreview(null);
                   if (logoInputRef.current) logoInputRef.current.value = "";
@@ -408,7 +411,7 @@ const MonthlyStudentPrintForm = ({
           <div className="text-center">
             <div className="flex items-center justify-center gap-2">
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-20">
+                <SelectTrigger className="w-16 sm:w-20 h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -419,25 +422,25 @@ const MonthlyStudentPrintForm = ({
                   ))}
                 </SelectContent>
               </Select>
-              <span className="text-2xl font-bold text-green-600">월의 학생</span>
+              <span className="text-xl sm:text-2xl font-bold text-green-600">월의 학생</span>
             </div>
           </div>
 
           {/* 정보 영역 */}
-          <div className="flex gap-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             {/* 사진 업로드 */}
-            <div className="flex-shrink-0">
-              <Label className="text-sm mb-2 block">학생 증명사진</Label>
+            <div className="flex-shrink-0 flex flex-col items-center sm:items-start">
+              <Label className="text-xs sm:text-sm mb-2 block">학생 증명사진</Label>
               <div
-                className="w-[240px] h-[320px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500 transition-colors overflow-hidden bg-muted/30"
+                className="w-[160px] h-[200px] sm:w-[200px] sm:h-[260px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500 transition-colors overflow-hidden bg-muted/30"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {photoPreview ? (
                   <img src={photoPreview} alt="학생 사진" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center text-muted-foreground">
-                    <Upload className="h-10 w-10 mx-auto mb-2" />
-                    <span className="text-sm">사진 업로드</span>
+                    <Upload className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-2" />
+                    <span className="text-xs sm:text-sm">사진 업로드</span>
                   </div>
                 )}
               </div>
@@ -452,66 +455,71 @@ const MonthlyStudentPrintForm = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full mt-2 text-destructive hover:text-destructive"
+                  className="w-[160px] sm:w-[200px] mt-2 text-destructive hover:text-destructive h-8 text-xs sm:text-sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     setPhotoPreview(null);
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
                 >
-                  <X className="h-4 w-4 mr-1" />
+                  <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                   삭제
                 </Button>
               )}
             </div>
 
             {/* 정보 입력 */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-3 sm:space-y-4">
               <div>
-                <Label htmlFor="name">이름</Label>
+                <Label htmlFor="name" className="text-xs sm:text-sm">이름</Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="이름 입력"
+                  className="h-9 text-sm"
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label htmlFor="grade">학년</Label>
+                  <Label htmlFor="grade" className="text-xs sm:text-sm">학년</Label>
                   <Input
                     id="grade"
                     value={grade}
                     onChange={(e) => setGrade(e.target.value)}
                     placeholder="예: 2학년"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="classNum">반</Label>
+                  <Label htmlFor="classNum" className="text-xs sm:text-sm">반</Label>
                   <Input
                     id="classNum"
                     value={classNum}
                     onChange={(e) => setClassNum(e.target.value)}
                     placeholder="예: 3반"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="dept">학과</Label>
+                  <Label htmlFor="dept" className="text-xs sm:text-sm">학과</Label>
                   <Input
                     id="dept"
                     value={dept}
                     onChange={(e) => setDept(e.target.value)}
                     placeholder="예: 전자과"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="dreamJob">장래희망</Label>
+                <Label htmlFor="dreamJob" className="text-xs sm:text-sm">장래희망</Label>
                 <Input
                   id="dreamJob"
                   value={dreamJob}
                   onChange={(e) => setDreamJob(e.target.value)}
                   placeholder="장래희망 입력"
+                  className="h-9 text-sm"
                 />
               </div>
             </div>
@@ -519,40 +527,42 @@ const MonthlyStudentPrintForm = ({
 
           {/* 자기소개 */}
           <div>
-            <Label htmlFor="introduction">자기소개</Label>
+            <Label htmlFor="introduction" className="text-xs sm:text-sm">자기소개</Label>
             <Textarea
               id="introduction"
               value={introduction}
               onChange={(e) => setIntroduction(e.target.value)}
               placeholder="자기소개를 입력하세요"
-              rows={6}
-              className="resize-none"
+              rows={5}
+              className="resize-none text-sm min-h-[100px] sm:min-h-[120px]"
             />
           </div>
         </div>
 
         {/* 버튼 */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t flex-shrink-0">
           <Button 
             variant="outline" 
             onClick={handleDownloadPdf}
             disabled={isDownloadingPdf}
-            className="mr-auto"
+            className="sm:mr-auto h-9 text-sm"
           >
             {isDownloadingPdf ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
             ) : (
-              <FileDown className="h-4 w-4 mr-2" />
+              <FileDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
             )}
             PDF
           </Button>
-          <Button variant="outline" onClick={handleClose}>
-            닫기
-          </Button>
-          <Button onClick={handlePrint} className="bg-green-600 hover:bg-green-700">
-            <Printer className="h-4 w-4 mr-2" />
-            출력
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClose} className="flex-1 sm:flex-none h-9 text-sm">
+              닫기
+            </Button>
+            <Button onClick={handlePrint} className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 h-9 text-sm">
+              <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+              출력
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
