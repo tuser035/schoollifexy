@@ -66,11 +66,51 @@ Deno.serve(async (req) => {
     const safeFilename = filename.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
     const path = `bulk-email/${user_id}/${timestamp}_${randomId}_${safeFilename}`
 
+    // MIME type mapping for unsupported types
+    const mimeTypeMap: Record<string, string> = {
+      'application/octet-stream': 'application/octet-stream',
+    }
+    
+    // Get file extension and determine proper MIME type
+    const ext = filename.split('.').pop()?.toLowerCase() || ''
+    const extMimeMap: Record<string, string> = {
+      'md': 'text/markdown',
+      'txt': 'text/plain',
+      'csv': 'text/csv',
+      'json': 'application/json',
+      'xml': 'application/xml',
+      'html': 'text/html',
+      'css': 'text/css',
+      'js': 'text/javascript',
+      'pdf': 'application/pdf',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'xls': 'application/vnd.ms-excel',
+      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'ppt': 'application/vnd.ms-powerpoint',
+      'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'zip': 'application/zip',
+      'png': 'image/png',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+      'svg': 'image/svg+xml',
+    }
+    
+    // Use extension-based MIME type if content_type is generic/unsupported
+    let finalContentType = content_type || 'application/octet-stream'
+    if (finalContentType === 'application/octet-stream' && extMimeMap[ext]) {
+      finalContentType = extMimeMap[ext]
+    }
+    
+    console.log('Final content type:', finalContentType, 'for extension:', ext)
+
     // Upload file using service role (bypasses RLS)
     const { error: uploadError } = await supabase.storage
       .from('email-attachments')
       .upload(path, binary, {
-        contentType: content_type || 'application/octet-stream',
+        contentType: finalContentType,
         upsert: false,
       })
 
