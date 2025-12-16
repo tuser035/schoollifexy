@@ -283,6 +283,16 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
     }
   };
 
+  // 점수 유형별 포커스 링 클래스
+  const getFocusRingClass = (type: "merits" | "demerits" | "monthly" | "total") => {
+    switch (type) {
+      case "merits": return "focus-visible:ring-blue-500";
+      case "demerits": return "focus-visible:ring-orange-500";
+      case "monthly": return "focus-visible:ring-green-500";
+      case "total": return "focus-visible:ring-purple-500";
+    }
+  };
+
   // PDF 다운로드
   const downloadPdf = async () => {
     if (!counselingModal) return;
@@ -861,7 +871,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
                   value={counselorName}
                   onChange={(e) => setCounselorName(e.target.value)}
                   placeholder="상담자 이름을 입력하세요"
-                  className="h-9 sm:h-10 text-sm pl-1.5"
+                  className={`h-9 sm:h-10 text-sm pl-1.5 ${getFocusRingClass(counselingModal.scoreType)}`}
                 />
               </div>
 
@@ -874,7 +884,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
                   onChange={(e) => setCounselingContent(e.target.value)}
                   placeholder="상담 내용을 입력하세요"
                   rows={4}
-                  className="text-sm resize-none pl-1.5"
+                  className={`text-sm resize-none pl-1.5 ${getFocusRingClass(counselingModal.scoreType)}`}
                 />
               </div>
 
