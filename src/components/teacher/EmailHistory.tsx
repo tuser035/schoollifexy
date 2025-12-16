@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Mail, RefreshCw, ChevronDown, Users, GraduationCap, CalendarIcon, X, Download } from "lucide-react";
+import { Mail, RefreshCw, Users, GraduationCap, CalendarIcon, X, Download } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay, endOfDay, isWithinInterval } from "date-fns";
@@ -232,10 +232,36 @@ const EmailHistory = () => {
   const studentEmails = filteredEmails.filter(e => e.recipient_student_id !== null);
   const teacherEmails = filteredEmails.filter(e => e.recipient_student_id === null);
 
+  // 무한 스크롤을 위한 IntersectionObserver
+  const studentObserverRef = useRef<HTMLDivElement | null>(null);
+  const teacherObserverRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            if (entry.target === studentObserverRef.current && studentEmails.length > studentDisplayCount) {
+              setStudentDisplayCount((prev) => prev + PAGE_SIZE);
+            } else if (entry.target === teacherObserverRef.current && teacherEmails.length > teacherDisplayCount) {
+              setTeacherDisplayCount((prev) => prev + PAGE_SIZE);
+            }
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (studentObserverRef.current) observer.observe(studentObserverRef.current);
+    if (teacherObserverRef.current) observer.observe(teacherObserverRef.current);
+
+    return () => observer.disconnect();
+  }, [studentEmails.length, teacherEmails.length, studentDisplayCount, teacherDisplayCount]);
+
   const renderEmailTable = (
     emailList: EmailRecord[], 
-    displayCount: number, 
-    setDisplayCount: React.Dispatch<React.SetStateAction<number>>
+    displayCount: number,
+    observerRef: React.MutableRefObject<HTMLDivElement | null>
   ) => {
     if (emailList.length === 0) {
       return (
@@ -275,15 +301,13 @@ const EmailHistory = () => {
           </TableBody>
         </Table>
         {emailList.length > displayCount && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full mt-2 text-xs text-muted-foreground"
-            onClick={() => setDisplayCount((prev) => prev + PAGE_SIZE)}
+          <div 
+            ref={observerRef}
+            className="flex items-center justify-center py-3 text-xs text-muted-foreground"
           >
-            <ChevronDown className="w-3 h-3 mr-1" />
-            ... 더보기 ({emailList.length - displayCount}건)
-          </Button>
+            <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+            더 불러오는 중... ({emailList.length - displayCount}건 남음)
+          </div>
         )}
       </div>
     );
@@ -407,10 +431,10 @@ const EmailHistory = () => {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="student" className="mt-0">
-                {renderEmailTable(studentEmails, studentDisplayCount, setStudentDisplayCount)}
+                {renderEmailTable(studentEmails, studentDisplayCount, studentObserverRef)}
               </TabsContent>
               <TabsContent value="teacher" className="mt-0">
-                {renderEmailTable(teacherEmails, teacherDisplayCount, setTeacherDisplayCount)}
+                {renderEmailTable(teacherEmails, teacherDisplayCount, teacherObserverRef)}
               </TabsContent>
             </Tabs>
           )}
