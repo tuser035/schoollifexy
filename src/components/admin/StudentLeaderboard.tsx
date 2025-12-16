@@ -69,6 +69,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
     studentGrade: number;
     studentClass: number;
     studentDept: string;
+    introduction: string;
   } | null>(null);
 
   const loadLeaderboard = async () => {
@@ -569,6 +570,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
           studentGrade: counselingModal.student.grade,
           studentClass: counselingModal.student.class,
           studentDept: getDeptName(deptCode),
+          introduction: counselingContent,
         });
       } else {
         // 다른 점수 유형은 상담 기록 조회로 자동 이동
@@ -970,6 +972,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
           studentGrade={printFormData.studentGrade}
           studentClass={printFormData.studentClass}
           studentDept={printFormData.studentDept}
+          initialIntroduction={printFormData.introduction}
         />
       )}
     </div>
