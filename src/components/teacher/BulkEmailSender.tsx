@@ -516,9 +516,9 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     : 0;
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col border-bulk-email-pink/30">
       <CardHeader className="flex-shrink-0">
-        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-bulk-email-pink">
           <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
           일괄 메시지 발송
         </CardTitle>
@@ -529,12 +529,12 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
           <div>
             <Label className="text-sm sm:text-base mb-2 block">수신자 유형</Label>
             <Tabs value={recipientType} onValueChange={(v) => setRecipientType(v as "student" | "teacher")}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="student">
+              <TabsList className="grid w-full grid-cols-2 bg-bulk-email-pink/10">
+                <TabsTrigger value="student" className="data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white">
                   <GraduationCap className="w-4 h-4 mr-2" />
                   학생
                 </TabsTrigger>
-                <TabsTrigger value="teacher">
+                <TabsTrigger value="teacher" className="data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white">
                   <Users className="w-4 h-4 mr-2" />
                   교사
                 </TabsTrigger>
@@ -712,7 +712,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
               type="button"
               onClick={handleSend}
               disabled={isSending || !selectedGroup || isUploading}
-              className="flex-1 h-11 text-sm sm:text-base font-medium"
+              className="flex-1 h-11 text-sm sm:text-base font-medium bg-bulk-email-pink hover:bg-bulk-email-pink-hover"
               size="default"
             >
               <Send className="w-4 h-4 mr-2" />
