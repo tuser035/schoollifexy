@@ -852,7 +852,7 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
           
           {counselingModal && (
             <div 
-              className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-1 sm:pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full" 
+              className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pl-1 pr-1 sm:pl-2 sm:pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full" 
               ref={counselingContentRef}
             >
               {/* 자동 입력된 정보 */}
