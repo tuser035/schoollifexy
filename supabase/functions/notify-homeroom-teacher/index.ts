@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 interface NotifyRequest {
-  notificationType: "demerit" | "monthly"; // 알림 유형
+  notificationType: "demerit" | "monthly" | "merit"; // 알림 유형
   studentName: string;
   studentGrade: number;
   studentClass: number;
@@ -180,6 +180,70 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         </div>
       `;
+    } else if (notificationType === "merit") {
+      // 상점 알림
+      emailSubject = `⭐ [상점 알림] ${studentGrade}학년 ${studentClass}반 ${studentName} 학생 상점 부여 안내`;
+      
+      emailHtml = `
+        <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 20px; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 20px;">⭐ 학생 상점 부여 알림</h1>
+          </div>
+          
+          <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
+            <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              담당 학급 학생의 <strong style="color: #2563eb;">상점 부여</strong> 내역을 알려드립니다. 🎉
+            </p>
+            
+            <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; width: 100px;">학생</td>
+                  <td style="padding: 8px 0; color: #111827; font-weight: 600;">
+                    ${studentName} (${studentGrade}학년 ${studentClass}반 ${studentNumber}번)
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">항목</td>
+                  <td style="padding: 8px 0; color: #111827;">${category || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">사유</td>
+                  <td style="padding: 8px 0; color: #111827;">${(reason || '-').replace(/\n/g, '<br>')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">상점</td>
+                  <td style="padding: 8px 0; color: #2563eb; font-weight: 700; font-size: 18px;">${score || 0}점</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">부여 교사</td>
+                  <td style="padding: 8px 0; color: #111827;">${teacherName || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">일시</td>
+                  <td style="padding: 8px 0; color: #111827;">${currentDate}</td>
+                </tr>
+              </table>
+            </div>
+            
+            ${evidenceUrls && evidenceUrls.length > 0 ? `
+            <div style="margin-top: 20px;">
+              <h3 style="color: #374151; font-size: 14px; margin-bottom: 10px;">📸 증빙사진</h3>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px; padding: 15px; background: #f9fafb; border-radius: 8px;">
+                ${evidenceUrls.map((url: string, index: number) => `
+                  <img src="${url}" alt="증빙사진 ${index + 1}" style="max-width: 150px; max-height: 150px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                `).join('')}
+              </div>
+            </div>
+            ` : ''}
+            <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+              이 메일은 School Life 시스템에서 자동으로 발송되었습니다.<br>
+              문의사항이 있으시면 gyeongjuhs@naver.com로 연락해 주세요.
+            </p>
+          </div>
+        </div>
+      `;
     } else {
       // 벌점 알림 (기존 로직)
       emailSubject = `[벌점 알림] ${studentGrade}학년 ${studentClass}반 ${studentName} 학생 벌점 부여 안내`;
@@ -248,7 +312,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // 이메일 발송
     const emailResponse = await resend.emails.send({
-      from: `School Point <${fromEmail}>`,
+      from: `School Life <${fromEmail}>`,
       replyTo: replyToEmail,
       to: [homeroomTeacher.teacher_email],
       subject: emailSubject,
