@@ -227,18 +227,19 @@ export const EmailHistory = () => {
           <CardDescription>이메일 발송 이력을 조회할 수 있습니다</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-            <div>
-              <Label>검색</Label>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-4">
+            <div className="col-span-2 md:col-span-1">
+              <Label className="text-xs md:text-sm">검색</Label>
               <Input
                 placeholder="이름, 이메일, 제목 검색"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                className="h-9 md:h-10 text-sm"
               />
             </div>
             <div>
-              <Label>수신자 유형</Label>
+              <Label className="text-xs md:text-sm">수신자 유형</Label>
               <Select value={recipientType} onValueChange={(value) => {
                 setRecipientType(value);
                 // 유형 변경 시 관련 필터 초기화
@@ -251,7 +252,7 @@ export const EmailHistory = () => {
                   setSelectedClass("all");
                 }
               }}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 md:h-10 text-sm">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -266,9 +267,9 @@ export const EmailHistory = () => {
             {recipientType !== "teacher" && (
               <>
                 <div>
-                  <Label>학년</Label>
+                  <Label className="text-xs md:text-sm">학년</Label>
                   <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9 md:h-10 text-sm">
                       <SelectValue placeholder="전체" />
                     </SelectTrigger>
                     <SelectContent>
@@ -280,9 +281,9 @@ export const EmailHistory = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label>반</Label>
+                  <Label className="text-xs md:text-sm">반</Label>
                   <Select value={selectedClass} onValueChange={setSelectedClass}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9 md:h-10 text-sm">
                       <SelectValue placeholder="전체" />
                     </SelectTrigger>
                     <SelectContent>
@@ -302,18 +303,19 @@ export const EmailHistory = () => {
             {recipientType === "teacher" && (
               <>
                 <div>
-                  <Label>교사 이름</Label>
+                  <Label className="text-xs md:text-sm">교사 이름</Label>
                   <Input
                     placeholder="교사 이름 검색"
                     value={teacherNameSearch}
                     onChange={(e) => setTeacherNameSearch(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                    className="h-9 md:h-10 text-sm"
                   />
                 </div>
                 <div>
-                  <Label>템플릿</Label>
+                  <Label className="text-xs md:text-sm">템플릿</Label>
                   <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9 md:h-10 text-sm">
                       <SelectValue placeholder="전체" />
                     </SelectTrigger>
                     <SelectContent>
@@ -329,21 +331,22 @@ export const EmailHistory = () => {
               </>
             )}
             
-            <div className="flex items-end gap-2">
-              <Button onClick={handleSearch} disabled={loading}>
+            <div className="col-span-2 md:col-span-1 flex items-end gap-2">
+              <Button onClick={handleSearch} disabled={loading} className="flex-1 md:flex-none h-9 md:h-10 text-sm">
                 조회
               </Button>
-              <Button onClick={handleReset} variant="outline" disabled={loading}>
+              <Button onClick={handleReset} variant="outline" disabled={loading} className="flex-1 md:flex-none h-9 md:h-10 text-sm">
                 초기화
               </Button>
-              <Button onClick={handleExportCSV} variant="outline" disabled={loading || history.length === 0}>
-                <Download className="h-4 w-4 mr-2" />
-                CSV
+              <Button onClick={handleExportCSV} variant="outline" disabled={loading || history.length === 0} className="h-9 md:h-10 px-3">
+                <Download className="h-4 w-4" />
+                <span className="hidden md:inline ml-2">CSV</span>
               </Button>
             </div>
           </div>
 
-          <div className="border rounded-lg">
+          {/* 데스크톱 테이블 */}
+          <div className="hidden md:block border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -410,38 +413,88 @@ export const EmailHistory = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* 모바일 카드 레이아웃 */}
+          <div className="md:hidden space-y-3">
+            {history.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8 border rounded-lg">
+                이메일 발송 이력이 없습니다
+              </div>
+            ) : (
+              history.map((record) => (
+                <div
+                  key={record.id}
+                  className="border rounded-lg p-4 space-y-2 bg-card cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => setSelectedEmail(record)}
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{record.subject}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(record.sent_at), "MM/dd HH:mm", { locale: ko })}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        record.recipient_student_id 
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" 
+                          : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                      }`}>
+                        {record.recipient_student_id ? "학생" : "교사"}
+                      </span>
+                      {record.opened ? (
+                        <span className="text-xs text-green-600">✓ 읽음</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">미열람</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="text-muted-foreground truncate">
+                      <span className="font-medium text-foreground">{record.recipient_name}</span>
+                      <span className="mx-1">·</span>
+                      <span className="truncate">{record.recipient_email}</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    발신: {record.sender_name}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
 
       <Dialog open={!!selectedEmail} onOpenChange={() => setSelectedEmail(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[90vh] w-[95vw] md:w-auto overflow-hidden flex flex-col">
           <DialogHeader className="pr-12">
-            <DialogTitle>이메일 상세 내용</DialogTitle>
+            <DialogTitle className="text-base md:text-lg">이메일 상세 내용</DialogTitle>
             <DialogDescription>
               {selectedEmail && format(new Date(selectedEmail.sent_at), "yyyy-MM-dd HH:mm", { locale: ko })}
             </DialogDescription>
           </DialogHeader>
           {selectedEmail && (
-            <div className="space-y-4 overflow-y-auto pr-2">
+            <div className="space-y-3 md:space-y-4 overflow-y-auto pr-2">
               <div>
-                <Label>발신자</Label>
+                <Label className="text-xs md:text-sm">발신자</Label>
                 <p className="text-sm">
                   {selectedEmail.sender_name} ({selectedEmail.sender_type === "admin" ? "관리자" : "교사"})
                 </p>
               </div>
               <div>
-                <Label>수신자</Label>
-                <p className="text-sm">
+                <Label className="text-xs md:text-sm">수신자</Label>
+                <p className="text-sm break-all">
                   {selectedEmail.recipient_name} ({selectedEmail.recipient_email})
                 </p>
               </div>
               <div>
-                <Label>제목</Label>
+                <Label className="text-xs md:text-sm">제목</Label>
                 <p className="text-sm">{selectedEmail.subject}</p>
               </div>
               <div>
-                <Label>내용</Label>
-                <div className="text-sm whitespace-pre-wrap border rounded-lg p-4 bg-muted">
+                <Label className="text-xs md:text-sm">내용</Label>
+                <div className="text-sm whitespace-pre-wrap border rounded-lg p-3 md:p-4 bg-muted max-h-[40vh] overflow-y-auto">
                   {selectedEmail.body}
                 </div>
               </div>
