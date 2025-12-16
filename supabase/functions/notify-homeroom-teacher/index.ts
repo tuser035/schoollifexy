@@ -11,14 +11,17 @@ const corsHeaders = {
 };
 
 interface NotifyRequest {
+  notificationType: "demerit" | "monthly"; // 알림 유형
   studentName: string;
   studentGrade: number;
   studentClass: number;
   studentNumber: number;
-  category: string;
-  reason: string;
-  score: number;
-  teacherName: string; // 벌점을 부여한 교사 이름
+  category?: string;
+  reason?: string;
+  score?: number;
+  teacherName?: string; // 벌점을 부여한 교사 이름
+  counselorName?: string; // 상담자 이름 (이달의학생용)
+  counselingContent?: string; // 상담 내용 (이달의학생용)
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -32,7 +35,9 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    const requestData: NotifyRequest = await req.json();
     const {
+      notificationType = "demerit",
       studentName,
       studentGrade,
       studentClass,
@@ -41,13 +46,15 @@ const handler = async (req: Request): Promise<Response> => {
       reason,
       score,
       teacherName,
-    }: NotifyRequest = await req.json();
+      counselorName,
+      counselingContent,
+    } = requestData;
 
     console.log("Notify homeroom teacher request:", {
+      notificationType,
       studentName,
       studentGrade,
       studentClass,
-      teacherName,
     });
 
     // 담임 선생님 찾기 (is_homeroom = true, 같은 학년, 같은 반)
@@ -95,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
     const replyToEmail = replyToSetting || "gyeongjuhs@naver.com";
 
-    // 이메일 본문 생성
+    // 현재 날짜 포맷
     const currentDate = new Date().toLocaleDateString("ko-KR", {
       year: "numeric",
       month: "long",
@@ -104,58 +111,115 @@ const handler = async (req: Request): Promise<Response> => {
       minute: "2-digit",
     });
 
-    const emailSubject = `[벌점 알림] ${studentGrade}학년 ${studentClass}반 ${studentName} 학생 벌점 부여 안내`;
-    
-    const emailHtml = `
-      <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 20px; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 20px;">🔔 학생 벌점 부여 알림</h1>
-        </div>
-        
-        <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
-          <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-            안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
-            담당 학급 학생의 벌점 부여 내역을 알려드립니다.
-          </p>
-          
-          <div style="background: #fef3c7; border-left: 4px solid #f97316; padding: 15px; margin: 20px 0; border-radius: 4px;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280; width: 100px;">학생</td>
-                <td style="padding: 8px 0; color: #111827; font-weight: 600;">
-                  ${studentName} (${studentGrade}학년 ${studentClass}반 ${studentNumber}번)
-                </td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280;">항목</td>
-                <td style="padding: 8px 0; color: #111827;">${category}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280;">사유</td>
-                <td style="padding: 8px 0; color: #111827;">${reason.replace(/\n/g, '<br>')}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280;">벌점</td>
-                <td style="padding: 8px 0; color: #ea580c; font-weight: 700; font-size: 18px;">${score}점</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280;">부여 교사</td>
-                <td style="padding: 8px 0; color: #111827;">${teacherName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280;">일시</td>
-                <td style="padding: 8px 0; color: #111827;">${currentDate}</td>
-              </tr>
-            </table>
+    let emailSubject: string;
+    let emailHtml: string;
+
+    if (notificationType === "monthly") {
+      // 이달의학생 알림
+      emailSubject = `🏆 [이달의학생] ${studentGrade}학년 ${studentClass}반 ${studentName} 학생 선정 안내`;
+      
+      emailHtml = `
+        <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 20px; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 20px;">🏆 이달의학생 선정 알림</h1>
           </div>
           
-          <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-            이 메일은 School Point 시스템에서 자동으로 발송되었습니다.<br>
-            문의사항이 있으시면 교무실로 연락해 주세요.
-          </p>
+          <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
+            <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              담당 학급 학생이 <strong style="color: #16a34a;">이달의학생</strong>으로 선정되었습니다! 🎉
+            </p>
+            
+            <div style="background: #dcfce7; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; width: 100px;">학생</td>
+                  <td style="padding: 8px 0; color: #111827; font-weight: 600;">
+                    ${studentName} (${studentGrade}학년 ${studentClass}반 ${studentNumber}번)
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">상담자</td>
+                  <td style="padding: 8px 0; color: #111827;">${counselorName || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">선정일</td>
+                  <td style="padding: 8px 0; color: #111827;">${currentDate}</td>
+                </tr>
+              </table>
+            </div>
+            
+            ${counselingContent ? `
+            <div style="margin-top: 20px;">
+              <h3 style="color: #374151; font-size: 14px; margin-bottom: 10px;">📝 상담 내용</h3>
+              <div style="background: #f9fafb; padding: 15px; border-radius: 8px; color: #4b5563; font-size: 14px; line-height: 1.7;">
+                ${counselingContent.replace(/\n/g, '<br>')}
+              </div>
+            </div>
+            ` : ''}
+            
+            <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+              이 메일은 School Point 시스템에서 자동으로 발송되었습니다.<br>
+              문의사항이 있으시면 교무실로 연락해 주세요.
+            </p>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    } else {
+      // 벌점 알림 (기존 로직)
+      emailSubject = `[벌점 알림] ${studentGrade}학년 ${studentClass}반 ${studentName} 학생 벌점 부여 안내`;
+      
+      emailHtml = `
+        <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 20px; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 20px;">🔔 학생 벌점 부여 알림</h1>
+          </div>
+          
+          <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
+            <p style="color: #374151; font-size: 15px; line-height: 1.6;">
+              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              담당 학급 학생의 벌점 부여 내역을 알려드립니다.
+            </p>
+            
+            <div style="background: #fef3c7; border-left: 4px solid #f97316; padding: 15px; margin: 20px 0; border-radius: 4px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; width: 100px;">학생</td>
+                  <td style="padding: 8px 0; color: #111827; font-weight: 600;">
+                    ${studentName} (${studentGrade}학년 ${studentClass}반 ${studentNumber}번)
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">항목</td>
+                  <td style="padding: 8px 0; color: #111827;">${category || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">사유</td>
+                  <td style="padding: 8px 0; color: #111827;">${(reason || '-').replace(/\n/g, '<br>')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">벌점</td>
+                  <td style="padding: 8px 0; color: #ea580c; font-weight: 700; font-size: 18px;">${score || 0}점</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">부여 교사</td>
+                  <td style="padding: 8px 0; color: #111827;">${teacherName || '-'}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">일시</td>
+                  <td style="padding: 8px 0; color: #111827;">${currentDate}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 13px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+              이 메일은 School Point 시스템에서 자동으로 발송되었습니다.<br>
+              문의사항이 있으시면 교무실로 연락해 주세요.
+            </p>
+          </div>
+        </div>
+      `;
+    }
 
     // 이메일 발송
     const emailResponse = await resend.emails.send({

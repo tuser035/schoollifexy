@@ -534,8 +534,34 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
 
       toast.success("상담 기록이 등록되었습니다");
       
-      // 이달의학생인 경우 학생 학과 조회 후 출력 폼 표시
+      // 이달의학생인 경우 담임 선생님에게 알림 발송 및 출력 폼 표시
       if (counselingModal.scoreType === "monthly") {
+        // 담임 선생님에게 알림 발송
+        try {
+          const { data: notifyResult, error: notifyError } = await supabase.functions.invoke(
+            "notify-homeroom-teacher",
+            {
+              body: {
+                notificationType: "monthly",
+                studentName: counselingModal.student.name,
+                studentGrade: counselingModal.student.grade,
+                studentClass: counselingModal.student.class,
+                studentNumber: counselingModal.student.number,
+                counselorName: counselorName,
+                counselingContent: counselingContent,
+              },
+            }
+          );
+          
+          if (notifyResult?.success) {
+            toast.success(`담임 선생님(${notifyResult.homeroomTeacher})에게 알림이 발송되었습니다`);
+          } else if (notifyResult?.message) {
+            toast.info(notifyResult.message);
+          }
+        } catch (notifyErr: any) {
+          console.error("담임 알림 발송 실패:", notifyErr);
+        }
+
         // 학생 학과 조회
         const { data: studentData } = await supabase.rpc("admin_get_students", {
           admin_id_input: parsedUser.id,
