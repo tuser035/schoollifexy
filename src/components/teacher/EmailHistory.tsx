@@ -322,10 +322,10 @@ const EmailHistory = () => {
 
   return (
     <>
-      <Card>
+      <Card className="border-email-history-teal/30">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between text-base">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-email-history-teal">
               <Mail className="w-4 h-4" />
               발송 이력
             </div>
@@ -427,12 +427,12 @@ const EmailHistory = () => {
             <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full mb-3">
-                <TabsTrigger value="student" className="flex-1 text-xs gap-1">
+              <TabsList className="w-full mb-3 bg-email-history-teal/10">
+                <TabsTrigger value="student" className="flex-1 text-xs gap-1 data-[state=active]:bg-email-history-teal data-[state=active]:text-white">
                   <GraduationCap className="w-3 h-3" />
                   학생 ({studentEmails.length})
                 </TabsTrigger>
-                <TabsTrigger value="teacher" className="flex-1 text-xs gap-1">
+                <TabsTrigger value="teacher" className="flex-1 text-xs gap-1 data-[state=active]:bg-email-history-teal data-[state=active]:text-white">
                   <Users className="w-3 h-3" />
                   교사 ({teacherEmails.length})
                 </TabsTrigger>
