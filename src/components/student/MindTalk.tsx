@@ -67,14 +67,15 @@ const DANGEROUS_WORDS = [
   '죽여버리', '살인', '복수', '없어지고 싶', '사라지고 싶'
 ];
 
-const INITIAL_MESSAGE: Message = {
+const getInitialMessage = (studentName: string): Message => ({
   role: 'assistant',
-  content: '안녕! 나는 마음톡이야 🧡\n\n오늘 하루는 어땠어? 혹시 마음에 걸리는 게 있거나, 그냥 이야기하고 싶은 거 있으면 편하게 말해줘.\n\n아래 태그 중에서 지금 네 마음과 가까운 걸 골라도 좋고, 그냥 하고 싶은 말을 적어도 돼 💬'
-};
+  content: `**${studentName}** 안녕! 나는 마음톡이야❤️\n\n오늘 하루는 어땠어? 혹시 마음에 걸리는 게 있거나, 그냥 이야기하고 싶은 거 있으면 편하게 말해줘.\n\n아래 태그 중에서 지금 네 마음과 가까운 걸 골라도 좋고, 그냥 하고 싶은 말을 적어도 돼 💬`
+});
 
 export default function MindTalk({ studentId, studentName, studentGrade, studentClass, studentNumber }: MindTalkProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
+  const initialMessage = getInitialMessage(studentName);
+  const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [dangerCount, setDangerCount] = useState(0);
@@ -101,7 +102,7 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
     });
 
     if (!error && data && data.length > 0) {
-      setMessages([INITIAL_MESSAGE, ...data.map((m: any) => ({
+      setMessages([initialMessage, ...data.map((m: any) => ({
         id: m.id,
         role: m.role as 'user' | 'assistant',
         content: m.content,
