@@ -264,23 +264,9 @@ const StorageManager = () => {
                   {files.map((file) => (
                     <TableRow key={file.id}>
                       <TableCell className="font-medium max-w-[200px]">
-                        <div className="flex flex-col">
-                          {file.originalFilename ? (
-                            <>
-                              <span className="text-xs truncate" title={file.originalFilename}>
-                                {file.originalFilename}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground truncate" title={file.name}>
-                                {file.name}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-xs truncate" title={file.name}>{file.name}</span>
-                              <span className="text-[10px] text-amber-600">※ 원본명 없음</span>
-                            </>
-                          )}
-                        </div>
+                        <span className="text-xs truncate block" title={file.originalFilename || file.name}>
+                          {file.originalFilename || file.name}
+                        </span>
                       </TableCell>
                       <TableCell className="text-xs text-center whitespace-nowrap">
                         {formatFileSize(file.metadata?.size)}
