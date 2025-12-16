@@ -284,24 +284,160 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
 
   // PDF 다운로드
   const downloadPdf = async () => {
-    if (!counselingModal || !counselingContentRef.current) return;
+    if (!counselingModal) return;
     
     setIsDownloadingPdf(true);
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       
-      const element = counselingContentRef.current;
+      // PDF용 HTML 생성
+      const pdfHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+                padding: 40px;
+                line-height: 1.6;
+              }
+              .header {
+                text-align: center;
+                padding: 20px;
+                margin-bottom: 30px;
+                background: ${getScoreTypeColorClass(counselingModal.scoreType).replace('bg-', '#').replace('blue-500', '3b82f6').replace('orange-500', 'f97316').replace('green-500', '22c55e').replace('purple-500', 'a855f7')};
+                color: white;
+                border-radius: 8px;
+              }
+              .header h1 { font-size: 24pt; font-weight: bold; }
+              .info-box {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 25px;
+              }
+              .info-row {
+                display: flex;
+                margin-bottom: 15px;
+              }
+              .info-row:last-child { margin-bottom: 0; }
+              .info-item { flex: 1; }
+              .info-label { 
+                color: #64748b; 
+                font-size: 11pt;
+                margin-bottom: 5px;
+              }
+              .info-value { 
+                font-size: 14pt; 
+                font-weight: 600;
+                color: #1e293b;
+              }
+              .score-value {
+                font-size: 18pt;
+                font-weight: bold;
+                color: ${getScoreTypeColorClass(counselingModal.scoreType).replace('bg-', '#').replace('blue-500', '3b82f6').replace('orange-500', 'f97316').replace('green-500', '22c55e').replace('purple-500', 'a855f7')};
+              }
+              .section {
+                margin-bottom: 25px;
+              }
+              .section-label {
+                font-size: 12pt;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 10px;
+                padding-bottom: 5px;
+                border-bottom: 2px solid #e5e7eb;
+              }
+              .section-content {
+                font-size: 12pt;
+                color: #1f2937;
+                padding: 15px;
+                background: #fafafa;
+                border-radius: 6px;
+                border: 1px solid #e5e7eb;
+                white-space: pre-wrap;
+                min-height: 100px;
+              }
+              .footer {
+                text-align: center;
+                margin-top: 40px;
+                color: #9ca3af;
+                font-size: 10pt;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>${getScoreTypeName(counselingModal.scoreType)} 상담기록</h1>
+            </div>
+            
+            <div class="info-box">
+              <div class="info-row">
+                <div class="info-item">
+                  <div class="info-label">이름</div>
+                  <div class="info-value">${counselingModal.student.name}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">학년반</div>
+                  <div class="info-value">${counselingModal.student.grade}학년 ${counselingModal.student.class}반 ${counselingModal.student.number}번</div>
+                </div>
+              </div>
+              <div class="info-row">
+                <div class="info-item">
+                  <div class="info-label">${getScoreTypeName(counselingModal.scoreType)} 점수</div>
+                  <div class="score-value">${counselingModal.score}점</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">상담일</div>
+                  <div class="info-value">${new Date().toLocaleDateString('ko-KR')}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="section">
+              <div class="section-label">상담자</div>
+              <div class="section-content">${counselorName || '-'}</div>
+            </div>
+            
+            <div class="section">
+              <div class="section-label">상담 내용</div>
+              <div class="section-content">${counselingContent || '-'}</div>
+            </div>
+            
+            ${attachmentFile ? `
+            <div class="section">
+              <div class="section-label">첨부파일</div>
+              <div class="section-content">${attachmentFile.name}</div>
+            </div>
+            ` : ''}
+            
+            <div class="footer">
+              ━━━ ${new Date().toLocaleString('ko-KR')} ━━━
+            </div>
+          </body>
+        </html>
+      `;
+      
+      const pdfContainer = document.createElement("div");
+      pdfContainer.innerHTML = pdfHtml;
+      pdfContainer.style.width = "210mm";
+      document.body.appendChild(pdfContainer);
+      
       const opt = {
-        margin: 10,
+        margin: 0,
         filename: `${counselingModal.student.name}_${getScoreTypeName(counselingModal.scoreType)}_상담기록.pdf`,
         image: { type: "jpeg" as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: "mm" as const, format: "a4" as const, orientation: "portrait" as const }
       };
       
-      await html2pdf().set(opt).from(element).save();
+      await html2pdf().set(opt).from(pdfContainer).save();
+      document.body.removeChild(pdfContainer);
       toast.success("PDF가 다운로드되었습니다");
     } catch (error: any) {
+      console.error("PDF download error:", error);
       toast.error("PDF 다운로드에 실패했습니다");
     } finally {
       setIsDownloadingPdf(false);
