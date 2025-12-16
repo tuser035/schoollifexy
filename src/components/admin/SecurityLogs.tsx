@@ -182,49 +182,51 @@ export const SecurityLogs = () => {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>보안 감사 로그</CardTitle>
-              <CardDescription>
-                시스템의 모든 로그인 시도와 데이터 변경 이력을 확인할 수 있습니다
+        <CardHeader className="space-y-4">
+          <div className="flex flex-row items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg">보안 감사 로그</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                시스템의 모든 로그인 시도와 데이터 변경 이력
               </CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-row gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleDeleteOldLogs(90)}
                 disabled={isDeleting}
+                className="text-xs px-2 sm:px-3"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                90일 이전 삭제
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">90일 이전 삭제</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleDeleteOldLogs(30)}
                 disabled={isDeleting}
+                className="text-xs px-2 sm:px-3"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                30일 이전 삭제
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">30일 이전 삭제</span>
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 mb-4">
-            <div className="flex-1 relative">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-4">
+            <div className="col-span-2 sm:col-span-1 relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="사용자 ID, 테이블명, 오류 메시지 검색..."
+                placeholder="검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
               />
             </div>
             <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue placeholder="활동 유형" />
               </SelectTrigger>
               <SelectContent>
@@ -237,7 +239,7 @@ export const SecurityLogs = () => {
               </SelectContent>
             </Select>
             <Select value={userTypeFilter} onValueChange={setUserTypeFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue placeholder="사용자 유형" />
               </SelectTrigger>
               <SelectContent>
