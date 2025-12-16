@@ -864,6 +864,34 @@ export type Database = {
           teacher_name: string
         }[]
       }
+      admin_get_mindtalk_alerts: {
+        Args: { admin_id_input: string }
+        Returns: {
+          dangerous_word_count: number
+          id: string
+          last_alert_sent_at: string
+          student_class: number
+          student_grade: number
+          student_id: string
+          student_name: string
+          student_number: number
+          updated_at: string
+        }[]
+      }
+      admin_get_mindtalk_messages: {
+        Args: { admin_id_input: string; student_id_input?: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          student_class: number
+          student_grade: number
+          student_id: string
+          student_name: string
+          student_number: number
+        }[]
+      }
       admin_get_monthly: {
         Args: {
           admin_id_input: string
