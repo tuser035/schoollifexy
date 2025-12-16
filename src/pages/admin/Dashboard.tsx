@@ -75,11 +75,16 @@ const DashboardContent = ({
   setActiveTab: (tab: string) => void; 
   renderContent: () => React.ReactNode;
 }) => {
-  const { setOpen } = useSidebar();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
 
   const handleMenuClick = (value: string) => {
     setActiveTab(value);
-    setOpen(false); // 메뉴 선택 시 사이드바 자동 닫기
+    // 메뉴 선택 시 사이드바 자동 닫기 (모바일/데스크톱 모두 대응)
+    if (isMobile) {
+      setOpenMobile(false);
+    } else {
+      setOpen(false);
+    }
   };
 
   return (
