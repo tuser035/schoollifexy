@@ -327,6 +327,16 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
   const handleDelete = async (type: "merit" | "demerit" | "monthly", id: string) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
+    // 삭제 전에 레코드 정보 저장 (알림용)
+    let recordToDelete: any = null;
+    if (type === "merit") {
+      recordToDelete = merits.find(r => r.id === id);
+    } else if (type === "demerit") {
+      recordToDelete = demerits.find(r => r.id === id);
+    } else if (type === "monthly") {
+      recordToDelete = monthly.find(r => r.id === id);
+    }
+
     try {
       if (type === "merit") {
         const { error } = await supabase.rpc("teacher_delete_merit", {
@@ -350,6 +360,41 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
 
       toast.success("삭제되었습니다");
       loadRecords();
+
+      // 담임 선생님에게 삭제 알림 발송 (백그라운드)
+      if (recordToDelete) {
+        try {
+          const authUser = localStorage.getItem("auth_user");
+          const user = authUser ? JSON.parse(authUser) : null;
+          
+          const notificationType = type === "merit" ? "merit_delete" 
+            : type === "demerit" ? "demerit_delete" 
+            : "monthly_delete";
+
+          const notifyResponse = await supabase.functions.invoke('notify-homeroom-teacher', {
+            body: {
+              notificationType,
+              studentName: recordToDelete.student_name,
+              studentGrade: recordToDelete.student_grade,
+              studentClass: recordToDelete.student_class,
+              studentNumber: recordToDelete.student_number,
+              category: recordToDelete.category,
+              reason: recordToDelete.reason,
+              score: recordToDelete.score,
+              teacherName: user?.name || '-',
+            }
+          });
+          
+          if (notifyResponse.data?.success) {
+            console.log('담임 선생님 삭제 알림 발송 성공:', notifyResponse.data);
+          } else {
+            console.log('담임 선생님 삭제 알림 발송 실패 또는 대상 없음:', notifyResponse.data);
+          }
+        } catch (notifyError) {
+          console.error('담임 삭제 알림 발송 중 오류:', notifyError);
+          // 알림 실패해도 삭제는 성공했으므로 에러 무시
+        }
+      }
     } catch (error: any) {
       console.error("Error deleting record:", error);
       toast.error("삭제 실패: " + error.message);
