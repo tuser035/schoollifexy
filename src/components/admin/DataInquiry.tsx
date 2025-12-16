@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, ClipboardEdit, FileUp, Camera, X, Send, Trash2, Users } from "lucide-react";
+import { Download, ClipboardEdit, FileUp, Camera, X, Send, Trash2, Users, FileDown, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import JSZip from "jszip";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
@@ -40,6 +40,7 @@ const DataInquiry = () => {
   const [counselingDate, setCounselingDate] = useState(new Date().toISOString().split('T')[0]);
   const [counselingContent, setCounselingContent] = useState("");
   const [isSavingCounseling, setIsSavingCounseling] = useState(false);
+  const [isDownloadingCounselingPdf, setIsDownloadingCounselingPdf] = useState(false);
   const [monthlyRawData, setMonthlyRawData] = useState<any[]>([]);
   const [meritsRawData, setMeritsRawData] = useState<any[]>([]);
   const [demeritsRawData, setDemeritsRawData] = useState<any[]>([]);
@@ -47,6 +48,7 @@ const DataInquiry = () => {
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const counselingPdfRef = useRef<HTMLDivElement>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
@@ -1088,6 +1090,32 @@ const DataInquiry = () => {
     setAttachmentPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
+
+  // 상담기록 PDF 다운로드
+  const downloadCounselingPdf = async () => {
+    if (!selectedStudent || !counselingPdfRef.current) return;
+    
+    setIsDownloadingCounselingPdf(true);
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      
+      const element = counselingPdfRef.current;
+      const opt = {
+        margin: 10,
+        filename: `${selectedStudent.학생}_상담기록.pdf`,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm" as const, format: "a4" as const, orientation: "portrait" as const }
+      };
+      
+      await html2pdf().set(opt).from(element).save();
+      toast.success("PDF가 다운로드되었습니다");
+    } catch (error: any) {
+      toast.error("PDF 다운로드에 실패했습니다");
+    } finally {
+      setIsDownloadingCounselingPdf(false);
+    }
   };
 
   const handleSaveCounseling = async () => {
@@ -3065,14 +3093,14 @@ const DataInquiry = () => {
 
       {/* 진로상담 기록 다이얼로그 */}
       <Dialog open={isCounselingDialogOpen} onOpenChange={setIsCounselingDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-base sm:text-lg">상담 기록 - {selectedStudent?.학생}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               학생의 진로 상담 내용을 기록합니다.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-2" ref={counselingPdfRef}>
             <div className="space-y-2">
               <Label htmlFor="counselor-name" className="text-sm">상담사 이름 *</Label>
               <Input
@@ -3174,7 +3202,20 @@ const DataInquiry = () => {
               )}
             </div>
           </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex-shrink-0 flex-col sm:flex-row gap-2 border-t pt-4">
+            <Button
+              variant="outline"
+              onClick={downloadCounselingPdf}
+              disabled={isSavingCounseling || isDownloadingCounselingPdf}
+              className="w-full sm:w-auto sm:mr-auto"
+            >
+              {isDownloadingCounselingPdf ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <FileDown className="w-4 h-4 mr-2" />
+              )}
+              PDF
+            </Button>
             <Button
               variant="outline"
               onClick={() => setIsCounselingDialogOpen(false)}
