@@ -2498,9 +2498,9 @@ const DataInquiry = () => {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-data-inquiry-indigo/30">
         <CardHeader>
-          <CardTitle>데이터 조회</CardTitle>
+          <CardTitle className="text-data-inquiry-indigo">데이터 조회</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4 flex-wrap">
@@ -2550,7 +2550,7 @@ const DataInquiry = () => {
               inputMode="search"
               enterKeyHint="search"
             />
-            <Button onClick={() => handleQuery()} disabled={isLoading}>
+            <Button onClick={() => handleQuery()} disabled={isLoading} className="bg-data-inquiry-indigo hover:bg-data-inquiry-indigo-hover">
               {isLoading ? "조회 중..." : "검색"}
             </Button>
             <Button variant="outline" onClick={async () => { 
