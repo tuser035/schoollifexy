@@ -177,7 +177,7 @@ const AdminDashboard = () => {
       case "statistics":
         return <UnifiedStatistics />;
       case "leaderboard":
-        return <StudentLeaderboard />;
+        return <StudentLeaderboard onNavigateToCounseling={() => setActiveTab("counseling")} />;
       case "email-history":
         return <EmailHistory />;
       case "email-templates":

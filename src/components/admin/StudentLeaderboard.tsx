@@ -37,7 +37,11 @@ interface CounselingModalData {
   score: number;
 }
 
-const StudentLeaderboard = () => {
+interface StudentLeaderboardProps {
+  onNavigateToCounseling?: () => void;
+}
+
+const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps) => {
   const [filterType, setFilterType] = useState<"all" | "grade" | "class">("all");
   const [selectedGrade, setSelectedGrade] = useState<string>("1");
   const [selectedClass, setSelectedClass] = useState<string>("1");
@@ -336,6 +340,11 @@ const StudentLeaderboard = () => {
 
       toast.success("상담 기록이 등록되었습니다");
       closeCounselingModal();
+      
+      // 상담 기록 조회로 자동 이동
+      if (onNavigateToCounseling) {
+        onNavigateToCounseling();
+      }
     } catch (error: any) {
       toast.error(error.message || "상담 등록에 실패했습니다");
     } finally {
