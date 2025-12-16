@@ -211,14 +211,16 @@ const StudentDashboard = () => {
       />
       <header className="border-b bg-card">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-lg sm:text-2xl font-bold text-foreground">학생 대시보드</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground break-words max-w-[180px] sm:max-w-none">{user.name}님 ({user.studentId})</p>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div>
+              <h1 className="text-lg sm:text-2xl font-bold text-foreground">학생 대시보드</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground break-words max-w-[180px] sm:max-w-none">{user.name}님 ({user.studentId})</p>
+            </div>
+            <Button onClick={handleLogout} variant="outline" size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">로그아웃</span>
+            </Button>
           </div>
-          <Button onClick={handleLogout} variant="outline" size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
-            <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
-            <span className="hidden sm:inline">로그아웃</span>
-          </Button>
         </div>
       </header>
 
