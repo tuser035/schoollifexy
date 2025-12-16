@@ -252,51 +252,52 @@ export const SecurityLogs = () => {
             </Select>
           </div>
 
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-auto max-h-[500px]">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>시간</TableHead>
-                  <TableHead>사용자 유형</TableHead>
-                  <TableHead>사용자 ID</TableHead>
-                  <TableHead>활동</TableHead>
-                  <TableHead>테이블</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>오류 메시지</TableHead>
+                  <TableHead className="w-[80px] text-xs">시간</TableHead>
+                  <TableHead className="w-[50px] text-xs">유형</TableHead>
+                  <TableHead className="w-[80px] text-xs">활동</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">테이블</TableHead>
+                  <TableHead className="w-[50px] text-xs">상태</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       로딩 중...
                     </TableCell>
                   </TableRow>
                 ) : filteredLogs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       로그가 없습니다
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredLogs.map((log) => (
                     <TableRow key={log.id}>
-                      <TableCell className="text-sm">
-                        {format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss", { locale: ko })}
+                      <TableCell className="text-[10px] whitespace-nowrap">
+                        {format(new Date(log.created_at), "MM-dd", { locale: ko })}
+                        <br />
+                        {format(new Date(log.created_at), "HH:mm", { locale: ko })}
                       </TableCell>
-                      <TableCell>{getUserTypeBadge(log.user_type)}</TableCell>
-                      <TableCell className="font-mono text-sm">{log.user_id}</TableCell>
+                      <TableCell className="text-[10px]">
+                        {log.user_type === "student" && "학생"}
+                        {log.user_type === "teacher" && "교사"}
+                        {log.user_type === "admin" && "관리자"}
+                        {log.user_type === "system" && "시스템"}
+                      </TableCell>
                       <TableCell>{getActionBadge(log.action_type, log.status)}</TableCell>
-                      <TableCell className="font-mono text-sm">{log.table_name || "-"}</TableCell>
+                      <TableCell className="font-mono text-[10px] hidden sm:table-cell">{log.table_name || "-"}</TableCell>
                       <TableCell>
                         {log.status === "success" ? (
-                          <Badge variant="outline" className="border-green-500 text-green-500">성공</Badge>
+                          <Badge variant="outline" className="border-green-500 text-green-500 text-[10px] px-1">성공</Badge>
                         ) : (
-                          <Badge variant="destructive">실패</Badge>
+                          <Badge variant="destructive" className="text-[10px] px-1">실패</Badge>
                         )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                        {log.error_message || "-"}
                       </TableCell>
                     </TableRow>
                   ))
