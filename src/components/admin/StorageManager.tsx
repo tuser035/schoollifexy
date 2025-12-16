@@ -223,21 +223,25 @@ const StorageManager = () => {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Storage 파일 관리</CardTitle>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => setShowDeleteAllConfirm(true)} 
-              disabled={isLoading || files.length === 0} 
-              variant="destructive"
-            >
-              <Trash className="h-4 w-4 mr-2" />
-              모두 삭제
-            </Button>
-            <Button onClick={loadFiles} disabled={isLoading} variant="outline">
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-              새로고침
-            </Button>
+        <CardHeader className="space-y-4">
+          <div className="flex flex-row items-center justify-between gap-4">
+            <CardTitle className="text-lg shrink-0">Storage 파일 관리</CardTitle>
+            <div className="flex flex-row gap-2 shrink-0">
+              <Button 
+                onClick={() => setShowDeleteAllConfirm(true)} 
+                disabled={isLoading || files.length === 0} 
+                variant="destructive"
+                size="sm"
+                className="text-xs px-2 sm:px-3"
+              >
+                <Trash className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">모두 삭제</span>
+              </Button>
+              <Button onClick={loadFiles} disabled={isLoading} variant="outline" size="sm" className="text-xs px-2 sm:px-3">
+                <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">새로고침</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
