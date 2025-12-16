@@ -13,6 +13,7 @@ interface MonthlyStudentPrintFormProps {
   studentName: string;
   studentGrade: number;
   studentClass: number;
+  studentDept?: string;
 }
 
 const MonthlyStudentPrintForm = ({
@@ -21,11 +22,14 @@ const MonthlyStudentPrintForm = ({
   studentName,
   studentGrade,
   studentClass,
+  studentDept = "",
 }: MonthlyStudentPrintFormProps) => {
   const [selectedMonth, setSelectedMonth] = useState<string>(String(new Date().getMonth() + 1));
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [name, setName] = useState(studentName);
-  const [gradeClass, setGradeClass] = useState(`${studentGrade}학년 ${studentClass}반`);
+  const [grade, setGrade] = useState(`${studentGrade}학년`);
+  const [classNum, setClassNum] = useState(`${studentClass}반`);
+  const [dept, setDept] = useState(studentDept);
   const [dreamJob, setDreamJob] = useState("");
   const [introduction, setIntroduction] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,21 +81,21 @@ const MonthlyStudentPrintForm = ({
             }
             .title {
               text-align: center;
-              font-size: 28pt;
+              font-size: 56pt;
               font-weight: bold;
-              margin-bottom: 30px;
+              margin-bottom: 40px;
               color: #16a34a;
             }
             .info-row {
               display: flex;
-              gap: 30px;
-              margin-bottom: 30px;
+              gap: 40px;
+              margin-bottom: 40px;
               align-items: flex-start;
             }
             .photo-section {
-              width: 120px;
-              height: 160px;
-              border: 2px solid #e5e7eb;
+              width: 240px;
+              height: 320px;
+              border: 3px solid #e5e7eb;
               display: flex;
               align-items: center;
               justify-content: center;
@@ -107,37 +111,37 @@ const MonthlyStudentPrintForm = ({
               flex: 1;
             }
             .detail-item {
-              margin-bottom: 15px;
+              margin-bottom: 20px;
             }
             .detail-label {
-              font-size: 12pt;
+              font-size: 24pt;
               color: #6b7280;
-              margin-bottom: 5px;
+              margin-bottom: 8px;
             }
             .detail-value {
-              font-size: 16pt;
+              font-size: 32pt;
               font-weight: 600;
               color: #111827;
-              padding: 8px 12px;
-              border-bottom: 2px solid #16a34a;
+              padding: 10px 15px;
+              border-bottom: 3px solid #16a34a;
             }
             .introduction-section {
-              margin-top: 20px;
+              margin-top: 30px;
             }
             .introduction-label {
-              font-size: 14pt;
+              font-size: 28pt;
               font-weight: bold;
               color: #374151;
-              margin-bottom: 10px;
+              margin-bottom: 15px;
             }
             .introduction-content {
-              font-size: 14pt;
+              font-size: 28pt;
               line-height: 1.8;
               color: #1f2937;
-              padding: 20px;
-              border: 2px solid #16a34a;
-              border-radius: 8px;
-              min-height: 150px;
+              padding: 25px;
+              border: 3px solid #16a34a;
+              border-radius: 10px;
+              min-height: 200px;
               white-space: pre-wrap;
             }
           </style>
@@ -155,8 +159,8 @@ const MonthlyStudentPrintForm = ({
                   <div class="detail-value">${name || "-"}</div>
                 </div>
                 <div class="detail-item">
-                  <div class="detail-label">학년/반</div>
-                  <div class="detail-value">${gradeClass || "-"}</div>
+                  <div class="detail-label">학년/반/학과</div>
+                  <div class="detail-value">${grade} ${classNum}${dept ? ` ${dept}` : ""}</div>
                 </div>
                 <div class="detail-item">
                   <div class="detail-label">장래희망</div>
@@ -185,12 +189,13 @@ const MonthlyStudentPrintForm = ({
     setPhotoPreview(null);
     setDreamJob("");
     setIntroduction("");
+    setDept("");
     onClose();
   };
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="bg-green-500 -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
           <DialogTitle className="text-white text-lg">이달의학생 출력 양식</DialogTitle>
         </DialogHeader>
@@ -221,15 +226,15 @@ const MonthlyStudentPrintForm = ({
             <div className="flex-shrink-0">
               <Label className="text-sm mb-2 block">학생 증명사진</Label>
               <div
-                className="w-[120px] h-[160px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500 transition-colors overflow-hidden bg-muted/30"
+                className="w-[240px] h-[320px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500 transition-colors overflow-hidden bg-muted/30"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {photoPreview ? (
                   <img src={photoPreview} alt="학생 사진" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center text-muted-foreground">
-                    <Upload className="h-8 w-8 mx-auto mb-2" />
-                    <span className="text-xs">사진 업로드</span>
+                    <Upload className="h-10 w-10 mx-auto mb-2" />
+                    <span className="text-sm">사진 업로드</span>
                   </div>
                 )}
               </div>
@@ -268,14 +273,34 @@ const MonthlyStudentPrintForm = ({
                   placeholder="이름 입력"
                 />
               </div>
-              <div>
-                <Label htmlFor="gradeClass">학년/반</Label>
-                <Input
-                  id="gradeClass"
-                  value={gradeClass}
-                  onChange={(e) => setGradeClass(e.target.value)}
-                  placeholder="예: 2학년 3반"
-                />
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label htmlFor="grade">학년</Label>
+                  <Input
+                    id="grade"
+                    value={grade}
+                    onChange={(e) => setGrade(e.target.value)}
+                    placeholder="예: 2학년"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="classNum">반</Label>
+                  <Input
+                    id="classNum"
+                    value={classNum}
+                    onChange={(e) => setClassNum(e.target.value)}
+                    placeholder="예: 3반"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dept">학과</Label>
+                  <Input
+                    id="dept"
+                    value={dept}
+                    onChange={(e) => setDept(e.target.value)}
+                    placeholder="예: 전자과"
+                  />
+                </div>
               </div>
               <div>
                 <Label htmlFor="dreamJob">장래희망</Label>
