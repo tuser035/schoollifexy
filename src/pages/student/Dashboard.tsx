@@ -294,16 +294,16 @@ const StudentDashboard = () => {
               <p className="text-muted-foreground text-sm">로딩 중...</p>
             ) : (
               <Tabs defaultValue="merits" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10">
-                  <TabsTrigger value="merits" className="text-xs sm:text-sm px-1 sm:px-3">
+                <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10 bg-muted/50">
+                  <TabsTrigger value="merits" className="text-xs sm:text-sm px-1 sm:px-3 data-[state=active]:bg-merit-blue data-[state=active]:text-white">
                     <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
                     <span className="hidden sm:inline">상점</span>
                   </TabsTrigger>
-                  <TabsTrigger value="demerits" className="text-xs sm:text-sm px-1 sm:px-3">
+                  <TabsTrigger value="demerits" className="text-xs sm:text-sm px-1 sm:px-3 data-[state=active]:bg-demerit-orange data-[state=active]:text-white">
                     <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
                     <span className="hidden sm:inline">벌점</span>
                   </TabsTrigger>
-                  <TabsTrigger value="monthly" className="text-xs sm:text-sm px-1 sm:px-3">
+                  <TabsTrigger value="monthly" className="text-xs sm:text-sm px-1 sm:px-3 data-[state=active]:bg-monthly-green data-[state=active]:text-white">
                     <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
                     <span className="hidden sm:inline">이달의 학생</span>
                   </TabsTrigger>
@@ -316,14 +316,14 @@ const StudentDashboard = () => {
                       variant="outline"
                       size="sm"
                       disabled={merits.length === 0}
-                      className="h-8 text-xs sm:text-sm"
+                      className="h-8 text-xs sm:text-sm border-merit-blue/50 text-merit-blue hover:bg-merit-blue/10"
                     >
                       <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       <span className="hidden sm:inline">CSV 다운로드</span>
                       <span className="sm:hidden">CSV</span>
                     </Button>
                   </div>
-                  <div className="border rounded-lg overflow-auto max-h-[400px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                  <div className="border rounded-lg overflow-auto max-h-[400px] border-merit-blue/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -380,14 +380,14 @@ const StudentDashboard = () => {
                       variant="outline"
                       size="sm"
                       disabled={demerits.length === 0}
-                      className="h-8 text-xs sm:text-sm"
+                      className="h-8 text-xs sm:text-sm border-demerit-orange/50 text-demerit-orange hover:bg-demerit-orange/10"
                     >
                       <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       <span className="hidden sm:inline">CSV 다운로드</span>
                       <span className="sm:hidden">CSV</span>
                     </Button>
                   </div>
-                  <div className="border rounded-lg overflow-auto max-h-[400px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                  <div className="border rounded-lg overflow-auto max-h-[400px] border-demerit-orange/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -442,14 +442,14 @@ const StudentDashboard = () => {
                       variant="outline"
                       size="sm"
                       disabled={monthly.length === 0}
-                      className="h-8 text-xs sm:text-sm"
+                      className="h-8 text-xs sm:text-sm border-monthly-green/50 text-monthly-green hover:bg-monthly-green/10"
                     >
                       <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       <span className="hidden sm:inline">CSV 다운로드</span>
                       <span className="sm:hidden">CSV</span>
                     </Button>
                   </div>
-                  <div className="border rounded-lg overflow-auto max-h-[400px] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                  <div className="border rounded-lg overflow-auto max-h-[400px] border-monthly-green/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
                         <TableRow>
