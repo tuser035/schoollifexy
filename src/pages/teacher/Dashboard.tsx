@@ -118,7 +118,7 @@ const TeacherDashboard = () => {
           </div>
 
           <TabsContent value="merit">
-            <Card>
+            <Card className="border-merit-blue/30">
               <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
                 <CardTitle className="text-merit-blue text-base sm:text-lg">상점 부여</CardTitle>
               </CardHeader>
@@ -129,7 +129,7 @@ const TeacherDashboard = () => {
           </TabsContent>
 
           <TabsContent value="demerit">
-            <Card>
+            <Card className="border-demerit-orange/30">
               <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
                 <CardTitle className="text-demerit-orange text-base sm:text-lg">벌점 부여</CardTitle>
               </CardHeader>
@@ -140,7 +140,7 @@ const TeacherDashboard = () => {
           </TabsContent>
 
           <TabsContent value="monthly">
-            <Card>
+            <Card className="border-monthly-green/30">
               <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
                 <CardTitle className="text-monthly-green text-base sm:text-lg">이달의 학생 추천</CardTitle>
               </CardHeader>
