@@ -658,57 +658,62 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
 
       {/* 상담 모달 */}
       <Dialog open={!!counselingModal} onOpenChange={(open) => !open && closeCounselingModal()}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
-          <DialogHeader className={`${counselingModal ? getScoreTypeColorClass(counselingModal.scoreType) : ""} -mx-6 -mt-6 px-6 py-4 rounded-t-lg flex-shrink-0`}>
-            <DialogTitle className="text-white">{counselingModal ? `${getScoreTypeName(counselingModal.scoreType)} 상담기록 등록` : "상담기록 등록"}</DialogTitle>
+        <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] flex flex-col p-4 sm:p-6">
+          <DialogHeader className={`${counselingModal ? getScoreTypeColorClass(counselingModal.scoreType) : ""} -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 px-4 sm:px-6 py-3 sm:py-4 rounded-t-lg flex-shrink-0`}>
+            <DialogTitle className="text-white text-base sm:text-lg">{counselingModal ? `${getScoreTypeName(counselingModal.scoreType)} 상담기록 등록` : "상담기록 등록"}</DialogTitle>
           </DialogHeader>
           
           {counselingModal && (
-            <div className="flex-1 overflow-y-auto space-y-4 pr-2" ref={counselingContentRef}>
+            <div 
+              className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 pr-1 sm:pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full" 
+              ref={counselingContentRef}
+            >
               {/* 자동 입력된 정보 */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 p-3 sm:p-4 bg-muted/50 rounded-lg">
                 <div>
                   <Label className="text-muted-foreground text-xs">이름</Label>
-                  <p className="font-medium">{counselingModal.student.name}</p>
+                  <p className="font-medium text-sm sm:text-base">{counselingModal.student.name}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground text-xs">학년반</Label>
-                  <p className="font-medium">
+                  <p className="font-medium text-sm sm:text-base">
                     {counselingModal.student.grade}학년 {counselingModal.student.class}반 {counselingModal.student.number}번
                   </p>
                 </div>
                 <div className="col-span-2">
                   <Label className="text-muted-foreground text-xs">{getScoreTypeName(counselingModal.scoreType)} 점수</Label>
-                  <p className="font-medium text-lg">{counselingModal.score}점</p>
+                  <p className="font-medium text-base sm:text-lg">{counselingModal.score}점</p>
                 </div>
               </div>
 
               {/* 상담자 이름 */}
-              <div className="space-y-2">
-                <Label htmlFor="counselorName">상담자 이름 *</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="counselorName" className="text-sm">상담자 이름 *</Label>
                 <Input
                   id="counselorName"
                   value={counselorName}
                   onChange={(e) => setCounselorName(e.target.value)}
                   placeholder="상담자 이름을 입력하세요"
+                  className="h-9 sm:h-10 text-sm"
                 />
               </div>
 
               {/* 상담 내용 */}
-              <div className="space-y-2">
-                <Label htmlFor="counselingContent">상담 내용 *</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="counselingContent" className="text-sm">상담 내용 *</Label>
                 <Textarea
                   id="counselingContent"
                   value={counselingContent}
                   onChange={(e) => setCounselingContent(e.target.value)}
                   placeholder="상담 내용을 입력하세요"
-                  rows={5}
+                  rows={4}
+                  className="text-sm resize-none"
                 />
               </div>
 
               {/* 첨부파일 */}
-              <div className="space-y-2">
-                <Label>첨부파일</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label className="text-sm">첨부파일</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     ref={fileInputRef}
@@ -721,12 +726,13 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
                     variant="outline"
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
+                    className="h-8 text-xs sm:text-sm"
                   >
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                     파일 선택
                   </Button>
                   {attachmentFile && (
-                    <span className="text-sm text-muted-foreground truncate max-w-[200px]">
+                    <span className="text-xs sm:text-sm text-muted-foreground truncate max-w-[120px] sm:max-w-[200px]">
                       {attachmentFile.name}
                     </span>
                   )}
@@ -735,33 +741,35 @@ const StudentLeaderboard = ({ onNavigateToCounseling }: StudentLeaderboardProps)
             </div>
           )}
 
-          <DialogFooter className="flex-shrink-0 border-t pt-4 gap-2">
+          <DialogFooter className="flex-shrink-0 border-t pt-3 sm:pt-4 gap-2 flex-col-reverse sm:flex-row">
             <Button 
               variant="outline" 
               onClick={downloadPdf} 
               disabled={isSubmitting || isDownloadingPdf}
-              className="mr-auto"
+              className="sm:mr-auto h-9 text-sm"
             >
               {isDownloadingPdf ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
               ) : (
-                <FileDown className="h-4 w-4 mr-2" />
+                <FileDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
               )}
               PDF
             </Button>
-            <Button variant="outline" onClick={closeCounselingModal} disabled={isSubmitting}>
-              취소
-            </Button>
-            <Button onClick={submitCounseling} disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  등록 중...
-                </>
-              ) : (
-                "상담 등록"
-              )}
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" onClick={closeCounselingModal} disabled={isSubmitting} className="flex-1 sm:flex-none h-9 text-sm">
+                취소
+              </Button>
+              <Button onClick={submitCounseling} disabled={isSubmitting} className="flex-1 sm:flex-none h-9 text-sm">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
+                    등록 중...
+                  </>
+                ) : (
+                  "상담 등록"
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
