@@ -27,15 +27,50 @@ interface EmailHistoryRecord {
   opened_at?: string;
 }
 
+interface EmailTemplate {
+  id: string;
+  title: string;
+  subject: string;
+}
+
 export const EmailHistory = () => {
   const [history, setHistory] = useState<EmailHistoryRecord[]>([]);
   const [searchText, setSearchText] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<string>("all");
   const [recipientType, setRecipientType] = useState<string>("all");
+  const [teacherNameSearch, setTeacherNameSearch] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("all");
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<EmailHistoryRecord | null>(null);
   const { toast } = useToast();
+
+  // 템플릿 목록 로드
+  const loadTemplates = async () => {
+    try {
+      const userString = localStorage.getItem("auth_user");
+      if (!userString) return;
+
+      const user = JSON.parse(userString);
+      
+      if (user.type === "admin") {
+        await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      } else if (user.type === "teacher") {
+        await supabase.rpc("set_teacher_session", { teacher_id_input: user.id });
+      }
+
+      const { data, error } = await supabase.rpc("admin_get_email_templates", {
+        admin_id_input: user.id,
+        filter_type: null,
+      });
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error: any) {
+      console.error("템플릿 로드 실패:", error.message);
+    }
+  };
 
   const loadHistory = async () => {
     setLoading(true);
@@ -69,6 +104,23 @@ export const EmailHistory = () => {
         filteredData = filteredData.filter((record: EmailHistoryRecord) => record.recipient_student_id !== null);
       } else if (recipientType === "teacher") {
         filteredData = filteredData.filter((record: EmailHistoryRecord) => record.recipient_student_id === null);
+        
+        // 교사 이름 검색 필터
+        if (teacherNameSearch.trim()) {
+          filteredData = filteredData.filter((record: EmailHistoryRecord) => 
+            record.recipient_name.toLowerCase().includes(teacherNameSearch.toLowerCase())
+          );
+        }
+        
+        // 템플릿 필터 (제목으로 매칭)
+        if (selectedTemplate && selectedTemplate !== "all") {
+          const template = templates.find(t => t.id === selectedTemplate);
+          if (template) {
+            filteredData = filteredData.filter((record: EmailHistoryRecord) => 
+              record.subject.includes(template.subject) || record.subject.includes(template.title)
+            );
+          }
+        }
       }
       
       setHistory(filteredData);
@@ -85,6 +137,7 @@ export const EmailHistory = () => {
 
   useEffect(() => {
     loadHistory();
+    loadTemplates();
   }, []);
 
   // 실시간 동기화 커스텀 훅 사용
@@ -92,7 +145,7 @@ export const EmailHistory = () => {
     if (history.length > 0) {
       loadHistory();
     }
-  }, [history.length, searchText, selectedGrade, selectedClass, recipientType]);
+  }, [history.length, searchText, selectedGrade, selectedClass, recipientType, teacherNameSearch, selectedTemplate, templates]);
 
   useRealtimeSync({
     tables: EMAIL_HISTORY_TABLE.map(t => ({
@@ -101,7 +154,7 @@ export const EmailHistory = () => {
     })),
     onRefresh: handleRefresh,
     enabled: history.length > 0,
-    dependencies: [history.length, searchText, selectedGrade, selectedClass, recipientType],
+    dependencies: [history.length, searchText, selectedGrade, selectedClass, recipientType, teacherNameSearch, selectedTemplate],
     useShadcnToast: true,
   });
 
@@ -114,6 +167,8 @@ export const EmailHistory = () => {
     setSelectedGrade("all");
     setSelectedClass("all");
     setRecipientType("all");
+    setTeacherNameSearch("");
+    setSelectedTemplate("all");
     setTimeout(() => loadHistory(), 100);
   };
 
@@ -184,7 +239,18 @@ export const EmailHistory = () => {
             </div>
             <div>
               <Label>수신자 유형</Label>
-              <Select value={recipientType} onValueChange={setRecipientType}>
+              <Select value={recipientType} onValueChange={(value) => {
+                setRecipientType(value);
+                // 유형 변경 시 관련 필터 초기화
+                if (value !== "teacher") {
+                  setTeacherNameSearch("");
+                  setSelectedTemplate("all");
+                }
+                if (value !== "student") {
+                  setSelectedGrade("all");
+                  setSelectedClass("all");
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
@@ -195,36 +261,74 @@ export const EmailHistory = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>학년</Label>
-              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                <SelectTrigger>
-                  <SelectValue placeholder="전체" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  <SelectItem value="1">1학년</SelectItem>
-                  <SelectItem value="2">2학년</SelectItem>
-                  <SelectItem value="3">3학년</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>반</Label>
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger>
-                  <SelectValue placeholder="전체" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  {Array.from({ length: 9 }, (_, i) => i + 1).map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num}반
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            
+            {/* 학생 수신자일 때 학년/반 필터 */}
+            {recipientType !== "teacher" && (
+              <>
+                <div>
+                  <Label>학년</Label>
+                  <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체</SelectItem>
+                      <SelectItem value="1">1학년</SelectItem>
+                      <SelectItem value="2">2학년</SelectItem>
+                      <SelectItem value="3">3학년</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>반</Label>
+                  <Select value={selectedClass} onValueChange={setSelectedClass}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체</SelectItem>
+                      {Array.from({ length: 9 }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num}반
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            
+            {/* 교사 수신자일 때 이름/템플릿 필터 */}
+            {recipientType === "teacher" && (
+              <>
+                <div>
+                  <Label>교사 이름</Label>
+                  <Input
+                    placeholder="교사 이름 검색"
+                    value={teacherNameSearch}
+                    onChange={(e) => setTeacherNameSearch(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                  />
+                </div>
+                <div>
+                  <Label>템플릿</Label>
+                  <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="전체" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체</SelectItem>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            
             <div className="flex items-end gap-2">
               <Button onClick={handleSearch} disabled={loading}>
                 조회
