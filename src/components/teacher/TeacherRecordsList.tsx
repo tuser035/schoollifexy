@@ -358,7 +358,9 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
         if (error) throw error;
       }
 
-      toast.success("삭제되었습니다");
+      // 삭제 성공 토스트 (학생 이름 포함)
+      const typeLabel = type === "merit" ? "상점" : type === "demerit" ? "벌점" : "이달의학생";
+      toast.success(`${recordToDelete?.student_name || ''} 학생의 ${typeLabel}이 삭제되었습니다.`);
       loadRecords();
 
       // 담임 선생님에게 삭제 알림 발송 (백그라운드)
@@ -387,6 +389,7 @@ const TeacherRecordsList = ({ teacherId }: TeacherRecordsListProps) => {
           
           if (notifyResponse.data?.success) {
             console.log('담임 선생님 삭제 알림 발송 성공:', notifyResponse.data);
+            toast.info('담임선생님께 전달했습니다');
           } else {
             console.log('담임 선생님 삭제 알림 발송 실패 또는 대상 없음:', notifyResponse.data);
           }
