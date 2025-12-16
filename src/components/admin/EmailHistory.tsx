@@ -19,6 +19,7 @@ interface EmailHistoryRecord {
   sender_type: string;
   recipient_email: string;
   recipient_name: string;
+  recipient_student_id?: string | null;
   subject: string;
   body: string;
   sent_at: string;
@@ -31,6 +32,7 @@ export const EmailHistory = () => {
   const [searchText, setSearchText] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<string>("all");
+  const [recipientType, setRecipientType] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<EmailHistoryRecord | null>(null);
   const { toast } = useToast();
@@ -60,7 +62,16 @@ export const EmailHistory = () => {
       });
 
       if (error) throw error;
-      setHistory(data || []);
+      
+      // 수신자 유형 필터링
+      let filteredData = data || [];
+      if (recipientType === "student") {
+        filteredData = filteredData.filter((record: EmailHistoryRecord) => record.recipient_student_id !== null);
+      } else if (recipientType === "teacher") {
+        filteredData = filteredData.filter((record: EmailHistoryRecord) => record.recipient_student_id === null);
+      }
+      
+      setHistory(filteredData);
     } catch (error: any) {
       toast({
         title: "이메일 이력 조회 실패",
@@ -81,7 +92,7 @@ export const EmailHistory = () => {
     if (history.length > 0) {
       loadHistory();
     }
-  }, [history.length, searchText, selectedGrade, selectedClass]);
+  }, [history.length, searchText, selectedGrade, selectedClass, recipientType]);
 
   useRealtimeSync({
     tables: EMAIL_HISTORY_TABLE.map(t => ({
@@ -90,7 +101,7 @@ export const EmailHistory = () => {
     })),
     onRefresh: handleRefresh,
     enabled: history.length > 0,
-    dependencies: [history.length, searchText, selectedGrade, selectedClass],
+    dependencies: [history.length, searchText, selectedGrade, selectedClass, recipientType],
     useShadcnToast: true,
   });
 
@@ -102,6 +113,7 @@ export const EmailHistory = () => {
     setSearchText("");
     setSelectedGrade("all");
     setSelectedClass("all");
+    setRecipientType("all");
     setTimeout(() => loadHistory(), 100);
   };
 
@@ -159,7 +171,7 @@ export const EmailHistory = () => {
           <CardDescription>이메일 발송 이력을 조회할 수 있습니다</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
             <div>
               <Label>검색</Label>
               <Input
@@ -168,6 +180,19 @@ export const EmailHistory = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               />
+            </div>
+            <div>
+              <Label>수신자 유형</Label>
+              <Select value={recipientType} onValueChange={setRecipientType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="전체" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="student">학생</SelectItem>
+                  <SelectItem value="teacher">교사</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>학년</Label>
