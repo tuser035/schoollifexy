@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { loginAdmin } from "@/lib/auth";
+import { Eye, EyeOff } from "lucide-react";
 
 interface SystemAdminLoginProps {
   onSuccess?: () => void;
@@ -13,6 +14,7 @@ interface SystemAdminLoginProps {
 const SystemAdminLogin = ({ onSuccess }: SystemAdminLoginProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -50,14 +52,30 @@ const SystemAdminLogin = ({ onSuccess }: SystemAdminLoginProps) => {
 
       <div className="space-y-2">
         <Label htmlFor="system-admin-password">비밀번호</Label>
-        <Input
-          id="system-admin-password"
-          type="password"
-          placeholder="비밀번호를 입력하세요"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <Input
+            id="system-admin-password"
+            type={showPassword ? "text" : "password"}
+            placeholder="비밀번호를 입력하세요"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="pr-10"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            )}
+          </Button>
+        </div>
       </div>
 
       <Button 
