@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.notify-homeroom-teacher]
 verify_jwt = false
+
+[functions.mindtalk-chat]
+verify_jwt = false
+
+[functions.mindtalk-alert]
+verify_jwt = false
