@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ interface MonthlyStudentPrintFormProps {
   studentGrade: number;
   studentClass: number;
   studentDept?: string;
+  initialIntroduction?: string;
 }
 
 const MonthlyStudentPrintForm = ({
@@ -24,6 +25,7 @@ const MonthlyStudentPrintForm = ({
   studentGrade,
   studentClass,
   studentDept = "",
+  initialIntroduction = "",
 }: MonthlyStudentPrintFormProps) => {
   const [selectedMonth, setSelectedMonth] = useState<string>(String(new Date().getMonth() + 1));
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -32,10 +34,15 @@ const MonthlyStudentPrintForm = ({
   const [classNum, setClassNum] = useState(`${studentClass}반`);
   const [dept, setDept] = useState(studentDept);
   const [dreamJob, setDreamJob] = useState("");
-  const [introduction, setIntroduction] = useState("");
+  const [introduction, setIntroduction] = useState(initialIntroduction);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+
+  // initialIntroduction이 변경되면 introduction 상태 업데이트
+  useEffect(() => {
+    setIntroduction(initialIntroduction);
+  }, [initialIntroduction]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
