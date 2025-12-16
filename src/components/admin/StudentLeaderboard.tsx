@@ -1,12 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal, Award, TrendingUp, Download } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Download, Upload, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 
@@ -27,6 +31,12 @@ interface MonthlyTrend {
   total: number;
 }
 
+interface CounselingModalData {
+  student: StudentRank;
+  scoreType: "merits" | "demerits" | "monthly";
+  score: number;
+}
+
 const StudentLeaderboard = () => {
   const [filterType, setFilterType] = useState<"all" | "grade" | "class">("all");
   const [selectedGrade, setSelectedGrade] = useState<string>("1");
@@ -36,6 +46,14 @@ const StudentLeaderboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [trendData, setTrendData] = useState<MonthlyTrend[]>([]);
+  
+  // 상담 모달 상태
+  const [counselingModal, setCounselingModal] = useState<CounselingModalData | null>(null);
+  const [counselorName, setCounselorName] = useState("");
+  const [counselingContent, setCounselingContent] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadLeaderboard = async () => {
     setIsLoading(true);
@@ -210,6 +228,110 @@ const StudentLeaderboard = () => {
     toast.success("CSV 파일이 다운로드되었습니다");
   };
 
+  // 상담 모달 열기
+  const openCounselingModal = (student: StudentRank, scoreType: "merits" | "demerits" | "monthly", score: number) => {
+    setCounselingModal({ student, scoreType, score });
+    setCounselorName("");
+    setCounselingContent("");
+    setAttachmentFile(null);
+  };
+
+  // 상담 모달 닫기
+  const closeCounselingModal = () => {
+    setCounselingModal(null);
+    setCounselorName("");
+    setCounselingContent("");
+    setAttachmentFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // 점수 유형 한글명
+  const getScoreTypeName = (type: "merits" | "demerits" | "monthly") => {
+    switch (type) {
+      case "merits": return "상점";
+      case "demerits": return "벌점";
+      case "monthly": return "이달의 학생";
+    }
+  };
+
+  // 상담 등록
+  const submitCounseling = async () => {
+    if (!counselingModal) return;
+    
+    if (!counselorName.trim()) {
+      toast.error("상담자 이름을 입력해주세요");
+      return;
+    }
+    if (!counselingContent.trim()) {
+      toast.error("상담 내용을 입력해주세요");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("인증 정보가 없습니다");
+        return;
+      }
+      const parsedUser = JSON.parse(authUser);
+
+      let attachmentUrl: string | null = null;
+
+      // 첨부파일 업로드
+      if (attachmentFile) {
+        const reader = new FileReader();
+        const fileBase64 = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(attachmentFile);
+        });
+
+        const { data: uploadData, error: uploadError } = await supabase.functions.invoke(
+          "upload-counseling-attachment",
+          {
+            body: {
+              admin_id: parsedUser.id,
+              filename: attachmentFile.name,
+              file_base64: fileBase64,
+              content_type: attachmentFile.type,
+            },
+          }
+        );
+
+        if (uploadError || !uploadData?.ok) {
+          throw new Error(uploadData?.error || uploadError?.message || "파일 업로드 실패");
+        }
+        attachmentUrl = uploadData.publicUrl;
+      }
+
+      // 상담 내용에 점수 정보 추가
+      const scoreInfo = `[${getScoreTypeName(counselingModal.scoreType)}: ${counselingModal.score}점]`;
+      const fullContent = `${scoreInfo}\n\n${counselingContent}`;
+
+      // 상담 기록 등록
+      const { data, error } = await supabase.rpc("admin_insert_career_counseling", {
+        admin_id_input: parsedUser.id,
+        student_id_input: counselingModal.student.student_id,
+        counselor_name_input: counselorName,
+        content_input: fullContent,
+        counseling_date_input: new Date().toISOString().split("T")[0],
+        attachment_url_input: attachmentUrl,
+      });
+
+      if (error) throw error;
+
+      toast.success("상담 기록이 등록되었습니다");
+      closeCounselingModal();
+    } catch (error: any) {
+      toast.error(error.message || "상담 등록에 실패했습니다");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     loadLeaderboard();
   }, [filterType, selectedGrade, selectedClass, sortBy]);
@@ -381,17 +503,29 @@ const StudentLeaderboard = () => {
                         {student.grade}학년 {student.class}반 {student.number}번
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="secondary" className="bg-merit-blue-light text-merit-blue">
+                        <Badge 
+                          variant="secondary" 
+                          className={`bg-merit-blue-light text-merit-blue ${index < 10 ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                          onClick={index < 10 ? () => openCounselingModal(student, "merits", student.merits) : undefined}
+                        >
                           {student.merits}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="secondary" className="bg-demerit-orange-light text-demerit-orange">
+                        <Badge 
+                          variant="secondary" 
+                          className={`bg-demerit-orange-light text-demerit-orange ${index < 10 ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                          onClick={index < 10 ? () => openCounselingModal(student, "demerits", student.demerits) : undefined}
+                        >
                           {student.demerits}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="secondary" className="bg-monthly-green-light text-monthly-green">
+                        <Badge 
+                          variant="secondary" 
+                          className={`bg-monthly-green-light text-monthly-green ${index < 10 ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                          onClick={index < 10 ? () => openCounselingModal(student, "monthly", student.monthly) : undefined}
+                        >
                           {student.monthly}
                         </Badge>
                       </TableCell>
@@ -451,6 +585,103 @@ const StudentLeaderboard = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* 상담 모달 */}
+      <Dialog open={!!counselingModal} onOpenChange={(open) => !open && closeCounselingModal()}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>상담 기록 등록</DialogTitle>
+          </DialogHeader>
+          
+          {counselingModal && (
+            <div className="space-y-4">
+              {/* 자동 입력된 정보 */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <Label className="text-muted-foreground text-xs">이름</Label>
+                  <p className="font-medium">{counselingModal.student.name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">학년반</Label>
+                  <p className="font-medium">
+                    {counselingModal.student.grade}학년 {counselingModal.student.class}반 {counselingModal.student.number}번
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-muted-foreground text-xs">{getScoreTypeName(counselingModal.scoreType)} 점수</Label>
+                  <p className="font-medium text-lg">{counselingModal.score}점</p>
+                </div>
+              </div>
+
+              {/* 상담자 이름 */}
+              <div className="space-y-2">
+                <Label htmlFor="counselorName">상담자 이름 *</Label>
+                <Input
+                  id="counselorName"
+                  value={counselorName}
+                  onChange={(e) => setCounselorName(e.target.value)}
+                  placeholder="상담자 이름을 입력하세요"
+                />
+              </div>
+
+              {/* 상담 내용 */}
+              <div className="space-y-2">
+                <Label htmlFor="counselingContent">상담 내용 *</Label>
+                <Textarea
+                  id="counselingContent"
+                  value={counselingContent}
+                  onChange={(e) => setCounselingContent(e.target.value)}
+                  placeholder="상담 내용을 입력하세요"
+                  rows={5}
+                />
+              </div>
+
+              {/* 첨부파일 */}
+              <div className="space-y-2">
+                <Label>첨부파일</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => setAttachmentFile(e.target.files?.[0] || null)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    파일 선택
+                  </Button>
+                  {attachmentFile && (
+                    <span className="text-sm text-muted-foreground truncate max-w-[200px]">
+                      {attachmentFile.name}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeCounselingModal} disabled={isSubmitting}>
+              취소
+            </Button>
+            <Button onClick={submitCounseling} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  등록 중...
+                </>
+              ) : (
+                "상담 등록"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
