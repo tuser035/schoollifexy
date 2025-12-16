@@ -304,6 +304,7 @@ const DemeritForm = () => {
       try {
         const { data: notifyResult, error: notifyError } = await supabase.functions.invoke('notify-homeroom-teacher', {
           body: {
+            notificationType: "demerit",
             studentName: selectedStudent.name,
             studentGrade: selectedStudent.grade,
             studentClass: selectedStudent.class,
