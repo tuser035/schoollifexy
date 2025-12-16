@@ -77,6 +77,10 @@ export default {
           teal: "hsl(var(--email-history-teal))",
           "teal-hover": "hsl(var(--email-history-teal-hover))",
         },
+        "data-inquiry": {
+          indigo: "hsl(var(--data-inquiry-indigo))",
+          "indigo-hover": "hsl(var(--data-inquiry-indigo-hover))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

@@ -62,6 +62,8 @@ All colors MUST be HSL.
     --bulk-email-pink-hover: 330 80% 52%;
     --email-history-teal: 180 70% 45%;
     --email-history-teal-hover: 180 70% 37%;
+    --data-inquiry-indigo: 240 60% 55%;
+    --data-inquiry-indigo-hover: 240 60% 47%;
 
     --sidebar-background: 0 0% 98%;
 
@@ -132,6 +134,8 @@ All colors MUST be HSL.
     --bulk-email-pink-hover: 330 80% 73%;
     --email-history-teal: 180 70% 50%;
     --email-history-teal-hover: 180 70% 58%;
+    --data-inquiry-indigo: 240 60% 60%;
+    --data-inquiry-indigo-hover: 240 60% 68%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
