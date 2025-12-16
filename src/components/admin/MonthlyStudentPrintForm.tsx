@@ -205,24 +205,24 @@ const MonthlyStudentPrintForm = ({
             margin-bottom: 25px;
           }
           .detail-label {
-            font-size: 24pt;
+            font-size: ${photoPreview ? '12pt' : '24pt'};
             color: #6b7280;
-            margin-bottom: 8px;
+            margin-bottom: ${photoPreview ? '4px' : '8px'};
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: ${photoPreview ? '5px' : '10px'};
           }
           .detail-label::before {
             content: "◆";
             color: #22c55e;
-            font-size: 16pt;
+            font-size: ${photoPreview ? '8pt' : '16pt'};
           }
           .detail-value {
-            font-size: 32pt;
+            font-size: ${photoPreview ? '16pt' : '32pt'};
             font-weight: 600;
             color: #111827;
-            padding: 12px 18px;
-            border-bottom: 4px solid #22c55e;
+            padding: ${photoPreview ? '6px 9px' : '12px 18px'};
+            border-bottom: ${photoPreview ? '2px' : '4px'} solid #22c55e;
             background: linear-gradient(90deg, #f0fdf4, transparent);
             border-radius: 8px 8px 0 0;
           }
