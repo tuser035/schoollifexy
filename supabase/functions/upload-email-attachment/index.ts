@@ -60,10 +60,11 @@ Deno.serve(async (req) => {
       : file_base64
 
     const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-    const fileExt = filename.split('.').pop() || 'file'
     const timestamp = Date.now()
     const randomId = Math.random().toString(36).substring(2, 10)
-    const path = `bulk-email/${user_id}/${timestamp}_${randomId}.${fileExt}`
+    // 원본 파일명을 경로에 포함 (특수문자 제거)
+    const safeFilename = filename.replace(/[^a-zA-Z0-9가-힣._-]/g, '_')
+    const path = `bulk-email/${user_id}/${timestamp}_${randomId}_${safeFilename}`
 
     // Upload file using service role (bypasses RLS)
     const { error: uploadError } = await supabase.storage
