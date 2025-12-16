@@ -58,13 +58,15 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     // 담임 선생님 찾기 (is_homeroom = true, 같은 학년, 같은 반)
-    const { data: homeroomTeacher, error: teacherError } = await supabase
+    const { data: homeroomTeachers, error: teacherError } = await supabase
       .from("teachers")
       .select("id, name, teacher_email")
       .eq("is_homeroom", true)
       .eq("grade", studentGrade)
       .eq("class", studentClass)
-      .single();
+      .limit(1);
+    
+    const homeroomTeacher = homeroomTeachers?.[0];
 
     if (teacherError || !homeroomTeacher) {
       console.log(`No homeroom teacher found for grade ${studentGrade}, class ${studentClass}`);
