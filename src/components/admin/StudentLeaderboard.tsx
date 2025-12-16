@@ -257,6 +257,16 @@ const StudentLeaderboard = () => {
     }
   };
 
+  // 점수 유형별 색상 클래스
+  const getScoreTypeColorClass = (type: "merits" | "demerits" | "monthly" | "total") => {
+    switch (type) {
+      case "merits": return "bg-blue-500";
+      case "demerits": return "bg-orange-500";
+      case "monthly": return "bg-green-500";
+      case "total": return "bg-purple-500";
+    }
+  };
+
   // 상담 등록
   const submitCounseling = async () => {
     if (!counselingModal) return;
@@ -594,8 +604,8 @@ const StudentLeaderboard = () => {
       {/* 상담 모달 */}
       <Dialog open={!!counselingModal} onOpenChange={(open) => !open && closeCounselingModal()}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{counselingModal ? `${getScoreTypeName(counselingModal.scoreType)} 상담기록등록` : "상담 기록 등록"}</DialogTitle>
+          <DialogHeader className={`${counselingModal ? getScoreTypeColorClass(counselingModal.scoreType) : ""} -mx-6 -mt-6 px-6 py-4 rounded-t-lg`}>
+            <DialogTitle className="text-white">{counselingModal ? `${getScoreTypeName(counselingModal.scoreType)} 상담기록등록` : "상담 기록 등록"}</DialogTitle>
           </DialogHeader>
           
           {counselingModal && (
