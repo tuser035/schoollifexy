@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, RefreshCw, Eye, Download, Trash } from "lucide-react";
+import { Trash2, RefreshCw, Eye, Download, Trash, Info } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FileObject } from "@supabase/storage-js";
 
 interface FileWithMetadata extends FileObject {
@@ -264,9 +263,39 @@ const StorageManager = () => {
                   {files.map((file) => (
                     <TableRow key={file.id}>
                       <TableCell className="font-medium max-w-[200px]">
-                        <span className="text-xs truncate block" title={file.originalFilename || file.name}>
-                          {file.originalFilename || file.name}
-                        </span>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="text-xs truncate block text-left hover:text-primary hover:underline cursor-pointer w-full">
+                              {file.originalFilename || file.name}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 text-xs" side="right" align="start">
+                            <div className="space-y-2">
+                              <div>
+                                <span className="font-semibold text-muted-foreground">원본 파일명:</span>
+                                <p className="break-all">{file.originalFilename || "없음"}</p>
+                              </div>
+                              <div>
+                                <span className="font-semibold text-muted-foreground">저장 경로:</span>
+                                <p className="break-all font-mono text-[10px]">{file.name}</p>
+                              </div>
+                              <div>
+                                <span className="font-semibold text-muted-foreground">파일 크기:</span>
+                                <p>{formatFileSize(file.metadata?.size)}</p>
+                              </div>
+                              <div>
+                                <span className="font-semibold text-muted-foreground">업로드 일시:</span>
+                                <p>{new Date(file.created_at).toLocaleString("ko-KR")}</p>
+                              </div>
+                              {file.metadata?.mimetype && (
+                                <div>
+                                  <span className="font-semibold text-muted-foreground">파일 형식:</span>
+                                  <p>{file.metadata.mimetype}</p>
+                                </div>
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       </TableCell>
                       <TableCell className="text-xs text-center whitespace-nowrap">
                         {formatFileSize(file.metadata?.size)}
