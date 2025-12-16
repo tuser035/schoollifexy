@@ -254,58 +254,71 @@ const StorageManager = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-            <TableHead>파일명</TableHead>
-            <TableHead>크기</TableHead>
-            <TableHead>업로드 날짜</TableHead>
-            <TableHead className="text-right w-[200px]">작업</TableHead>
+                    <TableHead className="min-w-[120px] max-w-[200px]">파일명</TableHead>
+                    <TableHead className="w-[70px] text-center">크기</TableHead>
+                    <TableHead className="w-[90px] text-center">업로드</TableHead>
+                    <TableHead className="w-[100px] text-right">작업</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {files.map((file) => (
                     <TableRow key={file.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium max-w-[200px]">
                         <div className="flex flex-col">
                           {file.originalFilename ? (
                             <>
-                              <span className="text-sm">
-                                <span className="font-semibold">원본 파일명:</span> {file.originalFilename}
+                              <span className="text-xs truncate" title={file.originalFilename}>
+                                {file.originalFilename}
                               </span>
-                              <span className="text-xs text-muted-foreground">저장 경로: {file.name}</span>
+                              <span className="text-[10px] text-muted-foreground truncate" title={file.name}>
+                                {file.name}
+                              </span>
                             </>
                           ) : (
                             <>
-                              <span className="text-sm">{file.name}</span>
-                              <span className="text-xs text-amber-600">※ 원본 파일명 정보 없음 (이전 업로드)</span>
+                              <span className="text-xs truncate" title={file.name}>{file.name}</span>
+                              <span className="text-[10px] text-amber-600">※ 원본명 없음</span>
                             </>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{formatFileSize(file.metadata?.size)}</TableCell>
-                      <TableCell>{formatDate(file.created_at)}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        {file.metadata?.mimetype?.startsWith("image/") && (
+                      <TableCell className="text-xs text-center whitespace-nowrap">
+                        {formatFileSize(file.metadata?.size)}
+                      </TableCell>
+                      <TableCell className="text-[10px] text-center whitespace-nowrap">
+                        {new Date(file.created_at).toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" })}
+                        <br />
+                        {new Date(file.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {file.metadata?.mimetype?.startsWith("image/") && (
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-7 w-7"
+                              onClick={() => handlePreviewFile(file.name)}
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                          )}
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="outline"
-                            onClick={() => handlePreviewFile(file.name)}
+                            className="h-7 w-7"
+                            onClick={() => handleDownloadFile(file.name)}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Download className="h-3 w-3" />
                           </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDownloadFile(file.name)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setDeleteFileId(file.name)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="h-7 w-7"
+                            onClick={() => setDeleteFileId(file.name)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
