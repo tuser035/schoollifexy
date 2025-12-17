@@ -603,6 +603,38 @@ export type Database = {
           },
         ]
       }
+      storybook_page_bookmarks: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          page_number: number
+          student_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          page_number: number
+          student_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          page_number?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storybook_page_bookmarks_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "storybooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storybook_pages: {
         Row: {
           book_id: string
@@ -688,6 +720,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_public: boolean | null
           rating: number | null
           student_id: string
           updated_at: string
@@ -697,6 +730,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          is_public?: boolean | null
           rating?: number | null
           student_id: string
           updated_at?: string
@@ -706,6 +740,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          is_public?: boolean | null
           rating?: number | null
           student_id?: string
           updated_at?: string
@@ -1649,6 +1684,17 @@ export type Database = {
           title: string
         }[]
       }
+      get_public_reviews: {
+        Args: { book_id_input: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          rating: number
+          student_id: string
+          student_name: string
+        }[]
+      }
       get_system_setting: {
         Args: { setting_key_input: string }
         Returns: string
@@ -1801,6 +1847,13 @@ export type Database = {
           year: number
         }[]
       }
+      student_get_page_bookmarks: {
+        Args: { book_id_input: string; student_id_input: string }
+        Returns: {
+          created_at: string
+          page_number: number
+        }[]
+      }
       student_get_play_history: {
         Args: { student_id_input: string }
         Returns: {
@@ -1888,6 +1941,14 @@ export type Database = {
         }
         Returns: string
       }
+      student_toggle_page_bookmark: {
+        Args: {
+          book_id_input: string
+          page_number_input: number
+          student_id_input: string
+        }
+        Returns: boolean
+      }
       student_update_playlist: {
         Args: {
           music_ids_input: string[]
@@ -1902,6 +1963,14 @@ export type Database = {
           book_id_input: string
           is_completed_input?: boolean
           last_page_input: number
+          student_id_input: string
+        }
+        Returns: boolean
+      }
+      student_update_review_visibility: {
+        Args: {
+          is_public_input: boolean
+          review_id_input: string
           student_id_input: string
         }
         Returns: boolean
