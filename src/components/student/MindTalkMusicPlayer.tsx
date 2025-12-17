@@ -515,7 +515,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
 
   return (
     <div className="fixed top-2 left-2 right-2 sm:left-auto sm:top-3 sm:right-3 z-[60] sm:w-[340px] max-h-[85vh] sm:max-h-[90vh]">
-      <div className="bg-gradient-to-b from-purple-900 via-purple-800 to-pink-900 rounded-2xl shadow-2xl overflow-hidden" style={{ background: 'linear-gradient(to bottom, rgb(88, 28, 135), rgb(107, 33, 168), rgb(131, 24, 67))' }}>
+      <div className="rounded-2xl shadow-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
           <div className="flex items-center gap-1.5 text-white">
