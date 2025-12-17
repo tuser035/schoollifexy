@@ -255,6 +255,10 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
                     </div>
                   );
                 })}
+                {/* 합계 카테고리 헤더 */}
+                <div className="w-14 shrink-0 text-center text-[10px] font-bold py-1 border-b-2 bg-slate-200 text-slate-700">
+                  총합
+                </div>
               </div>
               
               {/* 키워드 헤더 */}
@@ -281,48 +285,73 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
                     </div>
                   ))
                 )}
+                {/* 합계 헤더 */}
+                <div className="w-14 shrink-0 p-1 text-center bg-slate-100 border-l-2 border-slate-300">
+                  <span className="text-[10px] font-bold text-slate-700">합계</span>
+                </div>
               </div>
               
               {/* 데이터 행 (학생별) */}
-              {heatmapData.students.map(student => (
-                <div key={student.student_id} className="flex border-t">
-                  <div 
-                    className="w-28 shrink-0 p-2 text-xs truncate sticky left-0 bg-white z-10 cursor-pointer hover:bg-mindtalk-chat-cyan-light transition-colors"
-                    onClick={() => onStudentClick?.(student.student_id, student.student_name, student.student_grade, student.student_class, student.student_number)}
-                  >
+              {heatmapData.students.map(student => {
+                // 학생별 총 합계 계산
+                const studentTotal = heatmapData.keywords.reduce((sum, { keyword }) => 
+                  sum + (heatmapData.data[student.student_id][keyword] || 0), 0
+                );
+                
+                return (
+                  <div key={student.student_id} className="flex border-t">
+                    <div 
+                      className="w-28 shrink-0 p-2 text-xs truncate sticky left-0 bg-white z-10 cursor-pointer hover:bg-mindtalk-chat-cyan-light transition-colors"
+                      onClick={() => onStudentClick?.(student.student_id, student.student_name, student.student_grade, student.student_class, student.student_number)}
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-mindtalk-chat-cyan hover:underline">
+                            {student.student_name} ({student.student_grade}-{student.student_class})
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{student.student_name} ({student.student_grade}학년 {student.student_class}반 {student.student_number}번) - 클릭하여 대화보기</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    {heatmapData.sortedCategories.map(cat => 
+                      heatmapData.keywordsByCategory[cat].map(({ keyword }) => {
+                        const count = heatmapData.data[student.student_id][keyword] || 0;
+                        return (
+                          <Tooltip key={keyword}>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={`w-12 h-8 shrink-0 flex items-center justify-center text-xs font-medium transition-colors ${getHeatColor(count)} ${count > 0 ? 'cursor-pointer hover:ring-2 hover:ring-mindtalk-chat-cyan' : 'cursor-default'}`}
+                                onClick={() => count > 0 && onStudentClick?.(student.student_id, student.student_name, student.student_grade, student.student_class, student.student_number)}
+                              >
+                                {count > 0 ? count : ''}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{student.student_name}: "{keyword}" {count}회 {count > 0 ? '- 클릭하여 대화보기' : ''}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })
+                    )}
+                    {/* 합계 셀 */}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="text-mindtalk-chat-cyan hover:underline">
-                          {student.student_name} ({student.student_grade}-{student.student_class})
-                        </span>
+                        <div 
+                          className="w-14 h-8 shrink-0 flex items-center justify-center text-xs font-bold bg-slate-100 border-l-2 border-slate-300 text-slate-700 cursor-pointer hover:bg-slate-200 transition-colors"
+                          onClick={() => onStudentClick?.(student.student_id, student.student_name, student.student_grade, student.student_class, student.student_number)}
+                        >
+                          {studentTotal}
+                        </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{student.student_name} ({student.student_grade}학년 {student.student_class}반 {student.student_number}번) - 클릭하여 대화보기</p>
+                        <p>{student.student_name}: 총 {studentTotal}회 - 클릭하여 대화보기</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
-                  {heatmapData.sortedCategories.map(cat => 
-                    heatmapData.keywordsByCategory[cat].map(({ keyword }) => {
-                      const count = heatmapData.data[student.student_id][keyword] || 0;
-                      return (
-                        <Tooltip key={keyword}>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={`w-12 h-8 shrink-0 flex items-center justify-center text-xs font-medium transition-colors ${getHeatColor(count)} ${count > 0 ? 'cursor-pointer hover:ring-2 hover:ring-mindtalk-chat-cyan' : 'cursor-default'}`}
-                              onClick={() => count > 0 && onStudentClick?.(student.student_id, student.student_name, student.student_grade, student.student_class, student.student_number)}
-                            >
-                              {count > 0 ? count : ''}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{student.student_name}: "{keyword}" {count}회 {count > 0 ? '- 클릭하여 대화보기' : ''}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    })
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
