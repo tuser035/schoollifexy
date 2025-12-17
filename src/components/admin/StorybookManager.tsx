@@ -280,13 +280,27 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     }
   };
 
-  const handlePageChange = (newPageNumber: number) => {
-    // Save current page first
-    handleSavePageText();
+  const handlePageChange = async (newPageNumber: number) => {
+    if (!selectedBook) return;
     
-    // Load new page content
-    const page = pages.find(p => p.page_number === newPageNumber);
+    // Save current page first
+    await handleSavePageText();
+    
+    // Reload pages to get fresh data
+    const { data: freshPages } = await supabase.rpc('admin_get_storybook_pages', {
+      admin_id_input: adminId,
+      book_id_input: selectedBook.id
+    });
+    
+    if (freshPages) {
+      setPages(freshPages);
+    }
+    
+    // Load new page content from fresh data
+    const page = freshPages?.find((p: { page_number: number }) => p.page_number === newPageNumber);
     setCurrentPageNumber(newPageNumber);
+    
+    // Clear/initialize for new page
     setPageText(page?.text_content || '');
     setPageImagePreview(page?.image_url || null);
   };
