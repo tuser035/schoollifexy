@@ -101,6 +101,11 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   }, [volume, isMuted]);
 
   const getAudioUrl = (filePath: string) => {
+    // If file is in public folder (music/...), use direct path
+    if (filePath.startsWith('music/')) {
+      return `/${filePath}`;
+    }
+    // Otherwise use Supabase storage
     const { data } = supabase.storage.from('mindtalk-music').getPublicUrl(filePath);
     return data.publicUrl;
   };
