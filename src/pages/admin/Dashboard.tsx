@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle, AlertTriangle, Music } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle, AlertTriangle, Music, BookOpen } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -21,6 +21,7 @@ import SystemSettings from "@/components/admin/SystemSettings";
 import MindTalkInquiry from "@/components/admin/MindTalkInquiry";
 import MindTalkKeywords from "@/components/admin/MindTalkKeywords";
 import MindTalkMusic from "@/components/admin/MindTalkMusic";
+import StorybookManager from "@/components/admin/StorybookManager";
 import {
   Sidebar,
   SidebarContent,
@@ -52,6 +53,7 @@ const menuItems = (user: AuthUser) => {
     { value: "mindtalk", label: "마음톡", icon: MessageCircle },
     { value: "mindtalk-keywords", label: "키워드관리", icon: AlertTriangle },
     { value: "mindtalk-music", label: "힐링뮤직", icon: Music },
+    { value: "storybooks", label: "동화책", icon: BookOpen },
     { value: "statistics", label: "통계", icon: TrendingUp },
     { value: "leaderboard", label: "순위", icon: Trophy },
     { value: "email-history", label: "이메일", icon: Mail },
@@ -186,6 +188,8 @@ const AdminDashboard = () => {
         return <MindTalkKeywords adminId={user.id} />;
       case "mindtalk-music":
         return <MindTalkMusic adminId={user.id} />;
+      case "storybooks":
+        return <StorybookManager adminId={user.id} />;
       case "statistics":
         return <UnifiedStatistics />;
       case "leaderboard":
