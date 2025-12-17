@@ -499,22 +499,22 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
   }, [keywords]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-mindtalk-keyword-amber-light/30 p-4 rounded-lg border border-mindtalk-keyword-amber/20">
       {/* 통계 카드 및 차트 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="border-mindtalk-keyword-amber/30">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+                <AlertTriangle className="w-8 h-8 text-mindtalk-keyword-amber" />
                 <div>
                   <p className="text-sm text-muted-foreground">전체 키워드</p>
-                  <p className="text-2xl font-bold">{keywords.length}개</p>
+                  <p className="text-2xl font-bold text-mindtalk-keyword-amber">{keywords.length}개</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-mindtalk-keyword-amber/30">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
@@ -522,12 +522,12 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">활성 키워드</p>
-                  <p className="text-2xl font-bold">{activeCount}개</p>
+                  <p className="text-2xl font-bold text-green-600">{activeCount}개</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-mindtalk-keyword-amber/30">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
@@ -535,7 +535,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">비활성 키워드</p>
-                  <p className="text-2xl font-bold">{keywords.length - activeCount}개</p>
+                  <p className="text-2xl font-bold text-gray-600">{keywords.length - activeCount}개</p>
                 </div>
               </div>
             </CardContent>
@@ -543,9 +543,9 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
         </div>
         
         {/* 카테고리별 파이 차트 */}
-        <Card>
+        <Card className="border-mindtalk-keyword-amber/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">카테고리별 분포</CardTitle>
+            <CardTitle className="text-lg text-mindtalk-keyword-amber-hover">카테고리별 분포</CardTitle>
           </CardHeader>
           <CardContent>
             {categoryChartData.length > 0 ? (
@@ -583,9 +583,9 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
       </div>
 
       {/* 키워드 추가 */}
-      <Card>
+      <Card className="border-mindtalk-keyword-amber/30">
         <CardHeader>
-          <CardTitle className="text-lg">키워드 추가</CardTitle>
+          <CardTitle className="text-lg text-mindtalk-keyword-amber-hover">키워드 추가</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="single" className="w-full">
@@ -715,9 +715,9 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
       </Card>
 
       {/* 검색 및 필터 */}
-      <Card>
+      <Card className="border-mindtalk-keyword-amber/30">
         <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-lg">고위험 키워드 목록</CardTitle>
+          <CardTitle className="text-lg text-mindtalk-keyword-amber-hover">고위험 키워드 목록</CardTitle>
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={bulkChangeCategory} onValueChange={setBulkChangeCategory}>

@@ -91,6 +91,11 @@ export default {
           "cyan-hover": "hsl(var(--mindtalk-chat-cyan-hover))",
           "cyan-light": "hsl(var(--mindtalk-chat-cyan-light))",
         },
+        "mindtalk-keyword": {
+          amber: "hsl(var(--mindtalk-keyword-amber))",
+          "amber-hover": "hsl(var(--mindtalk-keyword-amber-hover))",
+          "amber-light": "hsl(var(--mindtalk-keyword-amber-light))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
