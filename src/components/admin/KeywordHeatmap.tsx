@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Grid3X3, Download } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Grid3X3, Download, ArrowUpDown, ArrowUp, ArrowDown, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface KeywordWithCategory {
@@ -26,23 +27,29 @@ interface KeywordHeatmapProps {
 }
 
 // 카테고리 표시 이름과 색상 (실제 DB 카테고리명에 맞춤)
-const CATEGORY_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
-  '자살징후': { label: '자살징후', color: 'text-red-700', bgColor: 'bg-red-50' },
-  '우울': { label: '우울', color: 'text-red-600', bgColor: 'bg-red-50' },
-  '자해': { label: '자해', color: 'text-rose-700', bgColor: 'bg-rose-50' },
-  '폭력': { label: '폭력', color: 'text-orange-700', bgColor: 'bg-orange-50' },
-  '충동조절': { label: '충동조절', color: 'text-amber-700', bgColor: 'bg-amber-50' },
-  '비행': { label: '비행', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
-  '정신증': { label: '정신증', color: 'text-purple-700', bgColor: 'bg-purple-50' },
-  '기능저하': { label: '기능저하', color: 'text-blue-700', bgColor: 'bg-blue-50' },
-  '고립': { label: '고립', color: 'text-indigo-700', bgColor: 'bg-indigo-50' },
-  '섭식': { label: '섭식', color: 'text-pink-700', bgColor: 'bg-pink-50' },
-  '정서': { label: '정서', color: 'text-teal-700', bgColor: 'bg-teal-50' },
-  '약물': { label: '약물', color: 'text-gray-700', bgColor: 'bg-gray-50' },
-  'default': { label: '기타', color: 'text-slate-700', bgColor: 'bg-slate-50' },
+const CATEGORY_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
+  '자살징후': { label: '자살징후', color: 'text-red-700', bgColor: 'bg-red-50', borderColor: 'border-red-300' },
+  '우울': { label: '우울', color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-300' },
+  '자해': { label: '자해', color: 'text-rose-700', bgColor: 'bg-rose-50', borderColor: 'border-rose-300' },
+  '폭력': { label: '폭력', color: 'text-orange-700', bgColor: 'bg-orange-50', borderColor: 'border-orange-300' },
+  '충동조절': { label: '충동조절', color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-300' },
+  '비행': { label: '비행', color: 'text-yellow-700', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-300' },
+  '정신증': { label: '정신증', color: 'text-purple-700', bgColor: 'bg-purple-50', borderColor: 'border-purple-300' },
+  '기능저하': { label: '기능저하', color: 'text-blue-700', bgColor: 'bg-blue-50', borderColor: 'border-blue-300' },
+  '고립': { label: '고립', color: 'text-indigo-700', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-300' },
+  '섭식': { label: '섭식', color: 'text-pink-700', bgColor: 'bg-pink-50', borderColor: 'border-pink-300' },
+  '정서': { label: '정서', color: 'text-teal-700', bgColor: 'bg-teal-50', borderColor: 'border-teal-300' },
+  '약물': { label: '약물', color: 'text-gray-700', bgColor: 'bg-gray-50', borderColor: 'border-gray-300' },
+  'default': { label: '기타', color: 'text-slate-700', bgColor: 'bg-slate-50', borderColor: 'border-slate-300' },
 };
 
+type SortOption = 'default' | 'total-desc' | 'total-asc';
+
 const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: KeywordHeatmapProps) => {
+  const [sortOption, setSortOption] = useState<SortOption>('default');
+  const [enabledCategories, setEnabledCategories] = useState<Set<string>>(new Set());
+  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
+  
   // 학생별 키워드 사용횟수 계산
   const heatmapData = useMemo(() => {
     const userMessages = allMessages.filter(m => m.role === 'user');
@@ -67,12 +74,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
       }
     });
     
-    const students = Array.from(studentsMap.values())
-      .sort((a, b) => {
-        if (a.student_grade !== b.student_grade) return a.student_grade - b.student_grade;
-        if (a.student_class !== b.student_class) return a.student_class - b.student_class;
-        return a.student_number - b.student_number;
-      });
+    const students = Array.from(studentsMap.values());
     
     const data: Record<string, Record<string, number>> = {};
     let maxCount = 0;
@@ -113,17 +115,80 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
     
     // 카테고리 순서 정렬 (위험도 높은 순)
     const categoryOrder = ['자살징후', '자해', '우울', '폭력', '충동조절', '비행', '정신증', '기능저하', '고립', '섭식', '정서', '약물', 'default'];
-    const sortedCategories = categoryOrder.filter(cat => keywordsByCategory[cat]?.length > 0);
+    const allCategories = categoryOrder.filter(cat => keywordsByCategory[cat]?.length > 0);
     
     return { 
       students: studentsWithKeywords, 
       keywords: usedKeywords, 
       keywordsByCategory,
-      sortedCategories,
+      allCategories,
       data, 
       maxCount 
     };
   }, [allMessages, keywordsWithCategory]);
+
+  // 필터링된 카테고리 (필터가 비어있으면 전체 표시)
+  const filteredCategories = useMemo(() => {
+    if (enabledCategories.size === 0) return heatmapData.allCategories;
+    return heatmapData.allCategories.filter(cat => enabledCategories.has(cat));
+  }, [heatmapData.allCategories, enabledCategories]);
+
+  // 학생별 총합 계산 (필터링된 카테고리 기준)
+  const getStudentTotal = (studentId: string) => {
+    let total = 0;
+    filteredCategories.forEach(cat => {
+      heatmapData.keywordsByCategory[cat]?.forEach(({ keyword }) => {
+        total += heatmapData.data[studentId]?.[keyword] || 0;
+      });
+    });
+    return total;
+  };
+
+  // 정렬된 학생 목록
+  const sortedStudents = useMemo(() => {
+    const students = [...heatmapData.students];
+    
+    if (sortOption === 'total-desc') {
+      return students.sort((a, b) => getStudentTotal(b.student_id) - getStudentTotal(a.student_id));
+    } else if (sortOption === 'total-asc') {
+      return students.sort((a, b) => getStudentTotal(a.student_id) - getStudentTotal(b.student_id));
+    }
+    
+    // default: 학년-반-번호 순
+    return students.sort((a, b) => {
+      if (a.student_grade !== b.student_grade) return a.student_grade - b.student_grade;
+      if (a.student_class !== b.student_class) return a.student_class - b.student_class;
+      return a.student_number - b.student_number;
+    });
+  }, [heatmapData.students, sortOption, filteredCategories]);
+
+  // 정렬 토글
+  const toggleSort = () => {
+    setSortOption(prev => {
+      if (prev === 'default') return 'total-desc';
+      if (prev === 'total-desc') return 'total-asc';
+      return 'default';
+    });
+  };
+
+  // 카테고리 필터 토글
+  const toggleCategory = (cat: string) => {
+    setEnabledCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(cat)) {
+        newSet.delete(cat);
+      } else {
+        newSet.add(cat);
+      }
+      return newSet;
+    });
+  };
+
+  // 모든 필터 초기화
+  const resetFilters = () => {
+    setEnabledCategories(new Set());
+    setSortOption('default');
+  };
 
   // 절대적 횟수 기준 색상 (1회=연한색, 점점 진해짐)
   const getHeatColor = (count: number): string => {
@@ -145,7 +210,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
 
     // 헤더 생성: 학생정보 + 카테고리별 키워드 + 합계
     const headers = ['학번', '이름', '학년', '반', '번호'];
-    heatmapData.sortedCategories.forEach(cat => {
+    filteredCategories.forEach(cat => {
       const catLabel = CATEGORY_CONFIG[cat]?.label || cat;
       heatmapData.keywordsByCategory[cat].forEach(({ keyword }) => {
         headers.push(`[${catLabel}] ${keyword}`);
@@ -154,7 +219,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
     headers.push('합계');
 
     // 데이터 행 생성
-    const rows = heatmapData.students.map(student => {
+    const rows = sortedStudents.map(student => {
       const row = [
         student.student_id,
         student.student_name,
@@ -164,7 +229,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
       ];
       
       let total = 0;
-      heatmapData.sortedCategories.forEach(cat => {
+      filteredCategories.forEach(cat => {
         heatmapData.keywordsByCategory[cat].forEach(({ keyword }) => {
           const count = heatmapData.data[student.student_id][keyword] || 0;
           row.push(count.toString());
@@ -216,24 +281,69 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
   return (
     <Card className="border-mindtalk-chat-cyan/30">
       <CardHeader className="py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <Grid3X3 className="h-4 w-4 text-mindtalk-chat-cyan" />
             키워드 사용 히트맵
             <span className="text-xs font-normal text-muted-foreground ml-2">
-              ({heatmapData.students.length}명, {heatmapData.keywords.length}개 키워드)
+              ({sortedStudents.length}명, {heatmapData.keywords.length}개 키워드)
             </span>
           </CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={exportToCSV}
-            className="border-mindtalk-chat-cyan/50 text-mindtalk-chat-cyan hover:bg-mindtalk-chat-cyan hover:text-white"
-          >
-            <Download className="h-4 w-4 mr-1" />
-            CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant={showCategoryFilter ? "default" : "outline"}
+              size="sm" 
+              onClick={() => setShowCategoryFilter(!showCategoryFilter)}
+              className={showCategoryFilter ? "bg-mindtalk-chat-cyan text-white" : "border-mindtalk-chat-cyan/50 text-mindtalk-chat-cyan hover:bg-mindtalk-chat-cyan hover:text-white"}
+            >
+              <Filter className="h-4 w-4 mr-1" />
+              필터
+              {enabledCategories.size > 0 && (
+                <Badge variant="secondary" className="ml-1 text-[10px] px-1">{enabledCategories.size}</Badge>
+              )}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={exportToCSV}
+              className="border-mindtalk-chat-cyan/50 text-mindtalk-chat-cyan hover:bg-mindtalk-chat-cyan hover:text-white"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              CSV
+            </Button>
+          </div>
         </div>
+        
+        {/* 카테고리 필터 토글 */}
+        {showCategoryFilter && (
+          <div className="mt-3 p-2 bg-gray-50 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-muted-foreground">카테고리 필터</span>
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="h-6 text-xs">
+                초기화
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {heatmapData.allCategories.map(cat => {
+                const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.default;
+                const isActive = enabledCategories.size === 0 || enabledCategories.has(cat);
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => toggleCategory(cat)}
+                    className={`text-[10px] px-2 py-1 rounded border transition-all ${
+                      isActive 
+                        ? `${config.bgColor} ${config.color} ${config.borderColor} border-2` 
+                        : 'bg-gray-100 text-gray-400 border-gray-200 opacity-50'
+                    }`}
+                  >
+                    {config.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="p-2">
         <TooltipProvider>
@@ -242,7 +352,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
               {/* 카테고리 헤더 */}
               <div className="flex">
                 <div className="w-28 shrink-0 sticky left-0 bg-white z-10" />
-                {heatmapData.sortedCategories.map(cat => {
+                {filteredCategories.map(cat => {
                   const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.default;
                   const keywordsInCat = heatmapData.keywordsByCategory[cat];
                   return (
@@ -255,10 +365,23 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
                     </div>
                   );
                 })}
-                {/* 합계 카테고리 헤더 */}
-                <div className="w-14 shrink-0 text-center text-[10px] font-bold py-1 border-b-2 bg-slate-200 text-slate-700">
-                  총합
-                </div>
+                {/* 합계 카테고리 헤더 - 클릭하여 정렬 */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className="w-14 shrink-0 text-center text-[10px] font-bold py-1 border-b-2 bg-slate-200 text-slate-700 cursor-pointer hover:bg-slate-300 transition-colors flex items-center justify-center gap-1"
+                      onClick={toggleSort}
+                    >
+                      총합
+                      {sortOption === 'default' && <ArrowUpDown className="h-3 w-3" />}
+                      {sortOption === 'total-desc' && <ArrowDown className="h-3 w-3" />}
+                      {sortOption === 'total-asc' && <ArrowUp className="h-3 w-3" />}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>클릭하여 정렬 (현재: {sortOption === 'default' ? '기본' : sortOption === 'total-desc' ? '내림차순' : '오름차순'})</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               
               {/* 키워드 헤더 */}
@@ -266,7 +389,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
                 <div className="w-28 shrink-0 p-2 text-xs font-medium text-muted-foreground sticky left-0 bg-white z-10">
                   학생
                 </div>
-                {heatmapData.sortedCategories.map(cat => 
+                {filteredCategories.map(cat => 
                   heatmapData.keywordsByCategory[cat].map(({ keyword }) => (
                     <div
                       key={keyword}
@@ -285,18 +408,29 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
                     </div>
                   ))
                 )}
-                {/* 합계 헤더 */}
-                <div className="w-14 shrink-0 p-1 text-center bg-slate-100 border-l-2 border-slate-300">
-                  <span className="text-[10px] font-bold text-slate-700">합계</span>
-                </div>
+                {/* 합계 헤더 - 클릭하여 정렬 */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className="w-14 shrink-0 p-1 text-center bg-slate-100 border-l-2 border-slate-300 cursor-pointer hover:bg-slate-200 transition-colors flex items-center justify-center gap-1"
+                      onClick={toggleSort}
+                    >
+                      <span className="text-[10px] font-bold text-slate-700">합계</span>
+                      {sortOption === 'default' && <ArrowUpDown className="h-2.5 w-2.5 text-slate-500" />}
+                      {sortOption === 'total-desc' && <ArrowDown className="h-2.5 w-2.5 text-slate-700" />}
+                      {sortOption === 'total-asc' && <ArrowUp className="h-2.5 w-2.5 text-slate-700" />}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>클릭하여 정렬</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
               
               {/* 데이터 행 (학생별) */}
-              {heatmapData.students.map(student => {
-                // 학생별 총 합계 계산
-                const studentTotal = heatmapData.keywords.reduce((sum, { keyword }) => 
-                  sum + (heatmapData.data[student.student_id][keyword] || 0), 0
-                );
+              {sortedStudents.map(student => {
+                // 학생별 총 합계 계산 (필터링된 카테고리 기준)
+                const studentTotal = getStudentTotal(student.student_id);
                 
                 return (
                   <div key={student.student_id} className="flex border-t">
@@ -315,7 +449,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    {heatmapData.sortedCategories.map(cat => 
+                    {filteredCategories.map(cat => 
                       heatmapData.keywordsByCategory[cat].map(({ keyword }) => {
                         const count = heatmapData.data[student.student_id][keyword] || 0;
                         return (
@@ -358,9 +492,9 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
         </TooltipProvider>
         
         {/* 범례 */}
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex flex-wrap gap-2">
-            {heatmapData.sortedCategories.map(cat => {
+        <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
+            {filteredCategories.map(cat => {
               const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.default;
               return (
                 <span key={cat} className={`text-[10px] px-2 py-0.5 rounded ${config.bgColor} ${config.color}`}>
