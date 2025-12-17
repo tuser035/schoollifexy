@@ -659,7 +659,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               </div>
 
               <p className="text-sm text-muted-foreground">
-                * 마음톡을 사용한 학생만 목록에 표시됩니다 ({filteredStudents.length}명)
+                * 마음톡을 사용한 학생만 목록에 표시됩니다 ({filteredStudents.length}명, 총 {filteredStudents.reduce((sum, s) => sum + s.message_count, 0)}건의 대화)
               </p>
             </TabsContent>
           </Tabs>
