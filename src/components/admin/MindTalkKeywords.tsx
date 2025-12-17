@@ -209,7 +209,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
               </SelectContent>
             </Select>
             <Input
-              placeholder="설명 (선택)"
+              placeholder="예: 자살 충동을 암시하는 표현"
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
               className="flex-1 min-w-40"
