@@ -29,7 +29,8 @@ import {
   ChevronRight,
   Save,
   FileSpreadsheet,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
 
 interface Storybook {
@@ -75,7 +76,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [pageImagePreview, setPageImagePreview] = useState<string | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-
+  const [pageSaving, setPageSaving] = useState(false);
   // CSV upload states
   const [isCsvDialogOpen, setIsCsvDialogOpen] = useState(false);
   const [csvUploading, setCsvUploading] = useState(false);
@@ -281,28 +282,39 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   };
 
   const handlePageChange = async (newPageNumber: number) => {
-    if (!selectedBook) return;
+    if (!selectedBook || pageSaving) return;
     
-    // Save current page first
-    await handleSavePageText();
+    setPageSaving(true);
     
-    // Reload pages to get fresh data
-    const { data: freshPages } = await supabase.rpc('admin_get_storybook_pages', {
-      admin_id_input: adminId,
-      book_id_input: selectedBook.id
-    });
-    
-    if (freshPages) {
-      setPages(freshPages);
+    try {
+      // Save current page first
+      await handleSavePageText();
+      
+      // Reload pages to get fresh data
+      const { data: freshPages } = await supabase.rpc('admin_get_storybook_pages', {
+        admin_id_input: adminId,
+        book_id_input: selectedBook.id
+      });
+      
+      if (freshPages) {
+        setPages(freshPages);
+      }
+      
+      // Load new page content from fresh data
+      const page = freshPages?.find((p: { page_number: number }) => p.page_number === newPageNumber);
+      setCurrentPageNumber(newPageNumber);
+      
+      // Clear/initialize for new page
+      setPageText(page?.text_content || '');
+      setPageImagePreview(page?.image_url || null);
+      
+      toast.success(`${newPageNumber}페이지로 이동했습니다`);
+    } catch (error) {
+      console.error('Page change error:', error);
+      toast.error('페이지 이동에 실패했습니다');
+    } finally {
+      setPageSaving(false);
     }
-    
-    // Load new page content from fresh data
-    const page = freshPages?.find((p: { page_number: number }) => p.page_number === newPageNumber);
-    setCurrentPageNumber(newPageNumber);
-    
-    // Clear/initialize for new page
-    setPageText(page?.text_content || '');
-    setPageImagePreview(page?.image_url || null);
   };
 
   // CSV bulk upload handler
@@ -610,21 +622,37 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => handlePageChange(currentPageNumber - 1)}
-                  disabled={currentPageNumber <= 1}
+                  disabled={currentPageNumber <= 1 || pageSaving}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  {pageSaving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ChevronLeft className="w-4 h-4" />
+                  )}
                   이전
                 </Button>
                 <span className="font-medium">
-                  {currentPageNumber} 페이지
+                  {pageSaving ? (
+                    <span className="flex items-center gap-2 text-amber-600">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      저장 중...
+                    </span>
+                  ) : (
+                    `${currentPageNumber} 페이지`
+                  )}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handlePageChange(currentPageNumber + 1)}
+                  disabled={pageSaving}
                 >
                   다음
-                  <ChevronRight className="w-4 h-4" />
+                  {pageSaving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
 
