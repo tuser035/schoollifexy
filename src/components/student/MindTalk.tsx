@@ -101,9 +101,18 @@ const getInitialMessage = (studentName: string): Message => ({
   content: `**${studentName}** 안녕! 나는 마음톡이야❤️\n\n오늘 하루는 어땠어? 혹시 마음에 걸리는 게 있거나, 그냥 이야기하고 싶은 거 있으면 편하게 말해줘.\n\n아래 태그 중에서 지금 네 마음과 가까운 걸 골라도 좋고, 그냥 하고 싶은 말을 적어도 돼 💬`
 });
 
-// 사용 가능 시간 체크 (평일 오후 4:30 ~ 6:30)
+// 사용 가능 시간 체크 (평일 오후 4:30 ~ 6:30) - 2025년 12월 22일(월)부터 적용
 const isWithinAllowedHours = (): { allowed: boolean; message: string } => {
   const now = new Date();
+  
+  // 시간 제한 적용 시작일: 2025년 12월 22일 (월요일)
+  const restrictionStartDate = new Date(2025, 11, 22); // 월은 0부터 시작 (11 = 12월)
+  
+  // 적용 시작일 이전이면 제한 없이 허용
+  if (now < restrictionStartDate) {
+    return { allowed: true, message: '' };
+  }
+  
   const day = now.getDay(); // 0 = Sunday, 6 = Saturday
   const hours = now.getHours();
   const minutes = now.getMinutes();
