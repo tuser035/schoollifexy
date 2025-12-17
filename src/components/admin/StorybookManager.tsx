@@ -30,7 +30,8 @@ import {
   Save,
   FileSpreadsheet,
   Download,
-  Loader2
+  Loader2,
+  Play
 } from 'lucide-react';
 
 interface Storybook {
@@ -63,7 +64,11 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Storybook | null>(null);
+  const [previewBook, setPreviewBook] = useState<Storybook | null>(null);
+  const [previewPages, setPreviewPages] = useState<StorybookPage[]>([]);
+  const [previewPageNumber, setPreviewPageNumber] = useState(1);
   
   // Form states
   const [newBookNumber, setNewBookNumber] = useState('');
@@ -168,6 +173,25 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     setCoverImagePreview(book.cover_image_url);
     loadPages(book.id);
     setIsEditDialogOpen(true);
+  };
+
+  const handlePreviewBook = async (book: Storybook) => {
+    try {
+      const { data, error } = await supabase.rpc('admin_get_storybook_pages', {
+        admin_id_input: adminId,
+        book_id_input: book.id
+      });
+
+      if (error) throw error;
+      
+      setPreviewBook(book);
+      setPreviewPages(data || []);
+      setPreviewPageNumber(1);
+      setIsPreviewDialogOpen(true);
+    } catch (error) {
+      console.error('Error loading preview:', error);
+      toast.error('미리보기를 불러오는데 실패했습니다');
+    }
   };
 
   const handleTogglePublish = async (book: Storybook) => {
@@ -529,7 +553,17 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                         <Button 
                           variant="ghost" 
                           size="sm"
+                          onClick={() => handlePreviewBook(book)}
+                          title="미리보기"
+                          className="text-amber-600 hover:text-amber-700"
+                        >
+                          <Play className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
                           onClick={() => handleSelectBook(book)}
+                          title="편집"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -537,6 +571,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleTogglePublish(book)}
+                          title={book.is_published ? '발행 취소' : '발행'}
                         >
                           {book.is_published ? (
                             <EyeOff className="w-4 h-4" />
@@ -766,6 +801,113 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-amber-600" />
+              {previewBook?.title} - 미리보기
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col h-[70vh]">
+            {/* Page Content */}
+            <div className="flex-1 overflow-hidden">
+              {previewPages.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  등록된 페이지가 없습니다
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 h-full">
+                  {/* Left: Image */}
+                  <div className="bg-amber-50 flex items-center justify-center p-4 overflow-hidden">
+                    {previewPages.find(p => p.page_number === previewPageNumber)?.image_url ? (
+                      <img 
+                        src={previewPages.find(p => p.page_number === previewPageNumber)?.image_url || ''}
+                        alt={`${previewPageNumber}페이지`}
+                        className="max-h-full max-w-full object-contain rounded-lg shadow-lg"
+                      />
+                    ) : (
+                      <div className="text-muted-foreground flex flex-col items-center gap-2">
+                        <ImageIcon className="w-16 h-16" />
+                        <span>이미지 없음</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Right: Text */}
+                  <div className="bg-amber-100/50 p-6 overflow-y-auto">
+                    {(() => {
+                      const currentPage = previewPages.find(p => p.page_number === previewPageNumber);
+                      const textContent = currentPage?.text_content || '';
+                      const lines = textContent.split('\n');
+                      const subtitle = lines[0] || '';
+                      const body = lines.slice(1).join('\n');
+                      
+                      return (
+                        <div className="space-y-4">
+                          {subtitle && (
+                            <h3 className="text-xl font-semibold text-amber-700">
+                              📖 {subtitle}
+                            </h3>
+                          )}
+                          {body && (
+                            <div className="text-base leading-relaxed whitespace-pre-wrap indent-6">
+                              {body}
+                            </div>
+                          )}
+                          {!textContent && (
+                            <div className="text-muted-foreground text-center py-8">
+                              텍스트 없음
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Navigation */}
+            <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/30">
+              <Button
+                variant="outline"
+                onClick={() => setPreviewPageNumber(prev => Math.max(1, prev - 1))}
+                disabled={previewPageNumber <= 1}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                이전
+              </Button>
+              
+              <div className="flex items-center gap-2">
+                {previewPages.map((_, idx) => (
+                  <Button
+                    key={idx + 1}
+                    variant={previewPageNumber === idx + 1 ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPreviewPageNumber(idx + 1)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {idx + 1}
+                  </Button>
+                ))}
+              </div>
+              
+              <Button
+                variant="outline"
+                onClick={() => setPreviewPageNumber(prev => Math.min(previewPages.length, prev + 1))}
+                disabled={previewPageNumber >= previewPages.length}
+              >
+                다음
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
