@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,29 @@ import { toast } from 'sonner';
 import { Search, AlertTriangle, MessageCircle, User, Bot, Filter, ChevronDown, ChevronUp, Mail, Loader2, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useRealtimeSync, TableSubscription } from '@/hooks/use-realtime-sync';
+
+// MindTalk 실시간 동기화 테이블 설정
+const MINDTALK_TABLES: TableSubscription[] = [
+  {
+    table: 'mindtalk_messages',
+    channelName: 'realtime_mindtalk_messages',
+    labels: {
+      insert: '🔄 새 마음톡 대화가 추가되었습니다',
+      update: undefined,
+      delete: undefined,
+    },
+  },
+  {
+    table: 'mindtalk_alerts',
+    channelName: 'realtime_mindtalk_alerts',
+    labels: {
+      insert: '🔄 위험 감지 현황이 업데이트되었습니다',
+      update: '🔄 위험 감지 현황이 업데이트되었습니다',
+      delete: undefined,
+    },
+  },
+];
 
 interface MindTalkInquiryProps {
   userId: string;
@@ -74,11 +97,55 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [sortOption, setSortOption] = useState<'danger-desc' | 'danger-asc' | 'date-desc' | 'date-asc'>('danger-desc');
   const [sendingFromDialog, setSendingFromDialog] = useState(false);
 
+  // 데이터 새로고침 함수들을 useCallback으로 감싸기
+  const fetchAlerts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_get_mindtalk_alerts', {
+        admin_id_input: userId
+      });
+
+      if (error) throw error;
+      setAlerts(data || []);
+    } catch (error) {
+      console.error('Error fetching mindtalk alerts:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
+
+  const fetchAllMessages = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('admin_get_mindtalk_messages', {
+        admin_id_input: userId,
+        student_id_input: null
+      });
+
+      if (error) throw error;
+      setAllMessages(data || []);
+    } catch (error) {
+      console.error('Error fetching all mindtalk messages:', error);
+    }
+  }, [userId]);
+
+  const refreshAllData = useCallback(() => {
+    fetchAlerts();
+    fetchAllMessages();
+  }, [fetchAlerts, fetchAllMessages]);
+
   useEffect(() => {
     fetchAlerts();
     fetchAllMessages();
     fetchDangerousKeywords();
-  }, [userId]);
+  }, [userId, fetchAlerts, fetchAllMessages]);
+
+  // 실시간 동기화 훅 사용
+  useRealtimeSync({
+    tables: MINDTALK_TABLES,
+    onRefresh: refreshAllData,
+    enabled: true,
+    dependencies: [userId],
+  });
 
   const fetchDangerousKeywords = async () => {
     try {
@@ -120,36 +187,6 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       }
       return part;
     });
-  };
-
-  const fetchAlerts = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.rpc('admin_get_mindtalk_alerts', {
-        admin_id_input: userId
-      });
-
-      if (error) throw error;
-      setAlerts(data || []);
-    } catch (error) {
-      console.error('Error fetching mindtalk alerts:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchAllMessages = async () => {
-    try {
-      const { data, error } = await supabase.rpc('admin_get_mindtalk_messages', {
-        admin_id_input: userId,
-        student_id_input: null
-      });
-
-      if (error) throw error;
-      setAllMessages(data || []);
-    } catch (error) {
-      console.error('Error fetching all mindtalk messages:', error);
-    }
   };
 
   const fetchStudentMessages = async (studentId: string, studentName: string, studentGrade?: number, studentClass?: number, studentNumber?: number) => {
