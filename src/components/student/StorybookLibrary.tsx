@@ -847,7 +847,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         <div>
                           {subtitle && (
                             <p className="text-lg font-semibold leading-relaxed text-amber-700 mb-2">
-                              {subtitle}
+                              📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
@@ -884,7 +884,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         <div>
                           {subtitle && (
                             <p className="text-lg font-semibold leading-relaxed text-amber-700 mb-2">
-                              {subtitle}
+                              📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
@@ -944,7 +944,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         <div>
                           {subtitle && (
                             <p className="text-xl font-semibold leading-relaxed text-amber-700 mb-3">
-                              {subtitle}
+                              📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
@@ -988,7 +988,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         <div>
                           {subtitle && (
                             <p className="text-xl font-semibold leading-relaxed text-amber-700 mb-3">
-                              {subtitle}
+                              📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
