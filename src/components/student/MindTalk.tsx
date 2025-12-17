@@ -360,7 +360,7 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
       )}
 
       {/* Music Player */}
-      <MindTalkMusicPlayer isOpen={isMusicOpen} onClose={() => setIsMusicOpen(false)} />
+      <MindTalkMusicPlayer isOpen={isMusicOpen} onClose={() => setIsMusicOpen(false)} studentId={studentId} />
 
       {/* Chat Modal */}
       {isOpen && (

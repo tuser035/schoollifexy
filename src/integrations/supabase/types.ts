@@ -496,6 +496,35 @@ export type Database = {
         }
         Relationships: []
       }
+      mindtalk_play_history: {
+        Row: {
+          id: string
+          music_id: string
+          played_at: string
+          student_id: string
+        }
+        Insert: {
+          id?: string
+          music_id: string
+          played_at?: string
+          student_id: string
+        }
+        Update: {
+          id?: string
+          music_id?: string
+          played_at?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mindtalk_play_history_music_id_fkey"
+            columns: ["music_id"]
+            isOneToOne: false
+            referencedRelation: "mindtalk_music"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly: {
         Row: {
           category: string | null
@@ -1501,6 +1530,17 @@ export type Database = {
           year: number
         }[]
       }
+      student_get_play_history: {
+        Args: { student_id_input: string }
+        Returns: {
+          category: string
+          duration_seconds: number
+          file_path: string
+          last_played_at: string
+          music_id: string
+          title: string
+        }[]
+      }
       student_login: {
         Args: { password_input: string; student_id_input: string }
         Returns: Json
@@ -1511,6 +1551,10 @@ export type Database = {
           role_input: string
           student_id_input: string
         }
+        Returns: string
+      }
+      student_save_play_history: {
+        Args: { music_id_input: string; student_id_input: string }
         Returns: string
       }
       teacher_delete_demerit: {
