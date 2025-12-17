@@ -313,6 +313,28 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
     }
   };
 
+  // 개별 트랙 카테고리 변경
+  const updateTrackCategory = async (track: MusicTrack, newCategory: string) => {
+    try {
+      await supabase.rpc('set_admin_session', { admin_id_input: adminId });
+      
+      const { error } = await supabase
+        .from('mindtalk_music')
+        .update({ category: newCategory })
+        .eq('id', track.id);
+
+      if (error) throw error;
+
+      setTracks(prev => prev.map(t => 
+        t.id === track.id ? { ...t, category: newCategory } : t
+      ));
+      toast.success('카테고리가 변경되었습니다');
+    } catch (error) {
+      console.error('Category update failed:', error);
+      toast.error('카테고리 변경에 실패했습니다');
+    }
+  };
+
   const toggleActive = async (track: MusicTrack) => {
     try {
       // Set admin session first
@@ -699,9 +721,19 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
                       <div className="min-w-0">
                         <p className="font-medium text-sm truncate">{track.title}</p>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {track.category}
-                          </Badge>
+                          <Select 
+                            value={track.category} 
+                            onValueChange={(v) => updateTrackCategory(track, v)}
+                          >
+                            <SelectTrigger className="h-6 w-20 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CATEGORIES.map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <span className="text-xs text-muted-foreground">
                             재생 {track.play_count}회
                           </span>
