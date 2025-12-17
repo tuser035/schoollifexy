@@ -584,11 +584,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             return (
               <div
                 key={book.id}
-                className="flex items-center gap-3 p-2 bg-amber-50 hover:bg-amber-100 rounded-lg cursor-pointer transition-colors border border-amber-200"
+                className="flex items-start gap-3 p-3 bg-amber-50 hover:bg-amber-100 rounded-lg cursor-pointer transition-colors border border-amber-200"
                 onClick={() => openBook(book)}
               >
                 {/* Cover Thumbnail */}
-                <div className="w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-amber-100 border border-amber-200">
+                <div className="w-14 h-20 flex-shrink-0 rounded overflow-hidden bg-amber-100 border border-amber-200">
                   {book.cover_image_url ? (
                     <img 
                       src={book.cover_image_url} 
@@ -597,21 +597,26 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-amber-600" />
+                      <BookOpen className="w-6 h-6 text-amber-600" />
                     </div>
                   )}
                 </div>
                 
-                {/* Book Number */}
-                <Badge className="bg-amber-600 text-white min-w-[28px] justify-center text-xs">
-                  {book.book_number}
-                </Badge>
-                
-                {/* Book Title */}
-                <span className="flex-1 font-medium text-amber-900 text-sm">{book.title}</span>
+                {/* Book Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-amber-600 text-white min-w-[28px] justify-center text-xs">
+                      {book.book_number}
+                    </Badge>
+                    <span className="font-medium text-amber-900 text-sm truncate">{book.title}</span>
+                  </div>
+                  {book.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{book.description}</p>
+                  )}
+                </div>
                 
                 {/* Status Badges */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {hasReview && (
                     <span title="독후감 작성됨">
                       <PenLine className="w-4 h-4 text-blue-500" />
