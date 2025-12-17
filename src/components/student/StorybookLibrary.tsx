@@ -846,7 +846,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-lg font-semibold leading-relaxed text-gray-900 mb-2">
+                            <p className="text-lg font-semibold leading-relaxed text-amber-700 mb-2">
                               {subtitle}
                             </p>
                           )}
@@ -883,7 +883,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-lg font-semibold leading-relaxed text-gray-900 mb-2">
+                            <p className="text-lg font-semibold leading-relaxed text-amber-700 mb-2">
                               {subtitle}
                             </p>
                           )}
@@ -943,7 +943,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-xl font-semibold leading-relaxed text-gray-900 mb-3">
+                            <p className="text-xl font-semibold leading-relaxed text-amber-700 mb-3">
                               {subtitle}
                             </p>
                           )}
@@ -987,7 +987,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-xl font-semibold leading-relaxed text-gray-900 mb-3">
+                            <p className="text-xl font-semibold leading-relaxed text-amber-700 mb-3">
                               {subtitle}
                             </p>
                           )}
