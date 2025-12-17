@@ -545,10 +545,13 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
     const deltaX = clientX - dragRef.current.startX;
     const deltaY = clientY - dragRef.current.startY;
     
-    setPosition({
-      x: dragRef.current.startPosX + deltaX,
-      y: dragRef.current.startPosY + deltaY
-    });
+    // 화면 경계 내에서만 이동 가능하도록 제한
+    const maxX = window.innerWidth - 100;
+    const maxY = window.innerHeight - 100;
+    const newX = Math.max(-maxX, Math.min(maxX, dragRef.current.startPosX + deltaX));
+    const newY = Math.max(-50, Math.min(maxY, dragRef.current.startPosY + deltaY));
+    
+    setPosition({ x: newX, y: newY });
   };
 
   const handleDragEnd = () => {
@@ -561,7 +564,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
     if (isDragging) {
       window.addEventListener('mousemove', handleDragMove);
       window.addEventListener('mouseup', handleDragEnd);
-      window.addEventListener('touchmove', handleDragMove);
+      window.addEventListener('touchmove', handleDragMove, { passive: false });
       window.addEventListener('touchend', handleDragEnd);
       
       return () => {
@@ -586,14 +589,16 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
   if (isMinimized) {
     return (
       <div 
-        className="fixed z-[60] animate-scale-in"
+        className="fixed z-[60] animate-scale-in right-2 sm:right-auto"
         style={{ 
-          top: `calc(0.5rem + ${position.y}px)`,
-          right: `calc(0.5rem - ${position.x}px)`,
+          top: `calc(0.5rem + ${Math.max(0, position.y)}px)`,
+          ...(window.innerWidth >= 640 ? {
+            right: `calc(0.5rem - ${position.x}px)`,
+          } : {})
         }}
       >
         <div 
-          className="rounded-xl shadow-2xl overflow-hidden w-[240px] sm:w-[260px]" 
+          className="rounded-xl shadow-2xl overflow-hidden w-[200px] sm:w-[260px]" 
           style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}
         >
           {/* Drag Handle */}
@@ -696,14 +701,16 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
 
   return (
     <div 
-      className="fixed z-[60] sm:w-[340px] max-h-[85vh] sm:max-h-[90vh]"
+      className="fixed z-[60] inset-x-2 sm:inset-x-auto sm:w-[340px]"
       style={{ 
         top: `calc(0.5rem + ${position.y}px)`,
-        left: position.x === 0 ? '0.5rem' : `calc(0.5rem + ${position.x}px)`,
-        right: position.x === 0 ? '0.5rem' : 'auto',
+        ...(window.innerWidth >= 640 ? {
+          left: position.x === 0 ? '0.5rem' : `calc(0.5rem + ${position.x}px)`,
+          right: position.x === 0 ? 'auto' : 'auto',
+        } : {})
       }}
     >
-      <div className="rounded-2xl shadow-2xl overflow-hidden sm:w-[340px]" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}>
+      <div className="rounded-2xl shadow-2xl overflow-hidden overflow-y-auto w-full sm:w-[340px] max-h-[80vh] sm:max-h-[90vh]" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}>
         {/* Drag Handle */}
         <div 
           className="hidden sm:flex items-center justify-center py-1 cursor-grab active:cursor-grabbing border-b border-white/10"
