@@ -22,7 +22,8 @@ import {
   Trash2,
   Plus,
   Minimize2,
-  Maximize2
+  Maximize2,
+  GripVertical
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -100,6 +101,11 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
   
   // Mini player state
   const [isMinimized, setIsMinimized] = useState(false);
+  
+  // Drag state
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null);
 
   // 로컬스토리지에서 즐겨찾기 불러오기
   useEffect(() => {
@@ -516,16 +522,89 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Drag handlers
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    dragRef.current = {
+      startX: clientX,
+      startY: clientY,
+      startPosX: position.x,
+      startPosY: position.y
+    };
+    setIsDragging(true);
+  };
+
+  const handleDragMove = (e: MouseEvent | TouchEvent) => {
+    if (!isDragging || !dragRef.current) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = clientX - dragRef.current.startX;
+    const deltaY = clientY - dragRef.current.startY;
+    
+    setPosition({
+      x: dragRef.current.startPosX + deltaX,
+      y: dragRef.current.startPosY + deltaY
+    });
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    dragRef.current = null;
+  };
+
+  // Drag event listeners
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDragMove);
+      window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchmove', handleDragMove);
+      window.addEventListener('touchend', handleDragEnd);
+      
+      return () => {
+        window.removeEventListener('mousemove', handleDragMove);
+        window.removeEventListener('mouseup', handleDragEnd);
+        window.removeEventListener('touchmove', handleDragMove);
+        window.removeEventListener('touchend', handleDragEnd);
+      };
+    }
+  }, [isDragging]);
+
+  // Reset position when closed
+  useEffect(() => {
+    if (!isOpen) {
+      setPosition({ x: 0, y: 0 });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Mini Player Mode
   if (isMinimized) {
     return (
-      <div className="fixed top-2 right-2 sm:top-3 sm:right-3 z-[60] animate-scale-in">
+      <div 
+        className="fixed z-[60] animate-scale-in"
+        style={{ 
+          top: `calc(0.5rem + ${position.y}px)`,
+          right: `calc(0.5rem - ${position.x}px)`,
+        }}
+      >
         <div 
-          className="rounded-xl shadow-2xl overflow-hidden w-[200px] sm:w-[220px]" 
+          className="rounded-xl shadow-2xl overflow-hidden w-[240px] sm:w-[260px]" 
           style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}
         >
+          {/* Drag Handle */}
+          <div 
+            className="flex items-center justify-center py-1 cursor-grab active:cursor-grabbing border-b border-white/10"
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+          >
+            <GripVertical className="w-4 h-4 text-white/50" />
+          </div>
+          
           <div className="flex items-center gap-2 p-2">
             {/* Album Art Mini */}
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center flex-shrink-0">
@@ -538,34 +617,54 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
               <p className="text-[10px] text-purple-200 truncate">{currentTrack?.category || ''}</p>
             </div>
             
-            {/* Controls */}
+            {/* Window Controls */}
             <div className="flex items-center gap-0.5">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={togglePlay}
-                className="text-white hover:bg-white/20 h-7 w-7 p-0"
-              >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
                 onClick={() => setIsMinimized(false)}
-                className="text-white hover:bg-white/20 h-7 w-7 p-0"
+                className="text-white hover:bg-white/20 h-6 w-6 p-0"
                 title="확대"
               >
-                <Maximize2 className="w-3.5 h-3.5" />
+                <Maximize2 className="w-3 h-3" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="text-white hover:bg-white/20 h-7 w-7 p-0"
+                className="text-white hover:bg-white/20 h-6 w-6 p-0"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" />
               </Button>
             </div>
+          </div>
+          
+          {/* Mini Playback Controls */}
+          <div className="flex items-center justify-center gap-1 pb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={playPrev}
+              className="text-white hover:bg-white/20 h-8 w-8 p-0"
+            >
+              <SkipBack className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={togglePlay}
+              className="text-white hover:bg-white/20 h-9 w-9 p-0 bg-white/10 rounded-full"
+            >
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={playNext}
+              className="text-white hover:bg-white/20 h-8 w-8 p-0"
+            >
+              <SkipForward className="w-4 h-4" />
+            </Button>
           </div>
           
           {/* Mini Progress Bar */}
@@ -575,6 +674,10 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
                 className="h-full bg-white/60 transition-all duration-300"
                 style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               />
+            </div>
+            <div className="flex justify-between text-[10px] text-purple-200 mt-0.5">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
             </div>
           </div>
         </div>
@@ -592,8 +695,24 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
   }
 
   return (
-    <div className="fixed top-2 left-2 right-2 sm:left-auto sm:top-3 sm:right-3 z-[60] sm:w-[340px] max-h-[85vh] sm:max-h-[90vh]">
-      <div className="rounded-2xl shadow-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}>
+    <div 
+      className="fixed z-[60] sm:w-[340px] max-h-[85vh] sm:max-h-[90vh]"
+      style={{ 
+        top: `calc(0.5rem + ${position.y}px)`,
+        left: position.x === 0 ? '0.5rem' : `calc(0.5rem + ${position.x}px)`,
+        right: position.x === 0 ? '0.5rem' : 'auto',
+      }}
+    >
+      <div className="rounded-2xl shadow-2xl overflow-hidden sm:w-[340px]" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}>
+        {/* Drag Handle */}
+        <div 
+          className="hidden sm:flex items-center justify-center py-1 cursor-grab active:cursor-grabbing border-b border-white/10"
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+        >
+          <GripVertical className="w-4 h-4 text-white/50" />
+        </div>
+        
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
           <div className="flex items-center gap-1.5 text-white">
