@@ -460,6 +460,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mindtalk_music: {
+        Row: {
+          category: string
+          created_at: string
+          duration_seconds: number | null
+          file_path: string
+          id: string
+          is_active: boolean
+          play_count: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          duration_seconds?: number | null
+          file_path: string
+          id?: string
+          is_active?: boolean
+          play_count?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          duration_seconds?: number | null
+          file_path?: string
+          id?: string
+          is_active?: boolean
+          play_count?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       monthly: {
         Row: {
           category: string | null
@@ -922,6 +958,19 @@ export type Database = {
           student_number: number
         }[]
       }
+      admin_get_mindtalk_music: {
+        Args: { admin_id_input: string }
+        Returns: {
+          category: string
+          created_at: string
+          duration_seconds: number
+          file_path: string
+          id: string
+          is_active: boolean
+          play_count: number
+          title: string
+        }[]
+      }
       admin_get_monthly: {
         Args: {
           admin_id_input: string
@@ -1294,9 +1343,23 @@ export type Database = {
         Args: { student_id_input: string }
         Returns: number
       }
+      get_mindtalk_music: {
+        Args: never
+        Returns: {
+          category: string
+          duration_seconds: number
+          file_path: string
+          id: string
+          title: string
+        }[]
+      }
       get_system_setting: {
         Args: { setting_key_input: string }
         Returns: string
+      }
+      increment_music_play_count: {
+        Args: { music_id_input: string }
+        Returns: boolean
       }
       insert_counseling_record: {
         Args: {

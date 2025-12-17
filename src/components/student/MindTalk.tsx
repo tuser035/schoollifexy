@@ -4,10 +4,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { X, Send, MessageCircleHeart, Loader2 } from 'lucide-react';
+import { X, Send, MessageCircleHeart, Loader2, Music } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-
+import MindTalkMusicPlayer from './MindTalkMusicPlayer';
 interface Message {
   id?: string;
   role: 'user' | 'assistant';
@@ -109,6 +109,7 @@ const isWithinAllowedHours = (): { allowed: boolean; message: string } => {
 
 export default function MindTalk({ studentId, studentName, studentGrade, studentClass, studentNumber }: MindTalkProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
   const initialMessage = getInitialMessage(studentName);
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
@@ -358,6 +359,9 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
         </button>
       )}
 
+      {/* Music Player */}
+      <MindTalkMusicPlayer isOpen={isMusicOpen} onClose={() => setIsMusicOpen(false)} />
+
       {/* Chat Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -373,14 +377,25 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
                   <p className="text-xs text-white/80">AI 마음 상담</p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMusicOpen(true)}
+                  className="text-white hover:bg-white/20"
+                  title="힐링 뮤직"
+                >
+                  <Music className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsOpen(false)}
+                  className="text-white hover:bg-white/20"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Messages */}

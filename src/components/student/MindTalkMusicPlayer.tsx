@@ -1,0 +1,329 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Slider } from '@/components/ui/slider';
+import { 
+  Music, 
+  Play, 
+  Pause, 
+  SkipBack, 
+  SkipForward, 
+  Volume2, 
+  VolumeX,
+  X,
+  Shuffle,
+  Repeat
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface MusicTrack {
+  id: string;
+  title: string;
+  category: string;
+  file_path: string;
+  duration_seconds?: number;
+}
+
+interface MindTalkMusicPlayerProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPlayerProps) {
+  const [tracks, setTracks] = useState<MusicTrack[]>([]);
+  const [currentTrack, setCurrentTrack] = useState<MusicTrack | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(70);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [shuffle, setShuffle] = useState(false);
+  const [repeat, setRepeat] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Load music tracks
+  useEffect(() => {
+    if (isOpen) {
+      loadTracks();
+    }
+  }, [isOpen]);
+
+  const loadTracks = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_mindtalk_music');
+      if (!error && data) {
+        setTracks(data);
+        if (data.length > 0 && !currentTrack) {
+          setCurrentTrack(data[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load tracks:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Audio event handlers
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const handleDurationChange = () => setDuration(audio.duration);
+    const handleEnded = () => {
+      if (repeat) {
+        audio.currentTime = 0;
+        audio.play();
+      } else {
+        playNext();
+      }
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('durationchange', handleDurationChange);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('durationchange', handleDurationChange);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [repeat, currentTrack, tracks]);
+
+  // Volume control
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume / 100;
+    }
+  }, [volume, isMuted]);
+
+  const getAudioUrl = (filePath: string) => {
+    const { data } = supabase.storage.from('mindtalk-music').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
+  const playTrack = async (track: MusicTrack) => {
+    setCurrentTrack(track);
+    setIsPlaying(true);
+    
+    // Increment play count
+    await supabase.rpc('increment_music_play_count', { music_id_input: track.id });
+    
+    setTimeout(() => {
+      audioRef.current?.play();
+    }, 100);
+  };
+
+  const togglePlay = () => {
+    if (!audioRef.current || !currentTrack) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const playNext = () => {
+    if (!currentTrack || tracks.length === 0) return;
+    
+    const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
+    let nextIndex: number;
+    
+    if (shuffle) {
+      nextIndex = Math.floor(Math.random() * tracks.length);
+    } else {
+      nextIndex = (currentIndex + 1) % tracks.length;
+    }
+    
+    playTrack(tracks[nextIndex]);
+  };
+
+  const playPrev = () => {
+    if (!currentTrack || tracks.length === 0) return;
+    
+    const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
+    const prevIndex = currentIndex === 0 ? tracks.length - 1 : currentIndex - 1;
+    
+    playTrack(tracks[prevIndex]);
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-sm bg-gradient-to-b from-purple-900 via-purple-800 to-pink-900 rounded-2xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-white/10">
+          <div className="flex items-center gap-2 text-white">
+            <Music className="w-5 h-5" />
+            <span className="font-medium">힐링 뮤직</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="text-white hover:bg-white/10"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {/* Now Playing */}
+        {currentTrack && (
+          <div className="p-6 text-center">
+            <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center shadow-lg">
+              <Music className={`w-16 h-16 text-white ${isPlaying ? 'animate-pulse' : ''}`} />
+            </div>
+            <h3 className="text-lg font-bold text-white truncate">{currentTrack.title}</h3>
+            <p className="text-sm text-purple-200">{currentTrack.category}</p>
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        <div className="px-6 pb-4">
+          <Slider
+            value={[currentTime]}
+            max={duration || 100}
+            step={1}
+            onValueChange={handleSeek}
+            className="cursor-pointer"
+          />
+          <div className="flex justify-between text-xs text-purple-200 mt-1">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center justify-center gap-4 pb-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShuffle(!shuffle)}
+            className={`text-white hover:bg-white/10 ${shuffle ? 'text-pink-400' : ''}`}
+          >
+            <Shuffle className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={playPrev}
+            className="text-white hover:bg-white/10"
+          >
+            <SkipBack className="w-5 h-5" />
+          </Button>
+          <Button
+            onClick={togglePlay}
+            className="w-14 h-14 rounded-full bg-white text-purple-900 hover:bg-purple-100"
+          >
+            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={playNext}
+            className="text-white hover:bg-white/10"
+          >
+            <SkipForward className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setRepeat(!repeat)}
+            className={`text-white hover:bg-white/10 ${repeat ? 'text-pink-400' : ''}`}
+          >
+            <Repeat className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Volume */}
+        <div className="flex items-center gap-2 px-6 pb-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMuted(!isMuted)}
+            className="text-white hover:bg-white/10"
+          >
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </Button>
+          <Slider
+            value={[isMuted ? 0 : volume]}
+            max={100}
+            step={1}
+            onValueChange={(v) => { setVolume(v[0]); setIsMuted(false); }}
+            className="flex-1"
+          />
+        </div>
+
+        {/* Playlist */}
+        <div className="border-t border-white/10">
+          <p className="px-4 py-2 text-xs text-purple-200 font-medium">플레이리스트</p>
+          <ScrollArea className="h-40">
+            {isLoading ? (
+              <div className="p-4 text-center text-purple-200">로딩 중...</div>
+            ) : tracks.length === 0 ? (
+              <div className="p-4 text-center text-purple-200">음악이 없습니다</div>
+            ) : (
+              <div className="space-y-1 px-2 pb-2">
+                {tracks.map((track) => (
+                  <button
+                    key={track.id}
+                    onClick={() => playTrack(track)}
+                    className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                      currentTrack?.id === track.id
+                        ? 'bg-white/20 text-white'
+                        : 'text-purple-200 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded bg-purple-500/30 flex items-center justify-center flex-shrink-0">
+                      {currentTrack?.id === track.id && isPlaying ? (
+                        <div className="flex gap-0.5">
+                          <span className="w-1 h-3 bg-pink-400 animate-pulse"></span>
+                          <span className="w-1 h-4 bg-pink-400 animate-pulse" style={{ animationDelay: '0.1s' }}></span>
+                          <span className="w-1 h-2 bg-pink-400 animate-pulse" style={{ animationDelay: '0.2s' }}></span>
+                        </div>
+                      ) : (
+                        <Music className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="text-left overflow-hidden">
+                      <p className="text-sm font-medium truncate">{track.title}</p>
+                      <p className="text-xs opacity-70">{track.category}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+
+        {/* Hidden Audio Element */}
+        {currentTrack && (
+          <audio
+            ref={audioRef}
+            src={getAudioUrl(currentTrack.file_path)}
+            preload="metadata"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
