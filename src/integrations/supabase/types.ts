@@ -525,6 +525,33 @@ export type Database = {
           },
         ]
       }
+      mindtalk_playlists: {
+        Row: {
+          created_at: string
+          id: string
+          music_ids: string[]
+          playlist_name: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          music_ids?: string[]
+          playlist_name: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          music_ids?: string[]
+          playlist_name?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       monthly: {
         Row: {
           category: string | null
@@ -1478,6 +1505,10 @@ export type Database = {
         Args: { teacher_id_input: string }
         Returns: undefined
       }
+      student_delete_playlist: {
+        Args: { playlist_id_input: string; student_id_input: string }
+        Returns: boolean
+      }
       student_get_demerits: {
         Args: { student_id_input: string }
         Returns: {
@@ -1541,6 +1572,16 @@ export type Database = {
           title: string
         }[]
       }
+      student_get_playlists: {
+        Args: { student_id_input: string }
+        Returns: {
+          created_at: string
+          id: string
+          music_ids: string[]
+          playlist_name: string
+          updated_at: string
+        }[]
+      }
       student_login: {
         Args: { password_input: string; student_id_input: string }
         Returns: Json
@@ -1556,6 +1597,23 @@ export type Database = {
       student_save_play_history: {
         Args: { music_id_input: string; student_id_input: string }
         Returns: string
+      }
+      student_save_playlist: {
+        Args: {
+          music_ids_input: string[]
+          playlist_name_input: string
+          student_id_input: string
+        }
+        Returns: string
+      }
+      student_update_playlist: {
+        Args: {
+          music_ids_input: string[]
+          playlist_id_input: string
+          playlist_name_input: string
+          student_id_input: string
+        }
+        Returns: boolean
       }
       teacher_delete_demerit: {
         Args: { demerit_id_input: string; teacher_id_input: string }
