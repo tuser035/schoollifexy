@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import JSZip from "jszip";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
 
-type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "monthly" | "departments";
+type TableType = "students" | "teachers" | "homeroom" | "merits" | "demerits" | "monthly" | "departments" | "mindtalk_messages" | "mindtalk_alerts" | "mindtalk_keywords";
 
 interface MonthlyStudent {
   학생: string;
@@ -1036,7 +1036,10 @@ const DataInquiry = () => {
       merits: "상점",
       demerits: "벌점",
       monthly: "이달의학생",
-      departments: "학과"
+      departments: "학과",
+      mindtalk_messages: "마음톡대화",
+      mindtalk_alerts: "마음톡알림",
+      mindtalk_keywords: "마음톡키워드"
     };
     link.download = `${tableNames[selectedTable]}_${timestamp}.csv`;
     
@@ -2455,15 +2458,62 @@ const DataInquiry = () => {
             student_name: group.student_name
           }));
 
-      } else {
+      } else if (selectedTable === "mindtalk_messages") {
+        // 마음톡 대화 조회
+        const { data, error } = await supabase.rpc("admin_get_mindtalk_messages", {
+          admin_id_input: adminId
+        });
+
+        if (error) throw error;
+        result = data?.map((row: any) => ({
+          "학생": `${row.student_name} (${row.student_grade}-${row.student_class}-${row.student_number})`,
+          "학번": row.student_id,
+          "역할": row.role === "user" ? "학생" : "AI",
+          "내용": row.content?.substring(0, 100) + (row.content?.length > 100 ? "..." : ""),
+          "일시": new Date(row.created_at).toLocaleString('ko-KR')
+        }));
+
+      } else if (selectedTable === "mindtalk_alerts") {
+        // 마음톡 알림 조회
+        const { data, error } = await supabase.rpc("admin_get_mindtalk_alerts", {
+          admin_id_input: adminId
+        });
+
+        if (error) throw error;
+        result = data?.map((row: any) => ({
+          "학생": `${row.student_name} (${row.student_grade}-${row.student_class}-${row.student_number})`,
+          "학번": row.student_id,
+          "위험단어수": row.dangerous_word_count,
+          "마지막알림": row.last_alert_sent_at ? new Date(row.last_alert_sent_at).toLocaleString('ko-KR') : "-",
+          "갱신일시": new Date(row.updated_at).toLocaleString('ko-KR')
+        }));
+
+      } else if (selectedTable === "mindtalk_keywords") {
+        // 마음톡 키워드 조회
+        const { data, error } = await supabase
+          .from("mindtalk_keywords")
+          .select("*")
+          .order("category", { ascending: true })
+          .order("keyword", { ascending: true });
+
+        if (error) throw error;
+        result = data?.map((row: any) => ({
+          "키워드": row.keyword,
+          "카테고리": row.category,
+          "설명": row.description || "-",
+          "활성": row.is_active ? "예" : "아니오",
+          "생성일": new Date(row.created_at).toLocaleDateString('ko-KR')
+        }));
+
+      } else if (selectedTable === "departments") {
         // departments
         const { data, error: queryError } = await supabase
-          .from(selectedTable)
+          .from("departments")
           .select("code, name")
           .limit(50);
 
         if (queryError) throw queryError;
-        result = data?.map(row => ({
+        result = data?.map((row: any) => ({
           "학과코드": row.code,
           "학과명": row.name
         }));
@@ -2516,6 +2566,9 @@ const DataInquiry = () => {
                 {userType === "admin" && <SelectItem value="demerits">벌점</SelectItem>}
                 {userType === "admin" && <SelectItem value="monthly">이달의 학생</SelectItem>}
                 <SelectItem value="departments">학과</SelectItem>
+                {userType === "admin" && <SelectItem value="mindtalk_messages">마음톡 대화</SelectItem>}
+                {userType === "admin" && <SelectItem value="mindtalk_alerts">마음톡 알림</SelectItem>}
+                {userType === "admin" && <SelectItem value="mindtalk_keywords">마음톡 키워드</SelectItem>}
               </SelectContent>
             </Select>
             <Input
@@ -2525,6 +2578,9 @@ const DataInquiry = () => {
                 selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
                 selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly" 
                   ? "학생명, 교사명, 학년반, 학년반번호로 검색" :
+                selectedTable === "mindtalk_messages" || selectedTable === "mindtalk_alerts"
+                  ? "전체 조회 (검색 없음)" :
+                selectedTable === "mindtalk_keywords" ? "전체 조회 (검색 없음)" :
                 "검색"
               }
               value={searchTerm}
