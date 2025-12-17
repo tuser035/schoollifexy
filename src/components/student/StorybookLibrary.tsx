@@ -839,11 +839,25 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         className="w-full rounded-lg mb-3 max-h-48 object-contain"
                       />
                     )}
-                    {currentPageData?.text_content && (
-                      <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
-                        {currentPageData.text_content}
-                      </p>
-                    )}
+                    {currentPageData?.text_content && (() => {
+                      const lines = currentPageData.text_content.split('\n');
+                      const subtitle = lines[0];
+                      const bodyText = lines.slice(1).join('\n');
+                      return (
+                        <div>
+                          {subtitle && (
+                            <p className="text-lg font-semibold leading-relaxed text-gray-900 mb-2">
+                              {subtitle}
+                            </p>
+                          )}
+                          {bodyText && (
+                            <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
+                              {bodyText}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
@@ -862,11 +876,25 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   )}
                   {/* Text Section Mobile */}
                   <div className="flex-1 p-4 bg-white">
-                    {currentPageData.text_content ? (
-                      <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
-                        {currentPageData.text_content}
-                      </p>
-                    ) : (
+                    {currentPageData.text_content ? (() => {
+                      const lines = currentPageData.text_content.split('\n');
+                      const subtitle = lines[0];
+                      const bodyText = lines.slice(1).join('\n');
+                      return (
+                        <div>
+                          {subtitle && (
+                            <p className="text-lg font-semibold leading-relaxed text-gray-900 mb-2">
+                              {subtitle}
+                            </p>
+                          )}
+                          {bodyText && (
+                            <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
+                              {bodyText}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })() : (
                       <div className="h-full flex items-center justify-center text-muted-foreground">
                         내용이 없습니다
                       </div>
@@ -908,11 +936,25 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         className="w-full rounded-lg mb-4"
                       />
                     )}
-                    {currentPageData?.text_content && (
-                      <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap">
-                        {currentPageData.text_content}
-                      </p>
-                    )}
+                    {currentPageData?.text_content && (() => {
+                      const lines = currentPageData.text_content.split('\n');
+                      const subtitle = lines[0];
+                      const bodyText = lines.slice(1).join('\n');
+                      return (
+                        <div>
+                          {subtitle && (
+                            <p className="text-xl font-semibold leading-relaxed text-gray-900 mb-3">
+                              {subtitle}
+                            </p>
+                          )}
+                          {bodyText && (
+                            <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap">
+                              {bodyText}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
@@ -938,11 +980,25 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   
                   {/* Right - Text */}
                   <div className="w-[350px] h-[500px] p-6 overflow-y-auto bg-white">
-                    {currentPageData.text_content ? (
-                      <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap">
-                        {currentPageData.text_content}
-                      </p>
-                    ) : (
+                    {currentPageData.text_content ? (() => {
+                      const lines = currentPageData.text_content.split('\n');
+                      const subtitle = lines[0];
+                      const bodyText = lines.slice(1).join('\n');
+                      return (
+                        <div>
+                          {subtitle && (
+                            <p className="text-xl font-semibold leading-relaxed text-gray-900 mb-3">
+                              {subtitle}
+                            </p>
+                          )}
+                          {bodyText && (
+                            <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap">
+                              {bodyText}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })() : (
                       <div className="h-full flex items-center justify-center text-muted-foreground">
                         내용이 없습니다
                       </div>
