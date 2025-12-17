@@ -414,7 +414,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className="h-5 w-5 text-mindtalk-chat-cyan" />
             마음톡 상담 조회
           </CardTitle>
         </CardHeader>
@@ -587,7 +587,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                                 <TableCell colSpan={8} className="p-4">
                                   <div className="space-y-2">
                                     <div className="text-sm font-medium flex items-center gap-2">
-                                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                                      <AlertTriangle className="h-4 w-4 text-mindtalk-alert-red" />
                                       키워드별 사용 횟수
                                     </div>
                                     <div className="flex flex-wrap gap-2">
@@ -663,7 +663,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   onClick={() => setShowOnlyDangerousStudents(!showOnlyDangerousStudents)}
                   className={showOnlyDangerousStudents ? "bg-red-500 hover:bg-red-600" : ""}
                 >
-                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  <AlertTriangle className="h-4 w-4 mr-1 text-mindtalk-alert-red" />
                   위험 감지만
                 </Button>
               </div>
@@ -867,7 +867,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-red-500" />
+              <Mail className="h-5 w-5 text-mindtalk-alert-red" />
               담임선생님 알림 발송
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
