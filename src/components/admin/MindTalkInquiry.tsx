@@ -44,16 +44,21 @@ interface MindTalkAlert {
 const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [alerts, setAlerts] = useState<MindTalkAlert[]>([]);
   const [messages, setMessages] = useState<MindTalkMessage[]>([]);
+  const [allMessages, setAllMessages] = useState<MindTalkMessage[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
   const [searchText, setSearchText] = useState('');
   const [searchGrade, setSearchGrade] = useState<string>('all');
   const [searchClass, setSearchClass] = useState<string>('all');
+  const [studentSearchText, setStudentSearchText] = useState('');
+  const [studentSearchGrade, setStudentSearchGrade] = useState<string>('all');
+  const [studentSearchClass, setStudentSearchClass] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchAlerts();
+    fetchAllMessages();
   }, [userId]);
 
   const fetchAlerts = async () => {
@@ -69,6 +74,20 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       console.error('Error fetching mindtalk alerts:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAllMessages = async () => {
+    try {
+      const { data, error } = await supabase.rpc('admin_get_mindtalk_messages', {
+        admin_id_input: userId,
+        student_id_input: null
+      });
+
+      if (error) throw error;
+      setAllMessages(data || []);
+    } catch (error) {
+      console.error('Error fetching all mindtalk messages:', error);
     }
   };
 
@@ -91,6 +110,41 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       setIsLoading(false);
     }
   };
+
+  // 전체 메시지에서 학생 목록 추출
+  const studentsWithMessages = allMessages.reduce((acc, msg) => {
+    if (!acc.find(s => s.student_id === msg.student_id)) {
+      acc.push({
+        student_id: msg.student_id,
+        student_name: msg.student_name,
+        student_grade: msg.student_grade,
+        student_class: msg.student_class,
+        student_number: msg.student_number,
+        message_count: allMessages.filter(m => m.student_id === msg.student_id).length,
+        last_message_at: allMessages
+          .filter(m => m.student_id === msg.student_id)
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.created_at
+      });
+    }
+    return acc;
+  }, [] as Array<{
+    student_id: string;
+    student_name: string;
+    student_grade: number;
+    student_class: number;
+    student_number: number;
+    message_count: number;
+    last_message_at: string;
+  }>);
+
+  const filteredStudents = studentsWithMessages.filter(student => {
+    const matchesText = !studentSearchText || 
+      student.student_name?.toLowerCase().includes(studentSearchText.toLowerCase()) ||
+      student.student_id?.toLowerCase().includes(studentSearchText.toLowerCase());
+    const matchesGrade = studentSearchGrade === 'all' || student.student_grade === parseInt(studentSearchGrade);
+    const matchesClass = studentSearchClass === 'all' || student.student_class === parseInt(studentSearchClass);
+    return matchesText && matchesGrade && matchesClass;
+  }).sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime());
 
   const filteredAlerts = alerts.filter(alert => {
     const matchesText = !searchText || 
@@ -226,9 +280,95 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
             </TabsContent>
 
             <TabsContent value="search" className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                위험 감지 현황 탭에서 학생을 선택하여 대화 내용을 조회할 수 있습니다.
+              {/* Student Search Filters */}
+              <div className="flex flex-wrap gap-2">
+                <div className="flex-1 min-w-[200px]">
+                  <Input
+                    placeholder="학생 이름 또는 학번 검색"
+                    value={studentSearchText}
+                    onChange={(e) => setStudentSearchText(e.target.value)}
+                  />
+                </div>
+                <Select value={studentSearchGrade} onValueChange={setStudentSearchGrade}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="학년" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="1">1학년</SelectItem>
+                    <SelectItem value="2">2학년</SelectItem>
+                    <SelectItem value="3">3학년</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={studentSearchClass} onValueChange={setStudentSearchClass}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="반" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    {[1,2,3,4,5,6,7,8,9].map(c => (
+                      <SelectItem key={c} value={c.toString()}>{c}반</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={fetchAllMessages} variant="outline">
+                  새로고침
+                </Button>
               </div>
+
+              {/* Students with Messages Table */}
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>학생</TableHead>
+                      <TableHead>학년/반/번</TableHead>
+                      <TableHead>대화 수</TableHead>
+                      <TableHead>마지막 대화</TableHead>
+                      <TableHead>대화 조회</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredStudents.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          마음톡 대화 기록이 없습니다
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredStudents.map((student) => (
+                        <TableRow key={student.student_id}>
+                          <TableCell className="font-medium">{student.student_name || '-'}</TableCell>
+                          <TableCell>
+                            {student.student_grade}-{student.student_class}-{student.student_number}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{student.message_count}개</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {student.last_message_at 
+                              ? format(new Date(student.last_message_at), 'MM/dd HH:mm', { locale: ko })
+                              : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => fetchStudentMessages(student.student_id, student.student_name || '')}
+                            >
+                              대화보기
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                * 마음톡을 사용한 학생만 목록에 표시됩니다 ({filteredStudents.length}명)
+              </p>
             </TabsContent>
           </Tabs>
         </CardContent>
