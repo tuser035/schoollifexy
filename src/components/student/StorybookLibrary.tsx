@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSwipe } from '@/hooks/use-swipe';
@@ -25,7 +27,10 @@ import {
   VolumeX,
   Maximize,
   Minimize,
-  Settings2
+  Settings2,
+  Heart,
+  Users,
+  Globe
 } from 'lucide-react';
 
 interface Storybook {
@@ -53,6 +58,16 @@ interface Review {
   content: string;
   rating: number;
   created_at: string;
+  is_public?: boolean;
+}
+
+interface PublicReview {
+  id: string;
+  student_id: string;
+  student_name: string;
+  content: string;
+  rating: number;
+  created_at: string;
 }
 
 interface StorybookLibraryProps {
@@ -71,9 +86,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [reviewContent, setReviewContent] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
+  const [reviewIsPublic, setReviewIsPublic] = useState(false);
   const [myReviews, setMyReviews] = useState<Review[]>([]);
+  const [publicReviews, setPublicReviews] = useState<PublicReview[]>([]);
   const [showMyReviews, setShowMyReviews] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Bookmark states
+  const [pageBookmarks, setPageBookmarks] = useState<number[]>([]);
 
   // TTS states
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -196,6 +216,54 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     }
   };
 
+  const loadBookmarks = async (bookId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('student_get_page_bookmarks', {
+        student_id_input: studentId,
+        book_id_input: bookId
+      });
+      if (error) throw error;
+      setPageBookmarks(data?.map((b: { page_number: number }) => b.page_number) || []);
+    } catch (error) {
+      console.error('Error loading bookmarks:', error);
+    }
+  };
+
+  const toggleBookmark = async () => {
+    if (!selectedBook) return;
+    try {
+      const { data, error } = await supabase.rpc('student_toggle_page_bookmark', {
+        student_id_input: studentId,
+        book_id_input: selectedBook.id,
+        page_number_input: currentPage
+      });
+      if (error) throw error;
+      
+      if (data) {
+        setPageBookmarks(prev => [...prev, currentPage]);
+        toast.success('북마크가 추가되었습니다 ❤️');
+      } else {
+        setPageBookmarks(prev => prev.filter(p => p !== currentPage));
+        toast.success('북마크가 제거되었습니다');
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast.error('북마크 처리에 실패했습니다');
+    }
+  };
+
+  const loadPublicReviews = async (bookId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('get_public_reviews', {
+        book_id_input: bookId
+      });
+      if (error) throw error;
+      setPublicReviews((data || []).filter((r: PublicReview) => r.student_id !== studentId));
+    } catch (error) {
+      console.error('Error loading public reviews:', error);
+    }
+  };
+
   const openBook = async (book: Storybook) => {
     try {
       setSelectedBook(book);
@@ -209,6 +277,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       if (error) throw error;
       setPages(data || []);
       setIsReaderOpen(true);
+      loadBookmarks(book.id);
     } catch (error) {
       console.error('Error loading pages:', error);
       toast.error('동화책을 여는데 실패했습니다');
@@ -350,10 +419,21 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
       if (error) throw error;
 
+      // Update visibility if public
+      const existingReview = myReviews.find(r => r.book_id === selectedBook.id);
+      if (existingReview && reviewIsPublic !== existingReview.is_public) {
+        await supabase.rpc('student_update_review_visibility', {
+          student_id_input: studentId,
+          review_id_input: existingReview.id,
+          is_public_input: reviewIsPublic
+        });
+      }
+
       toast.success('독후감이 저장되었습니다! 📝');
       setIsReviewDialogOpen(false);
       setReviewContent('');
       setReviewRating(5);
+      setReviewIsPublic(false);
       loadMyReviews();
     } catch (error) {
       console.error('Error saving review:', error);
@@ -363,16 +443,35 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     }
   };
 
+  const toggleReviewVisibility = async (reviewId: string, isPublic: boolean) => {
+    try {
+      const { error } = await supabase.rpc('student_update_review_visibility', {
+        student_id_input: studentId,
+        review_id_input: reviewId,
+        is_public_input: isPublic
+      });
+      if (error) throw error;
+      toast.success(isPublic ? '독후감이 공개되었습니다' : '독후감이 비공개되었습니다');
+      loadMyReviews();
+    } catch (error) {
+      console.error('Error updating visibility:', error);
+      toast.error('설정 변경에 실패했습니다');
+    }
+  };
+
   const openReviewDialog = (book: Storybook) => {
     setSelectedBook(book);
+    loadPublicReviews(book.id);
     // Check if already has review
     const existingReview = myReviews.find(r => r.book_id === book.id);
     if (existingReview) {
       setReviewContent(existingReview.content);
       setReviewRating(existingReview.rating);
+      setReviewIsPublic(existingReview.is_public || false);
     } else {
       setReviewContent('');
       setReviewRating(5);
+      setReviewIsPublic(false);
     }
     setIsReviewDialogOpen(true);
   };
@@ -418,19 +517,41 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   <div key={review.id} className="p-3 bg-amber-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium text-amber-900">{review.book_title}</span>
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
-                          />
-                        ))}
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                            />
+                          ))}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleReviewVisibility(review.id, !review.is_public)}
+                          className="h-6 px-2"
+                          title={review.is_public ? '공개됨 - 클릭하여 비공개' : '비공개 - 클릭하여 공개'}
+                        >
+                          {review.is_public ? (
+                            <Globe className="w-3 h-3 text-green-600" />
+                          ) : (
+                            <Users className="w-3 h-3 text-gray-400" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {new Date(review.created_at).toLocaleDateString('ko-KR')}
-                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(review.created_at).toLocaleDateString('ko-KR')}
+                      </p>
+                      {review.is_public && (
+                        <span className="text-xs text-green-600 flex items-center gap-1">
+                          <Globe className="w-3 h-3" /> 공개중
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -635,6 +756,17 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 ) : (
                   <Maximize className="w-4 h-4" />
                 )}
+              </Button>
+
+              {/* Bookmark Button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleBookmark}
+                className={`p-1 md:p-2 ${pageBookmarks.includes(currentPage) ? 'text-red-400 hover:bg-red-900/50' : 'text-white hover:bg-amber-700'}`}
+                title={pageBookmarks.includes(currentPage) ? '북마크 해제' : '북마크'}
+              >
+                <Heart className={`w-4 h-4 ${pageBookmarks.includes(currentPage) ? 'fill-red-400' : ''}`} />
               </Button>
 
               {selectedBook?.is_completed && (
@@ -868,62 +1000,119 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
       {/* Review Dialog */}
       <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <PenLine className="w-5 h-5 text-amber-600" />
-              독후감 작성
+              독후감
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">
-                {selectedBook?.title}
-              </p>
-            </div>
+          
+          <Tabs defaultValue="write" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="write">
+                <PenLine className="w-4 h-4 mr-1" />
+                내 독후감
+              </TabsTrigger>
+              <TabsTrigger value="others">
+                <Users className="w-4 h-4 mr-1" />
+                친구들 ({publicReviews.length})
+              </TabsTrigger>
+            </TabsList>
             
-            <div>
-              <Label>별점</Label>
-              <div className="flex gap-1 mt-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setReviewRating(star)}
-                    className="p-1"
-                  >
-                    <Star 
-                      className={`w-6 h-6 transition-colors ${
-                        star <= reviewRating 
-                          ? 'text-yellow-500 fill-yellow-500' 
-                          : 'text-gray-300 hover:text-yellow-400'
-                      }`} 
-                    />
-                  </button>
-                ))}
+            <TabsContent value="write" className="space-y-4 mt-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {selectedBook?.title}
+                </p>
               </div>
-            </div>
+              
+              <div>
+                <Label>별점</Label>
+                <div className="flex gap-1 mt-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className="p-1"
+                    >
+                      <Star 
+                        className={`w-6 h-6 transition-colors ${
+                          star <= reviewRating 
+                            ? 'text-yellow-500 fill-yellow-500' 
+                            : 'text-gray-300 hover:text-yellow-400'
+                        }`} 
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            <div>
-              <Label>독후감</Label>
-              <Textarea
-                placeholder="책을 읽고 느낀 점을 자유롭게 작성해주세요..."
-                value={reviewContent}
-                onChange={(e) => setReviewContent(e.target.value)}
-                rows={6}
-                className="mt-1"
-              />
-            </div>
+              <div>
+                <Label>독후감</Label>
+                <Textarea
+                  placeholder="책을 읽고 느낀 점을 자유롭게 작성해주세요..."
+                  value={reviewContent}
+                  onChange={(e) => setReviewContent(e.target.value)}
+                  rows={6}
+                  className="mt-1"
+                />
+              </div>
 
-            <Button 
-              onClick={handleSubmitReview} 
-              className="w-full bg-amber-600 hover:bg-amber-700"
-              disabled={submittingReview}
-            >
-              <Send className="w-4 h-4 mr-1" />
-              {submittingReview ? '저장 중...' : '독후감 저장'}
-            </Button>
-          </div>
+              <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-amber-600" />
+                  <span className="text-sm">친구들에게 공개하기</span>
+                </div>
+                <Switch
+                  checked={reviewIsPublic}
+                  onCheckedChange={setReviewIsPublic}
+                />
+              </div>
+
+              <Button 
+                onClick={handleSubmitReview} 
+                className="w-full bg-amber-600 hover:bg-amber-700"
+                disabled={submittingReview}
+              >
+                <Send className="w-4 h-4 mr-1" />
+                {submittingReview ? '저장 중...' : '독후감 저장'}
+              </Button>
+            </TabsContent>
+            
+            <TabsContent value="others" className="mt-4">
+              {publicReviews.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>아직 공개된 독후감이 없습니다</p>
+                  <p className="text-sm">첫 번째로 독후감을 공개해보세요!</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {publicReviews.map((review) => (
+                    <div key={review.id} className="p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-800">{review.student_name}</span>
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={`w-3 h-3 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {new Date(review.created_at).toLocaleDateString('ko-KR')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
