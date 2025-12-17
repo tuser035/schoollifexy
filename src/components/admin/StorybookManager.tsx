@@ -479,6 +479,40 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     toast.success('CSV 양식이 다운로드되었습니다');
   };
 
+  const handleDownloadBookContent = async (book: Storybook) => {
+    try {
+      const { data, error } = await supabase.rpc('admin_get_storybook_pages', {
+        admin_id_input: adminId,
+        book_id_input: book.id
+      });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        toast.error('다운로드할 페이지가 없습니다');
+        return;
+      }
+
+      const csvData = data.map((page: StorybookPage) => ({
+        '페이지번호': page.page_number,
+        '이미지URL': page.image_url || '',
+        '텍스트내용': page.text_content || ''
+      }));
+
+      const csv = Papa.unparse(csvData);
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${book.title}_내용.csv`;
+      link.click();
+      toast.success(`"${book.title}" 내용이 다운로드되었습니다`);
+    } catch (error) {
+      console.error('Error downloading book content:', error);
+      toast.error('다운로드에 실패했습니다');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -643,6 +677,15 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                           title="편집"
                         >
                           <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDownloadBookContent(book)}
+                          title="내용 다운로드"
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <Download className="w-4 h-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
