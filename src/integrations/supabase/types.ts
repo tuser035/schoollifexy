@@ -1216,6 +1216,18 @@ export type Database = {
           teacher_name: string
         }[]
       }
+      admin_get_popular_storybooks: {
+        Args: { admin_id_input: string }
+        Returns: {
+          avg_rating: number
+          book_id: string
+          book_number: number
+          completed_readers: number
+          cover_image_url: string
+          title: string
+          total_readers: number
+        }[]
+      }
       admin_get_reading_statistics: {
         Args: { admin_id_input: string }
         Returns: {
