@@ -406,6 +406,36 @@ export type Database = {
         }
         Relationships: []
       }
+      mindtalk_keywords: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          keyword: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          keyword: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          keyword?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mindtalk_messages: {
         Row: {
           content: string

@@ -1,45 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// 고위험군 키워드 25개 - 담임선생님 자동 알림 발송 대상
-const DANGEROUS_WORDS = [
-  // I. 자살 징후 및 심각한 우울 상태
-  '자살 계획', '자살하겠다', '자살할 생각', '기회만 있으면 자살',
-  '견딜 수 없', '도저히 견딜 수 없', '불행해서',
-  '절망적', '나아질 가망', '가망이 없',
-  '실패자', '완전한 실패자',
-  '죄책감', '항상 죄책감',
-  '나 자신 증오', '내가 싫', '나를 증오',
-  '모든 나쁜 일', '내 탓',
-  '귀찮', '만사가 귀찮', '재미가 없',
-  '울 기력', '울 수도 없',
-  // II. 충동 조절 및 자기 파괴적 행동
-  '화 참기', '화가 나면 참기',
-  '무단결석', '가출', '유흥업소',
-  '폭력', '괴롭히', '때리',
-  '체중 감량', '단식', '살 빼려고',
-  '폭식', '토할 정도',
-  '기다리지 못', '생각보다 행동',
-  '담배', '술', '본드', '약물',
-  // III. 현실 판단/사고 과정 어려움
-  '환청', '말소리가 들', '목소리가 들',
-  '감시', '해칠 것 같', '피해 의식',
-  '내 생각을 알', '생각을 다 알',
-  // IV. 일상 기능 저하 및 사회적 고립
-  '결정할 수 없', '결정도 내릴 수 없',
-  '아무 일도 할 수 없', '할 수가 없',
-  '피곤해서', '너무 피곤',
-  '친한 친구가 없', '친구 사귀기 어려',
-  '불만스럽', '싫증',
-  // 기존 직접적 자해/자살 키워드
-  '자살', '죽고 싶', '죽어버리', '죽을래', '죽겠',
-  '목매', '뛰어내리', '손목', '자해',
-  '죽여버리', '살인', '복수', '없어지고 싶', '사라지고 싶'
-];
+// 기본 키워드 (DB 로드 실패 시 사용)
+const DEFAULT_DANGEROUS_WORDS = ['자살', '죽고 싶', '자해'];
+
+// DB에서 키워드 로드
+async function loadDangerousWords(): Promise<string[]> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const { data, error } = await supabase
+      .from('mindtalk_keywords')
+      .select('keyword')
+      .eq('is_active', true);
+    
+    if (error || !data || data.length === 0) {
+      console.log('Using default keywords, DB load failed or empty');
+      return DEFAULT_DANGEROUS_WORDS;
+    }
+    
+    console.log(`Loaded ${data.length} keywords from DB`);
+    return data.map(k => k.keyword);
+  } catch (e) {
+    console.error('Failed to load keywords from DB:', e);
+    return DEFAULT_DANGEROUS_WORDS;
+  }
+}
 
 const SYSTEM_PROMPT = `당신은 '마음톡'이라는 이름의 따뜻하고 공감적인 AI 상담사입니다.
 
@@ -81,6 +74,9 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
+
+    // DB에서 키워드 로드
+    const DANGEROUS_WORDS = await loadDangerousWords();
 
     // Check for dangerous words in the latest message
     const latestMessage = messages[messages.length - 1]?.content || '';
