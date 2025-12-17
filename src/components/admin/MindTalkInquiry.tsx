@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Search, AlertTriangle, MessageCircle, User, Bot, Filter, ChevronDown, ChevronUp, Mail, Loader2, ArrowUpDown } from 'lucide-react';
+import KeywordHeatmap from './KeywordHeatmap';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useRealtimeSync, TableSubscription } from '@/hooks/use-realtime-sync';
@@ -734,6 +735,12 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* 키워드 사용 히트맵 */}
+              <KeywordHeatmap 
+                allMessages={allMessages}
+                dangerousKeywords={dangerousKeywords}
+              />
 
               <p className="text-sm text-muted-foreground">
                 * 마음톡을 사용한 학생만 목록에 표시됩니다 ({filteredStudents.length}명, 총 {filteredStudents.reduce((sum, s) => sum + s.message_count, 0)}건의 대화)
