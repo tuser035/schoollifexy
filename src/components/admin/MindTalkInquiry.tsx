@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, AlertTriangle, MessageCircle, User, Bot } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Search, AlertTriangle, MessageCircle, User, Bot, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -56,6 +57,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [studentSearchClass, setStudentSearchClass] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showOnlyDangerous, setShowOnlyDangerous] = useState(false);
 
   useEffect(() => {
     fetchAlerts();
@@ -419,7 +421,10 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       </Card>
 
       {/* Chat History Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) setShowOnlyDangerous(false);
+      }}>
         <DialogContent className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -427,14 +432,42 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               {selectedStudentName} 학생 마음톡 대화 기록
             </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="h-[60vh] pr-4">
+          
+          {/* 위험 메시지 필터 */}
+          <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 text-sm">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <span>위험 키워드 메시지만 보기</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={showOnlyDangerous}
+                onCheckedChange={setShowOnlyDangerous}
+              />
+              {showOnlyDangerous && (
+                <Badge variant="destructive" className="text-xs">
+                  {messages.filter(m => m.role === 'user' && containsDangerousKeyword(m.content)).length}개
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <ScrollArea className="h-[55vh] pr-4">
             <div className="space-y-3">
-              {messages.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  대화 기록이 없습니다
-                </div>
-              ) : (
-                messages.map((msg) => {
+              {(() => {
+                const filteredMessages = showOnlyDangerous 
+                  ? messages.filter(m => m.role === 'user' && containsDangerousKeyword(m.content))
+                  : messages;
+                
+                if (filteredMessages.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {showOnlyDangerous ? '위험 키워드가 포함된 메시지가 없습니다' : '대화 기록이 없습니다'}
+                    </div>
+                  );
+                }
+                
+                return filteredMessages.map((msg) => {
                   const hasDangerousWord = msg.role === 'user' && containsDangerousKeyword(msg.content);
                   return (
                     <div
@@ -476,8 +509,8 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                       )}
                     </div>
                   );
-                })
-              )}
+                });
+              })()}
             </div>
           </ScrollArea>
           {messages.some(m => m.role === 'user' && containsDangerousKeyword(m.content)) && (
