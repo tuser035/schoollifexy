@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,12 @@ import {
   Star,
   PenLine,
   Send,
-  Smartphone
+  Smartphone,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+  Square
 } from 'lucide-react';
 
 interface Storybook {
@@ -67,6 +72,87 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [myReviews, setMyReviews] = useState<Review[]>([]);
   const [showMyReviews, setShowMyReviews] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // TTS states
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  
+  // Fullscreen states
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const readerContainerRef = useRef<HTMLDivElement>(null);
+
+  // TTS Functions
+  const stopSpeaking = useCallback(() => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  }, []);
+
+  const speakText = useCallback((text: string) => {
+    if (!window.speechSynthesis) {
+      toast.error('이 브라우저는 음성 읽기를 지원하지 않습니다');
+      return;
+    }
+
+    stopSpeaking();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      toast.error('음성 읽기 중 오류가 발생했습니다');
+    };
+
+    speechSynthRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+  }, [stopSpeaking]);
+
+  // Fullscreen Functions
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        if (readerContainerRef.current) {
+          await readerContainerRef.current.requestFullscreen();
+          setIsFullscreen(true);
+        }
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.error('Fullscreen error:', error);
+      toast.error('전체화면 전환에 실패했습니다');
+    }
+  }, []);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Stop speaking when reader closes or page changes
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, [stopSpeaking]);
+
+  useEffect(() => {
+    stopSpeaking();
+  }, [currentPage, stopSpeaking]);
 
   useEffect(() => {
     loadBooks();
@@ -382,8 +468,21 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       )}
 
       {/* Book Reader Dialog - Mobile Optimized */}
-      <Dialog open={isReaderOpen} onOpenChange={closeReader}>
-        <DialogContent className="max-w-5xl w-full h-[100dvh] md:h-[90vh] p-0 overflow-hidden bg-amber-50 landscape:h-[100dvh]">
+      <Dialog open={isReaderOpen} onOpenChange={(open) => {
+        if (!open) {
+          stopSpeaking();
+          if (isFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          }
+        }
+        closeReader();
+      }}>
+        <DialogContent 
+          ref={readerContainerRef}
+          className={`max-w-5xl w-full p-0 overflow-hidden bg-amber-50 ${
+            isFullscreen ? 'h-screen max-h-screen rounded-none' : 'h-[100dvh] md:h-[90vh] landscape:h-[100dvh]'
+          }`}
+        >
           {/* Header */}
           <div className="flex items-center justify-between p-2 md:p-3 bg-amber-800 text-white">
             <div className="flex items-center gap-2 min-w-0">
@@ -394,6 +493,48 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-xs md:text-sm">
                 {currentPage} / {pages.length}
               </Badge>
+              
+              {/* TTS Button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  if (isSpeaking) {
+                    stopSpeaking();
+                  } else {
+                    const text = currentPageData?.text_content;
+                    if (text) {
+                      speakText(text);
+                    } else {
+                      toast.error('읽을 텍스트가 없습니다');
+                    }
+                  }
+                }}
+                className="text-white hover:bg-amber-700 p-1 md:p-2"
+                title={isSpeaking ? '읽기 중지' : '음성 읽기'}
+              >
+                {isSpeaking ? (
+                  <VolumeX className="w-4 h-4" />
+                ) : (
+                  <Volume2 className="w-4 h-4" />
+                )}
+              </Button>
+
+              {/* Fullscreen Button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleFullscreen}
+                className="text-white hover:bg-amber-700 p-1 md:p-2"
+                title={isFullscreen ? '전체화면 종료' : '전체화면'}
+              >
+                {isFullscreen ? (
+                  <Minimize className="w-4 h-4" />
+                ) : (
+                  <Maximize className="w-4 h-4" />
+                )}
+              </Button>
+
               {selectedBook?.is_completed && (
                 <Button 
                   variant="ghost" 
@@ -405,16 +546,31 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   독후감
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={closeReader} className="text-white hover:bg-amber-700 p-1 md:p-2">
+              <Button variant="ghost" size="sm" onClick={() => {
+                stopSpeaking();
+                if (isFullscreen) {
+                  document.exitFullscreen().catch(() => {});
+                }
+                closeReader();
+              }} className="text-white hover:bg-amber-700 p-1 md:p-2">
                 <X className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
-          {/* Mobile Swipe Hint */}
+          {/* Mobile Swipe Hint + TTS indicator */}
           <div className="md:hidden flex items-center justify-center gap-2 py-1 bg-amber-200 text-amber-800 text-xs">
-            <Smartphone className="w-3 h-3" />
-            <span>좌우로 밀어서 페이지 넘기기</span>
+            {isSpeaking ? (
+              <>
+                <Volume2 className="w-3 h-3 animate-pulse" />
+                <span>읽는 중... (버튼을 눌러 중지)</span>
+              </>
+            ) : (
+              <>
+                <Smartphone className="w-3 h-3" />
+                <span>좌우로 밀어서 페이지 넘기기</span>
+              </>
+            )}
           </div>
 
           {/* Book Content - Responsive with Swipe */}
