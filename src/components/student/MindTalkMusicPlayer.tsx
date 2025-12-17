@@ -13,7 +13,8 @@ import {
   X,
   Shuffle,
   Repeat,
-  Heart
+  Heart,
+  History
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -44,10 +45,16 @@ const FAVORITES_KEY = 'mindtalk_music_favorites';
 interface MindTalkMusicPlayerProps {
   isOpen: boolean;
   onClose: () => void;
+  studentId?: string;
 }
 
-export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPlayerProps) {
+interface HistoryTrack extends MusicTrack {
+  last_played_at: string;
+}
+
+export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: MindTalkMusicPlayerProps) {
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
+  const [historyTracks, setHistoryTracks] = useState<HistoryTrack[]>([]);
   const [currentTrack, setCurrentTrack] = useState<MusicTrack | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(70);
@@ -60,6 +67,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [showHistoryOnly, setShowHistoryOnly] = useState(false);
   const [shuffleQueue, setShuffleQueue] = useState<string[]>([]);
   const [shuffleIndex, setShuffleIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -95,11 +103,13 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   const categories = [...new Set(tracks.map(t => t.category))];
   
   // 필터된 트랙 목록
-  const filteredTracks = tracks.filter(t => {
-    const categoryMatch = !selectedCategory || t.category === selectedCategory;
-    const favoriteMatch = !showFavoritesOnly || favorites.has(t.id);
-    return categoryMatch && favoriteMatch;
-  });
+  const filteredTracks = showHistoryOnly 
+    ? historyTracks.map(h => ({ id: h.id, title: h.title, category: h.category, file_path: h.file_path, duration_seconds: h.duration_seconds }))
+    : tracks.filter(t => {
+        const categoryMatch = !selectedCategory || t.category === selectedCategory;
+        const favoriteMatch = !showFavoritesOnly || favorites.has(t.id);
+        return categoryMatch && favoriteMatch;
+      });
 
   // 셔플 큐 생성 함수 (Fisher-Yates 알고리즘)
   const generateShuffleQueue = (tracksList: MusicTrack[], currentTrackId?: string) => {
@@ -143,8 +153,11 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   useEffect(() => {
     if (isOpen) {
       loadTracks();
+      if (studentId) {
+        loadHistory();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, studentId]);
 
   const loadTracks = async () => {
     setIsLoading(true);
@@ -160,6 +173,31 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
       console.error('Failed to load tracks:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadHistory = async () => {
+    if (!studentId) return;
+    try {
+      const { data, error } = await supabase.rpc('student_get_play_history', {
+        student_id_input: studentId
+      });
+      if (!error && data) {
+        // Map music_id to id for compatibility
+        const mappedData = data.map((item: any) => ({
+          id: item.music_id,
+          title: item.title,
+          category: item.category,
+          file_path: item.file_path,
+          duration_seconds: item.duration_seconds,
+          last_played_at: item.last_played_at
+        }));
+        setHistoryTracks(mappedData.sort((a: HistoryTrack, b: HistoryTrack) => 
+          new Date(b.last_played_at).getTime() - new Date(a.last_played_at).getTime()
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to load play history:', error);
     }
   };
 
@@ -221,6 +259,16 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
     
     // Increment play count
     await supabase.rpc('increment_music_play_count', { music_id_input: track.id });
+    
+    // 재생 히스토리 저장
+    if (studentId) {
+      await supabase.rpc('student_save_play_history', {
+        student_id_input: studentId,
+        music_id_input: track.id
+      });
+      // 히스토리 갱신
+      loadHistory();
+    }
     
     setTimeout(() => {
       audioRef.current?.play();
@@ -415,20 +463,33 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
             <span className="text-xs text-purple-300">{filteredTracks.length}곡</span>
           </div>
           
-          {/* Category & Favorites Filter */}
+          {/* Category & Favorites & History Filter */}
           <div className="px-4 pb-2 flex gap-1 flex-wrap">
             <button
-              onClick={() => { setSelectedCategory(null); setShowFavoritesOnly(false); }}
+              onClick={() => { setSelectedCategory(null); setShowFavoritesOnly(false); setShowHistoryOnly(false); }}
               className={`px-2 py-1 text-xs rounded-full transition-colors ${
-                selectedCategory === null && !showFavoritesOnly
+                selectedCategory === null && !showFavoritesOnly && !showHistoryOnly
                   ? 'bg-pink-500 text-white'
                   : 'bg-white/10 text-purple-200 hover:bg-white/20'
               }`}
             >
               전체
             </button>
+            {studentId && (
+              <button
+                onClick={() => { setShowHistoryOnly(!showHistoryOnly); setShowFavoritesOnly(false); setSelectedCategory(null); }}
+                className={`px-2 py-1 text-xs rounded-full transition-colors flex items-center gap-1 ${
+                  showHistoryOnly
+                    ? 'bg-pink-500 text-white'
+                    : 'bg-white/10 text-purple-200 hover:bg-white/20'
+                }`}
+              >
+                <History className="w-3 h-3" />
+                최근 재생
+              </button>
+            )}
             <button
-              onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setSelectedCategory(null); }}
+              onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setSelectedCategory(null); setShowHistoryOnly(false); }}
               className={`px-2 py-1 text-xs rounded-full transition-colors flex items-center gap-1 ${
                 showFavoritesOnly
                   ? 'bg-pink-500 text-white'
@@ -441,7 +502,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => { setSelectedCategory(cat); setShowFavoritesOnly(false); }}
+                onClick={() => { setSelectedCategory(cat); setShowFavoritesOnly(false); setShowHistoryOnly(false); }}
                 className={`px-2 py-1 text-xs rounded-full transition-colors ${
                   selectedCategory === cat
                     ? 'bg-pink-500 text-white'
@@ -458,7 +519,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
               <div className="p-4 text-center text-purple-200">로딩 중...</div>
             ) : filteredTracks.length === 0 ? (
               <div className="p-4 text-center text-purple-200">
-                {showFavoritesOnly ? '즐겨찾기가 없습니다' : '음악이 없습니다'}
+                {showHistoryOnly ? '재생 기록이 없습니다' : showFavoritesOnly ? '즐겨찾기가 없습니다' : '음악이 없습니다'}
               </div>
             ) : (
               <div className="space-y-1 px-2 pb-2">
