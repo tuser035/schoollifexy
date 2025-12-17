@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Progress } from '@/components/ui/progress';
 import { 
   Music, 
   Upload, 
@@ -17,7 +18,9 @@ import {
   RefreshCw,
   Plus,
   Loader2,
-  BarChart3
+  BarChart3,
+  X,
+  FileAudio
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,6 +36,12 @@ interface MusicTrack {
   created_at: string;
 }
 
+interface PendingFile {
+  file: File;
+  title: string;
+  category: string;
+}
+
 interface MindTalkMusicProps {
   adminId: string;
 }
@@ -43,12 +52,15 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [currentUploadIndex, setCurrentUploadIndex] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState('힐링');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [bulkCategory, setBulkCategory] = useState('힐링');
+  const [isDragging, setIsDragging] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadTracks();
@@ -71,63 +83,130 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const processFiles = useCallback((files: FileList | File[]) => {
+    const audioFiles = Array.from(files).filter(file => {
       if (!file.type.startsWith('audio/')) {
-        toast.error('오디오 파일만 업로드할 수 있습니다');
-        return;
+        toast.error(`${file.name}: 오디오 파일만 업로드할 수 있습니다`);
+        return false;
       }
       if (file.size > 20 * 1024 * 1024) {
-        toast.error('파일 크기는 20MB 이하여야 합니다');
-        return;
+        toast.error(`${file.name}: 파일 크기는 20MB 이하여야 합니다`);
+        return false;
       }
-      setSelectedFile(file);
-      if (!newTitle) {
-        setNewTitle(file.name.replace(/\.[^/.]+$/, ''));
-      }
+      return true;
+    });
+
+    const newPendingFiles: PendingFile[] = audioFiles.map(file => ({
+      file,
+      title: file.name.replace(/\.[^/.]+$/, ''),
+      category: bulkCategory
+    }));
+
+    setPendingFiles(prev => [...prev, ...newPendingFiles]);
+    if (audioFiles.length > 0) {
+      toast.success(`${audioFiles.length}개 파일이 추가되었습니다`);
+    }
+  }, [bulkCategory]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      processFiles(e.target.files);
+      e.target.value = '';
     }
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile || !newTitle.trim()) {
-      toast.error('파일과 제목을 입력해주세요');
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget === dropZoneRef.current) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files) {
+      processFiles(e.dataTransfer.files);
+    }
+  }, [processFiles]);
+
+  const updatePendingFile = (index: number, updates: Partial<PendingFile>) => {
+    setPendingFiles(prev => prev.map((f, i) => i === index ? { ...f, ...updates } : f));
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadSingleFile = async (pendingFile: PendingFile): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          const { error } = await supabase.functions.invoke('upload-mindtalk-music', {
+            body: {
+              fileName: pendingFile.file.name,
+              fileBase64: base64,
+              title: pendingFile.title.trim(),
+              category: pendingFile.category,
+              adminId
+            }
+          });
+          resolve(!error);
+        } catch {
+          resolve(false);
+        }
+      };
+      reader.onerror = () => resolve(false);
+      reader.readAsDataURL(pendingFile.file);
+    });
+  };
+
+  const handleBulkUpload = async () => {
+    if (pendingFiles.length === 0) {
+      toast.error('업로드할 파일이 없습니다');
       return;
     }
 
     setIsUploading(true);
-    try {
-      // Convert file to base64
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        
-        const { data, error } = await supabase.functions.invoke('upload-mindtalk-music', {
-          body: {
-            fileName: selectedFile.name,
-            fileBase64: base64,
-            title: newTitle.trim(),
-            category: newCategory,
-            adminId
-          }
-        });
+    setUploadProgress(0);
+    setCurrentUploadIndex(0);
 
-        if (error) throw error;
+    let successCount = 0;
+    let failCount = 0;
 
-        toast.success('음악이 업로드되었습니다');
-        setNewTitle('');
-        setNewCategory('힐링');
-        setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        loadTracks();
-      };
-      reader.readAsDataURL(selectedFile);
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('업로드에 실패했습니다');
-    } finally {
-      setIsUploading(false);
+    for (let i = 0; i < pendingFiles.length; i++) {
+      setCurrentUploadIndex(i + 1);
+      const success = await uploadSingleFile(pendingFiles[i]);
+      if (success) successCount++;
+      else failCount++;
+      setUploadProgress(((i + 1) / pendingFiles.length) * 100);
     }
+
+    setIsUploading(false);
+    setPendingFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    if (failCount === 0) {
+      toast.success(`${successCount}개 파일 업로드 완료`);
+    } else {
+      toast.warning(`${successCount}개 성공, ${failCount}개 실패`);
+    }
+    loadTracks();
   };
 
   const toggleActive = async (track: MusicTrack) => {
@@ -242,47 +321,125 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Plus className="w-4 h-4 text-purple-500" />
-            새 음악 추가
+            음악 추가 (드래그 앤 드롭 / 일괄 업로드)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <Label className="text-xs">파일 선택</Label>
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept="audio/*"
-                onChange={handleFileSelect}
-                className="text-xs"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">제목</Label>
-              <Input
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="음악 제목"
-                className="text-sm"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">카테고리</Label>
-              <Select value={newCategory} onValueChange={setNewCategory}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Drag and Drop Zone */}
+          <div
+            ref={dropZoneRef}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+              isDragging 
+                ? 'border-purple-500 bg-purple-50' 
+                : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50/50'
+            }`}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-purple-500' : 'text-gray-400'}`} />
+            <p className="text-sm text-muted-foreground">
+              {isDragging ? '파일을 놓으세요' : '클릭하거나 파일을 드래그하여 업로드'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              여러 파일 선택 가능 (MP3, WAV 등, 최대 20MB)
+            </p>
+            <Input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
           </div>
+
+          {/* Bulk Category Selector */}
+          <div className="flex items-center gap-2">
+            <Label className="text-xs whitespace-nowrap">기본 카테고리:</Label>
+            <Select value={bulkCategory} onValueChange={setBulkCategory}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground">(새로 추가되는 파일에 적용)</span>
+          </div>
+
+          {/* Pending Files List */}
+          {pendingFiles.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">대기 중인 파일 ({pendingFiles.length}개)</Label>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setPendingFiles([])}
+                  className="text-xs text-red-500 hover:text-red-600"
+                >
+                  전체 삭제
+                </Button>
+              </div>
+              <ScrollArea className="h-[200px] border rounded-lg p-2">
+                <div className="space-y-2">
+                  {pendingFiles.map((pf, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                      <FileAudio className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                      <Input
+                        value={pf.title}
+                        onChange={(e) => updatePendingFile(index, { title: e.target.value })}
+                        className="h-8 text-sm flex-1"
+                        placeholder="제목"
+                      />
+                      <Select 
+                        value={pf.category} 
+                        onValueChange={(v) => updatePendingFile(index, { category: v })}
+                      >
+                        <SelectTrigger className="w-24 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORIES.map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-500 hover:text-red-600"
+                        onClick={() => removePendingFile(index)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          {/* Upload Progress */}
+          {isUploading && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span>업로드 중... ({currentUploadIndex}/{pendingFiles.length})</span>
+                <span>{Math.round(uploadProgress)}%</span>
+              </div>
+              <Progress value={uploadProgress} className="h-2" />
+            </div>
+          )}
+
+          {/* Upload Button */}
           <Button 
-            onClick={handleUpload} 
-            disabled={!selectedFile || !newTitle.trim() || isUploading}
+            onClick={handleBulkUpload} 
+            disabled={pendingFiles.length === 0 || isUploading}
             className="w-full bg-purple-500 hover:bg-purple-600"
           >
             {isUploading ? (
@@ -293,7 +450,7 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
             ) : (
               <>
                 <Upload className="w-4 h-4 mr-2" />
-                업로드
+                {pendingFiles.length > 0 ? `${pendingFiles.length}개 파일 업로드` : '업로드'}
               </>
             )}
           </Button>
