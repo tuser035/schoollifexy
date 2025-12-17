@@ -23,7 +23,8 @@ import {
   Plus,
   Minimize2,
   Maximize2,
-  GripVertical
+  GripVertical,
+  MessageCircleHeart
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -64,6 +65,7 @@ const MUSIC_PLAYER_ACTIVE_KEY = 'mindtalk_music_player_active';
 interface MindTalkMusicPlayerProps {
   isOpen: boolean;
   onClose: () => void;
+  onReturnToChat?: () => void;
   studentId?: string;
 }
 
@@ -71,7 +73,7 @@ interface HistoryTrack extends MusicTrack {
   last_played_at: string;
 }
 
-export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: MindTalkMusicPlayerProps) {
+export default function MindTalkMusicPlayer({ isOpen, onClose, onReturnToChat, studentId }: MindTalkMusicPlayerProps) {
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [historyTracks, setHistoryTracks] = useState<HistoryTrack[]>([]);
   const [currentTrack, setCurrentTrack] = useState<MusicTrack | null>(null);
@@ -624,6 +626,17 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
             
             {/* Window Controls */}
             <div className="flex items-center gap-0.5">
+              {onReturnToChat && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onReturnToChat}
+                  className="text-white hover:bg-white/20 h-6 w-6 p-0"
+                  title="마음톡 채팅"
+                >
+                  <MessageCircleHeart className="w-3 h-3" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -746,6 +759,17 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
             <span className="font-medium text-sm">힐링 뮤직</span>
           </div>
           <div className="flex items-center gap-1">
+            {onReturnToChat && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onReturnToChat}
+                className="text-white hover:bg-white/10 h-7 w-7 p-0"
+                title="마음톡 채팅"
+              >
+                <MessageCircleHeart className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"

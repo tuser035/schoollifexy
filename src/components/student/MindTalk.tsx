@@ -352,6 +352,12 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
     setIsMusicOpen(true);
   };
 
+  // 음악 플레이어에서 마음톡으로 돌아가기
+  const handleReturnToChat = () => {
+    setIsMusicOpen(false);
+    setIsOpen(true);
+  };
+
   return (
     <>
       {/* Floating Button - 허용 시간에만 표시 (음악 플레이어와 독립적으로 항상 표시) */}
@@ -366,7 +372,7 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
       )}
 
       {/* Music Player - 독립 플로팅 카드 */}
-      <MindTalkMusicPlayer isOpen={isMusicOpen} onClose={() => setIsMusicOpen(false)} studentId={studentId} />
+      <MindTalkMusicPlayer isOpen={isMusicOpen} onClose={() => setIsMusicOpen(false)} onReturnToChat={handleReturnToChat} studentId={studentId} />
 
       {/* Chat Modal */}
       {isOpen && (
