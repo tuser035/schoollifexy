@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Search, AlertTriangle, Upload, Download, FileUp } from 'lucide-react';
+import { Plus, Trash2, Search, AlertTriangle, Upload, Download, FileUp, ToggleLeft, ToggleRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 interface Keyword {
   id: string;
@@ -23,19 +24,19 @@ interface Keyword {
 }
 
 const CATEGORIES = [
-  { value: '자살징후', label: '자살 징후', color: 'bg-red-100 text-red-700' },
-  { value: '우울', label: '우울', color: 'bg-purple-100 text-purple-700' },
-  { value: '자해', label: '자해', color: 'bg-orange-100 text-orange-700' },
-  { value: '충동조절', label: '충동 조절', color: 'bg-yellow-100 text-yellow-700' },
-  { value: '비행', label: '비행', color: 'bg-gray-100 text-gray-700' },
-  { value: '섭식', label: '섭식 장애', color: 'bg-pink-100 text-pink-700' },
-  { value: '약물', label: '약물', color: 'bg-indigo-100 text-indigo-700' },
-  { value: '정신증', label: '정신증', color: 'bg-blue-100 text-blue-700' },
-  { value: '기능저하', label: '기능 저하', color: 'bg-teal-100 text-teal-700' },
-  { value: '고립', label: '사회적 고립', color: 'bg-cyan-100 text-cyan-700' },
-  { value: '정서', label: '정서', color: 'bg-emerald-100 text-emerald-700' },
-  { value: '폭력', label: '폭력', color: 'bg-rose-100 text-rose-700' },
-  { value: '기타', label: '기타', color: 'bg-slate-100 text-slate-700' },
+  { value: '자살징후', label: '자살 징후', color: 'bg-red-100 text-red-700', chartColor: '#ef4444' },
+  { value: '우울', label: '우울', color: 'bg-purple-100 text-purple-700', chartColor: '#a855f7' },
+  { value: '자해', label: '자해', color: 'bg-orange-100 text-orange-700', chartColor: '#f97316' },
+  { value: '충동조절', label: '충동 조절', color: 'bg-yellow-100 text-yellow-700', chartColor: '#eab308' },
+  { value: '비행', label: '비행', color: 'bg-gray-100 text-gray-700', chartColor: '#6b7280' },
+  { value: '섭식', label: '섭식 장애', color: 'bg-pink-100 text-pink-700', chartColor: '#ec4899' },
+  { value: '약물', label: '약물', color: 'bg-indigo-100 text-indigo-700', chartColor: '#6366f1' },
+  { value: '정신증', label: '정신증', color: 'bg-blue-100 text-blue-700', chartColor: '#3b82f6' },
+  { value: '기능저하', label: '기능 저하', color: 'bg-teal-100 text-teal-700', chartColor: '#14b8a6' },
+  { value: '고립', label: '사회적 고립', color: 'bg-cyan-100 text-cyan-700', chartColor: '#06b6d4' },
+  { value: '정서', label: '정서', color: 'bg-emerald-100 text-emerald-700', chartColor: '#10b981' },
+  { value: '폭력', label: '폭력', color: 'bg-rose-100 text-rose-700', chartColor: '#f43f5e' },
+  { value: '기타', label: '기타', color: 'bg-slate-100 text-slate-700', chartColor: '#64748b' },
 ];
 
 interface MindTalkKeywordsProps {
@@ -403,6 +404,50 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
     }
   };
 
+  // 일괄 활성화/비활성화
+  const [isBulkToggling, setIsBulkToggling] = useState(false);
+
+  const bulkToggleActive = async (activate: boolean) => {
+    if (selectedIds.size === 0) return;
+    
+    const action = activate ? '활성화' : '비활성화';
+    if (!confirm(`선택한 ${selectedIds.size}개 키워드를 ${action}하시겠습니까?`)) return;
+
+    setIsBulkToggling(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const id of selectedIds) {
+      const { error } = await supabase
+        .from('mindtalk_keywords')
+        .update({ is_active: activate })
+        .eq('id', id);
+
+      if (error) {
+        errorCount++;
+      } else {
+        successCount++;
+      }
+    }
+
+    setIsBulkToggling(false);
+    
+    if (successCount > 0) {
+      setKeywords(keywords.map(k => 
+        selectedIds.has(k.id) ? { ...k, is_active: activate } : k
+      ));
+      setSelectedIds(new Set());
+      toast({ 
+        title: `일괄 ${action} 완료`, 
+        description: errorCount > 0 
+          ? `${successCount}개 ${action}, ${errorCount}개 오류` 
+          : `${successCount}개 키워드가 ${action}되었습니다`
+      });
+    } else {
+      toast({ title: `${action} 실패`, variant: 'destructive' });
+    }
+  };
+
   const getCategoryBadge = (category: string) => {
     const cat = CATEGORIES.find(c => c.value === category) || CATEGORIES[CATEGORIES.length - 1];
     return <Badge className={cat.color}>{cat.label}</Badge>;
@@ -418,45 +463,101 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
 
   const activeCount = keywords.filter(k => k.is_active).length;
 
+  // 카테고리별 통계 데이터
+  const categoryChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    keywords.forEach(k => {
+      counts[k.category] = (counts[k.category] || 0) + 1;
+    });
+    return CATEGORIES
+      .filter(cat => counts[cat.value] > 0)
+      .map(cat => ({
+        name: cat.label,
+        value: counts[cat.value] || 0,
+        color: cat.chartColor,
+      }));
+  }, [keywords]);
+
   return (
     <div className="space-y-6">
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* 통계 카드 및 차트 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">전체 키워드</p>
+                  <p className="text-2xl font-bold">{keywords.length}개</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <span className="text-green-600 font-bold">✓</span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">활성 키워드</p>
+                  <p className="text-2xl font-bold">{activeCount}개</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <span className="text-gray-600 font-bold">-</span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">비활성 키워드</p>
+                  <p className="text-2xl font-bold">{keywords.length - activeCount}개</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* 카테고리별 파이 차트 */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">전체 키워드</p>
-                <p className="text-2xl font-bold">{keywords.length}개</p>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">카테고리별 분포</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {categoryChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie
+                    data={categoryChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {categoryChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => [`${value}개`, '']} />
+                  <Legend 
+                    layout="vertical" 
+                    verticalAlign="middle" 
+                    align="right"
+                    wrapperStyle={{ fontSize: '12px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[180px] flex items-center justify-center text-muted-foreground">
+                키워드가 없습니다
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <span className="text-green-600 font-bold">✓</span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">활성 키워드</p>
-                <p className="text-2xl font-bold">{activeCount}개</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-600 font-bold">-</span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">비활성 키워드</p>
-                <p className="text-2xl font-bold">{keywords.length - activeCount}개</p>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -609,6 +710,24 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                   ))}
                 </SelectContent>
               </Select>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => bulkToggleActive(true)}
+                disabled={isBulkToggling}
+              >
+                <ToggleRight className="w-4 h-4 mr-1" />
+                활성화
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => bulkToggleActive(false)}
+                disabled={isBulkToggling}
+              >
+                <ToggleLeft className="w-4 h-4 mr-1" />
+                비활성화
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm"
