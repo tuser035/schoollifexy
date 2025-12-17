@@ -20,7 +20,9 @@ import {
   Save,
   FolderOpen,
   Trash2,
-  Plus
+  Plus,
+  Minimize2,
+  Maximize2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -95,6 +97,9 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [selectedForPlaylist, setSelectedForPlaylist] = useState<Set<string>>(new Set());
   const [isSelectMode, setIsSelectMode] = useState(false);
+  
+  // Mini player state
+  const [isMinimized, setIsMinimized] = useState(false);
 
   // 로컬스토리지에서 즐겨찾기 불러오기
   useEffect(() => {
@@ -513,6 +518,79 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
 
   if (!isOpen) return null;
 
+  // Mini Player Mode
+  if (isMinimized) {
+    return (
+      <div className="fixed top-2 right-2 sm:top-3 sm:right-3 z-[60] animate-scale-in">
+        <div 
+          className="rounded-xl shadow-2xl overflow-hidden w-[200px] sm:w-[220px]" 
+          style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}
+        >
+          <div className="flex items-center gap-2 p-2">
+            {/* Album Art Mini */}
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center flex-shrink-0">
+              <Music className={`w-5 h-5 text-white ${isPlaying ? 'animate-pulse' : ''}`} />
+            </div>
+            
+            {/* Track Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-white truncate">{currentTrack?.title || '선택된 곡 없음'}</p>
+              <p className="text-[10px] text-purple-200 truncate">{currentTrack?.category || ''}</p>
+            </div>
+            
+            {/* Controls */}
+            <div className="flex items-center gap-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={togglePlay}
+                className="text-white hover:bg-white/20 h-7 w-7 p-0"
+              >
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMinimized(false)}
+                className="text-white hover:bg-white/20 h-7 w-7 p-0"
+                title="확대"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="text-white hover:bg-white/20 h-7 w-7 p-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+          
+          {/* Mini Progress Bar */}
+          <div className="px-2 pb-2">
+            <div className="h-1 bg-white/20 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-white/60 transition-all duration-300"
+                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Hidden Audio Element */}
+        {currentTrack && (
+          <audio
+            ref={audioRef}
+            src={getAudioUrl(currentTrack.file_path)}
+            preload="metadata"
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="fixed top-2 left-2 right-2 sm:left-auto sm:top-3 sm:right-3 z-[60] sm:w-[340px] max-h-[85vh] sm:max-h-[90vh]">
       <div className="rounded-2xl shadow-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%)' }}>
@@ -522,14 +600,25 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
             <Music className="w-3.5 h-3.5" />
             <span className="font-medium text-sm">힐링 뮤직</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-white hover:bg-white/10 h-7 w-7 p-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMinimized(true)}
+              className="text-white hover:bg-white/10 h-7 w-7 p-0"
+              title="최소화"
+            >
+              <Minimize2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="text-white hover:bg-white/10 h-7 w-7 p-0"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Now Playing */}
