@@ -1883,6 +1883,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_public: boolean
           rating: number
         }[]
       }
