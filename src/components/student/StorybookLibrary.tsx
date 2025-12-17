@@ -484,7 +484,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       {/* Celebration Animation Overlay */}
       <CelebrationOverlay />
       
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion type="single" collapsible defaultValue="storybook-library" className="w-full">
         <AccordionItem value="storybook-library" className="border-amber-200">
           <AccordionTrigger className="hover:no-underline py-3">
             <div className="flex items-center gap-2 text-amber-800">
@@ -584,16 +584,31 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             return (
               <div
                 key={book.id}
-                className="flex items-center gap-3 p-3 bg-amber-50 hover:bg-amber-100 rounded-lg cursor-pointer transition-colors border border-amber-200"
+                className="flex items-center gap-3 p-2 bg-amber-50 hover:bg-amber-100 rounded-lg cursor-pointer transition-colors border border-amber-200"
                 onClick={() => openBook(book)}
               >
+                {/* Cover Thumbnail */}
+                <div className="w-12 h-16 flex-shrink-0 rounded overflow-hidden bg-amber-100 border border-amber-200">
+                  {book.cover_image_url ? (
+                    <img 
+                      src={book.cover_image_url} 
+                      alt={book.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-amber-600" />
+                    </div>
+                  )}
+                </div>
+                
                 {/* Book Number */}
-                <Badge className="bg-amber-600 text-white min-w-[32px] justify-center">
+                <Badge className="bg-amber-600 text-white min-w-[28px] justify-center text-xs">
                   {book.book_number}
                 </Badge>
                 
                 {/* Book Title */}
-                <span className="flex-1 font-medium text-amber-900">{book.title}</span>
+                <span className="flex-1 font-medium text-amber-900 text-sm">{book.title}</span>
                 
                 {/* Status Badges */}
                 <div className="flex items-center gap-2">
