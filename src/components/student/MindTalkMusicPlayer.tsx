@@ -470,7 +470,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-3 right-3 z-[60] w-[340px] max-h-[90vh] overflow-hidden">
+    <div className="fixed top-2 left-2 right-2 sm:left-auto sm:top-3 sm:right-3 z-[60] sm:w-[340px] max-h-[85vh] sm:max-h-[90vh] overflow-hidden">
       <div className="bg-gradient-to-b from-purple-900 via-purple-800 to-pink-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
