@@ -829,37 +829,37 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
 
         {/* Playlist */}
         <div className="border-t border-white/10">
-          <div className="px-4 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-purple-200 font-medium">
+          <div className="px-3 py-1 flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <p className="text-[10px] text-purple-200 font-medium">
                 {activePlaylist ? activePlaylist.playlist_name : '플레이리스트'}
               </p>
               {activePlaylist && (
                 <button
                   onClick={() => setActivePlaylist(null)}
-                  className="text-xs text-pink-300 hover:text-pink-200"
+                  className="text-[10px] text-pink-300 hover:text-pink-200"
                 >
                   (해제)
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-purple-300">{filteredTracks.length}곡</span>
+            <div className="flex items-center gap-0.5">
+              <span className="text-[10px] text-purple-300">{filteredTracks.length}곡</span>
               {studentId && (
                 <>
                   <button
                     onClick={() => setShowPlaylistPanel(!showPlaylistPanel)}
-                    className={`p-1 rounded transition-colors ${showPlaylistPanel ? 'bg-pink-500 text-white' : 'text-purple-200 hover:bg-white/10'}`}
+                    className={`p-0.5 rounded transition-colors ${showPlaylistPanel ? 'bg-pink-500 text-white' : 'text-purple-200 hover:bg-white/10'}`}
                     title="재생 목록 관리"
                   >
-                    <ListMusic className="w-4 h-4" />
+                    <ListMusic className="w-3 h-3" />
                   </button>
                   <button
                     onClick={() => { setIsSelectMode(!isSelectMode); setSelectedForPlaylist(new Set()); }}
-                    className={`p-1 rounded transition-colors ${isSelectMode ? 'bg-pink-500 text-white' : 'text-purple-200 hover:bg-white/10'}`}
+                    className={`p-0.5 rounded transition-colors ${isSelectMode ? 'bg-pink-500 text-white' : 'text-purple-200 hover:bg-white/10'}`}
                     title="곡 선택하여 저장"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-3 h-3" />
                   </button>
                 </>
               )}
@@ -868,26 +868,26 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
 
           {/* Playlist Panel */}
           {showPlaylistPanel && studentId && (
-            <div className="px-4 pb-2 space-y-2 border-b border-white/10">
-              <p className="text-xs text-purple-200 font-medium">내 재생 목록</p>
+            <div className="px-3 pb-1 space-y-1 border-b border-white/10">
+              <p className="text-[10px] text-purple-200 font-medium">내 재생 목록</p>
               {playlists.length === 0 ? (
-                <p className="text-xs text-purple-300">저장된 재생 목록이 없습니다</p>
+                <p className="text-[10px] text-purple-300">저장된 재생 목록이 없습니다</p>
               ) : (
-                <div className="space-y-1 max-h-24 overflow-y-auto">
+                <div className="space-y-0.5 max-h-20 overflow-y-auto">
                   {playlists.map((pl) => (
-                    <div key={pl.id} className="flex items-center justify-between bg-white/5 rounded px-2 py-1">
+                    <div key={pl.id} className="flex items-center justify-between bg-white/5 rounded px-1.5 py-0.5">
                       <button
                         onClick={() => loadPlaylist(pl)}
-                        className="flex-1 text-left text-xs text-purple-200 hover:text-white truncate"
+                        className="flex-1 text-left text-[10px] text-purple-200 hover:text-white truncate"
                       >
-                        <FolderOpen className="w-3 h-3 inline mr-1" />
+                        <FolderOpen className="w-2.5 h-2.5 inline mr-0.5" />
                         {pl.playlist_name} ({pl.music_ids.length}곡)
                       </button>
                       <button
                         onClick={() => deletePlaylist(pl.id)}
-                        className="p-1 text-purple-300 hover:text-red-400"
+                        className="p-0.5 text-purple-300 hover:text-red-400"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-2.5 h-2.5" />
                       </button>
                     </div>
                   ))}
@@ -898,33 +898,33 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
 
           {/* Select Mode - Save Playlist */}
           {isSelectMode && studentId && (
-            <div className="px-4 pb-2 space-y-2 border-b border-white/10">
-              <div className="flex items-center gap-2">
+            <div className="px-3 pb-1 space-y-1 border-b border-white/10">
+              <div className="flex items-center gap-1">
                 <Input
                   value={newPlaylistName}
                   onChange={(e) => setNewPlaylistName(e.target.value)}
                   placeholder="재생 목록 이름"
-                  className="h-7 text-xs bg-white/10 border-white/20 text-white placeholder:text-purple-300"
+                  className="h-6 text-[10px] bg-white/10 border-white/20 text-white placeholder:text-purple-300"
                 />
                 <Button
                   size="sm"
                   onClick={savePlaylist}
                   disabled={!newPlaylistName.trim() || selectedForPlaylist.size === 0}
-                  className="h-7 px-2 bg-pink-500 hover:bg-pink-600 text-white text-xs"
+                  className="h-6 px-1.5 bg-pink-500 hover:bg-pink-600 text-white text-[10px]"
                 >
-                  <Save className="w-3 h-3 mr-1" />
+                  <Save className="w-2.5 h-2.5 mr-0.5" />
                   저장 ({selectedForPlaylist.size})
                 </Button>
               </div>
-              <p className="text-xs text-purple-300">아래 목록에서 곡을 선택하세요</p>
+              <p className="text-[10px] text-purple-300">아래 목록에서 곡을 선택하세요</p>
             </div>
           )}
           
           {/* Category & Favorites & History Filter */}
-          <div className="px-4 pb-2 flex gap-1 flex-wrap">
+          <div className="px-3 py-1 flex gap-1 flex-wrap">
             <button
               onClick={() => { setSelectedCategory(null); setShowFavoritesOnly(false); setShowHistoryOnly(false); setActivePlaylist(null); }}
-              className={`px-2 py-1 text-xs rounded-full transition-colors ${
+              className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors ${
                 selectedCategory === null && !showFavoritesOnly && !showHistoryOnly && !activePlaylist
                   ? 'bg-pink-500 text-white'
                   : 'bg-white/10 text-purple-200 hover:bg-white/20'
@@ -935,32 +935,32 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
             {studentId && (
               <button
                 onClick={() => { setShowHistoryOnly(!showHistoryOnly); setShowFavoritesOnly(false); setSelectedCategory(null); setActivePlaylist(null); }}
-                className={`px-2 py-1 text-xs rounded-full transition-colors flex items-center gap-1 ${
+                className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors flex items-center gap-0.5 ${
                   showHistoryOnly
                     ? 'bg-pink-500 text-white'
                     : 'bg-white/10 text-purple-200 hover:bg-white/20'
                 }`}
               >
-                <History className="w-3 h-3" />
-                최근 재생
+                <History className="w-2.5 h-2.5" />
+                최근
               </button>
             )}
             <button
               onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setSelectedCategory(null); setShowHistoryOnly(false); setActivePlaylist(null); }}
-              className={`px-2 py-1 text-xs rounded-full transition-colors flex items-center gap-1 ${
+              className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors flex items-center gap-0.5 ${
                 showFavoritesOnly
                   ? 'bg-pink-500 text-white'
                   : 'bg-white/10 text-purple-200 hover:bg-white/20'
               }`}
             >
-              <Heart className={`w-3 h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
+              <Heart className={`w-2.5 h-2.5 ${showFavoritesOnly ? 'fill-white' : ''}`} />
               즐겨찾기
             </button>
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => { setSelectedCategory(cat); setShowFavoritesOnly(false); setShowHistoryOnly(false); setActivePlaylist(null); }}
-                className={`px-2 py-1 text-xs rounded-full transition-colors ${
+                className={`px-1.5 py-0.5 text-[10px] rounded-full transition-colors ${
                   selectedCategory === cat
                     ? 'bg-pink-500 text-white'
                     : 'bg-white/10 text-purple-200 hover:bg-white/20'
@@ -971,28 +971,28 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
             ))}
           </div>
           
-          <ScrollArea className="h-48 [&_[data-radix-scroll-area-scrollbar]]:w-1.5 [&_[data-radix-scroll-area-thumb]]:bg-white/30">
+          <ScrollArea className="h-36 [&_[data-radix-scroll-area-scrollbar]]:w-1.5 [&_[data-radix-scroll-area-thumb]]:bg-white/30">
             {isLoading ? (
-              <div className="p-4 text-center text-purple-200">로딩 중...</div>
+              <div className="p-2 text-center text-purple-200 text-xs">로딩 중...</div>
             ) : filteredTracks.length === 0 ? (
-              <div className="p-4 text-center text-purple-200">
+              <div className="p-2 text-center text-purple-200 text-xs">
                 {activePlaylist ? '재생 목록이 비어있습니다' : showHistoryOnly ? '재생 기록이 없습니다' : showFavoritesOnly ? '즐겨찾기가 없습니다' : '음악이 없습니다'}
               </div>
             ) : (
-              <div className="space-y-1 px-2 pb-2">
+              <div className="space-y-0.5 px-2 pb-1">
                 {filteredTracks.map((track) => (
                   <div
                     key={track.id}
-                    className={`w-full flex items-center gap-2 p-2 rounded-lg transition-colors ${
+                    className={`w-full flex items-center gap-1.5 py-1 px-1.5 rounded-md transition-colors ${
                       currentTrack?.id === track.id
                         ? 'bg-white/20 text-white'
                         : 'text-purple-200 hover:bg-white/10 hover:text-white'
-                    } ${isSelectMode && selectedForPlaylist.has(track.id) ? 'ring-2 ring-pink-400' : ''}`}
+                    } ${isSelectMode && selectedForPlaylist.has(track.id) ? 'ring-1 ring-pink-400' : ''}`}
                   >
                     {isSelectMode && (
                       <button
                         onClick={(e) => toggleSelectForPlaylist(track.id, e)}
-                        className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                        className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 text-[10px] ${
                           selectedForPlaylist.has(track.id)
                             ? 'bg-pink-500 border-pink-500 text-white'
                             : 'border-purple-400 text-transparent hover:border-pink-400'
@@ -1003,30 +1003,30 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
                     )}
                     <button
                       onClick={() => playTrack(track)}
-                      className="flex items-center gap-3 flex-1 min-w-0"
+                      className="flex items-center gap-2 flex-1 min-w-0"
                     >
-                      <div className="w-8 h-8 rounded bg-purple-500/30 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded bg-purple-500/30 flex items-center justify-center flex-shrink-0">
                         {currentTrack?.id === track.id && isPlaying ? (
                           <div className="flex gap-0.5">
-                            <span className="w-1 h-3 bg-pink-400 animate-pulse"></span>
-                            <span className="w-1 h-4 bg-pink-400 animate-pulse" style={{ animationDelay: '0.1s' }}></span>
-                            <span className="w-1 h-2 bg-pink-400 animate-pulse" style={{ animationDelay: '0.2s' }}></span>
+                            <span className="w-0.5 h-2 bg-pink-400 animate-pulse"></span>
+                            <span className="w-0.5 h-3 bg-pink-400 animate-pulse" style={{ animationDelay: '0.1s' }}></span>
+                            <span className="w-0.5 h-1.5 bg-pink-400 animate-pulse" style={{ animationDelay: '0.2s' }}></span>
                           </div>
                         ) : (
-                          <Music className="w-4 h-4" />
+                          <Music className="w-3 h-3" />
                         )}
                       </div>
                       <div className="text-left overflow-hidden">
-                        <p className="text-sm font-medium truncate">{track.title}</p>
-                        <p className="text-xs opacity-70">{track.category}</p>
+                        <p className="text-xs font-medium truncate leading-tight">{track.title}</p>
+                        <p className="text-[10px] opacity-70 leading-tight">{track.category}</p>
                       </div>
                     </button>
                     <button
                       onClick={(e) => toggleFavorite(track.id, e)}
-                      className="p-1 hover:bg-white/10 rounded transition-colors flex-shrink-0"
+                      className="p-0.5 hover:bg-white/10 rounded transition-colors flex-shrink-0"
                     >
                       <Heart 
-                        className={`w-4 h-4 transition-colors ${
+                        className={`w-3 h-3 transition-colors ${
                           favorites.has(track.id) 
                             ? 'fill-pink-400 text-pink-400' 
                             : 'text-purple-300 hover:text-pink-300'
