@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Search, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Trash2, Search, AlertTriangle, Upload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -49,6 +51,11 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
   const [newKeyword, setNewKeyword] = useState('');
   const [newCategory, setNewCategory] = useState('기타');
   const [newDescription, setNewDescription] = useState('');
+  
+  // 일괄 추가 폼
+  const [bulkKeywords, setBulkKeywords] = useState('');
+  const [bulkCategory, setBulkCategory] = useState('기타');
+  const [isBulkAdding, setIsBulkAdding] = useState(false);
 
   useEffect(() => {
     loadKeywords();
@@ -96,6 +103,50 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
       setNewDescription('');
       loadKeywords();
     }
+  };
+
+  const bulkAddKeywords = async () => {
+    const lines = bulkKeywords.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    if (lines.length === 0) {
+      toast({ title: '키워드를 입력하세요', variant: 'destructive' });
+      return;
+    }
+
+    setIsBulkAdding(true);
+    let successCount = 0;
+    let duplicateCount = 0;
+    let errorCount = 0;
+
+    for (const keyword of lines) {
+      const { error } = await supabase
+        .from('mindtalk_keywords')
+        .insert({
+          keyword: keyword,
+          category: bulkCategory,
+          description: null,
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          duplicateCount++;
+        } else {
+          errorCount++;
+        }
+      } else {
+        successCount++;
+      }
+    }
+
+    setIsBulkAdding(false);
+    
+    let message = `${successCount}개 추가됨`;
+    if (duplicateCount > 0) message += `, ${duplicateCount}개 중복`;
+    if (errorCount > 0) message += `, ${errorCount}개 오류`;
+    
+    toast({ title: '일괄 추가 완료', description: message });
+    setBulkKeywords('');
+    loadKeywords();
   };
 
   const toggleActive = async (id: string, currentActive: boolean) => {
@@ -191,34 +242,83 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
           <CardTitle className="text-lg">키워드 추가</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Input
-              placeholder="키워드 입력"
-              value={newKeyword}
-              onChange={(e) => setNewKeyword(e.target.value)}
-              className="w-40"
-            />
-            <Select value={newCategory} onValueChange={setNewCategory}>
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map(cat => (
-                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="예: 자살 충동을 암시하는 표현"
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              className="flex-1 min-w-40"
-            />
-            <Button onClick={addKeyword}>
-              <Plus className="w-4 h-4 mr-1" />
-              추가
-            </Button>
-          </div>
+          <Tabs defaultValue="single" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="single">
+                <Plus className="w-4 h-4 mr-1" />
+                개별 추가
+              </TabsTrigger>
+              <TabsTrigger value="bulk">
+                <Upload className="w-4 h-4 mr-1" />
+                일괄 추가
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="single">
+              <div className="flex flex-wrap gap-3">
+                <Input
+                  placeholder="키워드 입력"
+                  value={newKeyword}
+                  onChange={(e) => setNewKeyword(e.target.value)}
+                  className="w-40"
+                />
+                <Select value={newCategory} onValueChange={setNewCategory}>
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map(cat => (
+                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="예: 자살 충동을 암시하는 표현"
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  className="flex-1 min-w-40"
+                />
+                <Button onClick={addKeyword}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  추가
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="bulk">
+              <div className="space-y-3">
+                <div className="flex gap-3 items-center">
+                  <Select value={bulkCategory} onValueChange={setBulkCategory}>
+                    <SelectTrigger className="w-36">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground">카테고리를 선택하세요</span>
+                </div>
+                <Textarea
+                  placeholder="키워드를 한 줄에 하나씩 입력하세요&#10;예:&#10;자살&#10;죽고싶어&#10;목숨"
+                  value={bulkKeywords}
+                  onChange={(e) => setBulkKeywords(e.target.value)}
+                  rows={6}
+                  className="font-mono"
+                />
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    {bulkKeywords.split('\n').filter(line => line.trim()).length}개 키워드
+                  </span>
+                  <Button onClick={bulkAddKeywords} disabled={isBulkAdding}>
+                    <Upload className="w-4 h-4 mr-1" />
+                    {isBulkAdding ? '추가 중...' : '일괄 추가'}
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
