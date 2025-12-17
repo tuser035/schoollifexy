@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useSwipe } from '@/hooks/use-swipe';
 import { 
   BookOpen, 
   ChevronLeft, 
@@ -16,7 +17,8 @@ import {
   CheckCircle2,
   Star,
   PenLine,
-  Send
+  Send,
+  Smartphone
 } from 'lucide-react';
 
 interface Storybook {
@@ -154,6 +156,21 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     const isCompleted = newPage === pages.length;
     saveProgress(newPage, isCompleted);
   };
+
+  // Swipe handlers for mobile navigation
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => {
+      if (currentPage < pages.length) {
+        handlePageChange('next');
+      }
+    },
+    onSwipeRight: () => {
+      if (currentPage > 1) {
+        handlePageChange('prev');
+      }
+    },
+    threshold: 50,
+  });
 
   const closeReader = () => {
     if (selectedBook) {
@@ -364,17 +381,17 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         </div>
       )}
 
-      {/* Book Reader Dialog */}
+      {/* Book Reader Dialog - Mobile Optimized */}
       <Dialog open={isReaderOpen} onOpenChange={closeReader}>
-        <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-amber-50">
+        <DialogContent className="max-w-5xl w-full h-[100dvh] md:h-[90vh] p-0 overflow-hidden bg-amber-50 landscape:h-[100dvh]">
           {/* Header */}
-          <div className="flex items-center justify-between p-3 bg-amber-800 text-white">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5" />
-              <span className="font-medium">{selectedBook?.title}</span>
+          <div className="flex items-center justify-between p-2 md:p-3 bg-amber-800 text-white">
+            <div className="flex items-center gap-2 min-w-0">
+              <BookOpen className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+              <span className="font-medium text-sm md:text-base truncate">{selectedBook?.title}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+              <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-xs md:text-sm">
                 {currentPage} / {pages.length}
               </Badge>
               {selectedBook?.is_completed && (
@@ -382,21 +399,98 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setIsReviewDialogOpen(true)}
-                  className="text-white hover:bg-amber-700"
+                  className="text-white hover:bg-amber-700 hidden md:flex"
                 >
                   <PenLine className="w-4 h-4 mr-1" />
                   독후감
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={closeReader} className="text-white hover:bg-amber-700">
+              <Button variant="ghost" size="sm" onClick={closeReader} className="text-white hover:bg-amber-700 p-1 md:p-2">
                 <X className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
-          {/* Book Content - Two Page Spread */}
-          <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
-            <div className="flex bg-white rounded-lg shadow-2xl max-h-full overflow-hidden">
+          {/* Mobile Swipe Hint */}
+          <div className="md:hidden flex items-center justify-center gap-2 py-1 bg-amber-200 text-amber-800 text-xs">
+            <Smartphone className="w-3 h-3" />
+            <span>좌우로 밀어서 페이지 넘기기</span>
+          </div>
+
+          {/* Book Content - Responsive with Swipe */}
+          <div 
+            className="flex-1 flex items-center justify-center p-2 md:p-4 overflow-hidden touch-pan-y"
+            {...swipeHandlers}
+          >
+            {/* Mobile Single Page View */}
+            <div className="md:hidden w-full h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
+              {currentPage === 1 && pages.length > 0 && (
+                <div className="flex-1 flex flex-col overflow-y-auto">
+                  {/* Title Page Mobile */}
+                  <div className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-amber-100 to-amber-50 min-h-[200px]">
+                    {selectedBook?.cover_image_url && (
+                      <img 
+                        src={selectedBook.cover_image_url} 
+                        alt="표지"
+                        className="max-h-32 rounded-lg shadow-lg mb-3"
+                      />
+                    )}
+                    <h1 className="text-xl font-bold text-amber-900 text-center">
+                      {selectedBook?.title}
+                    </h1>
+                    <p className="text-amber-700 mt-1 text-sm">#{selectedBook?.book_number}</p>
+                  </div>
+                  {/* First Page Content Mobile */}
+                  <div className="p-4 flex-1">
+                    {currentPageData?.image_url && (
+                      <img 
+                        src={currentPageData.image_url} 
+                        alt={`${currentPage}페이지`}
+                        className="w-full rounded-lg mb-3 max-h-48 object-contain"
+                      />
+                    )}
+                    {currentPageData?.text_content && (
+                      <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
+                        {currentPageData.text_content}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {currentPage > 1 && currentPageData && (
+                <div className="flex-1 flex flex-col overflow-y-auto">
+                  {/* Image Section Mobile */}
+                  {currentPageData.image_url && (
+                    <div className="flex-shrink-0 bg-amber-50 p-3 flex justify-center">
+                      <img 
+                        src={currentPageData.image_url} 
+                        alt={`${currentPage}페이지 삽화`}
+                        className="max-h-40 object-contain rounded-lg shadow"
+                      />
+                    </div>
+                  )}
+                  {/* Text Section Mobile */}
+                  <div className="flex-1 p-4 bg-white">
+                    {currentPageData.text_content ? (
+                      <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
+                        {currentPageData.text_content}
+                      </p>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-muted-foreground">
+                        내용이 없습니다
+                      </div>
+                    )}
+                    <div className="text-right text-sm text-amber-600 mt-4">
+                      - {currentPage} -
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Two Page Spread */}
+            <div className="hidden md:flex bg-white rounded-lg shadow-2xl max-h-full overflow-hidden">
               {/* Title Page (Page 1) */}
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
@@ -472,23 +566,24 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
           </div>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between p-4 bg-amber-100">
+          {/* Navigation - Responsive */}
+          <div className="flex items-center justify-between p-2 md:p-4 bg-amber-100">
             <Button
               variant="outline"
               onClick={() => handlePageChange('prev')}
               disabled={currentPage <= 1}
-              className="border-amber-300"
+              className="border-amber-300 px-2 md:px-4"
+              size="sm"
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              이전
+              <ChevronLeft className="w-4 h-4 md:mr-1" />
+              <span className="hidden md:inline">이전</span>
             </Button>
             
-            <div className="flex gap-1">
+            <div className="flex gap-1 max-w-[60%] overflow-x-auto">
               {pages.map((_, idx) => (
                 <div
                   key={idx}
-                  className={`w-2 h-2 rounded-full transition-colors ${
+                  className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors ${
                     idx + 1 === currentPage 
                       ? 'bg-amber-600' 
                       : idx + 1 < currentPage 
@@ -503,10 +598,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               variant="outline"
               onClick={() => handlePageChange('next')}
               disabled={currentPage >= pages.length}
-              className="border-amber-300"
+              className="border-amber-300 px-2 md:px-4"
+              size="sm"
             >
-              다음
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <span className="hidden md:inline">다음</span>
+              <ChevronRight className="w-4 h-4 md:ml-1" />
             </Button>
           </div>
         </DialogContent>
