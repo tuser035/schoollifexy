@@ -72,6 +72,9 @@ All colors MUST be HSL.
     --mindtalk-chat-cyan: 190 80% 45%;
     --mindtalk-chat-cyan-hover: 190 80% 37%;
     --mindtalk-chat-cyan-light: 190 80% 96%;
+    --mindtalk-keyword-amber: 45 95% 50%;
+    --mindtalk-keyword-amber-hover: 45 95% 42%;
+    --mindtalk-keyword-amber-light: 45 95% 96%;
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -143,6 +146,9 @@ All colors MUST be HSL.
     --email-history-teal-hover: 180 70% 58%;
     --data-inquiry-indigo: 240 60% 60%;
     --data-inquiry-indigo-hover: 240 60% 68%;
+    --mindtalk-keyword-amber: 45 95% 55%;
+    --mindtalk-keyword-amber-hover: 45 95% 63%;
+    --mindtalk-keyword-amber-light: 45 95% 20%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
