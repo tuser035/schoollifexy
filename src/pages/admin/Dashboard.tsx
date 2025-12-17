@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle, AlertTriangle } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -19,6 +19,7 @@ import { SecurityLogs } from "@/components/admin/SecurityLogs";
 import DatabaseLogs from "@/components/admin/DatabaseLogs";
 import SystemSettings from "@/components/admin/SystemSettings";
 import MindTalkInquiry from "@/components/admin/MindTalkInquiry";
+import MindTalkKeywords from "@/components/admin/MindTalkKeywords";
 import {
   Sidebar,
   SidebarContent,
@@ -48,6 +49,7 @@ const menuItems = (user: AuthUser) => {
     { value: "points", label: "상점", icon: BarChart },
     { value: "counseling", label: "상담", icon: ClipboardCheck },
     { value: "mindtalk", label: "마음톡", icon: MessageCircle },
+    { value: "mindtalk-keywords", label: "키워드관리", icon: AlertTriangle },
     { value: "statistics", label: "통계", icon: TrendingUp },
     { value: "leaderboard", label: "순위", icon: Trophy },
     { value: "email-history", label: "이메일", icon: Mail },
@@ -179,6 +181,8 @@ const AdminDashboard = () => {
         return <CounselingInquiry />;
       case "mindtalk":
         return <MindTalkInquiry userId={user.id} />;
+      case "mindtalk-keywords":
+        return <MindTalkKeywords adminId={user.id} />;
       case "statistics":
         return <UnifiedStatistics />;
       case "leaderboard":
