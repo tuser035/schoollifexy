@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { 
   Music, 
   Play, 
@@ -14,9 +15,15 @@ import {
   Shuffle,
   Repeat,
   Heart,
-  History
+  History,
+  ListMusic,
+  Save,
+  FolderOpen,
+  Trash2,
+  Plus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface MusicTrack {
   id: string;
@@ -24,6 +31,14 @@ interface MusicTrack {
   category: string;
   file_path: string;
   duration_seconds?: number;
+}
+
+interface Playlist {
+  id: string;
+  playlist_name: string;
+  music_ids: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 // Public 폴더에 있는 기존 음악 파일들
@@ -71,6 +86,14 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
   const [shuffleQueue, setShuffleQueue] = useState<string[]>([]);
   const [shuffleIndex, setShuffleIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  
+  // Playlist states
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
+  const [showPlaylistPanel, setShowPlaylistPanel] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [selectedForPlaylist, setSelectedForPlaylist] = useState<Set<string>>(new Set());
+  const [isSelectMode, setIsSelectMode] = useState(false);
 
   // 로컬스토리지에서 즐겨찾기 불러오기
   useEffect(() => {
@@ -102,14 +125,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
   // 카테고리 목록 추출
   const categories = [...new Set(tracks.map(t => t.category))];
   
-  // 필터된 트랙 목록
-  const filteredTracks = showHistoryOnly 
-    ? historyTracks.map(h => ({ id: h.id, title: h.title, category: h.category, file_path: h.file_path, duration_seconds: h.duration_seconds }))
-    : tracks.filter(t => {
-        const categoryMatch = !selectedCategory || t.category === selectedCategory;
-        const favoriteMatch = !showFavoritesOnly || favorites.has(t.id);
-        return categoryMatch && favoriteMatch;
-      });
+  // filteredTracks는 getFilteredTracks()로 대체됨 (아래에서 정의)
 
   // 셔플 큐 생성 함수 (Fisher-Yates 알고리즘)
   const generateShuffleQueue = (tracksList: MusicTrack[], currentTrackId?: string) => {
@@ -149,12 +165,13 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
     }
   }, [selectedCategory, showFavoritesOnly, tracks.length]);
 
-  // Load music tracks
+  // Load music tracks and playlists
   useEffect(() => {
     if (isOpen) {
       loadTracks();
       if (studentId) {
         loadHistory();
+        loadPlaylists();
       }
     }
   }, [isOpen, studentId]);
@@ -200,6 +217,108 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
       console.error('Failed to load play history:', error);
     }
   };
+
+  // Playlist functions
+  const loadPlaylists = async () => {
+    if (!studentId) return;
+    try {
+      const { data, error } = await supabase.rpc('student_get_playlists', {
+        student_id_input: studentId
+      });
+      if (!error && data) {
+        setPlaylists(data);
+      }
+    } catch (error) {
+      console.error('Failed to load playlists:', error);
+    }
+  };
+
+  const savePlaylist = async () => {
+    if (!studentId || !newPlaylistName.trim()) {
+      toast.error('재생 목록 이름을 입력하세요');
+      return;
+    }
+    if (selectedForPlaylist.size === 0) {
+      toast.error('곡을 선택하세요');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.rpc('student_save_playlist', {
+        student_id_input: studentId,
+        playlist_name_input: newPlaylistName.trim(),
+        music_ids_input: Array.from(selectedForPlaylist)
+      });
+      
+      if (error) throw error;
+      
+      toast.success('재생 목록이 저장되었습니다');
+      setNewPlaylistName('');
+      setSelectedForPlaylist(new Set());
+      setIsSelectMode(false);
+      loadPlaylists();
+    } catch (error) {
+      console.error('Failed to save playlist:', error);
+      toast.error('저장 실패');
+    }
+  };
+
+  const loadPlaylist = (playlist: Playlist) => {
+    setActivePlaylist(playlist);
+    setShowPlaylistPanel(false);
+    toast.success(`"${playlist.playlist_name}" 불러옴`);
+  };
+
+  const deletePlaylist = async (playlistId: string) => {
+    if (!studentId) return;
+    try {
+      const { error } = await supabase.rpc('student_delete_playlist', {
+        student_id_input: studentId,
+        playlist_id_input: playlistId
+      });
+      
+      if (error) throw error;
+      
+      if (activePlaylist?.id === playlistId) {
+        setActivePlaylist(null);
+      }
+      toast.success('삭제되었습니다');
+      loadPlaylists();
+    } catch (error) {
+      console.error('Failed to delete playlist:', error);
+      toast.error('삭제 실패');
+    }
+  };
+
+  const toggleSelectForPlaylist = (trackId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedForPlaylist(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(trackId)) {
+        newSet.delete(trackId);
+      } else {
+        newSet.add(trackId);
+      }
+      return newSet;
+    });
+  };
+
+  // 필터된 트랙 - 활성 재생목록 포함
+  const getFilteredTracks = () => {
+    if (activePlaylist) {
+      return tracks.filter(t => activePlaylist.music_ids.includes(t.id));
+    }
+    if (showHistoryOnly) {
+      return historyTracks.map(h => ({ id: h.id, title: h.title, category: h.category, file_path: h.file_path, duration_seconds: h.duration_seconds }));
+    }
+    return tracks.filter(t => {
+      const categoryMatch = !selectedCategory || t.category === selectedCategory;
+      const favoriteMatch = !showFavoritesOnly || favorites.has(t.id);
+      return categoryMatch && favoriteMatch;
+    });
+  };
+
+  const filteredTracks = getFilteredTracks();
 
   // Audio event handlers
   useEffect(() => {
@@ -459,16 +578,102 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
         {/* Playlist */}
         <div className="border-t border-white/10">
           <div className="px-4 py-2 flex items-center justify-between">
-            <p className="text-xs text-purple-200 font-medium">플레이리스트</p>
-            <span className="text-xs text-purple-300">{filteredTracks.length}곡</span>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-purple-200 font-medium">
+                {activePlaylist ? activePlaylist.playlist_name : '플레이리스트'}
+              </p>
+              {activePlaylist && (
+                <button
+                  onClick={() => setActivePlaylist(null)}
+                  className="text-xs text-pink-300 hover:text-pink-200"
+                >
+                  (해제)
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-purple-300">{filteredTracks.length}곡</span>
+              {studentId && (
+                <>
+                  <button
+                    onClick={() => setShowPlaylistPanel(!showPlaylistPanel)}
+                    className={`p-1 rounded transition-colors ${showPlaylistPanel ? 'bg-pink-500 text-white' : 'text-purple-200 hover:bg-white/10'}`}
+                    title="재생 목록 관리"
+                  >
+                    <ListMusic className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => { setIsSelectMode(!isSelectMode); setSelectedForPlaylist(new Set()); }}
+                    className={`p-1 rounded transition-colors ${isSelectMode ? 'bg-pink-500 text-white' : 'text-purple-200 hover:bg-white/10'}`}
+                    title="곡 선택하여 저장"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
+
+          {/* Playlist Panel */}
+          {showPlaylistPanel && studentId && (
+            <div className="px-4 pb-2 space-y-2 border-b border-white/10">
+              <p className="text-xs text-purple-200 font-medium">내 재생 목록</p>
+              {playlists.length === 0 ? (
+                <p className="text-xs text-purple-300">저장된 재생 목록이 없습니다</p>
+              ) : (
+                <div className="space-y-1 max-h-24 overflow-y-auto">
+                  {playlists.map((pl) => (
+                    <div key={pl.id} className="flex items-center justify-between bg-white/5 rounded px-2 py-1">
+                      <button
+                        onClick={() => loadPlaylist(pl)}
+                        className="flex-1 text-left text-xs text-purple-200 hover:text-white truncate"
+                      >
+                        <FolderOpen className="w-3 h-3 inline mr-1" />
+                        {pl.playlist_name} ({pl.music_ids.length}곡)
+                      </button>
+                      <button
+                        onClick={() => deletePlaylist(pl.id)}
+                        className="p-1 text-purple-300 hover:text-red-400"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Select Mode - Save Playlist */}
+          {isSelectMode && studentId && (
+            <div className="px-4 pb-2 space-y-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newPlaylistName}
+                  onChange={(e) => setNewPlaylistName(e.target.value)}
+                  placeholder="재생 목록 이름"
+                  className="h-7 text-xs bg-white/10 border-white/20 text-white placeholder:text-purple-300"
+                />
+                <Button
+                  size="sm"
+                  onClick={savePlaylist}
+                  disabled={!newPlaylistName.trim() || selectedForPlaylist.size === 0}
+                  className="h-7 px-2 bg-pink-500 hover:bg-pink-600 text-white text-xs"
+                >
+                  <Save className="w-3 h-3 mr-1" />
+                  저장 ({selectedForPlaylist.size})
+                </Button>
+              </div>
+              <p className="text-xs text-purple-300">아래 목록에서 곡을 선택하세요</p>
+            </div>
+          )}
           
           {/* Category & Favorites & History Filter */}
           <div className="px-4 pb-2 flex gap-1 flex-wrap">
             <button
-              onClick={() => { setSelectedCategory(null); setShowFavoritesOnly(false); setShowHistoryOnly(false); }}
+              onClick={() => { setSelectedCategory(null); setShowFavoritesOnly(false); setShowHistoryOnly(false); setActivePlaylist(null); }}
               className={`px-2 py-1 text-xs rounded-full transition-colors ${
-                selectedCategory === null && !showFavoritesOnly && !showHistoryOnly
+                selectedCategory === null && !showFavoritesOnly && !showHistoryOnly && !activePlaylist
                   ? 'bg-pink-500 text-white'
                   : 'bg-white/10 text-purple-200 hover:bg-white/20'
               }`}
@@ -477,7 +682,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
             </button>
             {studentId && (
               <button
-                onClick={() => { setShowHistoryOnly(!showHistoryOnly); setShowFavoritesOnly(false); setSelectedCategory(null); }}
+                onClick={() => { setShowHistoryOnly(!showHistoryOnly); setShowFavoritesOnly(false); setSelectedCategory(null); setActivePlaylist(null); }}
                 className={`px-2 py-1 text-xs rounded-full transition-colors flex items-center gap-1 ${
                   showHistoryOnly
                     ? 'bg-pink-500 text-white'
@@ -489,7 +694,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
               </button>
             )}
             <button
-              onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setSelectedCategory(null); setShowHistoryOnly(false); }}
+              onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setSelectedCategory(null); setShowHistoryOnly(false); setActivePlaylist(null); }}
               className={`px-2 py-1 text-xs rounded-full transition-colors flex items-center gap-1 ${
                 showFavoritesOnly
                   ? 'bg-pink-500 text-white'
@@ -502,7 +707,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => { setSelectedCategory(cat); setShowFavoritesOnly(false); setShowHistoryOnly(false); }}
+                onClick={() => { setSelectedCategory(cat); setShowFavoritesOnly(false); setShowHistoryOnly(false); setActivePlaylist(null); }}
                 className={`px-2 py-1 text-xs rounded-full transition-colors ${
                   selectedCategory === cat
                     ? 'bg-pink-500 text-white'
@@ -519,7 +724,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
               <div className="p-4 text-center text-purple-200">로딩 중...</div>
             ) : filteredTracks.length === 0 ? (
               <div className="p-4 text-center text-purple-200">
-                {showHistoryOnly ? '재생 기록이 없습니다' : showFavoritesOnly ? '즐겨찾기가 없습니다' : '음악이 없습니다'}
+                {activePlaylist ? '재생 목록이 비어있습니다' : showHistoryOnly ? '재생 기록이 없습니다' : showFavoritesOnly ? '즐겨찾기가 없습니다' : '음악이 없습니다'}
               </div>
             ) : (
               <div className="space-y-1 px-2 pb-2">
@@ -530,8 +735,20 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
                       currentTrack?.id === track.id
                         ? 'bg-white/20 text-white'
                         : 'text-purple-200 hover:bg-white/10 hover:text-white'
-                    }`}
+                    } ${isSelectMode && selectedForPlaylist.has(track.id) ? 'ring-2 ring-pink-400' : ''}`}
                   >
+                    {isSelectMode && (
+                      <button
+                        onClick={(e) => toggleSelectForPlaylist(track.id, e)}
+                        className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                          selectedForPlaylist.has(track.id)
+                            ? 'bg-pink-500 border-pink-500 text-white'
+                            : 'border-purple-400 text-transparent hover:border-pink-400'
+                        }`}
+                      >
+                        {selectedForPlaylist.has(track.id) && '✓'}
+                      </button>
+                    )}
                     <button
                       onClick={() => playTrack(track)}
                       className="flex items-center gap-3 flex-1 min-w-0"
