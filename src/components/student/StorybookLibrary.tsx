@@ -489,7 +489,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           <AccordionTrigger className="hover:no-underline py-3">
             <div className="flex items-center gap-2 text-amber-800">
               <BookOpen className="w-6 h-6" />
-              <span className="text-xl font-bold">이지영의 인문학서점</span>
+              <span className="text-xl font-bold">이지영의 지혜의 강</span>
               <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-700">
                 {books.length}권
               </Badge>
