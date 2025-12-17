@@ -81,6 +81,16 @@ export default {
           indigo: "hsl(var(--data-inquiry-indigo))",
           "indigo-hover": "hsl(var(--data-inquiry-indigo-hover))",
         },
+        "mindtalk-alert": {
+          red: "hsl(var(--mindtalk-alert-red))",
+          "red-hover": "hsl(var(--mindtalk-alert-red-hover))",
+          "red-light": "hsl(var(--mindtalk-alert-red-light))",
+        },
+        "mindtalk-chat": {
+          cyan: "hsl(var(--mindtalk-chat-cyan))",
+          "cyan-hover": "hsl(var(--mindtalk-chat-cyan-hover))",
+          "cyan-light": "hsl(var(--mindtalk-chat-cyan-light))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
