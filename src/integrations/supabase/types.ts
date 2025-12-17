@@ -603,6 +603,121 @@ export type Database = {
           },
         ]
       }
+      storybook_pages: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          page_number: number
+          text_content: string | null
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          page_number: number
+          text_content?: string | null
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          page_number?: number
+          text_content?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storybook_pages_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "storybooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      storybook_reading_history: {
+        Row: {
+          book_id: string
+          completed_at: string | null
+          id: string
+          is_completed: boolean | null
+          last_page: number | null
+          started_at: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          completed_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          last_page?: number | null
+          started_at?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          completed_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          last_page?: number | null
+          started_at?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storybook_reading_history_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "storybooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      storybooks: {
+        Row: {
+          book_number: number
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean | null
+          page_count: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          book_number: number
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          page_count?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          book_number?: number
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          page_count?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_groups: {
         Row: {
           admin_id: string
@@ -822,6 +937,10 @@ export type Database = {
       }
       admin_delete_email_template: {
         Args: { admin_id_input: string; template_id_input: string }
+        Returns: boolean
+      }
+      admin_delete_storybook: {
+        Args: { admin_id_input: string; book_id_input: string }
         Returns: boolean
       }
       admin_delete_student: {
@@ -1073,6 +1192,28 @@ export type Database = {
           updated_at: string
         }[]
       }
+      admin_get_storybook_pages: {
+        Args: { admin_id_input: string; book_id_input: string }
+        Returns: {
+          id: string
+          image_url: string
+          page_number: number
+          text_content: string
+        }[]
+      }
+      admin_get_storybooks: {
+        Args: { admin_id_input: string }
+        Returns: {
+          book_number: number
+          cover_image_url: string
+          created_at: string
+          description: string
+          id: string
+          is_published: boolean
+          page_count: number
+          title: string
+        }[]
+      }
       admin_get_student_groups: {
         Args: { admin_id_input: string }
         Returns: {
@@ -1213,6 +1354,15 @@ export type Database = {
         }
         Returns: string
       }
+      admin_insert_storybook: {
+        Args: {
+          admin_id_input: string
+          book_number_input: number
+          description_input?: string
+          title_input: string
+        }
+        Returns: string
+      }
       admin_insert_student: {
         Args: {
           admin_id_input: string
@@ -1281,6 +1431,14 @@ export type Database = {
         Args: { email_or_phone_input: string; password_input: string }
         Returns: Json
       }
+      admin_publish_storybook: {
+        Args: {
+          admin_id_input: string
+          book_id_input: string
+          publish_input: boolean
+        }
+        Returns: boolean
+      }
       admin_update_email_template: {
         Args: {
           admin_id_input: string
@@ -1289,6 +1447,14 @@ export type Database = {
           template_id_input: string
           template_type_input: string
           title_input: string
+        }
+        Returns: boolean
+      }
+      admin_update_storybook_cover: {
+        Args: {
+          admin_id_input: string
+          book_id_input: string
+          cover_image_url_input: string
         }
         Returns: boolean
       }
@@ -1344,6 +1510,16 @@ export type Database = {
             }
             Returns: boolean
           }
+      admin_upsert_storybook_page: {
+        Args: {
+          admin_id_input: string
+          book_id_input: string
+          image_url_input?: string
+          page_number_input: number
+          text_content_input?: string
+        }
+        Returns: string
+      }
       delete_counseling_record: {
         Args: { p_admin_id: string; p_record_id: string }
         Returns: boolean
@@ -1582,6 +1758,28 @@ export type Database = {
           updated_at: string
         }[]
       }
+      student_get_storybook_pages: {
+        Args: { book_id_input: string; student_id_input: string }
+        Returns: {
+          id: string
+          image_url: string
+          page_number: number
+          text_content: string
+        }[]
+      }
+      student_get_storybooks: {
+        Args: { student_id_input: string }
+        Returns: {
+          book_number: number
+          cover_image_url: string
+          description: string
+          id: string
+          is_completed: boolean
+          last_page: number
+          page_count: number
+          title: string
+        }[]
+      }
       student_login: {
         Args: { password_input: string; student_id_input: string }
         Returns: Json
@@ -1611,6 +1809,15 @@ export type Database = {
           music_ids_input: string[]
           playlist_id_input: string
           playlist_name_input: string
+          student_id_input: string
+        }
+        Returns: boolean
+      }
+      student_update_reading_progress: {
+        Args: {
+          book_id_input: string
+          is_completed_input?: boolean
+          last_page_input: number
           student_id_input: string
         }
         Returns: boolean

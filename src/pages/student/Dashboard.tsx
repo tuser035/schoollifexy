@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Award, AlertCircle, Star, LogOut, ImageIcon, Download } from "lucide-react";
+import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { useRealtimeSync, type TableSubscription } from "@/hooks/use-realtime-sync";
 import MindTalk from "@/components/student/MindTalk";
+import StorybookLibrary from "@/components/student/StorybookLibrary";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -530,6 +531,19 @@ const StudentDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* 인문학 서점 */}
+      <Card className="mt-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-amber-800">
+            <BookOpen className="w-5 h-5" />
+            인문학 서점
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <StorybookLibrary studentId={user.studentId} />
+        </CardContent>
+      </Card>
     </div>
   );
 };
