@@ -133,34 +133,37 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
     return heatmapData.allCategories.filter(cat => enabledCategories.has(cat));
   }, [heatmapData.allCategories, enabledCategories]);
 
-  // 학생별 총합 계산 (필터링된 카테고리 기준)
-  const getStudentTotal = (studentId: string) => {
-    let total = 0;
-    filteredCategories.forEach(cat => {
-      heatmapData.keywordsByCategory[cat]?.forEach(({ keyword }) => {
-        total += heatmapData.data[studentId]?.[keyword] || 0;
-      });
-    });
-    return total;
-  };
-
-  // 정렬된 학생 목록
-  const sortedStudents = useMemo(() => {
+  // 정렬된 학생 목록과 총합 계산 함수
+  const { sortedStudents, getStudentTotal } = useMemo(() => {
     const students = [...heatmapData.students];
     
+    // 학생별 총합 계산 함수 (필터링된 카테고리 기준)
+    const calcTotal = (studentId: string) => {
+      let total = 0;
+      filteredCategories.forEach(cat => {
+        heatmapData.keywordsByCategory[cat]?.forEach(({ keyword }) => {
+          total += heatmapData.data[studentId]?.[keyword] || 0;
+        });
+      });
+      return total;
+    };
+    
+    let sorted: typeof students;
     if (sortOption === 'total-desc') {
-      return students.sort((a, b) => getStudentTotal(b.student_id) - getStudentTotal(a.student_id));
+      sorted = students.sort((a, b) => calcTotal(b.student_id) - calcTotal(a.student_id));
     } else if (sortOption === 'total-asc') {
-      return students.sort((a, b) => getStudentTotal(a.student_id) - getStudentTotal(b.student_id));
+      sorted = students.sort((a, b) => calcTotal(a.student_id) - calcTotal(b.student_id));
+    } else {
+      // default: 학년-반-번호 순
+      sorted = students.sort((a, b) => {
+        if (a.student_grade !== b.student_grade) return a.student_grade - b.student_grade;
+        if (a.student_class !== b.student_class) return a.student_class - b.student_class;
+        return a.student_number - b.student_number;
+      });
     }
     
-    // default: 학년-반-번호 순
-    return students.sort((a, b) => {
-      if (a.student_grade !== b.student_grade) return a.student_grade - b.student_grade;
-      if (a.student_class !== b.student_class) return a.student_class - b.student_class;
-      return a.student_number - b.student_number;
-    });
-  }, [heatmapData.students, sortOption, filteredCategories]);
+    return { sortedStudents: sorted, getStudentTotal: calcTotal };
+  }, [heatmapData, sortOption, filteredCategories]);
 
   // 정렬 토글
   const toggleSort = () => {
