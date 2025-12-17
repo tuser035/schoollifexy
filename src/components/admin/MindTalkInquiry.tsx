@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
@@ -55,6 +56,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [dangerousKeywords, setDangerousKeywords] = useState<string[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
+  const [selectedStudentInfo, setSelectedStudentInfo] = useState<{grade: number; class: number; number: number} | null>(null);
   const [searchText, setSearchText] = useState('');
   const [searchGrade, setSearchGrade] = useState<string>('all');
   const [searchClass, setSearchClass] = useState<string>('all');
@@ -66,6 +68,9 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [showOnlyDangerous, setShowOnlyDangerous] = useState(false);
   const [expandedAlerts, setExpandedAlerts] = useState<Set<string>>(new Set());
   const [sendingAlertId, setSendingAlertId] = useState<string | null>(null);
+  const [confirmAlertOpen, setConfirmAlertOpen] = useState(false);
+  const [pendingAlert, setPendingAlert] = useState<MindTalkAlert | null>(null);
+  const [sendingFromDialog, setSendingFromDialog] = useState(false);
 
   useEffect(() => {
     fetchAlerts();
@@ -145,7 +150,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
     }
   };
 
-  const fetchStudentMessages = async (studentId: string, studentName: string) => {
+  const fetchStudentMessages = async (studentId: string, studentName: string, studentGrade?: number, studentClass?: number, studentNumber?: number) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('admin_get_mindtalk_messages', {
@@ -157,6 +162,9 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       setMessages(data || []);
       setSelectedStudent(studentId);
       setSelectedStudentName(studentName);
+      if (studentGrade !== undefined && studentClass !== undefined && studentNumber !== undefined) {
+        setSelectedStudentInfo({ grade: studentGrade, class: studentClass, number: studentNumber });
+      }
       setDialogOpen(true);
     } catch (error) {
       console.error('Error fetching mindtalk messages:', error);
@@ -251,9 +259,51 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
     });
   };
 
+  // 알림 발송 확인 다이얼로그 열기
+  const openAlertConfirm = (alert: MindTalkAlert) => {
+    setPendingAlert(alert);
+    setConfirmAlertOpen(true);
+  };
+
+  // 대화 모달에서 알림 발송 확인 다이얼로그 열기
+  const openAlertConfirmFromDialog = () => {
+    if (selectedStudent && selectedStudentName && selectedStudentInfo) {
+      // 해당 학생의 위험 단어 수를 계산
+      const studentMessages = allMessages.filter(
+        m => m.student_id === selectedStudent && m.role === 'user'
+      );
+      let dangerCount = 0;
+      studentMessages.forEach(msg => {
+        dangerousKeywords.forEach(keyword => {
+          const regex = new RegExp(keyword, 'gi');
+          const matches = msg.content.match(regex);
+          if (matches) dangerCount += matches.length;
+        });
+      });
+
+      const alertData: MindTalkAlert = {
+        id: `dialog-${selectedStudent}`,
+        student_id: selectedStudent,
+        student_name: selectedStudentName,
+        student_grade: selectedStudentInfo.grade,
+        student_class: selectedStudentInfo.class,
+        student_number: selectedStudentInfo.number,
+        dangerous_word_count: dangerCount,
+        last_alert_sent_at: null,
+        updated_at: new Date().toISOString()
+      };
+      setPendingAlert(alertData);
+      setConfirmAlertOpen(true);
+    }
+  };
+
   // 담임선생님에게 수동 알림 발송
-  const sendManualAlert = async (alert: MindTalkAlert) => {
-    setSendingAlertId(alert.id);
+  const sendManualAlert = async (alert: MindTalkAlert, fromDialog: boolean = false) => {
+    if (fromDialog) {
+      setSendingFromDialog(true);
+    } else {
+      setSendingAlertId(alert.id);
+    }
     try {
       const { data, error } = await supabase.functions.invoke('mindtalk-alert', {
         body: {
@@ -283,7 +333,21 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       console.error('Manual alert error:', error);
       toast.error('알림 발송 중 오류가 발생했습니다.');
     } finally {
-      setSendingAlertId(null);
+      if (fromDialog) {
+        setSendingFromDialog(false);
+      } else {
+        setSendingAlertId(null);
+      }
+    }
+  };
+
+  // 확인 다이얼로그에서 발송 실행
+  const handleConfirmSend = async () => {
+    if (pendingAlert) {
+      const fromDialog = pendingAlert.id.startsWith('dialog-');
+      await sendManualAlert(pendingAlert, fromDialog);
+      setConfirmAlertOpen(false);
+      setPendingAlert(null);
     }
   };
 
@@ -408,7 +472,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                                   disabled={isSending}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    sendManualAlert(alert);
+                                    openAlertConfirm(alert);
                                   }}
                                 >
                                   {isSending ? (
@@ -427,7 +491,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                                   variant="outline"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    fetchStudentMessages(alert.student_id, alert.student_name || '');
+                                    fetchStudentMessages(alert.student_id, alert.student_name || '', alert.student_grade, alert.student_class, alert.student_number);
                                   }}
                                 >
                                   대화보기
@@ -541,7 +605,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => fetchStudentMessages(student.student_id, student.student_name || '')}
+                              onClick={() => fetchStudentMessages(student.student_id, student.student_name || '', student.student_grade, student.student_class, student.student_number)}
                             >
                               대화보기
                             </Button>
@@ -564,7 +628,10 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       {/* Chat History Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(open) => {
         setDialogOpen(open);
-        if (!open) setShowOnlyDangerous(false);
+        if (!open) {
+          setShowOnlyDangerous(false);
+          setSelectedStudentInfo(null);
+        }
       }}>
         <DialogContent className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
@@ -655,13 +722,58 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
             </div>
           </ScrollArea>
           {messages.some(m => m.role === 'user' && containsDangerousKeyword(m.content)) && (
-            <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              <AlertTriangle className="h-4 w-4" />
-              <span>위험 키워드가 포함된 메시지가 있습니다</span>
+            <div className="flex items-center justify-between p-2 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-red-700">
+                <AlertTriangle className="h-4 w-4" />
+                <span>위험 키워드가 포함된 메시지가 있습니다</span>
+              </div>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={sendingFromDialog || !selectedStudentInfo}
+                onClick={openAlertConfirmFromDialog}
+              >
+                {sendingFromDialog ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Mail className="h-3 w-3 mr-1" />
+                    담임 알림
+                  </>
+                )}
+              </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
+      {/* Alert Confirmation Dialog */}
+      <AlertDialog open={confirmAlertOpen} onOpenChange={setConfirmAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-red-500" />
+              담임선생님 알림 발송
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  <strong>{pendingAlert?.student_name}</strong> 학생({pendingAlert?.student_grade}-{pendingAlert?.student_class}-{pendingAlert?.student_number})의 
+                  위험 감지 알림을 담임선생님께 발송하시겠습니까?
+                </p>
+                <p className="text-red-600 font-medium">
+                  위험 키워드 누적: {pendingAlert?.dangerous_word_count}회
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSend} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              알림 발송
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
