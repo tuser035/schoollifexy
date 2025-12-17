@@ -70,7 +70,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [sendingAlertId, setSendingAlertId] = useState<string | null>(null);
   const [confirmAlertOpen, setConfirmAlertOpen] = useState(false);
   const [pendingAlert, setPendingAlert] = useState<MindTalkAlert | null>(null);
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // 위험도 높은순(desc) 기본
+  const [sortOption, setSortOption] = useState<'danger-desc' | 'danger-asc' | 'date-desc' | 'date-asc'>('danger-desc');
   const [sendingFromDialog, setSendingFromDialog] = useState(false);
 
   useEffect(() => {
@@ -217,9 +217,18 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
     const matchesClass = searchClass === 'all' || alert.student_class === parseInt(searchClass);
     return matchesText && matchesGrade && matchesClass;
   }).sort((a, b) => {
-    return sortOrder === 'desc' 
-      ? b.dangerous_word_count - a.dangerous_word_count 
-      : a.dangerous_word_count - b.dangerous_word_count;
+    switch (sortOption) {
+      case 'danger-desc':
+        return b.dangerous_word_count - a.dangerous_word_count;
+      case 'danger-asc':
+        return a.dangerous_word_count - b.dangerous_word_count;
+      case 'date-desc':
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      case 'date-asc':
+        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+      default:
+        return b.dangerous_word_count - a.dangerous_word_count;
+    }
   });
 
   const getDangerLevel = (count: number) => {
@@ -413,14 +422,18 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                 <Button onClick={fetchAlerts} variant="outline">
                   새로고침
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                  className="flex items-center gap-1"
-                >
-                  <ArrowUpDown className="h-4 w-4" />
-                  {sortOrder === 'desc' ? '위험도 높은순' : '위험도 낮은순'}
-                </Button>
+                <Select value={sortOption} onValueChange={(v) => setSortOption(v as typeof sortOption)}>
+                  <SelectTrigger className="w-[150px]">
+                    <ArrowUpDown className="h-4 w-4 mr-1" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="danger-desc">위험도 높은순</SelectItem>
+                    <SelectItem value="danger-asc">위험도 낮은순</SelectItem>
+                    <SelectItem value="date-desc">최신순</SelectItem>
+                    <SelectItem value="date-asc">오래된순</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Alerts Table */}
