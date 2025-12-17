@@ -85,6 +85,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const readerContainerRef = useRef<HTMLDivElement>(null);
 
+  // Celebration states
+  const [showCelebration, setShowCelebration] = useState(false);
+
   // TTS Functions
   const stopSpeaking = useCallback(() => {
     if (window.speechSynthesis) {
@@ -224,15 +227,72 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       });
 
       if (completed) {
+        // Show celebration animation
+        setShowCelebration(true);
+        setTimeout(() => setShowCelebration(false), 4000);
+        
         toast.success('동화책을 다 읽었습니다! 🎉 독후감을 작성해보세요!');
         // Show review dialog after completing
         setTimeout(() => {
           setIsReviewDialogOpen(true);
-        }, 1000);
+        }, 2000);
       }
     } catch (error) {
       console.error('Error saving progress:', error);
     }
+  };
+
+  // Celebration confetti component
+  const CelebrationOverlay = () => {
+    if (!showCelebration) return null;
+    
+    const confettiColors = ['#f59e0b', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+    const confettiCount = 50;
+    
+    return (
+      <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+        {/* Confetti particles */}
+        {[...Array(confettiCount)].map((_, i) => {
+          const left = Math.random() * 100;
+          const delay = Math.random() * 0.5;
+          const duration = 2 + Math.random() * 2;
+          const color = confettiColors[i % confettiColors.length];
+          const size = 8 + Math.random() * 8;
+          const rotation = Math.random() * 360;
+          
+          return (
+            <div
+              key={i}
+              className="absolute animate-confetti"
+              style={{
+                left: `${left}%`,
+                top: '-20px',
+                width: `${size}px`,
+                height: `${size}px`,
+                backgroundColor: color,
+                borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                transform: `rotate(${rotation}deg)`,
+                animation: `confetti-fall ${duration}s ease-out ${delay}s forwards`,
+              }}
+            />
+          );
+        })}
+        
+        {/* Center celebration message */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="bg-white/95 rounded-2xl p-8 shadow-2xl transform animate-bounce-in text-center">
+            <div className="text-6xl mb-4">🎉</div>
+            <h2 className="text-2xl font-bold text-amber-600 mb-2">축하합니다!</h2>
+            <p className="text-lg text-gray-600">동화책을 완독했어요!</p>
+            <div className="flex justify-center gap-2 mt-4 text-3xl">
+              <span className="animate-bounce" style={{ animationDelay: '0ms' }}>⭐</span>
+              <span className="animate-bounce" style={{ animationDelay: '100ms' }}>📚</span>
+              <span className="animate-bounce" style={{ animationDelay: '200ms' }}>🏆</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const handlePageChange = (direction: 'prev' | 'next') => {
@@ -321,6 +381,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   return (
     <div className="p-4">
+      {/* Celebration Animation Overlay */}
+      <CelebrationOverlay />
+      
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2 text-amber-800">
