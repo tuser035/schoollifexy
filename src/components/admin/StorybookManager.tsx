@@ -31,8 +31,14 @@ import {
   FileSpreadsheet,
   Download,
   Loader2,
-  Play
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize
 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 
 interface Storybook {
   id: string;
@@ -69,6 +75,12 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [previewBook, setPreviewBook] = useState<Storybook | null>(null);
   const [previewPages, setPreviewPages] = useState<StorybookPage[]>([]);
   const [previewPageNumber, setPreviewPageNumber] = useState(1);
+  const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false);
+  
+  // TTS states
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechRate, setSpeechRate] = useState(1);
+  const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
   
   // Form states
   const [newBookNumber, setNewBookNumber] = useState('');
@@ -193,6 +205,41 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       toast.error('미리보기를 불러오는데 실패했습니다');
     }
   };
+
+  // TTS functions
+  const handleTTS = (text: string) => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    if (!text) {
+      toast.error('읽을 텍스트가 없습니다');
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    utterance.rate = speechRate;
+    
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    
+    speechSynthRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+  };
+
+  const stopTTS = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
+
+  // Stop TTS when page changes or dialog closes
+  useEffect(() => {
+    stopTTS();
+  }, [previewPageNumber, isPreviewDialogOpen]);
 
   const handleTogglePublish = async (book: Storybook) => {
     try {
@@ -803,16 +850,28 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       </AlertDialog>
 
       {/* Preview Dialog */}
-      <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
-          <DialogHeader className="px-6 pt-6 pb-2">
+      <Dialog open={isPreviewDialogOpen} onOpenChange={(open) => {
+        if (!open) stopTTS();
+        setIsPreviewDialogOpen(open);
+        if (!open) setIsPreviewFullscreen(false);
+      }}>
+        <DialogContent className={`overflow-hidden p-0 ${isPreviewFullscreen ? 'max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none' : 'max-w-5xl max-h-[90vh]'}`}>
+          <DialogHeader className="px-6 pt-4 pb-2 flex flex-row items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-amber-600" />
               {previewBook?.title} - 미리보기
             </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPreviewFullscreen(!isPreviewFullscreen)}
+              className="mr-8"
+            >
+              {isPreviewFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+            </Button>
           </DialogHeader>
           
-          <div className="flex flex-col h-[70vh]">
+          <div className={`flex flex-col ${isPreviewFullscreen ? 'h-[calc(100vh-80px)]' : 'h-[70vh]'}`}>
             {/* Page Content */}
             <div className="flex-1 overflow-hidden">
               {previewPages.length === 0 ? (
@@ -849,12 +908,12 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                       return (
                         <div className="space-y-4">
                           {subtitle && (
-                            <h3 className="text-xl font-semibold text-amber-700">
+                            <h3 className={`font-semibold text-amber-700 ${isPreviewFullscreen ? 'text-2xl' : 'text-xl'}`}>
                               📖 {subtitle}
                             </h3>
                           )}
                           {body && (
-                            <div className="text-base leading-relaxed whitespace-pre-wrap indent-6">
+                            <div className={`leading-relaxed whitespace-pre-wrap indent-6 ${isPreviewFullscreen ? 'text-lg' : 'text-base'}`}>
                               {body}
                             </div>
                           )}
@@ -871,8 +930,37 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
               )}
             </div>
             
+            {/* TTS Controls */}
+            <div className="flex items-center justify-center gap-4 px-6 py-2 border-t bg-amber-50/50">
+              <Button
+                variant={isSpeaking ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  const currentPage = previewPages.find(p => p.page_number === previewPageNumber);
+                  handleTTS(currentPage?.text_content || '');
+                }}
+                className={isSpeaking ? 'bg-amber-600 hover:bg-amber-700' : ''}
+              >
+                {isSpeaking ? <Pause className="w-4 h-4 mr-1" /> : <Volume2 className="w-4 h-4 mr-1" />}
+                {isSpeaking ? '멈춤' : '읽어주기'}
+              </Button>
+              
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>속도</span>
+                <Slider
+                  value={[speechRate]}
+                  onValueChange={([val]) => setSpeechRate(val)}
+                  min={0.5}
+                  max={2}
+                  step={0.1}
+                  className="w-24"
+                />
+                <span className="w-8">{speechRate}x</span>
+              </div>
+            </div>
+            
             {/* Navigation */}
-            <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/30">
+            <div className="flex items-center justify-between px-6 py-3 border-t bg-muted/30">
               <Button
                 variant="outline"
                 onClick={() => setPreviewPageNumber(prev => Math.max(1, prev - 1))}
