@@ -346,10 +346,16 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
     }
   }, [inputValue, isLoading, messages, studentId, studentName]);
 
+  // 음악 버튼 클릭 핸들러: 대화 저장 후 MindTalk 닫고 음악 플레이어 열기
+  const handleMusicClick = () => {
+    setIsOpen(false);
+    setIsMusicOpen(true);
+  };
+
   return (
     <>
       {/* Floating Button - 허용 시간에만 표시 */}
-      {isButtonVisible && (
+      {isButtonVisible && !isMusicOpen && (
         <button
           onClick={handleOpenMindTalk}
           className="fixed top-3 sm:top-4 right-3 sm:right-4 z-50 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-xs sm:text-sm"
@@ -359,7 +365,7 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
         </button>
       )}
 
-      {/* Music Player */}
+      {/* Music Player - 독립 플로팅 카드 */}
       <MindTalkMusicPlayer isOpen={isMusicOpen} onClose={() => setIsMusicOpen(false)} studentId={studentId} />
 
       {/* Chat Modal */}
@@ -381,7 +387,7 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsMusicOpen(true)}
+                  onClick={handleMusicClick}
                   className="text-white hover:bg-white/20"
                   title="힐링 뮤직"
                 >
