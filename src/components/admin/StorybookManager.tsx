@@ -460,10 +460,13 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     <div className="space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <BookOpen className="w-5 h-5 text-amber-600" />
-            인문학 동화책 관리
-          </CardTitle>
+          <div>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <BookOpen className="w-5 h-5 text-amber-600" />
+              인문학 서점
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">이지영의 지혜의 강</p>
+          </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={loadBooks}>
               <RefreshCw className="w-4 h-4 mr-1" />
