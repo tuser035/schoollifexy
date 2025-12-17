@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Music, 
   Upload, 
@@ -20,7 +21,9 @@ import {
   Loader2,
   BarChart3,
   X,
-  FileAudio
+  FileAudio,
+  CheckSquare,
+  FolderEdit
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -58,6 +61,9 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [bulkCategory, setBulkCategory] = useState('힐링');
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(new Set());
+  const [bulkEditCategory, setBulkEditCategory] = useState('힐링');
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -207,6 +213,88 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
       toast.warning(`${successCount}개 성공, ${failCount}개 실패`);
     }
     loadTracks();
+  };
+
+  // 일괄 선택 관련 함수
+  const toggleTrackSelection = (trackId: string) => {
+    setSelectedTrackIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(trackId)) {
+        newSet.delete(trackId);
+      } else {
+        newSet.add(trackId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllTracks = () => {
+    if (selectedTrackIds.size === tracks.length) {
+      setSelectedTrackIds(new Set());
+    } else {
+      setSelectedTrackIds(new Set(tracks.map(t => t.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedTrackIds(new Set());
+  };
+
+  // 일괄 삭제
+  const handleBulkDelete = async () => {
+    if (selectedTrackIds.size === 0) return;
+
+    try {
+      await supabase.rpc('set_admin_session', { admin_id_input: adminId });
+
+      const tracksToDelete = tracks.filter(t => selectedTrackIds.has(t.id));
+      
+      // Delete from storage (only non-public files)
+      for (const track of tracksToDelete) {
+        if (!track.file_path.startsWith('music/')) {
+          await supabase.storage.from('mindtalk-music').remove([track.file_path]);
+        }
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('mindtalk_music')
+        .delete()
+        .in('id', Array.from(selectedTrackIds));
+
+      if (error) throw error;
+
+      toast.success(`${selectedTrackIds.size}개 음악이 삭제되었습니다`);
+      setSelectedTrackIds(new Set());
+      setShowBulkDeleteConfirm(false);
+      loadTracks();
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      toast.error('일괄 삭제에 실패했습니다');
+    }
+  };
+
+  // 일괄 카테고리 변경
+  const handleBulkCategoryChange = async () => {
+    if (selectedTrackIds.size === 0) return;
+
+    try {
+      await supabase.rpc('set_admin_session', { admin_id_input: adminId });
+
+      const { error } = await supabase
+        .from('mindtalk_music')
+        .update({ category: bulkEditCategory })
+        .in('id', Array.from(selectedTrackIds));
+
+      if (error) throw error;
+
+      toast.success(`${selectedTrackIds.size}개 음악의 카테고리가 변경되었습니다`);
+      setSelectedTrackIds(new Set());
+      loadTracks();
+    } catch (error) {
+      console.error('Bulk category change failed:', error);
+      toast.error('카테고리 변경에 실패했습니다');
+    }
   };
 
   const toggleActive = async (track: MusicTrack) => {
@@ -463,14 +551,94 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Music className="w-4 h-4 text-purple-500" />
-              음악 목록
+              음악 목록 ({tracks.length}개)
             </CardTitle>
             <Button variant="ghost" size="sm" onClick={loadTracks}>
               <RefreshCw className="w-4 h-4" />
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
+          {/* Bulk Actions */}
+          {tracks.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 p-2 bg-gray-50 rounded-lg">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={selectAllTracks}
+                className="text-xs"
+              >
+                <CheckSquare className="w-3 h-3 mr-1" />
+                {selectedTrackIds.size === tracks.length ? '선택 해제' : '전체 선택'}
+              </Button>
+              {selectedTrackIds.size > 0 && (
+                <>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedTrackIds.size}개 선택됨
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Select value={bulkEditCategory} onValueChange={setBulkEditCategory}>
+                      <SelectTrigger className="w-20 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkCategoryChange}
+                      className="text-xs"
+                    >
+                      <FolderEdit className="w-3 h-3 mr-1" />
+                      카테고리 변경
+                    </Button>
+                  </div>
+                  <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs text-red-500 border-red-200 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        일괄 삭제
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>음악 일괄 삭제</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          선택한 {selectedTrackIds.size}개 음악을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleBulkDelete}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          삭제
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelection}
+                    className="text-xs"
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
@@ -488,10 +656,17 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
                   <div
                     key={track.id}
                     className={`flex items-center justify-between p-3 rounded-lg border ${
-                      track.is_active ? 'bg-white' : 'bg-gray-50 opacity-60'
+                      selectedTrackIds.has(track.id) 
+                        ? 'bg-purple-50 border-purple-300' 
+                        : track.is_active ? 'bg-white' : 'bg-gray-50 opacity-60'
                     }`}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Checkbox
+                        checked={selectedTrackIds.has(track.id)}
+                        onCheckedChange={() => toggleTrackSelection(track.id)}
+                        className="flex-shrink-0"
+                      />
                       <Button
                         variant="ghost"
                         size="icon"
