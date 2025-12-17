@@ -851,7 +851,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
+                            <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap indent-4">
                               {bodyText}
                             </p>
                           )}
@@ -888,7 +888,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap">
+                            <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap indent-4">
                               {bodyText}
                             </p>
                           )}
@@ -948,7 +948,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap">
+                            <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap indent-6">
                               {bodyText}
                             </p>
                           )}
@@ -992,7 +992,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap">
+                            <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap indent-6">
                               {bodyText}
                             </p>
                           )}
