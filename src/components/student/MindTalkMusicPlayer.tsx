@@ -742,88 +742,88 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
 
         {/* Now Playing */}
         {currentTrack && (
-          <div className="p-6 text-center">
-            <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center shadow-lg">
-              <Music className={`w-16 h-16 text-white ${isPlaying ? 'animate-pulse' : ''}`} />
+          <div className="px-4 py-3 text-center">
+            <div className="w-24 h-24 mx-auto mb-2 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center shadow-lg">
+              <Music className={`w-11 h-11 text-white ${isPlaying ? 'animate-pulse' : ''}`} />
             </div>
-            <h3 className="text-lg font-bold text-white truncate">{currentTrack.title}</h3>
-            <p className="text-sm text-purple-200">{currentTrack.category}</p>
+            <h3 className="text-base font-bold text-white truncate">{currentTrack.title}</h3>
+            <p className="text-xs text-purple-200">{currentTrack.category}</p>
           </div>
         )}
 
         {/* Progress Bar */}
-        <div className="px-6 pb-4">
+        <div className="px-4 pb-2">
           <Slider
             value={[currentTime]}
             max={duration || 100}
             step={1}
             onValueChange={handleSeek}
-            className="cursor-pointer"
+            className="cursor-pointer [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_.relative]:h-1"
           />
-          <div className="flex justify-between text-xs text-purple-200 mt-1">
+          <div className="flex justify-between text-[10px] text-purple-200 mt-0.5">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-4 pb-4">
+        <div className="flex items-center justify-center gap-3 pb-2">
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={() => setShuffle(!shuffle)}
-            className={`text-white hover:bg-white/10 ${shuffle ? 'text-pink-400' : ''}`}
+            className={`text-white hover:bg-white/10 h-8 w-8 p-0 ${shuffle ? 'text-pink-400' : ''}`}
           >
-            <Shuffle className="w-4 h-4" />
+            <Shuffle className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={playPrev}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-white/10 h-8 w-8 p-0"
           >
-            <SkipBack className="w-5 h-5" />
+            <SkipBack className="w-4 h-4" />
           </Button>
           <Button
             onClick={togglePlay}
-            className="w-14 h-14 rounded-full bg-white text-purple-900 hover:bg-purple-100"
+            className="w-10 h-10 rounded-full bg-white text-purple-900 hover:bg-purple-100"
           >
-            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
+            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </Button>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={playNext}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-white/10 h-8 w-8 p-0"
           >
-            <SkipForward className="w-5 h-5" />
+            <SkipForward className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={() => setRepeat(!repeat)}
-            className={`text-white hover:bg-white/10 ${repeat ? 'text-pink-400' : ''}`}
+            className={`text-white hover:bg-white/10 h-8 w-8 p-0 ${repeat ? 'text-pink-400' : ''}`}
           >
-            <Repeat className="w-4 h-4" />
+            <Repeat className="w-3.5 h-3.5" />
           </Button>
         </div>
 
         {/* Volume */}
-        <div className="flex items-center gap-2 px-6 pb-4">
+        <div className="flex items-center gap-2 px-4 pb-2">
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={() => setIsMuted(!isMuted)}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-white/10 h-7 w-7 p-0"
           >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
           </Button>
           <Slider
             value={[isMuted ? 0 : volume]}
             max={100}
             step={1}
             onValueChange={(v) => { setVolume(v[0]); setIsMuted(false); }}
-            className="flex-1"
+            className="flex-1 [&_[role=slider]]:h-3 [&_[role=slider]]:w-3 [&_.relative]:h-1"
           />
         </div>
 
