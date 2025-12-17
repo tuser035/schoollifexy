@@ -54,7 +54,16 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   const [isLoading, setIsLoading] = useState(true);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // 카테고리 목록 추출
+  const categories = [...new Set(tracks.map(t => t.category))];
+  
+  // 필터된 트랙 목록
+  const filteredTracks = selectedCategory 
+    ? tracks.filter(t => t.category === selectedCategory)
+    : tracks;
 
   // Load music tracks
   useEffect(() => {
@@ -148,27 +157,27 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   };
 
   const playNext = () => {
-    if (!currentTrack || tracks.length === 0) return;
+    if (!currentTrack || filteredTracks.length === 0) return;
     
-    const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
+    const currentIndex = filteredTracks.findIndex(t => t.id === currentTrack.id);
     let nextIndex: number;
     
     if (shuffle) {
-      nextIndex = Math.floor(Math.random() * tracks.length);
+      nextIndex = Math.floor(Math.random() * filteredTracks.length);
     } else {
-      nextIndex = (currentIndex + 1) % tracks.length;
+      nextIndex = (currentIndex + 1) % filteredTracks.length;
     }
     
-    playTrack(tracks[nextIndex]);
+    playTrack(filteredTracks[nextIndex]);
   };
 
   const playPrev = () => {
-    if (!currentTrack || tracks.length === 0) return;
+    if (!currentTrack || filteredTracks.length === 0) return;
     
-    const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
-    const prevIndex = currentIndex === 0 ? tracks.length - 1 : currentIndex - 1;
+    const currentIndex = filteredTracks.findIndex(t => t.id === currentTrack.id);
+    const prevIndex = currentIndex === 0 ? filteredTracks.length - 1 : currentIndex - 1;
     
-    playTrack(tracks[prevIndex]);
+    playTrack(filteredTracks[prevIndex]);
   };
 
   const handleSeek = (value: number[]) => {
@@ -294,15 +303,48 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
 
         {/* Playlist */}
         <div className="border-t border-white/10">
-          <p className="px-4 py-2 text-xs text-purple-200 font-medium">플레이리스트</p>
+          <div className="px-4 py-2 flex items-center justify-between">
+            <p className="text-xs text-purple-200 font-medium">플레이리스트</p>
+            <span className="text-xs text-purple-300">{filteredTracks.length}곡</span>
+          </div>
+          
+          {/* Category Filter */}
+          {categories.length > 1 && (
+            <div className="px-4 pb-2 flex gap-1 flex-wrap">
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className={`px-2 py-1 text-xs rounded-full transition-colors ${
+                  selectedCategory === null
+                    ? 'bg-pink-500 text-white'
+                    : 'bg-white/10 text-purple-200 hover:bg-white/20'
+                }`}
+              >
+                전체
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-2 py-1 text-xs rounded-full transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-white/10 text-purple-200 hover:bg-white/20'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+          
           <ScrollArea className="h-40">
             {isLoading ? (
               <div className="p-4 text-center text-purple-200">로딩 중...</div>
-            ) : tracks.length === 0 ? (
+            ) : filteredTracks.length === 0 ? (
               <div className="p-4 text-center text-purple-200">음악이 없습니다</div>
             ) : (
               <div className="space-y-1 px-2 pb-2">
-                {tracks.map((track) => (
+                {filteredTracks.map((track) => (
                   <button
                     key={track.id}
                     onClick={() => playTrack(track)}
