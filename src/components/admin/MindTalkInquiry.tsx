@@ -78,6 +78,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [messages, setMessages] = useState<MindTalkMessage[]>([]);
   const [allMessages, setAllMessages] = useState<MindTalkMessage[]>([]);
   const [dangerousKeywords, setDangerousKeywords] = useState<string[]>([]);
+  const [keywordsWithCategory, setKeywordsWithCategory] = useState<{keyword: string; category: string}[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
   const [selectedStudentInfo, setSelectedStudentInfo] = useState<{grade: number; class: number; number: number} | null>(null);
@@ -152,11 +153,12 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
     try {
       const { data, error } = await supabase
         .from('mindtalk_keywords')
-        .select('keyword')
+        .select('keyword, category')
         .eq('is_active', true);
 
       if (error) throw error;
       setDangerousKeywords((data || []).map(k => k.keyword));
+      setKeywordsWithCategory((data || []).map(k => ({ keyword: k.keyword, category: k.category })));
     } catch (error) {
       console.error('Error fetching keywords:', error);
     }
@@ -739,7 +741,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               {/* 키워드 사용 히트맵 */}
               <KeywordHeatmap 
                 allMessages={allMessages}
-                dangerousKeywords={dangerousKeywords}
+                keywordsWithCategory={keywordsWithCategory}
                 onStudentClick={(studentId, studentName, grade, classNum, number) => 
                   fetchStudentMessages(studentId, studentName, grade, classNum, number)
                 }
