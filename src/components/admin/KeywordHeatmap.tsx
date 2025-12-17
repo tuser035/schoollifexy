@@ -117,12 +117,14 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
     };
   }, [allMessages, keywordsWithCategory]);
 
-  const getHeatColor = (count: number, maxCount: number): string => {
+  // 절대적 횟수 기준 색상 (1회=연한색, 점점 진해짐)
+  const getHeatColor = (count: number): string => {
     if (count === 0) return 'bg-gray-100';
-    const intensity = Math.min(count / Math.max(maxCount, 1), 1);
-    if (intensity < 0.25) return 'bg-red-100';
-    if (intensity < 0.5) return 'bg-red-300';
-    if (intensity < 0.75) return 'bg-red-500 text-white';
+    if (count === 1) return 'bg-red-100';
+    if (count === 2) return 'bg-red-200';
+    if (count <= 4) return 'bg-red-300';
+    if (count <= 6) return 'bg-red-400 text-white';
+    if (count <= 9) return 'bg-red-500 text-white';
     return 'bg-red-700 text-white';
   };
 
@@ -298,7 +300,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
                         <Tooltip key={keyword}>
                           <TooltipTrigger asChild>
                             <div
-                              className={`w-12 h-8 shrink-0 flex items-center justify-center text-xs font-medium transition-colors ${getHeatColor(count, heatmapData.maxCount)} ${count > 0 ? 'cursor-pointer hover:ring-2 hover:ring-mindtalk-chat-cyan' : 'cursor-default'}`}
+                              className={`w-12 h-8 shrink-0 flex items-center justify-center text-xs font-medium transition-colors ${getHeatColor(count)} ${count > 0 ? 'cursor-pointer hover:ring-2 hover:ring-mindtalk-chat-cyan' : 'cursor-default'}`}
                               onClick={() => count > 0 && onStudentClick?.(student.student_id, student.student_name, student.student_grade, student.student_class, student.student_number)}
                             >
                               {count > 0 ? count : ''}
@@ -330,15 +332,17 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
               );
             })}
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>적음</span>
-            <div className="flex gap-0.5">
-              <div className="w-4 h-4 bg-red-100 border" />
-              <div className="w-4 h-4 bg-red-300" />
-              <div className="w-4 h-4 bg-red-500" />
-              <div className="w-4 h-4 bg-red-700" />
-            </div>
-            <span>많음</span>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <div className="w-4 h-4 bg-red-100 border" title="1회" />
+            <span>1</span>
+            <div className="w-4 h-4 bg-red-200" title="2회" />
+            <span>2</span>
+            <div className="w-4 h-4 bg-red-300" title="3-4회" />
+            <span>3+</span>
+            <div className="w-4 h-4 bg-red-500" title="5-9회" />
+            <span>5+</span>
+            <div className="w-4 h-4 bg-red-700" title="10회 이상" />
+            <span>10+</span>
           </div>
         </div>
       </CardContent>
