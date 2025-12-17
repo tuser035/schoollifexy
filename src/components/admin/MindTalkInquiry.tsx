@@ -10,8 +10,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-
-import { Search, AlertTriangle, MessageCircle, User, Bot, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { toast } from 'sonner';
+import { Search, AlertTriangle, MessageCircle, User, Bot, Filter, ChevronDown, ChevronUp, Mail, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -65,6 +65,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showOnlyDangerous, setShowOnlyDangerous] = useState(false);
   const [expandedAlerts, setExpandedAlerts] = useState<Set<string>>(new Set());
+  const [sendingAlertId, setSendingAlertId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAlerts();
@@ -250,6 +251,42 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
     });
   };
 
+  // 담임선생님에게 수동 알림 발송
+  const sendManualAlert = async (alert: MindTalkAlert) => {
+    setSendingAlertId(alert.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('mindtalk-alert', {
+        body: {
+          studentId: alert.student_id,
+          studentName: alert.student_name,
+          studentGrade: alert.student_grade,
+          studentClass: alert.student_class,
+          studentNumber: alert.student_number,
+          dangerousWordCount: alert.dangerous_word_count
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(data.message || '담임선생님께 알림이 발송되었습니다.');
+        // Update last_alert_sent_at in the database
+        await supabase.rpc('update_mindtalk_alert_sent', {
+          student_id_input: alert.student_id
+        });
+        // Refresh alerts
+        fetchAlerts();
+      } else {
+        toast.error(data?.message || '알림 발송에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Manual alert error:', error);
+      toast.error('알림 발송 중 오류가 발생했습니다.');
+    } finally {
+      setSendingAlertId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -320,13 +357,14 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                       <TableHead>위험단어 누적</TableHead>
                       <TableHead>위험도</TableHead>
                       <TableHead>최근 알림</TableHead>
+                      <TableHead>담임 알림</TableHead>
                       <TableHead>대화 조회</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredAlerts.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           위험 감지 기록이 없습니다
                         </TableCell>
                       </TableRow>
@@ -335,6 +373,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                         const danger = getDangerLevel(alert.dangerous_word_count);
                         const isExpanded = expandedAlerts.has(alert.id);
                         const keywordStats = getKeywordStatsForStudent(alert.student_id);
+                        const isSending = sendingAlertId === alert.id;
                         
                         return (
                           <React.Fragment key={alert.id}>
@@ -365,6 +404,26 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                               <TableCell>
                                 <Button
                                   size="sm"
+                                  variant="destructive"
+                                  disabled={isSending}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    sendManualAlert(alert);
+                                  }}
+                                >
+                                  {isSending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Mail className="h-3 w-3 mr-1" />
+                                      알림발송
+                                    </>
+                                  )}
+                                </Button>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
                                   variant="outline"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -377,7 +436,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                             </TableRow>
                             {isExpanded && keywordStats.length > 0 && (
                               <TableRow className="bg-muted/30">
-                                <TableCell colSpan={7} className="p-4">
+                                <TableCell colSpan={8} className="p-4">
                                   <div className="space-y-2">
                                     <div className="text-sm font-medium flex items-center gap-2">
                                       <AlertTriangle className="h-4 w-4 text-red-500" />
