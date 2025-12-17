@@ -673,7 +673,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
           </div>
           
           {/* Mini Progress Bar */}
-          <div className="px-2 pb-2">
+          <div className="px-2 pb-1">
             <div className="h-1 bg-white/20 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-white/60 transition-all duration-300"
@@ -684,6 +684,25 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
               <span>{formatTime(currentTime)}</span>
               <span>{formatTime(duration)}</span>
             </div>
+          </div>
+          
+          {/* Mini Volume Control */}
+          <div className="flex items-center gap-1 px-2 pb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMuted(!isMuted)}
+              className="text-white hover:bg-white/20 h-5 w-5 p-0"
+            >
+              {isMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+            </Button>
+            <Slider
+              value={[isMuted ? 0 : volume]}
+              max={100}
+              step={1}
+              onValueChange={(v) => { setVolume(v[0]); setIsMuted(false); }}
+              className="flex-1 [&_[role=slider]]:h-2 [&_[role=slider]]:w-2 [&_.relative]:h-0.5"
+            />
           </div>
         </div>
         
