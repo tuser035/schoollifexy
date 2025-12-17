@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.mindtalk-alert]
 verify_jwt = false
+
+[functions.upload-mindtalk-music]
+verify_jwt = false
