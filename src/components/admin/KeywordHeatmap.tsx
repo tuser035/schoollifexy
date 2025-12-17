@@ -4,8 +4,13 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Grid3X3, Download, ArrowUpDown, ArrowUp, ArrowDown, Filter } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Grid3X3, Download, ArrowUpDown, ArrowUp, ArrowDown, Filter, CalendarIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface KeywordWithCategory {
   keyword: string;
@@ -21,6 +26,7 @@ interface KeywordHeatmapProps {
     student_number: number;
     role: string;
     content: string;
+    created_at?: string;
   }>;
   keywordsWithCategory: KeywordWithCategory[];
   onStudentClick?: (studentId: string, studentName: string, grade: number, classNum: number, number: number) => void;
@@ -49,10 +55,27 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
   const [sortOption, setSortOption] = useState<SortOption>('default');
   const [enabledCategories, setEnabledCategories] = useState<Set<string>>(new Set());
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  
+  // 날짜 필터링된 메시지
+  const filteredMessages = useMemo(() => {
+    if (!startDate && !endDate) return allMessages;
+    
+    return allMessages.filter(msg => {
+      if (!msg.created_at) return true;
+      const msgDate = new Date(msg.created_at);
+      
+      if (startDate && isBefore(msgDate, startOfDay(startDate))) return false;
+      if (endDate && isAfter(msgDate, endOfDay(endDate))) return false;
+      
+      return true;
+    });
+  }, [allMessages, startDate, endDate]);
   
   // 학생별 키워드 사용횟수 계산
   const heatmapData = useMemo(() => {
-    const userMessages = allMessages.filter(m => m.role === 'user');
+    const userMessages = filteredMessages.filter(m => m.role === 'user');
     
     const studentsMap = new Map<string, {
       student_id: string;
@@ -125,7 +148,7 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
       data, 
       maxCount 
     };
-  }, [allMessages, keywordsWithCategory]);
+  }, [filteredMessages, keywordsWithCategory]);
 
   // 필터링된 카테고리 (필터가 비어있으면 전체 표시)
   const filteredCategories = useMemo(() => {
@@ -191,7 +214,12 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
   const resetFilters = () => {
     setEnabledCategories(new Set());
     setSortOption('default');
+    setStartDate(undefined);
+    setEndDate(undefined);
   };
+
+  // 날짜 필터 활성화 여부
+  const hasDateFilter = startDate || endDate;
 
   // 절대적 횟수 기준 색상 (1회=연한색, 점점 진해짐)
   const getHeatColor = (count: number): string => {
@@ -301,8 +329,10 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
             >
               <Filter className="h-4 w-4 mr-1" />
               필터
-              {enabledCategories.size > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[10px] px-1">{enabledCategories.size}</Badge>
+              {(enabledCategories.size > 0 || hasDateFilter) && (
+                <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                  {enabledCategories.size + (hasDateFilter ? 1 : 0)}
+                </Badge>
               )}
             </Button>
             <Button 
@@ -319,31 +349,121 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
         
         {/* 카테고리 필터 토글 */}
         {showCategoryFilter && (
-          <div className="mt-3 p-2 bg-gray-50 rounded-lg border">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-muted-foreground">카테고리 필터</span>
-              <Button variant="ghost" size="sm" onClick={resetFilters} className="h-6 text-xs">
-                초기화
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {heatmapData.allCategories.map(cat => {
-                const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.default;
-                const isActive = enabledCategories.size === 0 || enabledCategories.has(cat);
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => toggleCategory(cat)}
-                    className={`text-[10px] px-2 py-1 rounded border transition-all ${
-                      isActive 
-                        ? `${config.bgColor} ${config.color} ${config.borderColor} border-2` 
-                        : 'bg-gray-100 text-gray-400 border-gray-200 opacity-50'
-                    }`}
+          <div className="mt-3 p-2 bg-gray-50 rounded-lg border space-y-3">
+            {/* 날짜 필터 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">날짜 필터</span>
+                {hasDateFilter && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => { setStartDate(undefined); setEndDate(undefined); }} 
+                    className="h-6 text-xs text-mindtalk-chat-cyan"
                   >
-                    {config.label}
-                  </button>
-                );
-              })}
+                    날짜 초기화
+                  </Button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={cn(
+                        "h-8 text-xs justify-start",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                      {startDate ? format(startDate, 'yyyy-MM-dd', { locale: ko }) : '시작일'}
+                      {startDate && (
+                        <X 
+                          className="h-3 w-3 ml-1 hover:text-destructive" 
+                          onClick={(e) => { e.stopPropagation(); setStartDate(undefined); }}
+                        />
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      locale={ko}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-xs text-muted-foreground">~</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className={cn(
+                        "h-8 text-xs justify-start",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                      {endDate ? format(endDate, 'yyyy-MM-dd', { locale: ko }) : '종료일'}
+                      {endDate && (
+                        <X 
+                          className="h-3 w-3 ml-1 hover:text-destructive" 
+                          onClick={(e) => { e.stopPropagation(); setEndDate(undefined); }}
+                        />
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      locale={ko}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {hasDateFilter && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    {filteredMessages.length}건
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            {/* 카테고리 필터 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">카테고리 필터</span>
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="h-6 text-xs">
+                  전체 초기화
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {heatmapData.allCategories.map(cat => {
+                  const config = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.default;
+                  const isActive = enabledCategories.size === 0 || enabledCategories.has(cat);
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => toggleCategory(cat)}
+                      className={`text-[10px] px-2 py-1 rounded border transition-all ${
+                        isActive 
+                          ? `${config.bgColor} ${config.color} ${config.borderColor} border-2` 
+                          : 'bg-gray-100 text-gray-400 border-gray-200 opacity-50'
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
