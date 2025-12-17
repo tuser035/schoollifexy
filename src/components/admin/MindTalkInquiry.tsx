@@ -497,16 +497,16 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               {/* Alerts Table */}
               <div className="border border-mindtalk-alert-red/30 rounded-lg bg-white">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-mindtalk-alert-red-light">
                     <TableRow>
-                      <TableHead className="w-8"></TableHead>
-                      <TableHead>학생</TableHead>
-                      <TableHead>학년/반/번</TableHead>
-                      <TableHead>위험단어 누적</TableHead>
-                      <TableHead>위험도</TableHead>
-                      <TableHead>최근 알림</TableHead>
-                      <TableHead>담임 알림</TableHead>
-                      <TableHead>대화 조회</TableHead>
+                      <TableHead className="w-8 text-mindtalk-alert-red"></TableHead>
+                      <TableHead className="text-mindtalk-alert-red font-semibold">학생</TableHead>
+                      <TableHead className="text-mindtalk-alert-red font-semibold">학년/반/번</TableHead>
+                      <TableHead className="text-mindtalk-alert-red font-semibold">위험단어 누적</TableHead>
+                      <TableHead className="text-mindtalk-alert-red font-semibold">위험도</TableHead>
+                      <TableHead className="text-mindtalk-alert-red font-semibold">최근 알림</TableHead>
+                      <TableHead className="text-mindtalk-alert-red font-semibold">담임 알림</TableHead>
+                      <TableHead className="text-mindtalk-alert-red font-semibold">대화 조회</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -671,14 +671,14 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               {/* Students with Messages Table */}
               <div className="border border-mindtalk-chat-cyan/30 rounded-lg bg-white">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-mindtalk-chat-cyan-light">
                     <TableRow>
-                      <TableHead>학생</TableHead>
-                      <TableHead>학년/반/번</TableHead>
-                      <TableHead>대화 수</TableHead>
-                      <TableHead>위험 감지</TableHead>
-                      <TableHead>마지막 대화</TableHead>
-                      <TableHead>대화 조회</TableHead>
+                      <TableHead className="text-mindtalk-chat-cyan font-semibold">학생</TableHead>
+                      <TableHead className="text-mindtalk-chat-cyan font-semibold">학년/반/번</TableHead>
+                      <TableHead className="text-mindtalk-chat-cyan font-semibold">대화 수</TableHead>
+                      <TableHead className="text-mindtalk-chat-cyan font-semibold">위험 감지</TableHead>
+                      <TableHead className="text-mindtalk-chat-cyan font-semibold">마지막 대화</TableHead>
+                      <TableHead className="text-mindtalk-chat-cyan font-semibold">대화 조회</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
