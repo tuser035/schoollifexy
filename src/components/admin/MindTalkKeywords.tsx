@@ -628,7 +628,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                   onChange={(e) => setNewDescription(e.target.value)}
                   className="flex-1 min-w-40"
                 />
-                <Button onClick={addKeyword}>
+                <Button onClick={addKeyword} className="bg-mindtalk-keyword-amber hover:bg-mindtalk-keyword-amber-hover text-white">
                   <Plus className="w-4 h-4 mr-1" />
                   추가
                 </Button>
@@ -661,7 +661,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                   <span className="text-sm text-muted-foreground">
                     {bulkKeywords.split('\n').filter(line => line.trim()).length}개 키워드
                   </span>
-                  <Button onClick={bulkAddKeywords} disabled={isBulkAdding}>
+                  <Button onClick={bulkAddKeywords} disabled={isBulkAdding} className="bg-mindtalk-keyword-amber hover:bg-mindtalk-keyword-amber-hover text-white">
                     <Upload className="w-4 h-4 mr-1" />
                     {isBulkAdding ? '추가 중...' : '일괄 추가'}
                   </Button>
@@ -676,7 +676,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                   <p className="text-sm text-muted-foreground mb-3">
                     현재 {keywords.length}개의 키워드를 CSV 파일로 다운로드합니다.
                   </p>
-                  <Button onClick={exportToCsv} variant="outline">
+                  <Button onClick={exportToCsv} variant="outline" className="border-mindtalk-keyword-amber text-mindtalk-keyword-amber hover:bg-mindtalk-keyword-amber-light">
                     <Download className="w-4 h-4 mr-1" />
                     CSV 다운로드
                   </Button>
@@ -698,6 +698,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                     onClick={() => csvInputRef.current?.click()} 
                     variant="outline"
                     disabled={isImporting}
+                    className="border-mindtalk-keyword-amber text-mindtalk-keyword-amber hover:bg-mindtalk-keyword-amber-light"
                   >
                     <FileUp className="w-4 h-4 mr-1" />
                     {isImporting ? '가져오는 중...' : 'CSV 파일 선택'}
@@ -771,7 +772,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
         <CardContent>
           <div className="flex flex-wrap gap-3 mb-4">
             <div className="relative flex-1 min-w-48">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mindtalk-keyword-amber" />
               <Input
                 placeholder="키워드 검색..."
                 value={searchText}
