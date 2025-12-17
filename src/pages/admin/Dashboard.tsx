@@ -54,7 +54,6 @@ const menuItems = (user: AuthUser) => {
     { value: "leaderboard", label: "순위", icon: Trophy },
     { value: "email-history", label: "이메일", icon: Mail },
     { value: "email-templates", label: "템플릿", icon: FileText },
-    { value: "email-templates", label: "템플릿", icon: FileText },
     // 시스템 관리자만
     ...(isSystemAdmin ? [
       { value: "system-settings", label: "시스템설정", icon: Cog },
