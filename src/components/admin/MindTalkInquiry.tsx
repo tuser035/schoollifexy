@@ -740,6 +740,9 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               <KeywordHeatmap 
                 allMessages={allMessages}
                 dangerousKeywords={dangerousKeywords}
+                onStudentClick={(studentId, studentName, grade, classNum, number) => 
+                  fetchStudentMessages(studentId, studentName, grade, classNum, number)
+                }
               />
 
               <p className="text-sm text-muted-foreground">

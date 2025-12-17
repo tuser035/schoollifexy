@@ -15,9 +15,10 @@ interface KeywordHeatmapProps {
     content: string;
   }>;
   dangerousKeywords: string[];
+  onStudentClick?: (studentId: string, studentName: string, grade: number, classNum: number, number: number) => void;
 }
 
-const KeywordHeatmap = ({ allMessages, dangerousKeywords }: KeywordHeatmapProps) => {
+const KeywordHeatmap = ({ allMessages, dangerousKeywords, onStudentClick }: KeywordHeatmapProps) => {
   // 학생별 키워드 사용횟수 계산
   const heatmapData = useMemo(() => {
     // 사용자 메시지만 필터링
@@ -154,15 +155,18 @@ const KeywordHeatmap = ({ allMessages, dangerousKeywords }: KeywordHeatmapProps)
               {/* 데이터 행 (학생별) */}
               {heatmapData.students.map(student => (
                 <div key={student.student_id} className="flex border-t">
-                  <div className="w-28 shrink-0 p-2 text-xs truncate sticky left-0 bg-white z-10">
+                  <div 
+                    className="w-28 shrink-0 p-2 text-xs truncate sticky left-0 bg-white z-10 cursor-pointer hover:bg-mindtalk-chat-cyan-light transition-colors"
+                    onClick={() => onStudentClick?.(student.student_id, student.student_name, student.student_grade, student.student_class, student.student_number)}
+                  >
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="cursor-help">
+                        <span className="text-mindtalk-chat-cyan hover:underline">
                           {student.student_name} ({student.student_grade}-{student.student_class})
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{student.student_name} ({student.student_grade}학년 {student.student_class}반 {student.student_number}번)</p>
+                        <p>{student.student_name} ({student.student_grade}학년 {student.student_class}반 {student.student_number}번) - 클릭하여 대화보기</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -172,13 +176,14 @@ const KeywordHeatmap = ({ allMessages, dangerousKeywords }: KeywordHeatmapProps)
                       <Tooltip key={keyword}>
                         <TooltipTrigger asChild>
                           <div
-                            className={`w-12 h-8 shrink-0 flex items-center justify-center text-xs font-medium cursor-help transition-colors ${getHeatColor(count, heatmapData.maxCount)}`}
+                            className={`w-12 h-8 shrink-0 flex items-center justify-center text-xs font-medium transition-colors ${getHeatColor(count, heatmapData.maxCount)} ${count > 0 ? 'cursor-pointer hover:ring-2 hover:ring-mindtalk-chat-cyan' : 'cursor-default'}`}
+                            onClick={() => count > 0 && onStudentClick?.(student.student_id, student.student_name, student.student_grade, student.student_class, student.student_number)}
                           >
                             {count > 0 ? count : ''}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{student.student_name}: "{keyword}" {count}회</p>
+                          <p>{student.student_name}: "{keyword}" {count}회 {count > 0 ? '- 클릭하여 대화보기' : ''}</p>
                         </TooltipContent>
                       </Tooltip>
                     );
