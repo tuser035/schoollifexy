@@ -45,6 +45,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [alerts, setAlerts] = useState<MindTalkAlert[]>([]);
   const [messages, setMessages] = useState<MindTalkMessage[]>([]);
   const [allMessages, setAllMessages] = useState<MindTalkMessage[]>([]);
+  const [dangerousKeywords, setDangerousKeywords] = useState<string[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [selectedStudentName, setSelectedStudentName] = useState<string>('');
   const [searchText, setSearchText] = useState('');
@@ -59,7 +60,50 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   useEffect(() => {
     fetchAlerts();
     fetchAllMessages();
+    fetchDangerousKeywords();
   }, [userId]);
+
+  const fetchDangerousKeywords = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('mindtalk_keywords')
+        .select('keyword')
+        .eq('is_active', true);
+
+      if (error) throw error;
+      setDangerousKeywords((data || []).map(k => k.keyword));
+    } catch (error) {
+      console.error('Error fetching keywords:', error);
+    }
+  };
+
+  // 메시지에 위험 키워드가 포함되어 있는지 확인
+  const containsDangerousKeyword = (content: string): boolean => {
+    return dangerousKeywords.some(keyword => content.includes(keyword));
+  };
+
+  // 위험 키워드를 하이라이트 표시하는 함수
+  const highlightDangerousWords = (content: string): React.ReactNode => {
+    if (dangerousKeywords.length === 0) return content;
+    
+    // 키워드를 정규식으로 변환 (특수문자 이스케이프)
+    const escapedKeywords = dangerousKeywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const regex = new RegExp(`(${escapedKeywords.join('|')})`, 'gi');
+    
+    const parts = content.split(regex);
+    
+    return parts.map((part, index) => {
+      const isKeyword = dangerousKeywords.some(k => k.toLowerCase() === part.toLowerCase());
+      if (isKeyword) {
+        return (
+          <span key={index} className="bg-red-500 text-white px-1 rounded font-medium">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
 
   const fetchAlerts = async () => {
     setIsLoading(true);
@@ -390,38 +434,58 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   대화 기록이 없습니다
                 </div>
               ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {msg.role === 'assistant' && (
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Bot className="h-4 w-4 text-primary" />
-                      </div>
-                    )}
+                messages.map((msg) => {
+                  const hasDangerousWord = msg.role === 'user' && containsDangerousKeyword(msg.content);
+                  return (
                     <div
-                      className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                        msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
+                      key={msg.id}
+                      className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                      <p className="text-xs mt-1 opacity-70">
-                        {format(new Date(msg.created_at), 'MM/dd HH:mm', { locale: ko })}
-                      </p>
-                    </div>
-                    {msg.role === 'user' && (
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                        <User className="h-4 w-4 text-primary-foreground" />
+                      {msg.role === 'assistant' && (
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Bot className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                          msg.role === 'user'
+                            ? hasDangerousWord 
+                              ? 'bg-red-100 border-2 border-red-500 text-red-900'
+                              : 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">
+                          {msg.role === 'user' ? highlightDangerousWords(msg.content) : msg.content}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {hasDangerousWord && (
+                            <AlertTriangle className="h-3 w-3 text-red-600" />
+                          )}
+                          <p className={`text-xs ${hasDangerousWord ? 'text-red-600' : 'opacity-70'}`}>
+                            {format(new Date(msg.created_at), 'MM/dd HH:mm', { locale: ko })}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))
+                      {msg.role === 'user' && (
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          hasDangerousWord ? 'bg-red-500' : 'bg-primary'
+                        }`}>
+                          <User className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           </ScrollArea>
+          {messages.some(m => m.role === 'user' && containsDangerousKeyword(m.content)) && (
+            <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <AlertTriangle className="h-4 w-4" />
+              <span>위험 키워드가 포함된 메시지가 있습니다</span>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
