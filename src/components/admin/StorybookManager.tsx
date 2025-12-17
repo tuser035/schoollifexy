@@ -594,6 +594,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                 <TableRow>
                   <TableHead className="w-16">번호</TableHead>
                   <TableHead>제목</TableHead>
+                  <TableHead className="max-w-[200px]">설명</TableHead>
                   <TableHead className="w-20">페이지</TableHead>
                   <TableHead className="w-20">상태</TableHead>
                   <TableHead className="w-32">작업</TableHead>
@@ -614,6 +615,9 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                         )}
                         <span>{book.title}</span>
                       </div>
+                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate text-muted-foreground text-sm">
+                      {book.description || '-'}
                     </TableCell>
                     <TableCell>{book.page_count}쪽</TableCell>
                     <TableCell>
