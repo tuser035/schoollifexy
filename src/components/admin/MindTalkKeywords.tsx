@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,20 @@ import { Plus, Trash2, Search, AlertTriangle, Upload, Download, FileUp, ToggleLe
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useRealtimeSync, TableSubscription } from '@/hooks/use-realtime-sync';
 
+// 키워드 실시간 동기화 테이블 설정
+const MINDTALK_KEYWORDS_TABLE: TableSubscription[] = [
+  {
+    table: 'mindtalk_keywords',
+    channelName: 'realtime_mindtalk_keywords',
+    labels: {
+      insert: '🔄 새 키워드가 추가되었습니다',
+      update: '🔄 키워드가 수정되었습니다',
+      delete: '🔄 키워드가 삭제되었습니다',
+    },
+  },
+];
 interface Keyword {
   id: string;
   keyword: string;
@@ -67,11 +80,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-  useEffect(() => {
-    loadKeywords();
-  }, []);
-
-  const loadKeywords = async () => {
+  const loadKeywords = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('mindtalk_keywords')
@@ -85,7 +94,18 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
       setKeywords(data || []);
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    loadKeywords();
+  }, [loadKeywords]);
+
+  // 실시간 동기화 훅 사용
+  useRealtimeSync({
+    tables: MINDTALK_KEYWORDS_TABLE,
+    onRefresh: loadKeywords,
+    enabled: true,
+  });
 
   const addKeyword = async () => {
     if (!newKeyword.trim()) {
