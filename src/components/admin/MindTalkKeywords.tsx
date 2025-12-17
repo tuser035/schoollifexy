@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, Search, AlertTriangle, Upload, Download, FileUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -60,6 +61,10 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
   // CSV 가져오기
   const [isImporting, setIsImporting] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  
+  // 일괄 삭제
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   useEffect(() => {
     loadKeywords();
@@ -284,7 +289,73 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
     } else {
       toast({ title: '키워드가 삭제되었습니다' });
       setKeywords(keywords.filter(k => k.id !== id));
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
+  };
+
+  // 일괄 삭제
+  const bulkDeleteKeywords = async () => {
+    if (selectedIds.size === 0) return;
+    
+    if (!confirm(`선택한 ${selectedIds.size}개의 키워드를 삭제하시겠습니까?`)) return;
+
+    setIsBulkDeleting(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const id of selectedIds) {
+      const { error } = await supabase
+        .from('mindtalk_keywords')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        errorCount++;
+      } else {
+        successCount++;
+      }
+    }
+
+    setIsBulkDeleting(false);
+    
+    if (successCount > 0) {
+      setKeywords(keywords.filter(k => !selectedIds.has(k.id)));
+      setSelectedIds(new Set());
+      toast({ 
+        title: '일괄 삭제 완료', 
+        description: errorCount > 0 
+          ? `${successCount}개 삭제, ${errorCount}개 오류` 
+          : `${successCount}개 키워드가 삭제되었습니다`
+      });
+    } else {
+      toast({ title: '삭제 실패', variant: 'destructive' });
+    }
+  };
+
+  // 전체 선택/해제
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredKeywords.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredKeywords.map(k => k.id)));
+    }
+  };
+
+  // 개별 선택/해제
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   const getCategoryBadge = (category: string) => {
@@ -479,8 +550,19 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
 
       {/* 검색 및 필터 */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">고위험 키워드 목록</CardTitle>
+          {selectedIds.size > 0 && (
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={bulkDeleteKeywords}
+              disabled={isBulkDeleting}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              {isBulkDeleting ? '삭제 중...' : `${selectedIds.size}개 삭제`}
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3 mb-4">
@@ -510,6 +592,12 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12 text-center">
+                    <Checkbox
+                      checked={filteredKeywords.length > 0 && selectedIds.size === filteredKeywords.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead className="w-32">카테고리</TableHead>
                   <TableHead>키워드</TableHead>
                   <TableHead className="hidden md:table-cell">설명</TableHead>
@@ -520,17 +608,26 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">로딩 중...</TableCell>
+                    <TableCell colSpan={6} className="text-center py-8">로딩 중...</TableCell>
                   </TableRow>
                 ) : filteredKeywords.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       키워드가 없습니다
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredKeywords.map((keyword) => (
-                    <TableRow key={keyword.id} className={!keyword.is_active ? 'opacity-50' : ''}>
+                    <TableRow 
+                      key={keyword.id} 
+                      className={`${!keyword.is_active ? 'opacity-50' : ''} ${selectedIds.has(keyword.id) ? 'bg-muted/50' : ''}`}
+                    >
+                      <TableCell className="text-center">
+                        <Checkbox
+                          checked={selectedIds.has(keyword.id)}
+                          onCheckedChange={() => toggleSelect(keyword.id)}
+                        />
+                      </TableCell>
                       <TableCell>{getCategoryBadge(keyword.category)}</TableCell>
                       <TableCell className="font-medium">{keyword.keyword}</TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
