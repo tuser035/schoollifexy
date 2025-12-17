@@ -419,7 +419,13 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={fetchAlerts} variant="outline">
+                <Button onClick={() => {
+                  setSearchText('');
+                  setSearchGrade('all');
+                  setSearchClass('all');
+                  setSortOption('danger-desc');
+                  fetchAlerts();
+                }} variant="outline">
                   새로고침
                 </Button>
                 <Select value={sortOption} onValueChange={(v) => setSortOption(v as typeof sortOption)}>
@@ -588,7 +594,12 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={fetchAllMessages} variant="outline">
+                <Button onClick={() => {
+                  setStudentSearchText('');
+                  setStudentSearchGrade('all');
+                  setStudentSearchClass('all');
+                  fetchAllMessages();
+                }} variant="outline">
                   새로고침
                 </Button>
               </div>
