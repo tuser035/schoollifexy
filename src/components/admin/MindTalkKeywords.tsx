@@ -358,6 +358,51 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
     });
   };
 
+  // 일괄 카테고리 변경
+  const [bulkChangeCategory, setBulkChangeCategory] = useState('');
+  const [isBulkChanging, setIsBulkChanging] = useState(false);
+
+  const bulkChangeCategoryFn = async () => {
+    if (selectedIds.size === 0 || !bulkChangeCategory) return;
+    
+    if (!confirm(`선택한 ${selectedIds.size}개 키워드의 카테고리를 변경하시겠습니까?`)) return;
+
+    setIsBulkChanging(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const id of selectedIds) {
+      const { error } = await supabase
+        .from('mindtalk_keywords')
+        .update({ category: bulkChangeCategory })
+        .eq('id', id);
+
+      if (error) {
+        errorCount++;
+      } else {
+        successCount++;
+      }
+    }
+
+    setIsBulkChanging(false);
+    
+    if (successCount > 0) {
+      setKeywords(keywords.map(k => 
+        selectedIds.has(k.id) ? { ...k, category: bulkChangeCategory } : k
+      ));
+      setSelectedIds(new Set());
+      setBulkChangeCategory('');
+      toast({ 
+        title: '카테고리 변경 완료', 
+        description: errorCount > 0 
+          ? `${successCount}개 변경, ${errorCount}개 오류` 
+          : `${successCount}개 키워드의 카테고리가 변경되었습니다`
+      });
+    } else {
+      toast({ title: '변경 실패', variant: 'destructive' });
+    }
+  };
+
   const getCategoryBadge = (category: string) => {
     const cat = CATEGORIES.find(c => c.value === category) || CATEGORIES[CATEGORIES.length - 1];
     return <Badge className={cat.color}>{cat.label}</Badge>;
@@ -550,18 +595,38 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
 
       {/* 검색 및 필터 */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-lg">고위험 키워드 목록</CardTitle>
           {selectedIds.size > 0 && (
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={bulkDeleteKeywords}
-              disabled={isBulkDeleting}
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              {isBulkDeleting ? '삭제 중...' : `${selectedIds.size}개 삭제`}
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={bulkChangeCategory} onValueChange={setBulkChangeCategory}>
+                <SelectTrigger className="w-32 h-8">
+                  <SelectValue placeholder="카테고리" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(cat => (
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={bulkChangeCategoryFn}
+                disabled={isBulkChanging || !bulkChangeCategory}
+              >
+                {isBulkChanging ? '변경 중...' : '카테고리 변경'}
+              </Button>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={bulkDeleteKeywords}
+                disabled={isBulkDeleting}
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                {isBulkDeleting ? '삭제 중...' : `${selectedIds.size}개 삭제`}
+              </Button>
+            </div>
           )}
         </CardHeader>
         <CardContent>
