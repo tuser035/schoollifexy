@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     const base64Data = fileBase64.split(',')[1] || fileBase64;
     const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
     
-    const filePath = `music/${Date.now()}_${fileName}`;
+    const filePath = `uploads/${Date.now()}_${fileName}`;
     
     const { error: uploadError } = await supabase.storage
       .from('mindtalk-music')

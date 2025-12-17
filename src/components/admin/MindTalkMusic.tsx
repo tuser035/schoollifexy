@@ -51,6 +51,22 @@ interface MindTalkMusicProps {
 
 const CATEGORIES = ['힐링', '활력', '위로', '집중', '휴식'];
 
+// Public 폴더에 있는 기존 음악 파일들 (직접 업로드된 것이 아닌)
+const PUBLIC_MUSIC_FILES = [
+  'music/walk-around.mp3',
+  'music/ukulele-piano.mp3',
+  'music/rainbow.mp3',
+  'music/dream-up.mp3',
+  'music/swing-machine.mp3',
+  'music/rescue-me.mp3',
+  'music/journey.mp3',
+  'music/feel-good.mp3',
+  'music/happy-children.mp3',
+  'music/bliss.mp3',
+];
+
+const isPublicMusicFile = (filePath: string) => PUBLIC_MUSIC_FILES.includes(filePath);
+
 export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -324,8 +340,8 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
       // Set admin session
       await supabase.rpc('set_admin_session', { admin_id_input: adminId });
 
-      // Delete from storage if it's a storage file
-      if (!track.file_path.startsWith('music/')) {
+      // Delete from storage if it's NOT a public folder file
+      if (!isPublicMusicFile(track.file_path)) {
         await supabase.storage.from('mindtalk-music').remove([track.file_path]);
       }
 
@@ -352,7 +368,8 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
       audioRef.current.pause();
       setPlayingId(null);
     } else {
-      const url = track.file_path.startsWith('music/') 
+      // Public 폴더에 있는 기존 파일은 직접 경로로, 나머지는 Storage에서
+      const url = isPublicMusicFile(track.file_path)
         ? `/${track.file_path}`
         : supabase.storage.from('mindtalk-music').getPublicUrl(track.file_path).data.publicUrl;
       

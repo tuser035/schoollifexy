@@ -24,6 +24,20 @@ interface MusicTrack {
   duration_seconds?: number;
 }
 
+// Public 폴더에 있는 기존 음악 파일들
+const PUBLIC_MUSIC_FILES = [
+  'music/walk-around.mp3',
+  'music/ukulele-piano.mp3',
+  'music/rainbow.mp3',
+  'music/dream-up.mp3',
+  'music/swing-machine.mp3',
+  'music/rescue-me.mp3',
+  'music/journey.mp3',
+  'music/feel-good.mp3',
+  'music/happy-children.mp3',
+  'music/bliss.mp3',
+];
+
 interface MindTalkMusicPlayerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -101,8 +115,8 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   }, [volume, isMuted]);
 
   const getAudioUrl = (filePath: string) => {
-    // If file is in public folder (music/...), use direct path
-    if (filePath.startsWith('music/')) {
+    // If file is in public folder (predefined list), use direct path
+    if (PUBLIC_MUSIC_FILES.includes(filePath)) {
       return `/${filePath}`;
     }
     // Otherwise use Supabase storage
