@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Search, AlertTriangle, MessageCircle, User, Bot, Filter } from 'lucide-react';
+
+import { Search, AlertTriangle, MessageCircle, User, Bot, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -42,6 +43,11 @@ interface MindTalkAlert {
   updated_at: string;
 }
 
+interface KeywordStat {
+  keyword: string;
+  count: number;
+}
+
 const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [alerts, setAlerts] = useState<MindTalkAlert[]>([]);
   const [messages, setMessages] = useState<MindTalkMessage[]>([]);
@@ -58,6 +64,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showOnlyDangerous, setShowOnlyDangerous] = useState(false);
+  const [expandedAlerts, setExpandedAlerts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchAlerts();
@@ -208,6 +215,41 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
     return { color: 'bg-blue-500', label: '정상' };
   };
 
+  // 학생별 키워드 통계 계산
+  const getKeywordStatsForStudent = (studentId: string): KeywordStat[] => {
+    const studentMessages = allMessages.filter(
+      m => m.student_id === studentId && m.role === 'user'
+    );
+    
+    const keywordCounts: Record<string, number> = {};
+    
+    studentMessages.forEach(msg => {
+      dangerousKeywords.forEach(keyword => {
+        const regex = new RegExp(keyword, 'gi');
+        const matches = msg.content.match(regex);
+        if (matches) {
+          keywordCounts[keyword] = (keywordCounts[keyword] || 0) + matches.length;
+        }
+      });
+    });
+    
+    return Object.entries(keywordCounts)
+      .map(([keyword, count]) => ({ keyword, count }))
+      .sort((a, b) => b.count - a.count);
+  };
+
+  const toggleAlertExpand = (alertId: string) => {
+    setExpandedAlerts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(alertId)) {
+        newSet.delete(alertId);
+      } else {
+        newSet.add(alertId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -272,6 +314,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-8"></TableHead>
                       <TableHead>학생</TableHead>
                       <TableHead>학년/반/번</TableHead>
                       <TableHead>위험단어 누적</TableHead>
@@ -283,40 +326,79 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   <TableBody>
                     {filteredAlerts.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           위험 감지 기록이 없습니다
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredAlerts.map((alert) => {
                         const danger = getDangerLevel(alert.dangerous_word_count);
+                        const isExpanded = expandedAlerts.has(alert.id);
+                        const keywordStats = getKeywordStatsForStudent(alert.student_id);
+                        
                         return (
-                          <TableRow key={alert.id}>
-                            <TableCell className="font-medium">{alert.student_name || '-'}</TableCell>
-                            <TableCell>
-                              {alert.student_grade}-{alert.student_class}-{alert.student_number}
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-bold text-red-600">{alert.dangerous_word_count}회</span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={danger.color}>{danger.label}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              {alert.last_alert_sent_at 
-                                ? format(new Date(alert.last_alert_sent_at), 'MM/dd HH:mm', { locale: ko })
-                                : '-'}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => fetchStudentMessages(alert.student_id, alert.student_name || '')}
-                              >
-                                대화보기
-                              </Button>
-                            </TableCell>
-                          </TableRow>
+                          <React.Fragment key={alert.id}>
+                            <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => toggleAlertExpand(alert.id)}>
+                              <TableCell className="w-8 p-2">
+                                {keywordStats.length > 0 && (
+                                  isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium">{alert.student_name || '-'}</TableCell>
+                              <TableCell>
+                                {alert.student_grade}-{alert.student_class}-{alert.student_number}
+                              </TableCell>
+                              <TableCell>
+                                <span className="font-bold text-red-600">{alert.dangerous_word_count}회</span>
+                                {keywordStats.length > 0 && (
+                                  <span className="ml-2 text-xs text-muted-foreground">({keywordStats.length}종류)</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={danger.color}>{danger.label}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                {alert.last_alert_sent_at 
+                                  ? format(new Date(alert.last_alert_sent_at), 'MM/dd HH:mm', { locale: ko })
+                                  : '-'}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    fetchStudentMessages(alert.student_id, alert.student_name || '');
+                                  }}
+                                >
+                                  대화보기
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                            {isExpanded && keywordStats.length > 0 && (
+                              <TableRow className="bg-muted/30">
+                                <TableCell colSpan={7} className="p-4">
+                                  <div className="space-y-2">
+                                    <div className="text-sm font-medium flex items-center gap-2">
+                                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                                      키워드별 사용 횟수
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {keywordStats.map(stat => (
+                                        <Badge
+                                          key={stat.keyword}
+                                          variant="outline"
+                                          className="bg-red-50 border-red-200 text-red-700"
+                                        >
+                                          {stat.keyword}: {stat.count}회
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
                         );
                       })
                     )}
