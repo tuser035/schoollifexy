@@ -101,6 +101,36 @@ const getInitialMessage = (studentName: string): Message => ({
   content: `**${studentName}** 안녕! 나는 마음톡이야❤️\n\n오늘 하루는 어땠어? 혹시 마음에 걸리는 게 있거나, 그냥 이야기하고 싶은 거 있으면 편하게 말해줘.\n\n아래 태그 중에서 지금 네 마음과 가까운 걸 골라도 좋고, 그냥 하고 싶은 말을 적어도 돼 💬`
 });
 
+// 사용 가능 시간 체크 (평일 오후 4:30 ~ 6:30)
+const isWithinAllowedHours = (): { allowed: boolean; message: string } => {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const currentTime = hours * 60 + minutes; // 현재 시간을 분으로 변환
+  
+  const startTime = 16 * 60 + 30; // 오후 4:30 = 990분
+  const endTime = 18 * 60 + 30;   // 오후 6:30 = 1110분
+  
+  // 주말 체크 (토요일=6, 일요일=0)
+  if (day === 0 || day === 6) {
+    return { 
+      allowed: false, 
+      message: '마음톡은 평일(월~금) 오후 4:30 ~ 6:30에만 이용할 수 있어요 📅' 
+    };
+  }
+  
+  // 시간 체크
+  if (currentTime < startTime || currentTime > endTime) {
+    return { 
+      allowed: false, 
+      message: '마음톡은 오후 4:30 ~ 6:30에만 이용할 수 있어요 ⏰' 
+    };
+  }
+  
+  return { allowed: true, message: '' };
+};
+
 export default function MindTalk({ studentId, studentName, studentGrade, studentClass, studentNumber }: MindTalkProps) {
   const [isOpen, setIsOpen] = useState(false);
   const initialMessage = getInitialMessage(studentName);
@@ -109,6 +139,20 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
   const [isLoading, setIsLoading] = useState(false);
   const [dangerCount, setDangerCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // MindTalk 열기 핸들러 (시간 체크 포함)
+  const handleOpenMindTalk = () => {
+    const { allowed, message } = isWithinAllowedHours();
+    if (!allowed) {
+      toast({
+        title: "이용 시간 안내",
+        description: message,
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsOpen(true);
+  };
 
   // 대화 기록 불러오기
   useEffect(() => {
@@ -308,7 +352,7 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
     <>
       {/* Floating Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpenMindTalk}
         className="fixed top-3 sm:top-4 right-3 sm:right-4 z-50 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-xs sm:text-sm"
       >
         <MessageCircleHeart className="w-4 h-4" />
