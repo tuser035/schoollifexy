@@ -384,17 +384,23 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
         <CardContent>
           <Tabs defaultValue="alerts" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="alerts" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="alerts" 
+                className="flex items-center gap-2 data-[state=active]:bg-mindtalk-alert-red data-[state=active]:text-white"
+              >
                 <AlertTriangle className="h-4 w-4" />
                 위험 감지 현황
               </TabsTrigger>
-              <TabsTrigger value="search" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="search" 
+                className="flex items-center gap-2 data-[state=active]:bg-mindtalk-chat-cyan data-[state=active]:text-white"
+              >
                 <Search className="h-4 w-4" />
                 학생별 대화 조회
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="alerts" className="space-y-4">
+            <TabsContent value="alerts" className="space-y-4 p-4 rounded-lg bg-mindtalk-alert-red-light border border-mindtalk-alert-red/20">
               {/* Filters */}
               <div className="flex flex-wrap gap-2">
                 <div className="flex-1 min-w-[200px]">
@@ -452,7 +458,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               </div>
 
               {/* Alerts Table */}
-              <div className="border rounded-lg">
+              <div className="border border-mindtalk-alert-red/30 rounded-lg bg-white">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -571,7 +577,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               </div>
             </TabsContent>
 
-            <TabsContent value="search" className="space-y-4">
+            <TabsContent value="search" className="space-y-4 p-4 rounded-lg bg-mindtalk-chat-cyan-light border border-mindtalk-chat-cyan/20">
               {/* Student Search Filters */}
               <div className="flex flex-wrap gap-2">
                 <div className="flex-1 min-w-[200px]">
@@ -626,7 +632,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               </div>
 
               {/* Students with Messages Table */}
-              <div className="border rounded-lg">
+              <div className="border border-mindtalk-chat-cyan/30 rounded-lg bg-white">
                 <Table>
                   <TableHeader>
                     <TableRow>
