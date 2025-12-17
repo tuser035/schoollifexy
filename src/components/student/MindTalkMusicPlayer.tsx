@@ -12,7 +12,8 @@ import {
   VolumeX,
   X,
   Shuffle,
-  Repeat
+  Repeat,
+  Heart
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -38,6 +39,8 @@ const PUBLIC_MUSIC_FILES = [
   'music/bliss.mp3',
 ];
 
+const FAVORITES_KEY = 'mindtalk_music_favorites';
+
 interface MindTalkMusicPlayerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -55,15 +58,46 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // 로컬스토리지에서 즐겨찾기 불러오기
+  useEffect(() => {
+    const stored = localStorage.getItem(FAVORITES_KEY);
+    if (stored) {
+      try {
+        setFavorites(new Set(JSON.parse(stored)));
+      } catch (e) {
+        console.error('Failed to parse favorites:', e);
+      }
+    }
+  }, []);
+
+  // 즐겨찾기 변경 시 로컬스토리지에 저장
+  const toggleFavorite = (trackId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(trackId)) {
+        newFavorites.delete(trackId);
+      } else {
+        newFavorites.add(trackId);
+      }
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify([...newFavorites]));
+      return newFavorites;
+    });
+  };
 
   // 카테고리 목록 추출
   const categories = [...new Set(tracks.map(t => t.category))];
   
   // 필터된 트랙 목록
-  const filteredTracks = selectedCategory 
-    ? tracks.filter(t => t.category === selectedCategory)
-    : tracks;
+  const filteredTracks = tracks.filter(t => {
+    const categoryMatch = !selectedCategory || t.category === selectedCategory;
+    const favoriteMatch = !showFavoritesOnly || favorites.has(t.id);
+    return categoryMatch && favoriteMatch;
+  });
 
   // Load music tracks
   useEffect(() => {
@@ -308,68 +342,95 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
             <span className="text-xs text-purple-300">{filteredTracks.length}곡</span>
           </div>
           
-          {/* Category Filter */}
-          {categories.length > 1 && (
-            <div className="px-4 pb-2 flex gap-1 flex-wrap">
+          {/* Category & Favorites Filter */}
+          <div className="px-4 pb-2 flex gap-1 flex-wrap">
+            <button
+              onClick={() => { setSelectedCategory(null); setShowFavoritesOnly(false); }}
+              className={`px-2 py-1 text-xs rounded-full transition-colors ${
+                selectedCategory === null && !showFavoritesOnly
+                  ? 'bg-pink-500 text-white'
+                  : 'bg-white/10 text-purple-200 hover:bg-white/20'
+              }`}
+            >
+              전체
+            </button>
+            <button
+              onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setSelectedCategory(null); }}
+              className={`px-2 py-1 text-xs rounded-full transition-colors flex items-center gap-1 ${
+                showFavoritesOnly
+                  ? 'bg-pink-500 text-white'
+                  : 'bg-white/10 text-purple-200 hover:bg-white/20'
+              }`}
+            >
+              <Heart className={`w-3 h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
+              즐겨찾기
+            </button>
+            {categories.map((cat) => (
               <button
-                onClick={() => setSelectedCategory(null)}
+                key={cat}
+                onClick={() => { setSelectedCategory(cat); setShowFavoritesOnly(false); }}
                 className={`px-2 py-1 text-xs rounded-full transition-colors ${
-                  selectedCategory === null
+                  selectedCategory === cat
                     ? 'bg-pink-500 text-white'
                     : 'bg-white/10 text-purple-200 hover:bg-white/20'
                 }`}
               >
-                전체
+                {cat}
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-2 py-1 text-xs rounded-full transition-colors ${
-                    selectedCategory === cat
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-white/10 text-purple-200 hover:bg-white/20'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
           
           <ScrollArea className="h-40">
             {isLoading ? (
               <div className="p-4 text-center text-purple-200">로딩 중...</div>
             ) : filteredTracks.length === 0 ? (
-              <div className="p-4 text-center text-purple-200">음악이 없습니다</div>
+              <div className="p-4 text-center text-purple-200">
+                {showFavoritesOnly ? '즐겨찾기가 없습니다' : '음악이 없습니다'}
+              </div>
             ) : (
               <div className="space-y-1 px-2 pb-2">
                 {filteredTracks.map((track) => (
-                  <button
+                  <div
                     key={track.id}
-                    onClick={() => playTrack(track)}
-                    className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                    className={`w-full flex items-center gap-2 p-2 rounded-lg transition-colors ${
                       currentTrack?.id === track.id
                         ? 'bg-white/20 text-white'
                         : 'text-purple-200 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <div className="w-8 h-8 rounded bg-purple-500/30 flex items-center justify-center flex-shrink-0">
-                      {currentTrack?.id === track.id && isPlaying ? (
-                        <div className="flex gap-0.5">
-                          <span className="w-1 h-3 bg-pink-400 animate-pulse"></span>
-                          <span className="w-1 h-4 bg-pink-400 animate-pulse" style={{ animationDelay: '0.1s' }}></span>
-                          <span className="w-1 h-2 bg-pink-400 animate-pulse" style={{ animationDelay: '0.2s' }}></span>
-                        </div>
-                      ) : (
-                        <Music className="w-4 h-4" />
-                      )}
-                    </div>
-                    <div className="text-left overflow-hidden">
-                      <p className="text-sm font-medium truncate">{track.title}</p>
-                      <p className="text-xs opacity-70">{track.category}</p>
-                    </div>
-                  </button>
+                    <button
+                      onClick={() => playTrack(track)}
+                      className="flex items-center gap-3 flex-1 min-w-0"
+                    >
+                      <div className="w-8 h-8 rounded bg-purple-500/30 flex items-center justify-center flex-shrink-0">
+                        {currentTrack?.id === track.id && isPlaying ? (
+                          <div className="flex gap-0.5">
+                            <span className="w-1 h-3 bg-pink-400 animate-pulse"></span>
+                            <span className="w-1 h-4 bg-pink-400 animate-pulse" style={{ animationDelay: '0.1s' }}></span>
+                            <span className="w-1 h-2 bg-pink-400 animate-pulse" style={{ animationDelay: '0.2s' }}></span>
+                          </div>
+                        ) : (
+                          <Music className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div className="text-left overflow-hidden">
+                        <p className="text-sm font-medium truncate">{track.title}</p>
+                        <p className="text-xs opacity-70">{track.category}</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={(e) => toggleFavorite(track.id, e)}
+                      className="p-1 hover:bg-white/10 rounded transition-colors flex-shrink-0"
+                    >
+                      <Heart 
+                        className={`w-4 h-4 transition-colors ${
+                          favorites.has(track.id) 
+                            ? 'fill-pink-400 text-pink-400' 
+                            : 'text-purple-300 hover:text-pink-300'
+                        }`} 
+                      />
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
