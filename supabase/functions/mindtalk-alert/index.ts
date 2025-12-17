@@ -39,16 +39,15 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find homeroom teacher
-    const { data: teacher, error: teacherError } = await supabase
+    // Find homeroom teachers (공동담임 지원)
+    const { data: teachers, error: teacherError } = await supabase
       .from('teachers')
       .select('id, name, teacher_email')
       .eq('grade', studentGrade)
       .eq('class', studentClass)
-      .eq('is_homeroom', true)
-      .single();
+      .eq('is_homeroom', true);
 
-    if (teacherError || !teacher) {
+    if (teacherError || !teachers || teachers.length === 0) {
       console.log(`No homeroom teacher found for grade ${studentGrade} class ${studentClass}`);
       return new Response(JSON.stringify({ 
         success: false, 
@@ -57,6 +56,21 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // 이메일이 있는 담임선생님만 필터링
+    const validTeachers = teachers.filter(t => t.teacher_email);
+    
+    if (validTeachers.length === 0) {
+      console.log("Homeroom teachers have no email addresses");
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: "담임선생님의 이메일이 등록되어 있지 않습니다." 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Found ${validTeachers.length} homeroom teacher(s): ${validTeachers.map(t => t.name).join(', ')}`);
 
     // Get reply-to email setting
     const { data: replyToSetting } = await supabase
@@ -155,25 +169,29 @@ serve(async (req) => {
       </html>
     `;
 
-    const { data: emailResult, error: emailError } = await resend.emails.send({
-      from: "스쿨포인트 마음톡 <noreply@schoolpoint.store>",
-      to: [teacher.teacher_email],
-      reply_to: replyToEmail,
-      subject: `🚨 [긴급] ${studentName} 학생 마음톡 위험 신호 감지`,
-      html: emailHtml,
-    });
+    // 모든 담임선생님에게 이메일 발송 (공동담임 지원)
+    const emailPromises = validTeachers.map(teacher => 
+      resend.emails.send({
+        from: "스쿨포인트 마음톡 <noreply@schoolpoint.store>",
+        to: [teacher.teacher_email],
+        reply_to: replyToEmail,
+        subject: `🚨 [긴급] ${studentName} 학생 마음톡 위험 신호 감지`,
+        html: emailHtml,
+      })
+    );
 
-    if (emailError) {
-      console.error("Email send error:", emailError);
-      throw emailError;
-    }
+    const emailResults = await Promise.allSettled(emailPromises);
+    const successCount = emailResults.filter(r => r.status === 'fulfilled').length;
+    const teacherNames = validTeachers.map(t => t.name).join(', ');
 
-    console.log(`✅ Alert email sent to ${teacher.name} (${teacher.teacher_email})`);
+    console.log(`✅ Alert emails sent to ${successCount}/${validTeachers.length} homeroom teachers`);
 
     return new Response(JSON.stringify({ 
-      success: true, 
-      message: `담임선생님(${teacher.name})께 알림이 발송되었습니다.`,
-      emailId: emailResult?.id
+      success: successCount > 0, 
+      message: successCount === validTeachers.length 
+        ? `담임선생님(${teacherNames})께 알림이 발송되었습니다.`
+        : `담임선생님 ${successCount}/${validTeachers.length}명에게 알림이 발송되었습니다.`,
+      sentCount: successCount
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
