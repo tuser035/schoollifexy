@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
@@ -11,7 +13,10 @@ import {
   ChevronRight, 
   X, 
   BookMarked,
-  CheckCircle2
+  CheckCircle2,
+  Star,
+  PenLine,
+  Send
 } from 'lucide-react';
 
 interface Storybook {
@@ -32,6 +37,15 @@ interface StorybookPage {
   text_content: string | null;
 }
 
+interface Review {
+  id: string;
+  book_id: string;
+  book_title: string;
+  content: string;
+  rating: number;
+  created_at: string;
+}
+
 interface StorybookLibraryProps {
   studentId: string;
 }
@@ -43,9 +57,18 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [pages, setPages] = useState<StorybookPage[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isReaderOpen, setIsReaderOpen] = useState(false);
+  
+  // Review states
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [reviewContent, setReviewContent] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [myReviews, setMyReviews] = useState<Review[]>([]);
+  const [showMyReviews, setShowMyReviews] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     loadBooks();
+    loadMyReviews();
   }, [studentId]);
 
   const loadBooks = async () => {
@@ -62,6 +85,19 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       toast.error('동화책을 불러오는데 실패했습니다');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMyReviews = async () => {
+    try {
+      const { data, error } = await supabase.rpc('student_get_reviews', {
+        student_id_input: studentId
+      });
+
+      if (error) throw error;
+      setMyReviews(data || []);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
     }
   };
 
@@ -96,7 +132,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       });
 
       if (completed) {
-        toast.success('동화책을 다 읽었습니다! 🎉');
+        toast.success('동화책을 다 읽었습니다! 🎉 독후감을 작성해보세요!');
+        // Show review dialog after completing
+        setTimeout(() => {
+          setIsReviewDialogOpen(true);
+        }, 1000);
       }
     } catch (error) {
       console.error('Error saving progress:', error);
@@ -125,17 +165,109 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     loadBooks(); // Refresh to update progress
   };
 
+  const handleSubmitReview = async () => {
+    if (!selectedBook) return;
+    if (!reviewContent.trim()) {
+      toast.error('독후감 내용을 입력해주세요');
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const { error } = await supabase.rpc('student_save_review', {
+        student_id_input: studentId,
+        book_id_input: selectedBook.id,
+        content_input: reviewContent,
+        rating_input: reviewRating
+      });
+
+      if (error) throw error;
+
+      toast.success('독후감이 저장되었습니다! 📝');
+      setIsReviewDialogOpen(false);
+      setReviewContent('');
+      setReviewRating(5);
+      loadMyReviews();
+    } catch (error) {
+      console.error('Error saving review:', error);
+      toast.error('독후감 저장에 실패했습니다');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const openReviewDialog = (book: Storybook) => {
+    setSelectedBook(book);
+    // Check if already has review
+    const existingReview = myReviews.find(r => r.book_id === book.id);
+    if (existingReview) {
+      setReviewContent(existingReview.content);
+      setReviewRating(existingReview.rating);
+    } else {
+      setReviewContent('');
+      setReviewRating(5);
+    }
+    setIsReviewDialogOpen(true);
+  };
+
   const currentPageData = pages.find(p => p.page_number === currentPage);
 
   return (
     <div className="p-4">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold flex items-center gap-2 text-amber-800">
-          <BookOpen className="w-7 h-7" />
-          인문학 서점
-        </h2>
-        <p className="text-muted-foreground mt-1">매일 한 권씩 읽어보세요</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2 text-amber-800">
+            <BookOpen className="w-7 h-7" />
+            인문학 서점
+          </h2>
+          <p className="text-muted-foreground mt-1">매일 한 권씩 읽어보세요</p>
+        </div>
+        <Button 
+          variant={showMyReviews ? "default" : "outline"}
+          onClick={() => setShowMyReviews(!showMyReviews)}
+          className={showMyReviews ? "bg-amber-600 hover:bg-amber-700" : "border-amber-300"}
+        >
+          <PenLine className="w-4 h-4 mr-1" />
+          내 독후감 ({myReviews.length})
+        </Button>
       </div>
+
+      {/* My Reviews Section */}
+      {showMyReviews && (
+        <Card className="mb-6 border-amber-200">
+          <CardContent className="pt-4">
+            <h3 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
+              <PenLine className="w-5 h-5" />
+              내가 쓴 독후감
+            </h3>
+            {myReviews.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">아직 작성한 독후감이 없습니다</p>
+            ) : (
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {myReviews.map((review) => (
+                  <div key={review.id} className="p-3 bg-amber-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-amber-900">{review.book_title}</span>
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {new Date(review.created_at).toLocaleDateString('ko-KR')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">
@@ -149,57 +281,82 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         /* Bookshelf Style Grid */
         <div className="bg-gradient-to-b from-amber-900 to-amber-800 rounded-lg p-6 shadow-xl">
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3">
-            {books.map((book) => (
-              <div
-                key={book.id}
-                className="relative group cursor-pointer"
-                onClick={() => openBook(book)}
-              >
-                {/* Book Spine */}
-                <div 
-                  className="relative bg-gradient-to-r from-amber-100 to-amber-50 rounded-sm shadow-lg transform transition-transform group-hover:-translate-y-2 group-hover:rotate-[-2deg]"
-                  style={{ 
-                    height: '180px',
-                    width: '100%',
-                    minWidth: '50px'
-                  }}
+            {books.map((book) => {
+              const hasReview = myReviews.some(r => r.book_id === book.id);
+              return (
+                <div
+                  key={book.id}
+                  className="relative group"
                 >
-                  {book.cover_image_url ? (
-                    <img 
-                      src={book.cover_image_url} 
-                      alt={book.title}
-                      className="w-full h-full object-cover rounded-sm"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-gradient-to-b from-amber-200 to-amber-100">
-                      <span className="text-xs font-bold text-amber-900 text-center leading-tight">
-                        {book.book_number}
-                      </span>
-                      <BookOpen className="w-6 h-6 text-amber-700 my-1" />
-                      <span className="text-[10px] text-amber-800 text-center leading-tight line-clamp-3">
-                        {book.title}
-                      </span>
-                    </div>
-                  )}
+                  {/* Book Spine */}
+                  <div 
+                    className="relative bg-gradient-to-r from-amber-100 to-amber-50 rounded-sm shadow-lg transform transition-transform group-hover:-translate-y-2 group-hover:rotate-[-2deg] cursor-pointer"
+                    style={{ 
+                      height: '180px',
+                      width: '100%',
+                      minWidth: '50px'
+                    }}
+                    onClick={() => openBook(book)}
+                  >
+                    {book.cover_image_url ? (
+                      <img 
+                        src={book.cover_image_url} 
+                        alt={book.title}
+                        className="w-full h-full object-cover rounded-sm"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-gradient-to-b from-amber-200 to-amber-100">
+                        <span className="text-xs font-bold text-amber-900 text-center leading-tight">
+                          {book.book_number}
+                        </span>
+                        <BookOpen className="w-6 h-6 text-amber-700 my-1" />
+                        <span className="text-[10px] text-amber-800 text-center leading-tight line-clamp-3">
+                          {book.title}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Reading Progress Indicator */}
+                    {book.is_completed ? (
+                      <div className="absolute top-1 right-1">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 bg-white rounded-full" />
+                      </div>
+                    ) : book.last_page > 0 ? (
+                      <div className="absolute top-1 right-1">
+                        <BookMarked className="w-4 h-4 text-amber-600 bg-white rounded-full p-0.5" />
+                      </div>
+                    ) : null}
+
+                    {/* Has Review Indicator */}
+                    {hasReview && (
+                      <div className="absolute top-1 left-1">
+                        <PenLine className="w-4 h-4 text-blue-500 bg-white rounded-full p-0.5" />
+                      </div>
+                    )}
+                  </div>
                   
-                  {/* Reading Progress Indicator */}
-                  {book.is_completed ? (
-                    <div className="absolute top-1 right-1">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 bg-white rounded-full" />
-                    </div>
-                  ) : book.last_page > 0 ? (
-                    <div className="absolute top-1 right-1">
-                      <BookMarked className="w-4 h-4 text-amber-600 bg-white rounded-full p-0.5" />
-                    </div>
-                  ) : null}
+                  {/* Book Number */}
+                  <div className="absolute -top-2 -left-1 bg-amber-600 text-white text-xs px-1.5 py-0.5 rounded font-bold shadow">
+                    {book.book_number}
+                  </div>
+
+                  {/* Write Review Button (appears on hover for completed books) */}
+                  {book.is_completed && (
+                    <Button
+                      size="sm"
+                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-amber-600 hover:bg-amber-700 text-xs px-2 py-1 h-auto"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openReviewDialog(book);
+                      }}
+                    >
+                      <PenLine className="w-3 h-3 mr-1" />
+                      독후감
+                    </Button>
+                  )}
                 </div>
-                
-                {/* Book Number */}
-                <div className="absolute -top-2 -left-1 bg-amber-600 text-white text-xs px-1.5 py-0.5 rounded font-bold shadow">
-                  {book.book_number}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
           {/* Shelf */}
@@ -220,6 +377,17 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               <Badge variant="secondary" className="bg-amber-100 text-amber-800">
                 {currentPage} / {pages.length}
               </Badge>
+              {selectedBook?.is_completed && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsReviewDialogOpen(true)}
+                  className="text-white hover:bg-amber-700"
+                >
+                  <PenLine className="w-4 h-4 mr-1" />
+                  독후감
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={closeReader} className="text-white hover:bg-amber-700">
                 <X className="w-4 h-4" />
               </Button>
@@ -339,6 +507,67 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             >
               다음
               <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Dialog */}
+      <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PenLine className="w-5 h-5 text-amber-600" />
+              독후감 작성
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                {selectedBook?.title}
+              </p>
+            </div>
+            
+            <div>
+              <Label>별점</Label>
+              <div className="flex gap-1 mt-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="p-1"
+                  >
+                    <Star 
+                      className={`w-6 h-6 transition-colors ${
+                        star <= reviewRating 
+                          ? 'text-yellow-500 fill-yellow-500' 
+                          : 'text-gray-300 hover:text-yellow-400'
+                      }`} 
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label>독후감</Label>
+              <Textarea
+                placeholder="책을 읽고 느낀 점을 자유롭게 작성해주세요..."
+                value={reviewContent}
+                onChange={(e) => setReviewContent(e.target.value)}
+                rows={6}
+                className="mt-1"
+              />
+            </div>
+
+            <Button 
+              onClick={handleSubmitReview} 
+              className="w-full bg-amber-600 hover:bg-amber-700"
+              disabled={submittingReview}
+            >
+              <Send className="w-4 h-4 mr-1" />
+              {submittingReview ? '저장 중...' : '독후감 저장'}
             </Button>
           </div>
         </DialogContent>
