@@ -15,7 +15,7 @@ const GradeStatistics = () => {
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [chartType, setChartType] = useState<"bar" | "line">("bar");
+  const [chartType, setChartType] = useState<"bar" | "line">("line");
   const [useCustomRange, setUseCustomRange] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
