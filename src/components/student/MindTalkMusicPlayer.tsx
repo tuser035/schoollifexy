@@ -517,18 +517,18 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
     <div className="fixed top-2 left-2 right-2 sm:left-auto sm:top-3 sm:right-3 z-[60] sm:w-[340px] max-h-[85vh] sm:max-h-[90vh] overflow-hidden">
       <div className="bg-gradient-to-b from-purple-900 via-purple-800 to-pink-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <div className="flex items-center gap-2 text-white">
-            <Music className="w-5 h-5" />
-            <span className="font-medium">힐링 뮤직</span>
+        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10">
+          <div className="flex items-center gap-1.5 text-white">
+            <Music className="w-3.5 h-3.5" />
+            <span className="font-medium text-sm">힐링 뮤직</span>
           </div>
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={onClose}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-white/10 h-7 w-7 p-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </Button>
         </div>
 
@@ -763,7 +763,7 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
             ))}
           </div>
           
-          <ScrollArea className="h-40">
+          <ScrollArea className="h-48 [&_[data-radix-scroll-area-scrollbar]]:w-1.5 [&_[data-radix-scroll-area-thumb]]:bg-white/30">
             {isLoading ? (
               <div className="p-4 text-center text-purple-200">로딩 중...</div>
             ) : filteredTracks.length === 0 ? (
