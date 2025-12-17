@@ -682,6 +682,44 @@ export type Database = {
           },
         ]
       }
+      storybook_reviews: {
+        Row: {
+          book_id: string
+          content: string
+          created_at: string
+          id: string
+          rating: number | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          content: string
+          created_at?: string
+          id?: string
+          rating?: number | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          rating?: number | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storybook_reviews_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "storybooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storybooks: {
         Row: {
           book_number: number
@@ -1176,6 +1214,20 @@ export type Database = {
           image_url: string[]
           reason: string
           teacher_name: string
+        }[]
+      }
+      admin_get_reading_statistics: {
+        Args: { admin_id_input: string }
+        Returns: {
+          avg_rating: number
+          completed_books: number
+          student_class: number
+          student_grade: number
+          student_id: string
+          student_name: string
+          student_number: number
+          total_books_read: number
+          total_reviews: number
         }[]
       }
       admin_get_storage_files: {
@@ -1758,6 +1810,17 @@ export type Database = {
           updated_at: string
         }[]
       }
+      student_get_reviews: {
+        Args: { student_id_input: string }
+        Returns: {
+          book_id: string
+          book_title: string
+          content: string
+          created_at: string
+          id: string
+          rating: number
+        }[]
+      }
       student_get_storybook_pages: {
         Args: { book_id_input: string; student_id_input: string }
         Returns: {
@@ -1800,6 +1863,15 @@ export type Database = {
         Args: {
           music_ids_input: string[]
           playlist_name_input: string
+          student_id_input: string
+        }
+        Returns: string
+      }
+      student_save_review: {
+        Args: {
+          book_id_input: string
+          content_input: string
+          rating_input: number
           student_id_input: string
         }
         Returns: string

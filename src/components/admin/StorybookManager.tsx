@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import Papa from 'papaparse';
 import { 
   BookOpen, 
   Plus, 
@@ -25,7 +27,9 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
-  Save
+  Save,
+  FileSpreadsheet,
+  Download
 } from 'lucide-react';
 
 interface Storybook {
@@ -71,6 +75,12 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [pageImagePreview, setPageImagePreview] = useState<string | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  // CSV upload states
+  const [isCsvDialogOpen, setIsCsvDialogOpen] = useState(false);
+  const [csvUploading, setCsvUploading] = useState(false);
+  const [csvProgress, setCsvProgress] = useState(0);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadBooks();
@@ -281,6 +291,73 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     setPageImagePreview(page?.image_url || null);
   };
 
+  // CSV bulk upload handler
+  const handleCsvUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setCsvUploading(true);
+    setCsvProgress(0);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const rows = results.data as { 번호: string; 제목: string; 설명?: string }[];
+        const total = rows.length;
+        let success = 0;
+        let failed = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row.번호 || !row.제목) {
+            failed++;
+            continue;
+          }
+
+          try {
+            await supabase.rpc('admin_insert_storybook', {
+              admin_id_input: adminId,
+              book_number_input: parseInt(row.번호),
+              title_input: row.제목,
+              description_input: row.설명 || null
+            });
+            success++;
+          } catch (error) {
+            failed++;
+          }
+
+          setCsvProgress(Math.round(((i + 1) / total) * 100));
+        }
+
+        setCsvUploading(false);
+        setIsCsvDialogOpen(false);
+        if (csvInputRef.current) csvInputRef.current.value = '';
+        
+        toast.success(`${success}권 등록 완료${failed > 0 ? `, ${failed}건 실패` : ''}`);
+        loadBooks();
+      },
+      error: (error) => {
+        console.error('CSV parse error:', error);
+        toast.error('CSV 파일을 읽는데 실패했습니다');
+        setCsvUploading(false);
+      }
+    });
+  };
+
+  const downloadCsvTemplate = () => {
+    const headers = ['번호', '제목', '설명'];
+    const example = ['1', '아기돼지 삼형제', '유명한 동화'];
+    const csvContent = [headers.join(','), example.join(',')].join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '동화책_일괄등록_양식.csv';
+    link.click();
+    toast.success('CSV 양식이 다운로드되었습니다');
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -289,11 +366,52 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             <BookOpen className="w-5 h-5 text-amber-600" />
             인문학 동화책 관리
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={loadBooks}>
               <RefreshCw className="w-4 h-4 mr-1" />
               새로고침
             </Button>
+            <Dialog open={isCsvDialogOpen} onOpenChange={setIsCsvDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <FileSpreadsheet className="w-4 h-4 mr-1" />
+                  CSV 일괄등록
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>CSV 일괄 등록</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    CSV 파일로 여러 동화책을 한 번에 등록할 수 있습니다.
+                    <br />필수 컬럼: 번호, 제목 / 선택 컬럼: 설명
+                  </div>
+                  <Button variant="outline" onClick={downloadCsvTemplate} className="w-full">
+                    <Download className="w-4 h-4 mr-1" />
+                    CSV 양식 다운로드
+                  </Button>
+                  <div>
+                    <Label htmlFor="csv-upload">CSV 파일 선택</Label>
+                    <Input
+                      id="csv-upload"
+                      ref={csvInputRef}
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCsvUpload}
+                      disabled={csvUploading}
+                      className="mt-1"
+                    />
+                  </div>
+                  {csvUploading && (
+                    <div className="space-y-2">
+                      <Progress value={csvProgress} />
+                      <p className="text-sm text-center text-muted-foreground">{csvProgress}% 처리 중...</p>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
