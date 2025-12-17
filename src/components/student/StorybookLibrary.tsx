@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSwipe } from '@/hooks/use-swipe';
@@ -23,7 +25,7 @@ import {
   VolumeX,
   Maximize,
   Minimize,
-  Square
+  Settings2
 } from 'lucide-react';
 
 interface Storybook {
@@ -75,6 +77,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   // TTS states
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechRate, setSpeechRate] = useState(0.9);
+  const [showSpeedControl, setShowSpeedControl] = useState(false);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
   
   // Fullscreen states
@@ -99,7 +103,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ko-KR';
-    utterance.rate = 0.9;
+    utterance.rate = speechRate;
     utterance.pitch = 1;
     
     utterance.onstart = () => setIsSpeaking(true);
@@ -111,7 +115,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
     speechSynthRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [stopSpeaking]);
+  }, [stopSpeaking, speechRate]);
 
   // Fullscreen Functions
   const toggleFullscreen = useCallback(async () => {
@@ -519,6 +523,41 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   <Volume2 className="w-4 h-4" />
                 )}
               </Button>
+
+              {/* Speed Control */}
+              <Popover open={showSpeedControl} onOpenChange={setShowSpeedControl}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-white hover:bg-amber-700 p-1 md:p-2"
+                    title="읽기 속도"
+                  >
+                    <Settings2 className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-3" align="end">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">읽기 속도</Label>
+                      <span className="text-sm text-muted-foreground">{speechRate.toFixed(1)}x</span>
+                    </div>
+                    <Slider
+                      value={[speechRate]}
+                      onValueChange={(value) => setSpeechRate(value[0])}
+                      min={0.5}
+                      max={2}
+                      step={0.1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>느리게</span>
+                      <span>보통</span>
+                      <span>빠르게</span>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
 
               {/* Fullscreen Button */}
               <Button 
