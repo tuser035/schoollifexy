@@ -61,18 +61,15 @@ const handler = async (req: Request): Promise<Response> => {
       studentClass,
     });
 
-    // 담임 선생님 찾기 (is_homeroom = true, 같은 학년, 같은 반)
+    // 담임 선생님 찾기 (is_homeroom = true, 같은 학년, 같은 반) - 공동담임 지원
     const { data: homeroomTeachers, error: teacherError } = await supabase
       .from("teachers")
       .select("id, name, teacher_email")
       .eq("is_homeroom", true)
       .eq("grade", studentGrade)
-      .eq("class", studentClass)
-      .limit(1);
-    
-    const homeroomTeacher = homeroomTeachers?.[0];
+      .eq("class", studentClass);
 
-    if (teacherError || !homeroomTeacher) {
+    if (teacherError || !homeroomTeachers || homeroomTeachers.length === 0) {
       console.log(`No homeroom teacher found for grade ${studentGrade}, class ${studentClass}`);
       return new Response(
         JSON.stringify({
@@ -86,8 +83,11 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!homeroomTeacher.teacher_email) {
-      console.log(`Homeroom teacher ${homeroomTeacher.name} has no email`);
+    // 이메일이 있는 담임선생님만 필터링
+    const validTeachers = homeroomTeachers.filter(t => t.teacher_email);
+    
+    if (validTeachers.length === 0) {
+      console.log(`Homeroom teachers have no email addresses`);
       return new Response(
         JSON.stringify({
           success: false,
@@ -100,7 +100,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Found homeroom teacher: ${homeroomTeacher.name} (${homeroomTeacher.teacher_email})`);
+    console.log(`Found ${validTeachers.length} homeroom teacher(s): ${validTeachers.map(t => t.name).join(', ')}`);
+
+    // 첫 번째 담임을 기본으로 사용 (이메일 내용용)
+    const primaryTeacher = validTeachers[0];
 
     // 답장 이메일 주소 가져오기
     const { data: replyToSetting } = await supabase.rpc("get_system_setting", {
@@ -132,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
             <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              안녕하세요, 담임 선생님.<br>
               담당 학급 학생이 <strong style="color: #16a34a;">이달의학생</strong>으로 선정되었습니다! 🎉
             </p>
             
@@ -192,7 +195,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
             <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              안녕하세요, 담임 선생님.<br>
               담당 학급 학생의 <strong style="color: #2563eb;">상점 부여</strong> 내역을 알려드립니다. 🎉
             </p>
             
@@ -256,7 +259,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
             <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              안녕하세요, 담임 선생님.<br>
               담당 학급 학생의 <strong style="color: #6b7280;">상점이 삭제</strong>되었음을 알려드립니다.
             </p>
             
@@ -310,7 +313,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
             <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              안녕하세요, 담임 선생님.<br>
               담당 학급 학생의 <strong style="color: #6b7280;">벌점이 삭제</strong>되었음을 알려드립니다.
             </p>
             
@@ -364,7 +367,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
             <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              안녕하세요, 담임 선생님.<br>
               담당 학급 학생의 <strong style="color: #6b7280;">이달의학생 선정이 취소</strong>되었음을 알려드립니다.
             </p>
             
@@ -414,7 +417,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="background: #fff; border: 1px solid #e5e7eb; border-top: none; padding: 25px; border-radius: 0 0 10px 10px;">
             <p style="color: #374151; font-size: 15px; line-height: 1.6;">
-              안녕하세요, <strong>${homeroomTeacher.name}</strong> 선생님.<br>
+              안녕하세요, 담임 선생님.<br>
               담당 학급 학생의 벌점 부여 내역을 알려드립니다.
             </p>
             
@@ -469,21 +472,31 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // 이메일 발송
-    const emailResponse = await resend.emails.send({
-      from: `School Life <${fromEmail}>`,
-      replyTo: replyToEmail,
-      to: [homeroomTeacher.teacher_email],
-      subject: emailSubject,
-      html: emailHtml,
-    });
+    // 모든 담임선생님에게 이메일 발송 (공동담임 지원)
+    const emailPromises = validTeachers.map(teacher => 
+      resend.emails.send({
+        from: `School Life <${fromEmail}>`,
+        replyTo: replyToEmail,
+        to: [teacher.teacher_email],
+        subject: emailSubject,
+        html: emailHtml,
+      })
+    );
 
-    console.log("Email sent successfully:", emailResponse);
+    const emailResults = await Promise.allSettled(emailPromises);
+    const successCount = emailResults.filter(r => r.status === 'fulfilled').length;
+    const teacherNames = validTeachers.map(t => t.name).join(', ');
+
+    console.log(`Emails sent to ${successCount}/${validTeachers.length} homeroom teachers`);
 
     return new Response(
       JSON.stringify({
-        success: true,
-        message: `담임 선생님(${homeroomTeacher.name})에게 알림이 발송되었습니다`,
-        homeroomTeacher: homeroomTeacher.name,
+        success: successCount > 0,
+        message: successCount === validTeachers.length 
+          ? `담임 선생님(${teacherNames})에게 알림이 발송되었습니다`
+          : `담임 선생님 ${successCount}/${validTeachers.length}명에게 알림이 발송되었습니다`,
+        homeroomTeachers: validTeachers.map(t => t.name),
+        sentCount: successCount,
       }),
       {
         status: 200,
