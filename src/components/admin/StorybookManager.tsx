@@ -99,6 +99,9 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [csvUploading, setCsvUploading] = useState(false);
   const [csvProgress, setCsvProgress] = useState(0);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  
+  // Description editing state
+  const [editDescription, setEditDescription] = useState('');
 
   useEffect(() => {
     loadBooks();
@@ -183,8 +186,28 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     setPageText('');
     setPageImagePreview(null);
     setCoverImagePreview(book.cover_image_url);
+    setEditDescription(book.description || '');
     loadPages(book.id);
     setIsEditDialogOpen(true);
+  };
+
+  const handleSaveDescription = async () => {
+    if (!selectedBook) return;
+    
+    try {
+      const { error } = await supabase.rpc('admin_update_storybook_description', {
+        admin_id_input: adminId,
+        book_id_input: selectedBook.id,
+        description_input: editDescription
+      });
+
+      if (error) throw error;
+      toast.success('설명이 저장되었습니다');
+      loadBooks();
+    } catch (error) {
+      console.error('Error saving description:', error);
+      toast.error('설명 저장에 실패했습니다');
+    }
   };
 
   const handlePreviewBook = async (book: Storybook) => {
@@ -698,6 +721,24 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                     disabled={uploading}
                   />
                 </div>
+              </div>
+              
+              {/* Description Edit Section */}
+              <div className="mt-6 space-y-2">
+                <Label className="flex items-center gap-1">
+                  <FileText className="w-4 h-4" />
+                  책 설명
+                </Label>
+                <Textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="책에 대한 설명을 입력하세요..."
+                  className="min-h-[100px] resize-none"
+                />
+                <Button onClick={handleSaveDescription} className="w-full bg-amber-600 hover:bg-amber-700">
+                  <Save className="w-4 h-4 mr-1" />
+                  설명 저장
+                </Button>
               </div>
             </TabsContent>
             
