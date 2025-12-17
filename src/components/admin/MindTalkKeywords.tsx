@@ -793,21 +793,21 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
             </Select>
           </div>
 
-          <div className="border rounded-md overflow-hidden">
+          <div className="border border-mindtalk-keyword-amber/30 rounded-md overflow-hidden">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-mindtalk-keyword-amber-light">
                 <TableRow>
-                  <TableHead className="w-12 text-center">
+                  <TableHead className="w-12 text-center text-mindtalk-keyword-amber-hover">
                     <Checkbox
                       checked={filteredKeywords.length > 0 && selectedIds.size === filteredKeywords.length}
                       onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
-                  <TableHead className="w-32">카테고리</TableHead>
-                  <TableHead>키워드</TableHead>
-                  <TableHead className="hidden md:table-cell">설명</TableHead>
-                  <TableHead className="w-20 text-center">활성</TableHead>
-                  <TableHead className="w-20 text-center">삭제</TableHead>
+                  <TableHead className="w-32 text-mindtalk-keyword-amber-hover font-semibold">카테고리</TableHead>
+                  <TableHead className="text-mindtalk-keyword-amber-hover font-semibold">키워드</TableHead>
+                  <TableHead className="hidden md:table-cell text-mindtalk-keyword-amber-hover font-semibold">설명</TableHead>
+                  <TableHead className="w-20 text-center text-mindtalk-keyword-amber-hover font-semibold">활성</TableHead>
+                  <TableHead className="w-20 text-center text-mindtalk-keyword-amber-hover font-semibold">삭제</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
