@@ -66,6 +66,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showOnlyDangerous, setShowOnlyDangerous] = useState(false);
+  const [showOnlyDangerousStudents, setShowOnlyDangerousStudents] = useState(false);
   const [expandedAlerts, setExpandedAlerts] = useState<Set<string>>(new Set());
   const [sendingAlertId, setSendingAlertId] = useState<string | null>(null);
   const [confirmAlertOpen, setConfirmAlertOpen] = useState(false);
@@ -206,7 +207,13 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
       student.student_id?.toLowerCase().includes(studentSearchText.toLowerCase());
     const matchesGrade = studentSearchGrade === 'all' || student.student_grade === parseInt(studentSearchGrade);
     const matchesClass = studentSearchClass === 'all' || student.student_class === parseInt(studentSearchClass);
-    return matchesText && matchesGrade && matchesClass;
+    
+    // 위험 감지 필터
+    const studentAlert = alerts.find(a => a.student_id === student.student_id);
+    const hasDanger = studentAlert && studentAlert.dangerous_word_count > 0;
+    const matchesDanger = !showOnlyDangerousStudents || hasDanger;
+    
+    return matchesText && matchesGrade && matchesClass && matchesDanger;
   }).sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime());
 
   const filteredAlerts = alerts.filter(alert => {
@@ -600,11 +607,21 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   setStudentSearchText('');
                   setStudentSearchGrade('all');
                   setStudentSearchClass('all');
+                  setShowOnlyDangerousStudents(false);
                 }} variant="outline" size="sm">
                   초기화
                 </Button>
                 <Button onClick={fetchAllMessages} variant="outline">
                   새로고침
+                </Button>
+                <Button
+                  variant={showOnlyDangerousStudents ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowOnlyDangerousStudents(!showOnlyDangerousStudents)}
+                  className={showOnlyDangerousStudents ? "bg-red-500 hover:bg-red-600" : ""}
+                >
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  위험 감지만
                 </Button>
               </div>
 
