@@ -56,6 +56,7 @@ const PUBLIC_MUSIC_FILES = [
 ];
 
 const FAVORITES_KEY = 'mindtalk_music_favorites';
+const MUSIC_PLAYER_ACTIVE_KEY = 'mindtalk_music_player_active';
 
 interface MindTalkMusicPlayerProps {
   isOpen: boolean;
@@ -164,6 +165,49 @@ export default function MindTalkMusicPlayer({ isOpen, onClose, studentId }: Mind
       setShuffleIndex(newIndex >= 0 ? newIndex : 0);
     }
   }, [selectedCategory, showFavoritesOnly, tracks.length]);
+
+  // 단일 인스턴스 관리: 한 계정에서 하나의 플레이어만 열리도록
+  useEffect(() => {
+    if (!isOpen || !studentId) return;
+
+    const instanceId = `${studentId}_${Date.now()}`;
+    const activeKey = `${MUSIC_PLAYER_ACTIVE_KEY}_${studentId}`;
+
+    // 다른 인스턴스가 이미 열려있는지 확인
+    const existingInstance = localStorage.getItem(activeKey);
+    if (existingInstance && existingInstance !== instanceId) {
+      // 5초 이내에 생성된 인스턴스가 있으면 차단
+      const [, timestamp] = existingInstance.split('_').slice(-1);
+      const timeDiff = Date.now() - parseInt(timestamp || '0', 10);
+      if (timeDiff < 60000) { // 1분 이내
+        toast.error('다른 창에서 이미 힐링뮤직이 실행 중입니다.');
+        onClose();
+        return;
+      }
+    }
+
+    // 현재 인스턴스를 활성 상태로 설정
+    localStorage.setItem(activeKey, instanceId);
+
+    // 다른 탭에서 플레이어가 열리면 현재 플레이어 닫기
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === activeKey && e.newValue && e.newValue !== instanceId) {
+        toast.info('다른 창에서 힐링뮤직이 열렸습니다.');
+        onClose();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      // 현재 인스턴스가 활성 상태일 때만 정리
+      const currentActive = localStorage.getItem(activeKey);
+      if (currentActive === instanceId) {
+        localStorage.removeItem(activeKey);
+      }
+    };
+  }, [isOpen, studentId, onClose]);
 
   // Load music tracks and playlists
   useEffect(() => {
