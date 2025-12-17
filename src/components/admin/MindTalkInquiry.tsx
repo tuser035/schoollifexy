@@ -402,7 +402,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                     <SelectValue placeholder="학년" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="all">학년</SelectItem>
                     <SelectItem value="1">1학년</SelectItem>
                     <SelectItem value="2">2학년</SelectItem>
                     <SelectItem value="3">3학년</SelectItem>
@@ -413,7 +413,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                     <SelectValue placeholder="반" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="all">반</SelectItem>
                     {[1,2,3,4,5,6,7,8,9].map(c => (
                       <SelectItem key={c} value={c.toString()}>{c}반</SelectItem>
                     ))}
@@ -424,8 +424,10 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   setSearchGrade('all');
                   setSearchClass('all');
                   setSortOption('danger-desc');
-                  fetchAlerts();
-                }} variant="outline">
+                }} variant="outline" size="sm">
+                  초기화
+                </Button>
+                <Button onClick={fetchAlerts} variant="outline">
                   새로고침
                 </Button>
                 <Select value={sortOption} onValueChange={(v) => setSortOption(v as typeof sortOption)}>
@@ -577,7 +579,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                     <SelectValue placeholder="학년" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="all">학년</SelectItem>
                     <SelectItem value="1">1학년</SelectItem>
                     <SelectItem value="2">2학년</SelectItem>
                     <SelectItem value="3">3학년</SelectItem>
@@ -588,7 +590,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                     <SelectValue placeholder="반" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="all">반</SelectItem>
                     {[1,2,3,4,5,6,7,8,9].map(c => (
                       <SelectItem key={c} value={c.toString()}>{c}반</SelectItem>
                     ))}
@@ -598,8 +600,10 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   setStudentSearchText('');
                   setStudentSearchGrade('all');
                   setStudentSearchClass('all');
-                  fetchAllMessages();
-                }} variant="outline">
+                }} variant="outline" size="sm">
+                  초기화
+                </Button>
+                <Button onClick={fetchAllMessages} variant="outline">
                   새로고침
                 </Button>
               </div>
