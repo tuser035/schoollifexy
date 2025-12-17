@@ -142,6 +142,7 @@ const isWithinAllowedHours = (): { allowed: boolean; message: string } => {
 
 export default function MindTalk({ studentId, studentName, studentGrade, studentClass, studentNumber }: MindTalkProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
   const initialMessage = getInitialMessage(studentName);
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [inputValue, setInputValue] = useState('');
@@ -149,17 +150,21 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
   const [dangerCount, setDangerCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // MindTalk 열기 핸들러 (시간 체크 포함)
+  // 버튼 표시 여부 체크 (1분마다 갱신)
+  useEffect(() => {
+    const checkVisibility = () => {
+      const { allowed } = isWithinAllowedHours();
+      setIsButtonVisible(allowed);
+    };
+    
+    checkVisibility(); // 초기 체크
+    const interval = setInterval(checkVisibility, 60000); // 1분마다 체크
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // MindTalk 열기 핸들러
   const handleOpenMindTalk = () => {
-    const { allowed, message } = isWithinAllowedHours();
-    if (!allowed) {
-      toast({
-        title: "이용 시간 안내",
-        description: message,
-        variant: "destructive",
-      });
-      return;
-    }
     setIsOpen(true);
   };
 
@@ -359,14 +364,16 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
 
   return (
     <>
-      {/* Floating Button */}
-      <button
-        onClick={handleOpenMindTalk}
-        className="fixed top-3 sm:top-4 right-3 sm:right-4 z-50 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-xs sm:text-sm"
-      >
-        <MessageCircleHeart className="w-4 h-4" />
-        <span className="font-medium">MindTalk</span>
-      </button>
+      {/* Floating Button - 허용 시간에만 표시 */}
+      {isButtonVisible && (
+        <button
+          onClick={handleOpenMindTalk}
+          className="fixed top-3 sm:top-4 right-3 sm:right-4 z-50 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-xs sm:text-sm"
+        >
+          <MessageCircleHeart className="w-4 h-4" />
+          <span className="font-medium">MindTalk</span>
+        </button>
+      )}
 
       {/* Chat Modal */}
       {isOpen && (
