@@ -616,6 +616,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                       <TableHead>학생</TableHead>
                       <TableHead>학년/반/번</TableHead>
                       <TableHead>대화 수</TableHead>
+                      <TableHead>위험 감지</TableHead>
                       <TableHead>마지막 대화</TableHead>
                       <TableHead>대화 조회</TableHead>
                     </TableRow>
@@ -623,36 +624,50 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   <TableBody>
                     {filteredStudents.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           마음톡 대화 기록이 없습니다
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredStudents.map((student) => (
-                        <TableRow key={student.student_id}>
-                          <TableCell className="font-medium">{student.student_name || '-'}</TableCell>
-                          <TableCell>
-                            {student.student_grade}-{student.student_class}-{student.student_number}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{student.message_count}개</Badge>
-                          </TableCell>
-                          <TableCell>
-                            {student.last_message_at 
-                              ? format(new Date(student.last_message_at), 'MM/dd HH:mm', { locale: ko })
-                              : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => fetchStudentMessages(student.student_id, student.student_name || '', student.student_grade, student.student_class, student.student_number)}
-                            >
-                              대화보기
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                      filteredStudents.map((student) => {
+                        const studentAlert = alerts.find(a => a.student_id === student.student_id);
+                        const dangerCount = studentAlert?.dangerous_word_count || 0;
+                        const dangerLevel = getDangerLevel(dangerCount);
+                        return (
+                          <TableRow key={student.student_id}>
+                            <TableCell className="font-medium">{student.student_name || '-'}</TableCell>
+                            <TableCell>
+                              {student.student_grade}-{student.student_class}-{student.student_number}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{student.message_count}개</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {dangerCount > 0 ? (
+                                <Badge className={`${dangerLevel.color} text-white`}>
+                                  {dangerLevel.label} ({dangerCount})
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {student.last_message_at 
+                                ? format(new Date(student.last_message_at), 'MM/dd HH:mm', { locale: ko })
+                                : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => fetchStudentMessages(student.student_id, student.student_name || '', student.student_grade, student.student_class, student.student_number)}
+                              >
+                                대화보기
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
