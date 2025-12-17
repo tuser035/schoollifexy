@@ -9,6 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSwipe } from '@/hooks/use-swipe';
@@ -483,23 +484,30 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       {/* Celebration Animation Overlay */}
       <CelebrationOverlay />
       
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2 text-amber-800">
-            <BookOpen className="w-7 h-7" />
-            인문학 서점
-          </h2>
-          <p className="text-muted-foreground mt-1">매일 한 권씩 읽어보세요</p>
-        </div>
-        <Button 
-          variant={showMyReviews ? "default" : "outline"}
-          onClick={() => setShowMyReviews(!showMyReviews)}
-          className={showMyReviews ? "bg-amber-600 hover:bg-amber-700" : "border-amber-300"}
-        >
-          <PenLine className="w-4 h-4 mr-1" />
-          내 독후감 ({myReviews.length})
-        </Button>
-      </div>
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="storybook-library" className="border-amber-200">
+          <AccordionTrigger className="hover:no-underline py-3">
+            <div className="flex items-center gap-2 text-amber-800">
+              <BookOpen className="w-6 h-6" />
+              <span className="text-xl font-bold">이지영의 인문학서점</span>
+              <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-700">
+                {books.length}권
+              </Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="flex items-center justify-between mb-4 pt-2">
+              <p className="text-muted-foreground text-sm">매일 한 권씩 읽어보세요</p>
+              <Button 
+                variant={showMyReviews ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowMyReviews(!showMyReviews)}
+                className={showMyReviews ? "bg-amber-600 hover:bg-amber-700" : "border-amber-300"}
+              >
+                <PenLine className="w-4 h-4 mr-1" />
+                내 독후감 ({myReviews.length})
+              </Button>
+            </div>
 
       {/* My Reviews Section */}
       {showMyReviews && (
@@ -561,99 +569,58 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-8 text-muted-foreground">
           책꽂이를 정리하는 중...
         </div>
       ) : books.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-8 text-muted-foreground">
           아직 등록된 동화책이 없습니다
         </div>
       ) : (
-        /* Bookshelf Style Grid */
-        <div className="bg-gradient-to-b from-amber-900 to-amber-800 rounded-lg p-6 shadow-xl">
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3">
-            {books.map((book) => {
-              const hasReview = myReviews.some(r => r.book_id === book.id);
-              return (
-                <div
-                  key={book.id}
-                  className="relative group"
-                >
-                  {/* Book Spine */}
-                  <div 
-                    className="relative bg-gradient-to-r from-amber-100 to-amber-50 rounded-sm shadow-lg transform transition-transform group-hover:-translate-y-2 group-hover:rotate-[-2deg] cursor-pointer"
-                    style={{ 
-                      height: '180px',
-                      width: '100%',
-                      minWidth: '50px'
-                    }}
-                    onClick={() => openBook(book)}
-                  >
-                    {book.cover_image_url ? (
-                      <img 
-                        src={book.cover_image_url} 
-                        alt={book.title}
-                        className="w-full h-full object-cover rounded-sm"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-gradient-to-b from-amber-200 to-amber-100">
-                        <span className="text-xs font-bold text-amber-900 text-center leading-tight">
-                          {book.book_number}
-                        </span>
-                        <BookOpen className="w-6 h-6 text-amber-700 my-1" />
-                        <span className="text-[10px] text-amber-800 text-center leading-tight line-clamp-3">
-                          {book.title}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {/* Reading Progress Indicator */}
-                    {book.is_completed ? (
-                      <div className="absolute top-1 right-1">
-                        <CheckCircle2 className="w-4 h-4 text-green-500 bg-white rounded-full" />
-                      </div>
-                    ) : book.last_page > 0 ? (
-                      <div className="absolute top-1 right-1">
-                        <BookMarked className="w-4 h-4 text-amber-600 bg-white rounded-full p-0.5" />
-                      </div>
-                    ) : null}
-
-                    {/* Has Review Indicator */}
-                    {hasReview && (
-                      <div className="absolute top-1 left-1">
-                        <PenLine className="w-4 h-4 text-blue-500 bg-white rounded-full p-0.5" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Book Number */}
-                  <div className="absolute -top-2 -left-1 bg-amber-600 text-white text-xs px-1.5 py-0.5 rounded font-bold shadow">
-                    {book.book_number}
-                  </div>
-
-                  {/* Write Review Button (appears on hover for completed books) */}
-                  {book.is_completed && (
-                    <Button
-                      size="sm"
-                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-amber-600 hover:bg-amber-700 text-xs px-2 py-1 h-auto"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openReviewDialog(book);
-                      }}
-                    >
-                      <PenLine className="w-3 h-3 mr-1" />
-                      독후감
-                    </Button>
+        /* Book List */
+        <div className="space-y-2">
+          {books.map((book) => {
+            const hasReview = myReviews.some(r => r.book_id === book.id);
+            return (
+              <div
+                key={book.id}
+                className="flex items-center gap-3 p-3 bg-amber-50 hover:bg-amber-100 rounded-lg cursor-pointer transition-colors border border-amber-200"
+                onClick={() => openBook(book)}
+              >
+                {/* Book Number */}
+                <Badge className="bg-amber-600 text-white min-w-[32px] justify-center">
+                  {book.book_number}
+                </Badge>
+                
+                {/* Book Title */}
+                <span className="flex-1 font-medium text-amber-900">{book.title}</span>
+                
+                {/* Status Badges */}
+                <div className="flex items-center gap-2">
+                  {hasReview && (
+                    <span title="독후감 작성됨">
+                      <PenLine className="w-4 h-4 text-blue-500" />
+                    </span>
                   )}
+                  {book.is_completed ? (
+                    <span title="완독">
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    </span>
+                  ) : book.last_page > 0 ? (
+                    <Badge variant="outline" className="text-xs border-amber-400 text-amber-700">
+                      {book.last_page}p
+                    </Badge>
+                  ) : null}
+                  <ChevronRight className="w-5 h-5 text-amber-400" />
                 </div>
-              );
-            })}
-          </div>
-          
-          {/* Shelf */}
-          <div className="h-3 bg-amber-950 rounded-b-lg mt-2 shadow-inner" />
+              </div>
+            );
+          })}
         </div>
       )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Book Reader Dialog - Mobile Optimized */}
       <Dialog open={isReaderOpen} onOpenChange={(open) => {
