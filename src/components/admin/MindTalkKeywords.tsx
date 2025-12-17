@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Search, AlertTriangle, Upload } from 'lucide-react';
+import { Plus, Trash2, Search, AlertTriangle, Upload, Download, FileUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -56,6 +56,10 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
   const [bulkKeywords, setBulkKeywords] = useState('');
   const [bulkCategory, setBulkCategory] = useState('기타');
   const [isBulkAdding, setIsBulkAdding] = useState(false);
+  
+  // CSV 가져오기
+  const [isImporting, setIsImporting] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadKeywords();
@@ -147,6 +151,111 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
     toast({ title: '일괄 추가 완료', description: message });
     setBulkKeywords('');
     loadKeywords();
+  };
+
+  // CSV 내보내기
+  const exportToCsv = () => {
+    const headers = ['키워드', '카테고리', '설명', '활성'];
+    const rows = keywords.map(k => [
+      k.keyword,
+      k.category,
+      k.description || '',
+      k.is_active ? 'Y' : 'N'
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `마음톡_키워드_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({ title: 'CSV 파일이 다운로드되었습니다' });
+  };
+
+  // CSV 가져오기
+  const importFromCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setIsImporting(true);
+    
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+      
+      if (lines.length < 2) {
+        toast({ title: '유효한 CSV 파일이 아닙니다', variant: 'destructive' });
+        return;
+      }
+      
+      // 헤더 확인 (첫 줄 스킵)
+      const dataLines = lines.slice(1);
+      
+      let successCount = 0;
+      let duplicateCount = 0;
+      let errorCount = 0;
+      
+      for (const line of dataLines) {
+        // CSV 파싱 (쌍따옴표 처리)
+        const matches = line.match(/("([^"]|"")*"|[^,]*)(,("([^"]|"")*"|[^,]*))*$/);
+        if (!matches) continue;
+        
+        const cells = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(cell => 
+          cell.replace(/^"|"$/g, '').replace(/""/g, '"').trim()
+        );
+        
+        if (cells.length < 2) continue;
+        
+        const keyword = cells[0];
+        const category = cells[1] || '기타';
+        const description = cells[2] || null;
+        const isActive = cells[3]?.toUpperCase() !== 'N';
+        
+        if (!keyword) continue;
+        
+        const { error } = await supabase
+          .from('mindtalk_keywords')
+          .insert({
+            keyword,
+            category: CATEGORIES.find(c => c.value === category || c.label === category)?.value || '기타',
+            description,
+            is_active: isActive,
+          });
+        
+        if (error) {
+          if (error.code === '23505') {
+            duplicateCount++;
+          } else {
+            errorCount++;
+          }
+        } else {
+          successCount++;
+        }
+      }
+      
+      let message = `${successCount}개 가져옴`;
+      if (duplicateCount > 0) message += `, ${duplicateCount}개 중복`;
+      if (errorCount > 0) message += `, ${errorCount}개 오류`;
+      
+      toast({ title: 'CSV 가져오기 완료', description: message });
+      loadKeywords();
+    } catch (error: any) {
+      toast({ title: 'CSV 가져오기 실패', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsImporting(false);
+      if (csvInputRef.current) {
+        csvInputRef.current.value = '';
+      }
+    }
   };
 
   const toggleActive = async (id: string, currentActive: boolean) => {
@@ -252,6 +361,10 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                 <Upload className="w-4 h-4 mr-1" />
                 일괄 추가
               </TabsTrigger>
+              <TabsTrigger value="csv">
+                <FileUp className="w-4 h-4 mr-1" />
+                CSV
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="single">
@@ -315,6 +428,48 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                     <Upload className="w-4 h-4 mr-1" />
                     {isBulkAdding ? '추가 중...' : '일괄 추가'}
                   </Button>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="csv">
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg bg-muted/30">
+                  <h4 className="font-medium mb-2">CSV 내보내기</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    현재 {keywords.length}개의 키워드를 CSV 파일로 다운로드합니다.
+                  </p>
+                  <Button onClick={exportToCsv} variant="outline">
+                    <Download className="w-4 h-4 mr-1" />
+                    CSV 다운로드
+                  </Button>
+                </div>
+                
+                <div className="p-4 border rounded-lg bg-muted/30">
+                  <h4 className="font-medium mb-2">CSV 가져오기</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    CSV 파일에서 키워드를 가져옵니다. 형식: 키워드,카테고리,설명,활성(Y/N)
+                  </p>
+                  <input
+                    ref={csvInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={importFromCsv}
+                    className="hidden"
+                  />
+                  <Button 
+                    onClick={() => csvInputRef.current?.click()} 
+                    variant="outline"
+                    disabled={isImporting}
+                  >
+                    <FileUp className="w-4 h-4 mr-1" />
+                    {isImporting ? '가져오는 중...' : 'CSV 파일 선택'}
+                  </Button>
+                </div>
+                
+                <div className="text-xs text-muted-foreground p-3 bg-muted/20 rounded">
+                  <p className="font-medium mb-1">CSV 형식 예시:</p>
+                  <pre className="font-mono">키워드,카테고리,설명,활성{'\n'}자살,자살징후,자살 관련 표현,Y{'\n'}죽고싶어,우울,우울감 표현,Y</pre>
                 </div>
               </div>
             </TabsContent>
