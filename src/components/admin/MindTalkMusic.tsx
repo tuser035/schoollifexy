@@ -383,7 +383,7 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
     }
   };
 
-  const playPreview = (track: MusicTrack) => {
+  const playPreview = async (track: MusicTrack) => {
     if (!audioRef.current) return;
 
     if (playingId === track.id) {
@@ -398,6 +398,16 @@ export default function MindTalkMusic({ adminId }: MindTalkMusicProps) {
       audioRef.current.src = url;
       audioRef.current.play();
       setPlayingId(track.id);
+
+      // 재생 횟수 증가
+      try {
+        await supabase.rpc('increment_music_play_count', { music_id_input: track.id });
+        setTracks(prev => prev.map(t => 
+          t.id === track.id ? { ...t, play_count: t.play_count + 1 } : t
+        ));
+      } catch (error) {
+        console.error('Failed to increment play count:', error);
+      }
     }
   };
 
