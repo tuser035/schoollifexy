@@ -25,13 +25,21 @@ interface KeywordHeatmapProps {
   onStudentClick?: (studentId: string, studentName: string, grade: number, classNum: number, number: number) => void;
 }
 
-// 카테고리 표시 이름과 색상
+// 카테고리 표시 이름과 색상 (실제 DB 카테고리명에 맞춤)
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
-  'suicide_depression': { label: '자살/우울', color: 'text-red-700', bgColor: 'bg-red-50' },
-  'impulse_control': { label: '충동조절', color: 'text-orange-700', bgColor: 'bg-orange-50' },
-  'reality_judgment': { label: '현실판단', color: 'text-purple-700', bgColor: 'bg-purple-50' },
-  'functional_impairment': { label: '기능저하', color: 'text-blue-700', bgColor: 'bg-blue-50' },
-  'default': { label: '기타', color: 'text-gray-700', bgColor: 'bg-gray-50' },
+  '자살징후': { label: '자살징후', color: 'text-red-700', bgColor: 'bg-red-50' },
+  '우울': { label: '우울', color: 'text-red-600', bgColor: 'bg-red-50' },
+  '자해': { label: '자해', color: 'text-rose-700', bgColor: 'bg-rose-50' },
+  '폭력': { label: '폭력', color: 'text-orange-700', bgColor: 'bg-orange-50' },
+  '충동조절': { label: '충동조절', color: 'text-amber-700', bgColor: 'bg-amber-50' },
+  '비행': { label: '비행', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
+  '정신증': { label: '정신증', color: 'text-purple-700', bgColor: 'bg-purple-50' },
+  '기능저하': { label: '기능저하', color: 'text-blue-700', bgColor: 'bg-blue-50' },
+  '고립': { label: '고립', color: 'text-indigo-700', bgColor: 'bg-indigo-50' },
+  '섭식': { label: '섭식', color: 'text-pink-700', bgColor: 'bg-pink-50' },
+  '정서': { label: '정서', color: 'text-teal-700', bgColor: 'bg-teal-50' },
+  '약물': { label: '약물', color: 'text-gray-700', bgColor: 'bg-gray-50' },
+  'default': { label: '기타', color: 'text-slate-700', bgColor: 'bg-slate-50' },
 };
 
 const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: KeywordHeatmapProps) => {
@@ -103,8 +111,8 @@ const KeywordHeatmap = ({ allMessages, keywordsWithCategory, onStudentClick }: K
       keywordsByCategory[cat].push(kw);
     });
     
-    // 카테고리 순서 정렬
-    const categoryOrder = ['suicide_depression', 'impulse_control', 'reality_judgment', 'functional_impairment', 'default'];
+    // 카테고리 순서 정렬 (위험도 높은 순)
+    const categoryOrder = ['자살징후', '자해', '우울', '폭력', '충동조절', '비행', '정신증', '기능저하', '고립', '섭식', '정서', '약물', 'default'];
     const sortedCategories = categoryOrder.filter(cat => keywordsByCategory[cat]?.length > 0);
     
     return { 
