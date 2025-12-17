@@ -104,7 +104,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     }
   };
 
-  const loadPages = async (bookId: string) => {
+  const loadPages = async (bookId: string, targetPageNumber?: number) => {
     try {
       const { data, error } = await supabase.rpc('admin_get_storybook_pages', {
         admin_id_input: adminId,
@@ -114,12 +114,13 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       if (error) throw error;
       setPages(data || []);
       
-      // Load first page content
+      // Load target page content (default to page 1 if not specified)
+      const pageToLoad = targetPageNumber || 1;
       if (data && data.length > 0) {
-        const firstPage = data.find((p: StorybookPage) => p.page_number === 1);
-        if (firstPage) {
-          setPageText(firstPage.text_content || '');
-          setPageImagePreview(firstPage.image_url || null);
+        const page = data.find((p: StorybookPage) => p.page_number === pageToLoad);
+        if (page) {
+          setPageText(page.text_content || '');
+          setPageImagePreview(page.image_url || null);
         }
       }
     } catch (error) {
@@ -248,7 +249,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             text_content_input: pageText || null
           });
           toast.success('페이지 이미지가 업로드되었습니다');
-          loadPages(selectedBook.id);
+          loadPages(selectedBook.id, currentPageNumber);
         }
 
         setUploading(false);
@@ -274,7 +275,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       });
 
       toast.success('페이지가 저장되었습니다');
-      loadPages(selectedBook.id);
+      loadPages(selectedBook.id, currentPageNumber);
     } catch (error) {
       console.error('Save error:', error);
       toast.error('저장에 실패했습니다');
