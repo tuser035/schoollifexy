@@ -736,6 +736,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                 size="sm"
                 onClick={() => bulkToggleActive(true)}
                 disabled={isBulkToggling}
+                className="border-mindtalk-keyword-amber/50 text-mindtalk-keyword-amber hover:bg-mindtalk-keyword-amber hover:text-white"
               >
                 <ToggleRight className="w-4 h-4 mr-1" />
                 활성화
@@ -745,6 +746,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                 size="sm"
                 onClick={() => bulkToggleActive(false)}
                 disabled={isBulkToggling}
+                className="border-mindtalk-keyword-amber/50 text-mindtalk-keyword-amber hover:bg-mindtalk-keyword-amber hover:text-white"
               >
                 <ToggleLeft className="w-4 h-4 mr-1" />
                 비활성화
@@ -754,6 +756,7 @@ export default function MindTalkKeywords({ adminId }: MindTalkKeywordsProps) {
                 size="sm"
                 onClick={bulkChangeCategoryFn}
                 disabled={isBulkChanging || !bulkChangeCategory}
+                className="border-mindtalk-keyword-amber/50 text-mindtalk-keyword-amber hover:bg-mindtalk-keyword-amber hover:text-white"
               >
                 {isBulkChanging ? '변경 중...' : '카테고리 변경'}
               </Button>

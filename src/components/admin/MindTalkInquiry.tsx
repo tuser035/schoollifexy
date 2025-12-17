@@ -474,10 +474,10 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   setSearchGrade('all');
                   setSearchClass('all');
                   setSortOption('danger-desc');
-                }} variant="outline" size="sm">
+                }} variant="outline" size="sm" className="border-mindtalk-alert-red/50 text-mindtalk-alert-red hover:bg-mindtalk-alert-red hover:text-white">
                   초기화
                 </Button>
-                <Button onClick={fetchAlerts} variant="outline">
+                <Button onClick={fetchAlerts} variant="outline" className="border-mindtalk-alert-red/50 text-mindtalk-alert-red hover:bg-mindtalk-alert-red hover:text-white">
                   새로고침
                 </Button>
                 <Select value={sortOption} onValueChange={(v) => setSortOption(v as typeof sortOption)}>
@@ -552,12 +552,12 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                               <TableCell>
                                 <Button
                                   size="sm"
-                                  variant="destructive"
                                   disabled={isSending}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     openAlertConfirm(alert);
                                   }}
+                                  className="bg-mindtalk-alert-red hover:bg-mindtalk-alert-red-hover text-white"
                                 >
                                   {isSending ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -577,6 +577,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                                     e.stopPropagation();
                                     fetchStudentMessages(alert.student_id, alert.student_name || '', alert.student_grade, alert.student_class, alert.student_number);
                                   }}
+                                  className="border-mindtalk-alert-red/50 text-mindtalk-alert-red hover:bg-mindtalk-alert-red hover:text-white"
                                 >
                                   대화보기
                                 </Button>
@@ -651,19 +652,19 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                   setStudentSearchGrade('all');
                   setStudentSearchClass('all');
                   setShowOnlyDangerousStudents(false);
-                }} variant="outline" size="sm">
+                }} variant="outline" size="sm" className="border-mindtalk-chat-cyan/50 text-mindtalk-chat-cyan hover:bg-mindtalk-chat-cyan hover:text-white">
                   초기화
                 </Button>
-                <Button onClick={fetchAllMessages} variant="outline">
+                <Button onClick={fetchAllMessages} variant="outline" className="border-mindtalk-chat-cyan/50 text-mindtalk-chat-cyan hover:bg-mindtalk-chat-cyan hover:text-white">
                   새로고침
                 </Button>
                 <Button
                   variant={showOnlyDangerousStudents ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowOnlyDangerousStudents(!showOnlyDangerousStudents)}
-                  className={showOnlyDangerousStudents ? "bg-red-500 hover:bg-red-600" : ""}
+                  className={showOnlyDangerousStudents ? "bg-mindtalk-alert-red hover:bg-mindtalk-alert-red-hover text-white" : "border-mindtalk-alert-red/50 text-mindtalk-alert-red hover:bg-mindtalk-alert-red hover:text-white"}
                 >
-                  <AlertTriangle className="h-4 w-4 mr-1 text-mindtalk-alert-red" />
+                  <AlertTriangle className="h-4 w-4 mr-1" />
                   위험 감지만
                 </Button>
               </div>
@@ -721,6 +722,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => fetchStudentMessages(student.student_id, student.student_name || '', student.student_grade, student.student_class, student.student_number)}
+                                className="border-mindtalk-chat-cyan/50 text-mindtalk-chat-cyan hover:bg-mindtalk-chat-cyan hover:text-white"
                               >
                                 대화보기
                               </Button>
@@ -845,9 +847,9 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
               </div>
               <Button
                 size="sm"
-                variant="destructive"
                 disabled={sendingFromDialog || !selectedStudentInfo}
                 onClick={openAlertConfirmFromDialog}
+                className="bg-mindtalk-alert-red hover:bg-mindtalk-alert-red-hover text-white"
               >
                 {sendingFromDialog ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
