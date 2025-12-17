@@ -354,8 +354,8 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
 
   return (
     <>
-      {/* Floating Button - 허용 시간에만 표시 */}
-      {isButtonVisible && !isMusicOpen && (
+      {/* Floating Button - 허용 시간에만 표시 (음악 플레이어와 독립적으로 항상 표시) */}
+      {isButtonVisible && (
         <button
           onClick={handleOpenMindTalk}
           className="fixed top-3 sm:top-4 right-3 sm:right-4 z-50 flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-xs sm:text-sm"
