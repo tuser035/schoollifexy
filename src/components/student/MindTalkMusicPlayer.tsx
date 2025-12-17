@@ -60,6 +60,8 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [shuffleQueue, setShuffleQueue] = useState<string[]>([]);
+  const [shuffleIndex, setShuffleIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // 로컬스토리지에서 즐겨찾기 불러오기
@@ -98,6 +100,44 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
     const favoriteMatch = !showFavoritesOnly || favorites.has(t.id);
     return categoryMatch && favoriteMatch;
   });
+
+  // 셔플 큐 생성 함수 (Fisher-Yates 알고리즘)
+  const generateShuffleQueue = (tracksList: MusicTrack[], currentTrackId?: string) => {
+    const ids = tracksList.map(t => t.id);
+    // Fisher-Yates shuffle
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    // 현재 트랙이 있으면 맨 앞으로 이동
+    if (currentTrackId) {
+      const idx = ids.indexOf(currentTrackId);
+      if (idx > 0) {
+        ids.splice(idx, 1);
+        ids.unshift(currentTrackId);
+      }
+    }
+    return ids;
+  };
+
+  // 셔플 모드 변경 시 큐 재생성
+  useEffect(() => {
+    if (shuffle && filteredTracks.length > 0) {
+      const queue = generateShuffleQueue(filteredTracks, currentTrack?.id);
+      setShuffleQueue(queue);
+      setShuffleIndex(currentTrack ? 0 : -1);
+    }
+  }, [shuffle]);
+
+  // 필터 변경 시 셔플 큐 재생성
+  useEffect(() => {
+    if (shuffle && filteredTracks.length > 0) {
+      const queue = generateShuffleQueue(filteredTracks, currentTrack?.id);
+      setShuffleQueue(queue);
+      const newIndex = currentTrack ? queue.indexOf(currentTrack.id) : -1;
+      setShuffleIndex(newIndex >= 0 ? newIndex : 0);
+    }
+  }, [selectedCategory, showFavoritesOnly, tracks.length]);
 
   // Load music tracks
   useEffect(() => {
@@ -171,6 +211,14 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
     setCurrentTrack(track);
     setIsPlaying(true);
     
+    // 셔플 모드에서 수동 선택 시 큐 인덱스 업데이트
+    if (shuffle) {
+      const idx = shuffleQueue.indexOf(track.id);
+      if (idx >= 0) {
+        setShuffleIndex(idx);
+      }
+    }
+    
     // Increment play count
     await supabase.rpc('increment_music_play_count', { music_id_input: track.id });
     
@@ -191,27 +239,52 @@ export default function MindTalkMusicPlayer({ isOpen, onClose }: MindTalkMusicPl
   };
 
   const playNext = () => {
-    if (!currentTrack || filteredTracks.length === 0) return;
-    
-    const currentIndex = filteredTracks.findIndex(t => t.id === currentTrack.id);
-    let nextIndex: number;
+    if (filteredTracks.length === 0) return;
     
     if (shuffle) {
-      nextIndex = Math.floor(Math.random() * filteredTracks.length);
+      // 셔플 큐에서 다음 곡 재생
+      let nextIndex = shuffleIndex + 1;
+      if (nextIndex >= shuffleQueue.length) {
+        // 큐 끝에 도달하면 새로운 셔플 큐 생성
+        const newQueue = generateShuffleQueue(filteredTracks);
+        setShuffleQueue(newQueue);
+        nextIndex = 0;
+      }
+      setShuffleIndex(nextIndex);
+      const nextTrack = filteredTracks.find(t => t.id === shuffleQueue[nextIndex]);
+      if (nextTrack) playTrack(nextTrack);
     } else {
-      nextIndex = (currentIndex + 1) % filteredTracks.length;
+      if (!currentTrack) {
+        playTrack(filteredTracks[0]);
+        return;
+      }
+      const currentIndex = filteredTracks.findIndex(t => t.id === currentTrack.id);
+      const nextIndex = (currentIndex + 1) % filteredTracks.length;
+      playTrack(filteredTracks[nextIndex]);
     }
-    
-    playTrack(filteredTracks[nextIndex]);
   };
 
   const playPrev = () => {
-    if (!currentTrack || filteredTracks.length === 0) return;
+    if (filteredTracks.length === 0) return;
     
-    const currentIndex = filteredTracks.findIndex(t => t.id === currentTrack.id);
-    const prevIndex = currentIndex === 0 ? filteredTracks.length - 1 : currentIndex - 1;
-    
-    playTrack(filteredTracks[prevIndex]);
+    if (shuffle) {
+      // 셔플 큐에서 이전 곡 재생
+      let prevIndex = shuffleIndex - 1;
+      if (prevIndex < 0) {
+        prevIndex = shuffleQueue.length - 1;
+      }
+      setShuffleIndex(prevIndex);
+      const prevTrack = filteredTracks.find(t => t.id === shuffleQueue[prevIndex]);
+      if (prevTrack) playTrack(prevTrack);
+    } else {
+      if (!currentTrack) {
+        playTrack(filteredTracks[filteredTracks.length - 1]);
+        return;
+      }
+      const currentIndex = filteredTracks.findIndex(t => t.id === currentTrack.id);
+      const prevIndex = currentIndex === 0 ? filteredTracks.length - 1 : currentIndex - 1;
+      playTrack(filteredTracks[prevIndex]);
+    }
   };
 
   const handleSeek = (value: number[]) => {
