@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Search, AlertTriangle, MessageCircle, User, Bot, Filter, ChevronDown, ChevronUp, Mail, Loader2 } from 'lucide-react';
+import { Search, AlertTriangle, MessageCircle, User, Bot, Filter, ChevronDown, ChevronUp, Mail, Loader2, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -70,6 +70,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   const [sendingAlertId, setSendingAlertId] = useState<string | null>(null);
   const [confirmAlertOpen, setConfirmAlertOpen] = useState(false);
   const [pendingAlert, setPendingAlert] = useState<MindTalkAlert | null>(null);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // 위험도 높은순(desc) 기본
   const [sendingFromDialog, setSendingFromDialog] = useState(false);
 
   useEffect(() => {
@@ -215,6 +216,10 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
     const matchesGrade = searchGrade === 'all' || alert.student_grade === parseInt(searchGrade);
     const matchesClass = searchClass === 'all' || alert.student_class === parseInt(searchClass);
     return matchesText && matchesGrade && matchesClass;
+  }).sort((a, b) => {
+    return sortOrder === 'desc' 
+      ? b.dangerous_word_count - a.dangerous_word_count 
+      : a.dangerous_word_count - b.dangerous_word_count;
   });
 
   const getDangerLevel = (count: number) => {
@@ -407,6 +412,14 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
                 </Select>
                 <Button onClick={fetchAlerts} variant="outline">
                   새로고침
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                  className="flex items-center gap-1"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  {sortOrder === 'desc' ? '위험도 높은순' : '위험도 낮은순'}
                 </Button>
               </div>
 
