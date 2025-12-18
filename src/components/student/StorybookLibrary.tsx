@@ -272,7 +272,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const openBook = async (book: Storybook) => {
     try {
       setSelectedBook(book);
-      setCurrentPage(book.last_page > 0 ? book.last_page : 1);
+      setCurrentPage(1);
 
       const { data, error } = await supabase.rpc('student_get_storybook_pages', {
         student_id_input: studentId,
