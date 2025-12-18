@@ -493,6 +493,20 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
         setPages(freshPages);
       }
       
+      // 콘텐츠가 있는 페이지 수 계산
+      const pagesWithContent = freshPages?.filter((p: { image_url: string | null; text_content: string | null }) => 
+        p.image_url || p.text_content
+      ).length || 0;
+      
+      // 페이지 수 자동 업데이트
+      if (pagesWithContent > 0) {
+        await supabase.rpc('admin_update_storybook_page_count', {
+          admin_id_input: adminId,
+          book_id_input: selectedBook.id,
+          page_count_input: pagesWithContent
+        });
+      }
+      
       // 현재 페이지가 마지막 페이지인지 확인 (콘텐츠가 있는 마지막 페이지)
       const maxPageWithContent = freshPages?.reduce((max: number, p: { page_number: number; image_url: string | null; text_content: string | null }) => {
         if (p.image_url || p.text_content) {
