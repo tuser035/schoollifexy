@@ -771,10 +771,20 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-1.5 py-0.5 md:px-2 md:py-1 bg-storybook-emerald-dark text-white">
-            <div className="flex items-center gap-0.5 min-w-0">
-              <BookOpen className="w-3 h-3 flex-shrink-0" />
-              <span className="font-medium text-[10px] md:text-xs truncate max-w-[80px] md:max-w-none">{selectedBook?.title}</span>
+          <div className="flex items-center justify-between px-2 py-1.5 md:px-4 md:py-2 bg-gradient-to-r from-storybook-emerald-dark to-storybook-emerald text-white shadow-md">
+            {/* Left: Book Info */}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full bg-white/20 flex-shrink-0">
+                <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="font-semibold text-xs md:text-sm truncate block max-w-[120px] md:max-w-[200px] lg:max-w-none">
+                  {selectedBook?.title}
+                </span>
+                <Badge variant="secondary" className="bg-white/20 text-white text-[9px] md:text-[10px] px-1.5 py-0 h-4 border-0">
+                  {currentPage} / {pages.length} 페이지
+                </Badge>
+              </div>
               {/* Description Popover */}
               {selectedBook?.description && (
                 <Popover>
@@ -782,10 +792,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-white hover:bg-storybook-emerald p-0 h-auto"
+                      className="text-white/80 hover:text-white hover:bg-white/20 p-1 h-auto rounded-full"
                       title="책 설명"
                     >
-                      <Info className="w-3 h-3" />
+                      <Info className="w-4 h-4" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80 max-h-60 overflow-auto" align="start">
@@ -799,11 +809,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 </Popover>
               )}
             </div>
-            <div className="flex items-center gap-0 md:gap-0.5 flex-shrink-0">
-              <Badge variant="secondary" className="bg-storybook-emerald-light text-storybook-emerald-dark text-[8px] md:text-[10px] px-1 py-0 h-4">
-                {currentPage} / {pages.length}
-              </Badge>
-              
+
+            {/* Center: Playback Controls */}
+            <div className="hidden md:flex items-center gap-1 bg-white/10 rounded-full px-2 py-1">
               {/* TTS Button */}
               <Button 
                 variant="ghost" 
@@ -820,13 +828,17 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     }
                   }
                 }}
-                className="text-white hover:bg-storybook-emerald p-0 h-auto"
+                className={`p-1.5 h-auto rounded-full transition-colors ${
+                  isSpeaking 
+                    ? 'text-amber-300 bg-amber-500/20 hover:bg-amber-500/30' 
+                    : 'text-white hover:bg-white/20'
+                }`}
                 title={isSpeaking ? '읽기 중지' : '음성 읽기'}
               >
                 {isSpeaking ? (
-                  <VolumeX className="w-3 h-3" />
+                  <VolumeX className="w-4 h-4" />
                 ) : (
-                  <Volume2 className="w-3 h-3" />
+                  <Volume2 className="w-4 h-4" />
                 )}
               </Button>
 
@@ -836,10 +848,87 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-white hover:bg-storybook-emerald p-0 h-auto"
-                    title="읽기 속도"
+                    className="text-white hover:bg-white/20 p-1.5 h-auto rounded-full"
+                    title="읽기 설정"
                   >
-                    <Settings2 className="w-3 h-3" />
+                    <Settings2 className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-3" align="center">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">읽기 속도</Label>
+                        <span className="text-sm text-muted-foreground">{speechRate.toFixed(1)}x</span>
+                      </div>
+                      <Slider
+                        value={[speechRate]}
+                        onValueChange={(value) => setSpeechRate(value[0])}
+                        min={0.5}
+                        max={2}
+                        step={0.1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>느리게</span>
+                        <span>보통</span>
+                        <span>빠르게</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <Label className="text-sm font-medium">자동 페이지 넘김</Label>
+                      <Switch
+                        checked={autoPageTurn}
+                        onCheckedChange={setAutoPageTurn}
+                      />
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Right: Action Buttons */}
+            <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
+              {/* Mobile TTS Button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  if (isSpeaking) {
+                    stopSpeaking();
+                  } else {
+                    const text = currentPageData?.text_content;
+                    if (text) {
+                      speakText(text);
+                    } else {
+                      toast.error('읽을 텍스트가 없습니다');
+                    }
+                  }
+                }}
+                className={`md:hidden p-1.5 h-auto rounded-full transition-colors ${
+                  isSpeaking 
+                    ? 'text-amber-300 bg-amber-500/20 hover:bg-amber-500/30' 
+                    : 'text-white hover:bg-white/20'
+                }`}
+                title={isSpeaking ? '읽기 중지' : '음성 읽기'}
+              >
+                {isSpeaking ? (
+                  <VolumeX className="w-4 h-4" />
+                ) : (
+                  <Volume2 className="w-4 h-4" />
+                )}
+              </Button>
+
+              {/* Mobile Speed Control */}
+              <Popover open={showSpeedControl} onOpenChange={setShowSpeedControl}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="md:hidden text-white hover:bg-white/20 p-1.5 h-auto rounded-full"
+                    title="읽기 설정"
+                  >
+                    <Settings2 className="w-4 h-4" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-56 p-3" align="end">
@@ -874,18 +963,20 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 </PopoverContent>
               </Popover>
 
+              <div className="w-px h-5 bg-white/30 mx-1 hidden md:block" />
+
               {/* Fullscreen Button */}
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={toggleFullscreen}
-                className="text-white hover:bg-storybook-emerald p-0 h-auto"
+                className="text-white hover:bg-white/20 p-1.5 h-auto rounded-full"
                 title={isFullscreen ? '전체화면 종료' : '전체화면'}
               >
                 {isFullscreen ? (
-                  <Minimize className="w-3 h-3" />
+                  <Minimize className="w-4 h-4" />
                 ) : (
-                  <Maximize className="w-3 h-3" />
+                  <Maximize className="w-4 h-4" />
                 )}
               </Button>
 
@@ -894,30 +985,45 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 variant="ghost" 
                 size="sm" 
                 onClick={toggleBookmark}
-                className={`p-0 h-auto ${pageBookmarks.includes(currentPage) ? 'text-red-400 hover:bg-red-900/50' : 'text-white hover:bg-storybook-emerald'}`}
+                className={`p-1.5 h-auto rounded-full transition-colors ${
+                  pageBookmarks.includes(currentPage) 
+                    ? 'text-red-400 bg-red-500/20 hover:bg-red-500/30' 
+                    : 'text-white hover:bg-white/20'
+                }`}
                 title={pageBookmarks.includes(currentPage) ? '북마크 해제' : '북마크'}
               >
-                <Heart className={`w-3 h-3 ${pageBookmarks.includes(currentPage) ? 'fill-red-400' : ''}`} />
+                <Heart className={`w-4 h-4 ${pageBookmarks.includes(currentPage) ? 'fill-red-400' : ''}`} />
               </Button>
 
+              {/* Review Button (Desktop) */}
               {selectedBook?.is_completed && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setIsReviewDialogOpen(true)}
-                  className="text-white hover:bg-storybook-emerald hidden md:flex p-0.5 md:p-1 h-auto"
+                  className="text-white hover:bg-white/20 hidden md:flex items-center gap-1 px-2 py-1 h-auto rounded-full"
                 >
-                  <PenLine className="w-3.5 h-3.5 mr-1" />
+                  <PenLine className="w-4 h-4" />
                   <span className="text-xs">독후감</span>
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={() => {
-                stopSpeaking();
-                if (isFullscreen) {
-                  document.exitFullscreen().catch(() => {});
-                }
-                closeReader();
-              }} className="text-white hover:bg-storybook-emerald p-1 md:p-2">
+
+              <div className="w-px h-5 bg-white/30 mx-1" />
+
+              {/* Close Button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  stopSpeaking();
+                  if (isFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                  }
+                  closeReader();
+                }} 
+                className="text-white hover:bg-red-500/30 hover:text-red-200 p-1.5 h-auto rounded-full transition-colors"
+                title="닫기"
+              >
                 <X className="w-4 h-4" />
               </Button>
             </div>
