@@ -1060,19 +1060,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
-                  <div className="flex flex-col items-center justify-center py-4 px-3 bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50 min-h-[140px]">
-                    {selectedBook?.cover_image_url && (
-                      <div className="relative mb-3">
-                        <img 
-                          src={selectedBook.cover_image_url} 
-                          alt="표지"
-                          className="max-h-24 rounded-lg shadow-lg"
-                        />
-                        <div className="absolute -bottom-1 -right-1 bg-storybook-emerald text-white text-[10px] px-1.5 py-0.5 rounded-full shadow">
-                          #{selectedBook?.book_number}
-                        </div>
-                      </div>
-                    )}
+                  <div className="flex flex-col items-center justify-center py-4 px-3 bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50 min-h-[100px]">
+                    <Badge className="bg-storybook-emerald text-white text-[10px] px-2 py-0.5 mb-2">
+                      #{selectedBook?.book_number}
+                    </Badge>
                     <h1 className="text-base font-bold text-storybook-emerald-dark text-center leading-tight">
                       {selectedBook?.title}
                     </h1>
@@ -1172,15 +1163,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 <div className="flex">
                   {/* Left - Title */}
                   <div className="w-[350px] h-[500px] flex flex-col items-center justify-center p-8 bg-gradient-to-br from-storybook-emerald-light to-white border-r border-storybook-emerald/20">
-                    {selectedBook?.cover_image_url && (
-                      <img 
-                        src={selectedBook.cover_image_url} 
-                        alt="표지"
-                        className="max-h-48 rounded-lg shadow-lg mb-4"
-                      />
-                    )}
+                    <Badge className="bg-storybook-emerald text-white text-sm px-3 py-1 mb-4">
+                      #{selectedBook?.book_number}
+                    </Badge>
                     <h1 className="text-2xl font-bold text-storybook-emerald-dark text-center">
-                      {selectedBook?.title} <span className="text-[0.8em] font-normal text-storybook-emerald">#{selectedBook?.book_number}</span>
+                      {selectedBook?.title}
                     </h1>
                   </div>
                   
