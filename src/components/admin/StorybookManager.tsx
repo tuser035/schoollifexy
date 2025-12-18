@@ -121,6 +121,9 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   // Recently edited book highlight
   const [recentlyEditedBookId, setRecentlyEditedBookId] = useState<string | null>(null);
   
+  // Real-time update indicator
+  const [realtimeUpdated, setRealtimeUpdated] = useState(false);
+  
   // Clear highlight after 3 seconds
   useEffect(() => {
     if (recentlyEditedBookId) {
@@ -130,9 +133,42 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       return () => clearTimeout(timer);
     }
   }, [recentlyEditedBookId]);
+  
+  // Clear realtime indicator after 2 seconds
+  useEffect(() => {
+    if (realtimeUpdated) {
+      const timer = setTimeout(() => {
+        setRealtimeUpdated(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [realtimeUpdated]);
 
   useEffect(() => {
     loadBooks();
+  }, [adminId]);
+  
+  // Real-time subscription for storybooks
+  useEffect(() => {
+    const channel = supabase
+      .channel('storybooks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'storybooks'
+        },
+        () => {
+          setRealtimeUpdated(true);
+          loadBooks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [adminId]);
 
   const loadBooks = async () => {
@@ -329,11 +365,14 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
         setPreviewPageNumber(updatedPages.length);
       }
       
+      // 콘텐츠가 있는 페이지 수 계산 (이미지 또는 텍스트가 있는 페이지만)
+      const pagesWithContent = updatedPages.filter(p => p.image_url || p.text_content).length;
+      
       // Update page count using RPC function
       const { error: updateError } = await supabase.rpc('admin_update_storybook_page_count', {
         admin_id_input: adminId,
         book_id_input: previewBook.id,
-        page_count_input: updatedPages.length
+        page_count_input: pagesWithContent
       });
 
       if (updateError) {
@@ -341,7 +380,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       }
 
       // Update local previewBook state
-      setPreviewBook(prev => prev ? { ...prev, page_count: updatedPages.length } : null);
+      setPreviewBook(prev => prev ? { ...prev, page_count: pagesWithContent } : null);
 
       toast.success(`${pageToDelete}페이지가 삭제되었습니다`);
       
@@ -754,12 +793,20 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     <div className="space-y-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BookOpen className="w-5 h-5 text-amber-600" />
-              인문학 서점
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">이지영의 지혜의 강</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BookOpen className="w-5 h-5 text-amber-600" />
+                인문학 서점
+                {realtimeUpdated && (
+                  <span className="flex items-center gap-1 text-xs text-emerald-600 font-normal animate-pulse">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full" />
+                    실시간 업데이트
+                  </span>
+                )}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">이지영의 지혜의 강</p>
+            </div>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={loadBooks}>
