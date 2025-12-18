@@ -794,7 +794,11 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                     </TableCell>
                     <TableCell>{book.page_count}쪽</TableCell>
                     <TableCell>
-                      <Badge variant={book.is_published ? 'default' : 'secondary'}>
+                      <Badge 
+                        variant={book.is_published ? 'default' : 'secondary'}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => handleTogglePublish(book)}
+                      >
                         {book.is_published ? '발행' : '비공개'}
                       </Badge>
                     </TableCell>
