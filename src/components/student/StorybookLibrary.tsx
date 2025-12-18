@@ -184,6 +184,15 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     }
   }, []);
 
+  // Helper function to extract body text for TTS (skip subtitle on first line)
+  const getBodyTextForTTS = useCallback((text: string | null | undefined): string | null => {
+    if (!text) return null;
+    const lines = text.split('\n');
+    // Skip the first line (subtitle) and join the rest
+    const bodyText = lines.slice(1).join('\n').trim();
+    return bodyText || null;
+  }, []);
+
   const speakText = useCallback((text: string, continueReading: boolean = false) => {
     if (!window.speechSynthesis) {
       toast.error('이 브라우저는 음성 읽기를 지원하지 않습니다');
@@ -333,16 +342,17 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       setTimeout(() => setPageTransition(null), 300);
       
       const currentPageData = pages.find(p => p.page_number === currentPage);
-      if (currentPageData?.text_content) {
+      const bodyText = getBodyTextForTTS(currentPageData?.text_content);
+      if (bodyText) {
         setTimeout(() => {
-          speakText(currentPageData.text_content!, true);
+          speakText(bodyText, true);
         }, 400); // Delay after animation
       }
     } else {
       // Manual page change: stop speaking
       stopSpeaking();
     }
-  }, [currentPage, pages, speakText, stopSpeaking]);
+  }, [currentPage, pages, speakText, stopSpeaking, getBodyTextForTTS]);
 
   useEffect(() => {
     loadBooks();
@@ -872,9 +882,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   if (isSpeaking) {
                     stopSpeaking();
                   } else {
-                    const text = currentPageData?.text_content;
-                    if (text) {
-                      speakText(text);
+                    const bodyText = getBodyTextForTTS(currentPageData?.text_content);
+                    if (bodyText) {
+                      speakText(bodyText);
                     } else {
                       toast.error('읽을 텍스트가 없습니다');
                     }
@@ -949,9 +959,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   if (isSpeaking) {
                     stopSpeaking();
                   } else {
-                    const text = currentPageData?.text_content;
-                    if (text) {
-                      speakText(text);
+                    const bodyText = getBodyTextForTTS(currentPageData?.text_content);
+                    if (bodyText) {
+                      speakText(bodyText);
                     } else {
                       toast.error('읽을 텍스트가 없습니다');
                     }
