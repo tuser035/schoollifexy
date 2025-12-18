@@ -1565,6 +1565,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_storybook_page_count: {
+        Args: {
+          admin_id_input: string
+          book_id_input: string
+          page_count_input: number
+        }
+        Returns: boolean
+      }
       admin_update_student: {
         Args: {
           admin_id_input: string
