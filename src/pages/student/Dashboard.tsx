@@ -515,8 +515,8 @@ const StudentDashboard = () => {
 
         {/* 인문학 서점 */}
         <Card className="mt-4 sm:mt-6 border-storybook-emerald">
-          <CardHeader className="pb-2 sm:pb-6 p-3 sm:p-6">
-            <CardTitle className="flex items-center gap-2 text-amber-800 text-base sm:text-lg">
+          <CardHeader className="pb-2 sm:pb-6 p-3 sm:p-6 bg-storybook-emerald-light">
+            <CardTitle className="flex items-center gap-2 text-storybook-emerald text-base sm:text-lg">
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
               인문학 서점
             </CardTitle>
