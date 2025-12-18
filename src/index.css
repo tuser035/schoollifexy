@@ -325,3 +325,85 @@ All colors MUST be HSL.
 .animate-bounce-in {
   animation: bounce-in 0.6s ease-out forwards;
 }
+
+/* Page Curl Effect for Storybook */
+@keyframes page-curl-exit {
+  0% {
+    transform: perspective(1200px) rotateY(0deg);
+    transform-origin: left center;
+    opacity: 1;
+  }
+  100% {
+    transform: perspective(1200px) rotateY(-90deg);
+    transform-origin: left center;
+    opacity: 0;
+  }
+}
+
+@keyframes page-curl-enter {
+  0% {
+    transform: perspective(1200px) rotateY(90deg);
+    transform-origin: left center;
+    opacity: 0;
+  }
+  100% {
+    transform: perspective(1200px) rotateY(0deg);
+    transform-origin: left center;
+    opacity: 1;
+  }
+}
+
+/* Mobile page curl - slide from right with curl hint */
+@keyframes page-curl-exit-mobile {
+  0% {
+    transform: perspective(800px) rotateY(0deg) translateX(0);
+    transform-origin: right center;
+    opacity: 1;
+  }
+  50% {
+    transform: perspective(800px) rotateY(-15deg) translateX(-20px);
+    transform-origin: right center;
+  }
+  100% {
+    transform: perspective(800px) rotateY(-30deg) translateX(-100%);
+    transform-origin: right center;
+    opacity: 0;
+  }
+}
+
+@keyframes page-curl-enter-mobile {
+  0% {
+    transform: perspective(800px) rotateY(30deg) translateX(100%);
+    transform-origin: left center;
+    opacity: 0;
+  }
+  50% {
+    transform: perspective(800px) rotateY(15deg) translateX(20px);
+    transform-origin: left center;
+  }
+  100% {
+    transform: perspective(800px) rotateY(0deg) translateX(0);
+    transform-origin: left center;
+    opacity: 1;
+  }
+}
+
+.animate-page-curl-exit {
+  animation: page-curl-exit 0.4s ease-in-out forwards;
+  backface-visibility: hidden;
+}
+
+.animate-page-curl-enter {
+  animation: page-curl-enter 0.4s ease-in-out forwards;
+  backface-visibility: hidden;
+}
+
+.animate-page-curl-exit-mobile {
+  animation: page-curl-exit-mobile 0.35s ease-in-out forwards;
+  backface-visibility: hidden;
+}
+
+.animate-page-curl-enter-mobile {
+  animation: page-curl-enter-mobile 0.35s ease-in-out forwards;
+  backface-visibility: hidden;
+}
