@@ -516,10 +516,13 @@ const StudentDashboard = () => {
         {/* 인문학 서점 */}
         <Card className="mt-4 sm:mt-6 border-storybook-emerald">
           <CardHeader className="pb-2 sm:pb-6 p-3 sm:p-6 bg-storybook-emerald-light">
-            <CardTitle className="flex items-center gap-2 text-storybook-emerald text-base sm:text-lg">
-              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-              인문학 서점
-            </CardTitle>
+            <div>
+              <CardTitle className="flex items-center gap-2 text-storybook-emerald text-base sm:text-lg">
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                인문학 서점
+              </CardTitle>
+              <p className="text-xs sm:text-sm text-storybook-emerald/70 mt-1 ml-5 sm:ml-7">이지영의 지혜의 강</p>
+            </div>
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
             <StorybookLibrary studentId={user.studentId} />
