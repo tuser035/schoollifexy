@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import Papa from 'papaparse';
+import ReactMarkdown from 'react-markdown';
 import { 
   BookOpen, 
   Plus, 
@@ -770,18 +771,35 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                 </div>
               </div>
               
-              {/* Description Edit Section */}
+              {/* Description Edit Section - Markdown */}
               <div className="mt-6 space-y-2">
                 <Label className="flex items-center gap-1">
                   <FileText className="w-4 h-4" />
-                  책 설명
+                  책 설명 (마크다운 지원)
                 </Label>
-                <Textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="책에 대한 설명을 입력하세요..."
-                  className="min-h-[100px] resize-none"
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  {/* 입력 영역 */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">입력</p>
+                    <Textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      placeholder="마크다운 형식으로 입력하세요...&#10;&#10;예시:&#10;# 제목&#10;## 소제목&#10;**굵게** *기울임*&#10;- 목록 항목"
+                      className="min-h-[200px] resize-none font-mono text-sm"
+                    />
+                  </div>
+                  {/* 미리보기 영역 */}
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">미리보기</p>
+                    <div className="min-h-[200px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
+                      {editDescription ? (
+                        <ReactMarkdown>{editDescription}</ReactMarkdown>
+                      ) : (
+                        <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <Button onClick={handleSaveDescription} className="w-full bg-amber-600 hover:bg-amber-700">
                   <Save className="w-4 h-4 mr-1" />
                   설명 저장
