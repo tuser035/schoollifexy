@@ -110,6 +110,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   // Celebration states
   const [showCelebration, setShowCelebration] = useState(false);
 
+  // Description modal state
+  const [descriptionBook, setDescriptionBook] = useState<Storybook | null>(null);
+
   // TTS Functions
   const stopSpeaking = useCallback(() => {
     if (window.speechSynthesis) {
@@ -597,8 +600,19 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     <span className="font-medium text-storybook-emerald-dark text-sm truncate">{book.title}</span>
                   </div>
                   {book.description && (
-                    <div className="text-xs text-muted-foreground line-clamp-2 prose prose-xs max-w-none">
-                      <ReactMarkdown>{book.description}</ReactMarkdown>
+                    <div className="flex items-end gap-1">
+                      <div className="text-xs text-muted-foreground line-clamp-2 prose prose-xs max-w-none flex-1">
+                        <ReactMarkdown>{book.description}</ReactMarkdown>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDescriptionBook(book);
+                        }}
+                        className="text-xs text-storybook-emerald hover:underline flex-shrink-0"
+                      >
+                        더보기
+                      </button>
                     </div>
                   )}
                 </div>
@@ -630,7 +644,21 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         </AccordionItem>
       </Accordion>
 
-      {/* Book Reader Dialog - Mobile Optimized */}
+      {/* Book Description Modal */}
+      <Dialog open={!!descriptionBook} onOpenChange={(open) => !open && setDescriptionBook(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-storybook-emerald-dark">
+              <BookOpen className="w-5 h-5" />
+              {descriptionBook?.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="prose prose-sm max-w-none text-muted-foreground">
+            <ReactMarkdown>{descriptionBook?.description || ''}</ReactMarkdown>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isReaderOpen} onOpenChange={(open) => {
         if (!open) {
           stopSpeaking();
