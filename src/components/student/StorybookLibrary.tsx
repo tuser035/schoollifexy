@@ -803,7 +803,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             className="flex-1 flex items-center justify-center p-2 md:p-4 overflow-hidden"
           >
             {/* Mobile Single Page View - 70% width */}
-            <div className="md:hidden w-[70%] h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
+            <div className="md:hidden w-[80%] h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
@@ -1015,9 +1015,21 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               <span className="hidden md:inline text-xs">이전</span>
             </Button>
             
-            <span className="text-xs text-storybook-emerald-dark font-medium">
-              {currentPage} / {pages.length}
-            </span>
+            {/* Page Dot Indicators */}
+            <div className="flex items-center gap-1">
+              {pages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentPage(index + 1)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    currentPage === index + 1
+                      ? 'bg-storybook-emerald w-3'
+                      : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50'
+                  }`}
+                  aria-label={`${index + 1}페이지로 이동`}
+                />
+              ))}
+            </div>
 
             <Button
               variant="outline"
