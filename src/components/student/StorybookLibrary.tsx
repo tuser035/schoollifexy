@@ -336,8 +336,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     setTimeout(() => {
       setCurrentPage(newPage);
       setPageTransition('enter');
-      setTimeout(() => setPageTransition(null), 300);
-    }, 150);
+      setTimeout(() => setPageTransition(null), 400);
+    }, 350); // Wait for curl exit animation
   }, [currentPage, pages.length]);
 
   // Handle page change - continue reading if auto-advancing, otherwise stop
@@ -1127,10 +1127,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           >
             {/* Mobile Single Page View */}
             <div 
-              className={`md:hidden w-full max-w-full h-full flex flex-col bg-white overflow-hidden overflow-x-hidden box-border transition-all duration-300 ${
-                pageTransition === 'exit' ? 'opacity-0 translate-x-4' : 
-                pageTransition === 'enter' ? 'opacity-100 translate-x-0 animate-fade-in' : ''
+              className={`md:hidden w-full max-w-full h-full flex flex-col bg-white overflow-hidden overflow-x-hidden box-border ${
+                pageTransition === 'exit' ? 'animate-page-curl-exit-mobile' : 
+                pageTransition === 'enter' ? 'animate-page-curl-enter-mobile' : ''
               }`}
+              style={{ transformStyle: 'preserve-3d' }}
               {...swipeHandlers}
             >
               {currentPage === 1 && pages.length > 0 && (
@@ -1230,10 +1231,13 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
 
             {/* Desktop Two Page Spread */}
-            <div className={`hidden md:flex bg-white rounded-lg shadow-2xl max-h-full overflow-hidden transition-all duration-300 ${
-              pageTransition === 'exit' ? 'opacity-0 scale-95' : 
-              pageTransition === 'enter' ? 'opacity-100 scale-100 animate-scale-in' : ''
-            }`}>
+            <div 
+              className={`hidden md:flex bg-white rounded-lg shadow-2xl max-h-full overflow-hidden ${
+                pageTransition === 'exit' ? 'animate-page-curl-exit' : 
+                pageTransition === 'enter' ? 'animate-page-curl-enter' : ''
+              }`}
+              style={{ transformStyle: 'preserve-3d' }}
+            >
               {/* Title Page (Page 1) */}
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
