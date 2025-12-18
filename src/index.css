@@ -75,6 +75,13 @@ All colors MUST be HSL.
     --mindtalk-keyword-amber: 45 95% 50%;
     --mindtalk-keyword-amber-hover: 45 95% 42%;
     --mindtalk-keyword-amber-light: 45 95% 96%;
+    
+    /* Storybook Colors - Emerald/Teal theme */
+    --storybook-emerald: 160 84% 39%;
+    --storybook-emerald-hover: 160 84% 32%;
+    --storybook-emerald-light: 160 84% 96%;
+    --storybook-emerald-dark: 160 84% 25%;
+    
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;

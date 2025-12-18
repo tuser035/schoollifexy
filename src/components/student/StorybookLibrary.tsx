@@ -354,7 +354,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="bg-white/95 rounded-2xl p-8 shadow-2xl transform animate-bounce-in text-center">
             <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold text-amber-600 mb-2">축하합니다!</h2>
+            <h2 className="text-2xl font-bold text-storybook-emerald mb-2">축하합니다!</h2>
             <p className="text-lg text-gray-600">동화책을 완독했어요!</p>
             <div className="flex justify-center gap-2 mt-4 text-3xl">
               <span className="animate-bounce" style={{ animationDelay: '0ms' }}>⭐</span>
@@ -487,12 +487,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       <CelebrationOverlay />
       
       <Accordion type="single" collapsible defaultValue="storybook-library" className="w-full">
-        <AccordionItem value="storybook-library" className="border-amber-200">
+        <AccordionItem value="storybook-library" className="border-storybook-emerald/30">
           <AccordionTrigger className="hover:no-underline py-3">
-            <div className="flex items-center gap-2 text-amber-800">
+            <div className="flex items-center gap-2 text-storybook-emerald-dark">
               <BookOpen className="w-6 h-6" />
               <span className="text-xl font-bold">이지영의 지혜의 강</span>
-              <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-700">
+              <Badge variant="secondary" className="ml-2 bg-storybook-emerald-light text-storybook-emerald">
                 {books.length}권
               </Badge>
             </div>
@@ -504,7 +504,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 variant={showMyReviews ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowMyReviews(!showMyReviews)}
-                className={showMyReviews ? "bg-amber-600 hover:bg-amber-700" : "border-amber-300"}
+                className={showMyReviews ? "bg-storybook-emerald hover:bg-storybook-emerald-hover" : "border-storybook-emerald/50 text-storybook-emerald hover:bg-storybook-emerald-light"}
               >
                 <PenLine className="w-4 h-4 mr-1" />
                 내 독후감 ({myReviews.length})
@@ -513,9 +513,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
       {/* My Reviews Section */}
       {showMyReviews && (
-        <Card className="mb-6 border-amber-200">
+        <Card className="mb-6 border-storybook-emerald/30">
           <CardContent className="pt-4">
-            <h3 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
+            <h3 className="font-semibold text-storybook-emerald-dark mb-3 flex items-center gap-2">
               <PenLine className="w-5 h-5" />
               내가 쓴 독후감
             </h3>
@@ -524,9 +524,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             ) : (
               <div className="space-y-3 max-h-60 overflow-y-auto">
                 {myReviews.map((review) => (
-                  <div key={review.id} className="p-3 bg-amber-50 rounded-lg">
+                  <div key={review.id} className="p-3 bg-storybook-emerald-light rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-amber-900">{review.book_title}</span>
+                      <span className="font-medium text-storybook-emerald-dark">{review.book_title}</span>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (
@@ -586,11 +586,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             return (
               <div
                 key={book.id}
-                className="flex items-start gap-3 p-3 bg-amber-50 hover:bg-amber-100 rounded-lg cursor-pointer transition-colors border border-amber-200"
+                className="flex items-start gap-3 p-3 bg-storybook-emerald-light hover:bg-storybook-emerald/10 rounded-lg cursor-pointer transition-colors border border-storybook-emerald/20"
                 onClick={() => openBook(book)}
               >
                 {/* Cover Thumbnail */}
-                <div className="w-14 h-20 flex-shrink-0 rounded overflow-hidden bg-amber-100 border border-amber-200">
+                <div className="w-14 h-20 flex-shrink-0 rounded overflow-hidden bg-storybook-emerald-light border border-storybook-emerald/20">
                   {book.cover_image_url ? (
                     <img 
                       src={book.cover_image_url} 
@@ -599,7 +599,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-amber-600" />
+                      <BookOpen className="w-6 h-6 text-storybook-emerald" />
                     </div>
                   )}
                 </div>
@@ -607,10 +607,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 {/* Book Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge className="bg-amber-600 text-white min-w-[28px] justify-center text-xs">
+                    <Badge className="bg-storybook-emerald text-white min-w-[28px] justify-center text-xs">
                       {book.book_number}
                     </Badge>
-                    <span className="font-medium text-amber-900 text-sm truncate">{book.title}</span>
+                    <span className="font-medium text-storybook-emerald-dark text-sm truncate">{book.title}</span>
                   </div>
                   {book.description && (
                     <div className="text-xs text-muted-foreground line-clamp-2 prose prose-xs max-w-none">
@@ -631,11 +631,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
                     </span>
                   ) : book.last_page > 0 ? (
-                    <Badge variant="outline" className="text-xs border-amber-400 text-amber-700">
+                    <Badge variant="outline" className="text-xs border-storybook-emerald/50 text-storybook-emerald">
                       {book.last_page}p
                     </Badge>
                   ) : null}
-                  <ChevronRight className="w-5 h-5 text-amber-400" />
+                  <ChevronRight className="w-5 h-5 text-storybook-emerald/60" />
                 </div>
               </div>
             );
@@ -658,12 +658,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       }}>
         <DialogContent 
           ref={readerContainerRef}
-          className={`max-w-5xl w-full p-0 overflow-hidden bg-amber-50 ${
+          className={`max-w-5xl w-full p-0 overflow-hidden bg-storybook-emerald-light ${
             isFullscreen ? 'h-screen max-h-screen rounded-none' : 'h-[100dvh] md:h-[90vh] landscape:h-[100dvh]'
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-2 md:p-3 bg-amber-800 text-white">
+          <div className="flex items-center justify-between p-2 md:p-3 bg-storybook-emerald-dark text-white">
             <div className="flex items-center gap-2 min-w-0">
               <BookOpen className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
               <span className="font-medium text-sm md:text-base truncate">{selectedBook?.title}</span>
@@ -674,7 +674,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-white hover:bg-amber-700 p-1"
+                      className="text-white hover:bg-storybook-emerald p-1"
                       title="책 설명"
                     >
                       <Info className="w-4 h-4" />
@@ -682,7 +682,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   </PopoverTrigger>
                   <PopoverContent className="w-80 max-h-60 overflow-auto" align="start">
                     <div className="space-y-2">
-                      <h4 className="font-semibold text-amber-800">📖 책 설명</h4>
+                      <h4 className="font-semibold text-storybook-emerald-dark">📖 책 설명</h4>
                       <div className="prose prose-sm max-w-none text-muted-foreground">
                         <ReactMarkdown>{selectedBook.description}</ReactMarkdown>
                       </div>
@@ -692,7 +692,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               )}
             </div>
             <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-              <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-xs md:text-sm">
+              <Badge variant="secondary" className="bg-storybook-emerald-light text-storybook-emerald-dark text-xs md:text-sm">
                 {currentPage} / {pages.length}
               </Badge>
               
@@ -712,7 +712,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     }
                   }
                 }}
-                className="text-white hover:bg-amber-700 p-1 md:p-2"
+                className="text-white hover:bg-storybook-emerald p-1 md:p-2"
                 title={isSpeaking ? '읽기 중지' : '음성 읽기'}
               >
                 {isSpeaking ? (
@@ -728,7 +728,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-white hover:bg-amber-700 p-1 md:p-2"
+                    className="text-white hover:bg-storybook-emerald p-1 md:p-2"
                     title="읽기 속도"
                   >
                     <Settings2 className="w-4 h-4" />
@@ -762,7 +762,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 variant="ghost" 
                 size="sm" 
                 onClick={toggleFullscreen}
-                className="text-white hover:bg-amber-700 p-1 md:p-2"
+                className="text-white hover:bg-storybook-emerald p-1 md:p-2"
                 title={isFullscreen ? '전체화면 종료' : '전체화면'}
               >
                 {isFullscreen ? (
@@ -777,7 +777,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 variant="ghost" 
                 size="sm" 
                 onClick={toggleBookmark}
-                className={`p-1 md:p-2 ${pageBookmarks.includes(currentPage) ? 'text-red-400 hover:bg-red-900/50' : 'text-white hover:bg-amber-700'}`}
+                className={`p-1 md:p-2 ${pageBookmarks.includes(currentPage) ? 'text-red-400 hover:bg-red-900/50' : 'text-white hover:bg-storybook-emerald'}`}
                 title={pageBookmarks.includes(currentPage) ? '북마크 해제' : '북마크'}
               >
                 <Heart className={`w-4 h-4 ${pageBookmarks.includes(currentPage) ? 'fill-red-400' : ''}`} />
@@ -788,7 +788,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setIsReviewDialogOpen(true)}
-                  className="text-white hover:bg-amber-700 hidden md:flex"
+                  className="text-white hover:bg-storybook-emerald hidden md:flex"
                 >
                   <PenLine className="w-4 h-4 mr-1" />
                   독후감
@@ -800,14 +800,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   document.exitFullscreen().catch(() => {});
                 }
                 closeReader();
-              }} className="text-white hover:bg-amber-700 p-1 md:p-2">
+              }} className="text-white hover:bg-storybook-emerald p-1 md:p-2">
                 <X className="w-4 h-4" />
               </Button>
             </div>
           </div>
 
           {/* Mobile Swipe Hint + TTS indicator */}
-          <div className="md:hidden flex items-center justify-center gap-2 py-1 bg-amber-200 text-amber-800 text-xs">
+          <div className="md:hidden flex items-center justify-center gap-2 py-1 bg-storybook-emerald-light text-storybook-emerald-dark text-xs">
             {isSpeaking ? (
               <>
                 <Volume2 className="w-3 h-3 animate-pulse" />
@@ -831,7 +831,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
-                  <div className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-amber-100 to-amber-50 min-h-[200px]">
+                  <div className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-storybook-emerald-light to-white min-h-[200px]">
                     {selectedBook?.cover_image_url && (
                       <img 
                         src={selectedBook.cover_image_url} 
@@ -839,10 +839,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         className="max-h-32 rounded-lg shadow-lg mb-3"
                       />
                     )}
-                    <h1 className="text-xl font-bold text-amber-900 text-center">
+                    <h1 className="text-xl font-bold text-storybook-emerald-dark text-center">
                       {selectedBook?.title}
                     </h1>
-                    <p className="text-amber-700 mt-1 text-sm">#{selectedBook?.book_number}</p>
+                    <p className="text-storybook-emerald mt-1 text-sm">#{selectedBook?.book_number}</p>
                   </div>
                   {/* First Page Content Mobile */}
                   <div className="p-4 flex-1">
@@ -860,7 +860,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-lg font-semibold leading-relaxed text-amber-700 mb-2">
+                            <p className="text-lg font-semibold leading-relaxed text-storybook-emerald mb-2">
                               📖 {subtitle}
                             </p>
                           )}
@@ -880,7 +880,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Image Section Mobile */}
                   {currentPageData.image_url && (
-                    <div className="flex-shrink-0 bg-amber-50 p-3 flex justify-center">
+                    <div className="flex-shrink-0 bg-storybook-emerald-light p-3 flex justify-center">
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지 삽화`}
@@ -897,7 +897,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-lg font-semibold leading-relaxed text-amber-700 mb-2">
+                            <p className="text-lg font-semibold leading-relaxed text-storybook-emerald mb-2">
                               📖 {subtitle}
                             </p>
                           )}
@@ -913,7 +913,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         내용이 없습니다
                       </div>
                     )}
-                    <div className="text-right text-sm text-amber-600 mt-4">
+                    <div className="text-right text-sm text-storybook-emerald mt-4">
                       - {currentPage} -
                     </div>
                   </div>
@@ -927,7 +927,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
                   {/* Left - Title */}
-                  <div className="w-[350px] h-[500px] flex flex-col items-center justify-center p-8 bg-gradient-to-br from-amber-100 to-amber-50 border-r border-amber-200">
+                  <div className="w-[350px] h-[500px] flex flex-col items-center justify-center p-8 bg-gradient-to-br from-storybook-emerald-light to-white border-r border-storybook-emerald/20">
                     {selectedBook?.cover_image_url && (
                       <img 
                         src={selectedBook.cover_image_url} 
@@ -935,10 +935,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         className="max-h-48 rounded-lg shadow-lg mb-4"
                       />
                     )}
-                    <h1 className="text-2xl font-bold text-amber-900 text-center">
+                    <h1 className="text-2xl font-bold text-storybook-emerald-dark text-center">
                       {selectedBook?.title}
                     </h1>
-                    <p className="text-amber-700 mt-2">#{selectedBook?.book_number}</p>
+                    <p className="text-storybook-emerald mt-2">#{selectedBook?.book_number}</p>
                   </div>
                   
                   {/* Right - First Page Content */}
@@ -957,7 +957,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-xl font-semibold leading-relaxed text-amber-700 mb-3">
+                            <p className="text-xl font-semibold leading-relaxed text-storybook-emerald mb-3">
                               📖 {subtitle}
                             </p>
                           )}
@@ -977,7 +977,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage > 1 && currentPageData && (
                 <div className="flex">
                   {/* Left - Image */}
-                  <div className="w-[350px] h-[500px] flex items-center justify-center bg-amber-50 border-r border-amber-200 p-4">
+                  <div className="w-[350px] h-[500px] flex items-center justify-center bg-storybook-emerald-light border-r border-storybook-emerald/20 p-4">
                     {currentPageData.image_url ? (
                       <img 
                         src={currentPageData.image_url} 
@@ -1001,7 +1001,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-xl font-semibold leading-relaxed text-amber-700 mb-3">
+                            <p className="text-xl font-semibold leading-relaxed text-storybook-emerald mb-3">
                               📖 {subtitle}
                             </p>
                           )}
@@ -1017,7 +1017,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         내용이 없습니다
                       </div>
                     )}
-                    <div className="text-right text-sm text-amber-600 mt-4">
+                    <div className="text-right text-sm text-storybook-emerald mt-4">
                       - {currentPage} -
                     </div>
                   </div>
@@ -1027,12 +1027,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           </div>
 
           {/* Navigation - Responsive */}
-          <div className="flex items-center justify-between p-2 md:p-4 bg-amber-100">
+          <div className="flex items-center justify-between p-2 md:p-4 bg-storybook-emerald-light">
             <Button
               variant="outline"
               onClick={() => handlePageChange('prev')}
               disabled={currentPage <= 1}
-              className="border-amber-300 px-2 md:px-4"
+              className="border-storybook-emerald/40 px-2 md:px-4"
               size="sm"
             >
               <ChevronLeft className="w-4 h-4 md:mr-1" />
@@ -1045,10 +1045,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   key={idx}
                   className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors ${
                     idx + 1 === currentPage 
-                      ? 'bg-amber-600' 
+                      ? 'bg-storybook-emerald' 
                       : idx + 1 < currentPage 
-                        ? 'bg-amber-400' 
-                        : 'bg-amber-200'
+                        ? 'bg-storybook-emerald/60' 
+                        : 'bg-storybook-emerald/20'
                   }`}
                 />
               ))}
@@ -1058,7 +1058,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               variant="outline"
               onClick={() => handlePageChange('next')}
               disabled={currentPage >= pages.length}
-              className="border-amber-300 px-2 md:px-4"
+              className="border-storybook-emerald/40 px-2 md:px-4"
               size="sm"
             >
               <span className="hidden md:inline">다음</span>
@@ -1073,7 +1073,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <PenLine className="w-5 h-5 text-amber-600" />
+              <PenLine className="w-5 h-5 text-storybook-emerald" />
               독후감
             </DialogTitle>
           </DialogHeader>
@@ -1130,9 +1130,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-storybook-emerald-light rounded-lg">
                 <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-amber-600" />
+                  <Globe className="w-4 h-4 text-storybook-emerald" />
                   <span className="text-sm">친구들에게 공개하기</span>
                 </div>
                 <Switch
@@ -1143,7 +1143,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
               <Button 
                 onClick={handleSubmitReview} 
-                className="w-full bg-amber-600 hover:bg-amber-700"
+                className="w-full bg-storybook-emerald hover:bg-storybook-emerald-hover"
                 disabled={submittingReview}
               >
                 <Send className="w-4 h-4 mr-1" />

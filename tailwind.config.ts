@@ -96,6 +96,12 @@ export default {
           "amber-hover": "hsl(var(--mindtalk-keyword-amber-hover))",
           "amber-light": "hsl(var(--mindtalk-keyword-amber-light))",
         },
+        storybook: {
+          emerald: "hsl(var(--storybook-emerald))",
+          "emerald-hover": "hsl(var(--storybook-emerald-hover))",
+          "emerald-light": "hsl(var(--storybook-emerald-light))",
+          "emerald-dark": "hsl(var(--storybook-emerald-dark))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
