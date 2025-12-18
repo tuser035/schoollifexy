@@ -815,10 +815,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         className="max-h-32 rounded-lg shadow-lg mb-3"
                       />
                     )}
-                    <h1 className="text-xl font-bold text-storybook-emerald-dark text-center">
+                    <h1 className="text-lg font-bold text-storybook-emerald-dark text-center">
                       {selectedBook?.title}
                     </h1>
-                    <p className="text-storybook-emerald mt-1 text-sm">#{selectedBook?.book_number}</p>
+                    <p className="text-storybook-emerald mt-1 text-xs">#{selectedBook?.book_number}</p>
                   </div>
                   {/* First Page Content Mobile */}
                   <div className="p-4 flex-1">
@@ -836,12 +836,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-lg font-semibold leading-relaxed text-storybook-emerald mb-2">
+                            <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-2">
                               📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap indent-4">
+                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap indent-4">
                               {bodyText}
                             </p>
                           )}
@@ -873,12 +873,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div>
                           {subtitle && (
-                            <p className="text-lg font-semibold leading-relaxed text-storybook-emerald mb-2">
+                            <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-2">
                               📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-base leading-relaxed text-gray-800 whitespace-pre-wrap indent-4">
+                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap indent-4">
                               {bodyText}
                             </p>
                           )}
@@ -889,7 +889,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         내용이 없습니다
                       </div>
                     )}
-                    <div className="text-right text-sm text-storybook-emerald mt-4">
+                    <div className="text-right text-xs text-storybook-emerald mt-4">
                       - {currentPage} -
                     </div>
                   </div>
