@@ -840,7 +840,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           >
             {/* Mobile Single Page View */}
             <div 
-              className="md:hidden w-full h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden"
+              className="md:hidden w-full h-full flex flex-col bg-white shadow-xl overflow-hidden"
               {...swipeHandlers}
             >
               {currentPage === 1 && pages.length > 0 && (
@@ -851,7 +851,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       <img 
                         src={selectedBook.cover_image_url} 
                         alt="표지"
-                        className="max-h-28 rounded-lg shadow-lg mb-2"
+                        className="max-h-28 shadow-lg mb-2"
                       />
                     )}
                     <h1 className="text-lg font-bold text-storybook-emerald-dark text-center">
@@ -864,7 +864,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지`}
-                        className="w-full rounded-lg mb-1 max-h-44 object-contain"
+                        className="w-full mb-1 max-h-44 object-contain"
                       />
                     )}
                     {currentPageData?.text_content && (() => {
@@ -898,7 +898,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지 삽화`}
-                        className="max-h-36 object-contain rounded-lg shadow"
+                        className="max-h-36 object-contain shadow"
                       />
                     </div>
                   )}
