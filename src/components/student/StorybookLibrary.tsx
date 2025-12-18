@@ -818,7 +818,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         <DialogContent 
           ref={readerContainerRef}
           hideCloseButton
-          className={`max-w-[100vw] md:max-w-5xl w-full p-0 overflow-hidden bg-storybook-emerald-light ${
+          className={`w-screen max-w-screen md:max-w-5xl md:w-full p-0 overflow-hidden overflow-x-hidden bg-storybook-emerald-light box-border ${
             isFullscreen ? 'h-screen max-h-screen rounded-none' : 'h-[100dvh] md:h-[90vh] landscape:h-[100dvh]'
           }`}
         >
@@ -1103,32 +1103,32 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           >
             {/* Mobile Single Page View */}
             <div 
-              className={`md:hidden w-full h-full flex flex-col bg-white overflow-hidden transition-all duration-300 ${
+              className={`md:hidden w-full max-w-full h-full flex flex-col bg-white overflow-hidden overflow-x-hidden box-border transition-all duration-300 ${
                 pageTransition === 'exit' ? 'opacity-0 translate-x-4' : 
                 pageTransition === 'enter' ? 'opacity-100 translate-x-0 animate-fade-in' : ''
               }`}
               {...swipeHandlers}
             >
               {currentPage === 1 && pages.length > 0 && (
-                <div className="flex-1 flex flex-col overflow-y-auto">
+                <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden w-full max-w-full">
                   {/* Title Page Mobile */}
-                  <div className="flex flex-col items-center justify-center py-4 px-3 bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50 min-h-[100px]">
+                  <div className="flex flex-col items-center justify-center py-4 px-4 bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50 min-h-[100px] w-full max-w-full box-border">
                     <Badge className="bg-storybook-emerald text-white text-[10px] px-2 py-0.5 mb-2">
                       #{selectedBook?.book_number}
                     </Badge>
-                    <h1 className="text-base font-bold text-storybook-emerald-dark text-center leading-tight">
+                    <h1 className="text-base font-bold text-storybook-emerald-dark text-center leading-tight px-2 max-w-full break-words">
                       {selectedBook?.title}
                     </h1>
                   </div>
                   
                   {/* First Page Content Mobile */}
-                  <div className="flex-1 px-3 py-2 overflow-y-auto">
+                  <div className="flex-1 px-4 py-2 overflow-y-auto overflow-x-hidden w-full max-w-full box-border">
                     {currentPageData?.image_url && (
-                      <div className="flex justify-center mb-3">
+                      <div className="flex justify-center mb-3 w-full max-w-full">
                         <img 
                           src={currentPageData.image_url} 
                           alt={`${currentPage}페이지`}
-                          className="max-h-40 object-contain rounded-lg shadow-md"
+                          className="max-h-40 max-w-full object-contain rounded-lg shadow-md"
                         />
                       </div>
                     )}
@@ -1137,14 +1137,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-full max-w-full">
                           {subtitle && (
-                            <p className="text-sm font-semibold leading-relaxed text-storybook-emerald break-words">
+                            <p className="text-sm font-semibold leading-relaxed text-storybook-emerald break-words w-full max-w-full">
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap break-words">
+                            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap break-words w-full max-w-full">
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1156,35 +1156,35 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               )}
 
               {currentPage > 1 && currentPageData && (
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden overflow-x-hidden w-full max-w-full">
                   {/* Image Section Mobile - Fixed height */}
                   {currentPageData.image_url && (
-                    <div className="flex-shrink-0 bg-gradient-to-b from-storybook-emerald-light to-white py-3 px-3">
-                      <div className="flex justify-center">
+                    <div className="flex-shrink-0 bg-gradient-to-b from-storybook-emerald-light to-white py-3 px-4 w-full max-w-full box-border">
+                      <div className="flex justify-center w-full max-w-full">
                         <img 
                           src={currentPageData.image_url} 
                           alt={`${currentPage}페이지 삽화`}
-                          className="max-h-32 object-contain rounded-lg shadow-md"
+                          className="max-h-32 max-w-full object-contain rounded-lg shadow-md"
                         />
                       </div>
                     </div>
                   )}
                   
                   {/* Text Section Mobile - Scrollable */}
-                  <div className="flex-1 overflow-y-auto px-3 py-2 bg-white">
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 bg-white w-full max-w-full box-border">
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-full max-w-full">
                           {subtitle && (
-                            <p className="text-sm font-semibold leading-relaxed text-storybook-emerald break-words">
+                            <p className="text-sm font-semibold leading-relaxed text-storybook-emerald break-words w-full max-w-full">
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap break-words">
+                            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap break-words w-full max-w-full">
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1198,7 +1198,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   </div>
                   
                   {/* Page Number */}
-                  <div className="flex-shrink-0 text-center py-1 text-xs text-storybook-emerald bg-storybook-emerald-light/50">
+                  <div className="flex-shrink-0 text-center py-1 text-xs text-storybook-emerald bg-storybook-emerald-light/50 w-full">
                     - {currentPage} -
                   </div>
                 </div>
