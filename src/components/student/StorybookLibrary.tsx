@@ -1039,45 +1039,23 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
           </div>
 
-          {/* Navigation - Compact */}
-          <div className="flex items-center justify-between px-2 py-1 md:p-2 bg-storybook-emerald-light">
-            <Button
-              variant="outline"
-              onClick={() => handlePageChange('prev')}
-              disabled={currentPage <= 1}
-              className="border-storybook-emerald/40 px-2 h-7 text-xs"
-              size="sm"
-            >
-              <ChevronLeft className="w-3 h-3 md:mr-1" />
-              <span className="hidden md:inline text-xs">이전</span>
-            </Button>
-            
+          {/* Navigation - Page Dots Only (swipe to navigate) */}
+          <div className="flex items-center justify-center px-2 py-1 bg-storybook-emerald-light">
             {/* Page Dot Indicators */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               {pages.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentPage(index + 1)}
-                  className={`w-2 h-2 rounded-full transition-all ${
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${
                     currentPage === index + 1
-                      ? 'bg-storybook-emerald w-3'
+                      ? 'bg-storybook-emerald w-4'
                       : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50'
                   }`}
                   aria-label={`${index + 1}페이지로 이동`}
                 />
               ))}
             </div>
-
-            <Button
-              variant="outline"
-              onClick={() => handlePageChange('next')}
-              disabled={currentPage >= pages.length}
-              className="border-storybook-emerald/40 px-2 h-7 text-xs"
-              size="sm"
-            >
-              <span className="hidden md:inline text-xs">다음</span>
-              <ChevronRight className="w-3 h-3 md:ml-1" />
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
