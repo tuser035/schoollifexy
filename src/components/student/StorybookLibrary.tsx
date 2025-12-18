@@ -836,11 +836,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
           {/* Book Content */}
           <div 
-            className="flex-1 flex items-center justify-center p-1 md:p-4 overflow-hidden"
+            className="flex-1 flex items-center justify-center p-0 md:p-4 overflow-hidden"
           >
             {/* Mobile Single Page View */}
             <div 
-              className="md:hidden w-full max-w-[95vw] h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden"
+              className="md:hidden w-full h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden"
               {...swipeHandlers}
             >
               {currentPage === 1 && pages.length > 0 && (
