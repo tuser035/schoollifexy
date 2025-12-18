@@ -113,6 +113,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   // Page transition state
   const [pageTransition, setPageTransition] = useState<'enter' | 'exit' | null>(null);
   
+  // Font size state (0.8 = 작게, 1 = 보통, 1.2 = 크게, 1.4 = 매우 크게)
+  const [fontSize, setFontSize] = useState(1);
+  
   // Fullscreen states
   const [isFullscreen, setIsFullscreen] = useState(false);
   const readerContainerRef = useRef<HTMLDivElement>(null);
@@ -958,6 +961,27 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         onCheckedChange={setReadTitle}
                       />
                     </div>
+                    <div className="space-y-2 pt-2 border-t">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">글씨 크기</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {fontSize === 0.85 ? '작게' : fontSize === 1 ? '보통' : fontSize === 1.15 ? '크게' : '매우 크게'}
+                        </span>
+                      </div>
+                      <Slider
+                        value={[fontSize]}
+                        onValueChange={(value) => setFontSize(value[0])}
+                        min={0.85}
+                        max={1.3}
+                        step={0.15}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>작게</span>
+                        <span>보통</span>
+                        <span>크게</span>
+                      </div>
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -1034,6 +1058,27 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         checked={autoPageTurn}
                         onCheckedChange={setAutoPageTurn}
                       />
+                    </div>
+                    <div className="space-y-2 pt-2 border-t">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">글씨 크기</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {fontSize === 0.85 ? '작게' : fontSize === 1 ? '보통' : fontSize === 1.15 ? '크게' : '매우 크게'}
+                        </span>
+                      </div>
+                      <Slider
+                        value={[fontSize]}
+                        onValueChange={(value) => setFontSize(value[0])}
+                        min={0.85}
+                        max={1.3}
+                        step={0.15}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>작게</span>
+                        <span>보통</span>
+                        <span>크게</span>
+                      </div>
                     </div>
                   </div>
                 </PopoverContent>
@@ -1162,14 +1207,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div className="space-y-2">
+                        <div className="space-y-2" style={{ fontSize: `${fontSize}rem` }}>
                           {subtitle && (
-                            <p className="text-sm font-semibold leading-relaxed text-storybook-emerald break-words">
+                            <p className="font-semibold leading-relaxed text-storybook-emerald break-words" style={{ fontSize: `${fontSize}rem` }}>
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap break-words">
+                            <p className="leading-relaxed text-gray-700 whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}rem` }}>
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1202,14 +1247,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div className="space-y-2">
+                        <div className="space-y-2" style={{ fontSize: `${fontSize}rem` }}>
                           {subtitle && (
-                            <p className="text-sm font-semibold leading-relaxed text-storybook-emerald break-words">
+                            <p className="font-semibold leading-relaxed text-storybook-emerald break-words" style={{ fontSize: `${fontSize}rem` }}>
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap break-words">
+                            <p className="leading-relaxed text-gray-700 whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}rem` }}>
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1265,14 +1310,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div>
+                        <div style={{ fontSize: `${fontSize * 1.25}rem` }}>
                           {subtitle && (
-                            <p className="text-xl font-semibold leading-relaxed text-storybook-emerald mb-3">
+                            <p className="font-semibold leading-relaxed text-storybook-emerald mb-3" style={{ fontSize: `${fontSize * 1.25}rem` }}>
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap indent-6">
+                            <p className="leading-relaxed text-gray-800 whitespace-pre-wrap indent-6" style={{ fontSize: `${fontSize * 1.125}rem` }}>
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1309,14 +1354,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div>
+                        <div style={{ fontSize: `${fontSize * 1.25}rem` }}>
                           {subtitle && (
-                            <p className="text-xl font-semibold leading-relaxed text-storybook-emerald mb-3">
+                            <p className="font-semibold leading-relaxed text-storybook-emerald mb-3" style={{ fontSize: `${fontSize * 1.25}rem` }}>
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap indent-6">
+                            <p className="leading-relaxed text-gray-800 whitespace-pre-wrap indent-6" style={{ fontSize: `${fontSize * 1.125}rem` }}>
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
