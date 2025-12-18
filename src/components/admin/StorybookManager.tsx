@@ -109,6 +109,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   
   // Auto move to next page after save
   const [autoMoveEnabled, setAutoMoveEnabled] = useState(true);
+  
+  // Publish confirmation dialog
+  const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
+  const [bookToPublish, setBookToPublish] = useState<Storybook | null>(null);
 
   useEffect(() => {
     loadBooks();
@@ -293,6 +297,29 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     }
   };
 
+  const handleConfirmPublish = async () => {
+    if (!bookToPublish) return;
+    
+    try {
+      const { error } = await supabase.rpc('admin_publish_storybook', {
+        admin_id_input: adminId,
+        book_id_input: bookToPublish.id,
+        publish_input: true
+      });
+
+      if (error) throw error;
+
+      toast.success('동화책이 발행되었습니다');
+      loadBooks();
+    } catch (error) {
+      console.error('Error publishing book:', error);
+      toast.error('발행에 실패했습니다');
+    } finally {
+      setIsPublishConfirmOpen(false);
+      setBookToPublish(null);
+    }
+  };
+
   const handleDeleteBook = async () => {
     if (!bookToDelete) return;
 
@@ -401,13 +428,20 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       
       // 명시적으로 다음 페이지로 이동 요청된 경우
       if (moveToNext) {
-        // 마지막 페이지에서 다음으로 이동하려는 경우 - 편집 완료 메시지
+        // 마지막 페이지에서 다음으로 이동하려는 경우 - 편집 완료
         if (isLastPage && (pageImagePreview || pageText)) {
           toast.success('🎉 편집이 완료되었습니다!', { 
             description: `총 ${currentPageNumber}페이지 편집 완료`,
             duration: 3000 
           });
           loadBooks(); // 페이지 수 업데이트
+          setIsEditDialogOpen(false); // 편집 다이얼로그 닫기
+          
+          // 미발행 상태인 경우 발행 확인 다이얼로그 표시
+          if (!selectedBook.is_published) {
+            setBookToPublish(selectedBook);
+            setIsPublishConfirmOpen(true);
+          }
           return;
         }
         
@@ -1068,6 +1102,27 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteBook} className="bg-destructive hover:bg-destructive/90">
               삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Publish Confirmation */}
+      <AlertDialog open={isPublishConfirmOpen} onOpenChange={setIsPublishConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>동화책 발행</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{bookToPublish?.title}"을(를) 발행하시겠습니까?
+              발행하면 학생들이 이 동화책을 읽을 수 있습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBookToPublish(null)}>
+              나중에
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmPublish} className="bg-emerald-600 hover:bg-emerald-700">
+              발행하기
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
