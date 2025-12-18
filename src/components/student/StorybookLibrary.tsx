@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useSwipe } from '@/hooks/use-swipe';
 
 import ReactMarkdown from 'react-markdown';
 import { 
@@ -380,6 +381,13 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     const isCompleted = newPage === pages.length;
     saveProgress(newPage, isCompleted);
   };
+
+  // Swipe handlers for mobile
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => handlePageChange('next'),
+    onSwipeRight: () => handlePageChange('prev'),
+    threshold: 50
+  });
 
   const closeReader = () => {
     if (selectedBook) {
@@ -828,19 +836,22 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
           {/* Book Content */}
           <div 
-            className="flex-1 flex items-center justify-center p-2 md:p-4 overflow-hidden"
+            className="flex-1 flex items-center justify-center p-1 md:p-4 overflow-hidden"
           >
             {/* Mobile Single Page View */}
-            <div className="md:hidden w-full max-w-[90vw] h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
+            <div 
+              className="md:hidden w-full max-w-[95vw] h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden"
+              {...swipeHandlers}
+            >
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
-                  <div className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-storybook-emerald-light to-white min-h-[200px]">
+                  <div className="flex flex-col items-center justify-center p-2 bg-gradient-to-br from-storybook-emerald-light to-white min-h-[150px]">
                     {selectedBook?.cover_image_url && (
                       <img 
                         src={selectedBook.cover_image_url} 
                         alt="표지"
-                        className="max-h-32 rounded-lg shadow-lg mb-3"
+                        className="max-h-28 rounded-lg shadow-lg mb-2"
                       />
                     )}
                     <h1 className="text-lg font-bold text-storybook-emerald-dark text-center">
@@ -849,12 +860,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     <p className="text-storybook-emerald mt-1 text-xs">#{selectedBook?.book_number}</p>
                   </div>
                   {/* First Page Content Mobile */}
-                  <div className="p-4 flex-1">
+                  <div className="p-2 flex-1 flex flex-col items-center">
                     {currentPageData?.image_url && (
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지`}
-                        className="w-full rounded-lg mb-3 max-h-48 object-contain"
+                        className="w-full rounded-lg mb-2 max-h-44 object-contain"
                       />
                     )}
                     {currentPageData?.text_content && (() => {
@@ -862,14 +873,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div>
+                        <div className="w-full text-center">
                           {subtitle && (
                             <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-2">
                               📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap indent-4">
+                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
                               {bodyText}
                             </p>
                           )}
@@ -884,29 +895,29 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Image Section Mobile */}
                   {currentPageData.image_url && (
-                    <div className="flex-shrink-0 bg-storybook-emerald-light p-3 flex justify-center">
+                    <div className="flex-shrink-0 bg-storybook-emerald-light p-2 flex justify-center">
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지 삽화`}
-                        className="max-h-40 object-contain rounded-lg shadow"
+                        className="max-h-36 object-contain rounded-lg shadow"
                       />
                     </div>
                   )}
                   {/* Text Section Mobile */}
-                  <div className="flex-1 p-4 bg-white">
+                  <div className="flex-1 p-2 bg-white flex flex-col items-center">
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div>
+                        <div className="w-full text-center">
                           {subtitle && (
                             <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-2">
                               📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap indent-4">
+                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
                               {bodyText}
                             </p>
                           )}
@@ -917,7 +928,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         내용이 없습니다
                       </div>
                     )}
-                    <div className="text-right text-xs text-storybook-emerald mt-4">
+                    <div className="text-center text-xs text-storybook-emerald mt-2">
                       - {currentPage} -
                     </div>
                   </div>
