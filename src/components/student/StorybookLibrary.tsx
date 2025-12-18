@@ -765,6 +765,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       }}>
         <DialogContent 
           ref={readerContainerRef}
+          hideCloseButton
           className={`max-w-[100vw] md:max-w-5xl w-full p-0 overflow-hidden bg-storybook-emerald-light ${
             isFullscreen ? 'h-screen max-h-screen rounded-none' : 'h-[100dvh] md:h-[90vh] landscape:h-[100dvh]'
           }`}
