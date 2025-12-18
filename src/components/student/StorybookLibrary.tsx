@@ -212,7 +212,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             key={idx}
             className={`transition-all duration-300 ${
               idx === currentSentenceIndex
-                ? 'bg-yellow-200 text-gray-900 rounded px-0.5'
+                ? 'bg-amber-100 text-amber-900 rounded px-0.5'
                 : ''
             }`}
           >
