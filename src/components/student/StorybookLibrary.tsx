@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useSwipe } from '@/hooks/use-swipe';
+
 import ReactMarkdown from 'react-markdown';
 import { 
   BookOpen, 
@@ -24,7 +24,6 @@ import {
   Star,
   PenLine,
   Send,
-  Smartphone,
   Volume2,
   VolumeX,
   Maximize,
@@ -378,21 +377,6 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     const isCompleted = newPage === pages.length;
     saveProgress(newPage, isCompleted);
   };
-
-  // Swipe handlers for mobile navigation
-  const swipeHandlers = useSwipe({
-    onSwipeLeft: () => {
-      if (currentPage < pages.length) {
-        handlePageChange('next');
-      }
-    },
-    onSwipeRight: () => {
-      if (currentPage > 1) {
-        handlePageChange('prev');
-      }
-    },
-    threshold: 50,
-  });
 
   const closeReader = () => {
     if (selectedBook) {
@@ -806,28 +790,20 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
           </div>
 
-          {/* Mobile Swipe Hint + TTS indicator */}
-          <div className="md:hidden flex items-center justify-center gap-2 py-1 bg-storybook-emerald-light text-storybook-emerald-dark text-xs">
-            {isSpeaking ? (
-              <>
-                <Volume2 className="w-3 h-3 animate-pulse" />
-                <span>읽는 중... (버튼을 눌러 중지)</span>
-              </>
-            ) : (
-              <>
-                <Smartphone className="w-3 h-3" />
-                <span>좌우로 밀어서 페이지 넘기기</span>
-              </>
-            )}
-          </div>
+          {/* Mobile TTS indicator */}
+          {isSpeaking && (
+            <div className="md:hidden flex items-center justify-center gap-2 py-1 bg-storybook-emerald-light text-storybook-emerald-dark text-xs">
+              <Volume2 className="w-3 h-3 animate-pulse" />
+              <span>읽는 중... (버튼을 눌러 중지)</span>
+            </div>
+          )}
 
-          {/* Book Content - Responsive with Swipe */}
+          {/* Book Content */}
           <div 
-            className="flex-1 flex items-center justify-center p-2 md:p-4 overflow-hidden touch-pan-y"
-            {...swipeHandlers}
+            className="flex-1 flex items-center justify-center p-2 md:p-4 overflow-hidden"
           >
-            {/* Mobile Single Page View */}
-            <div className="md:hidden w-full h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
+            {/* Mobile Single Page View - 70% width */}
+            <div className="md:hidden w-[70%] h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
@@ -1026,43 +1002,32 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
           </div>
 
-          {/* Navigation - Responsive */}
-          <div className="flex items-center justify-between p-2 md:p-4 bg-storybook-emerald-light">
+          {/* Navigation - Compact */}
+          <div className="flex items-center justify-between px-2 py-1 md:p-2 bg-storybook-emerald-light">
             <Button
               variant="outline"
               onClick={() => handlePageChange('prev')}
               disabled={currentPage <= 1}
-              className="border-storybook-emerald/40 px-2 md:px-4"
+              className="border-storybook-emerald/40 px-2 h-7 text-xs"
               size="sm"
             >
-              <ChevronLeft className="w-4 h-4 md:mr-1" />
-              <span className="hidden md:inline">이전</span>
+              <ChevronLeft className="w-3 h-3 md:mr-1" />
+              <span className="hidden md:inline text-xs">이전</span>
             </Button>
             
-            <div className="flex gap-1 max-w-[60%] overflow-x-auto">
-              {pages.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors ${
-                    idx + 1 === currentPage 
-                      ? 'bg-storybook-emerald' 
-                      : idx + 1 < currentPage 
-                        ? 'bg-storybook-emerald/60' 
-                        : 'bg-storybook-emerald/20'
-                  }`}
-                />
-              ))}
-            </div>
+            <span className="text-xs text-storybook-emerald-dark font-medium">
+              {currentPage} / {pages.length}
+            </span>
 
             <Button
               variant="outline"
               onClick={() => handlePageChange('next')}
               disabled={currentPage >= pages.length}
-              className="border-storybook-emerald/40 px-2 md:px-4"
+              className="border-storybook-emerald/40 px-2 h-7 text-xs"
               size="sm"
             >
-              <span className="hidden md:inline">다음</span>
-              <ChevronRight className="w-4 h-4 md:ml-1" />
+              <span className="hidden md:inline text-xs">다음</span>
+              <ChevronRight className="w-3 h-3 md:ml-1" />
             </Button>
           </div>
         </DialogContent>
