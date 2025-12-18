@@ -13,6 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSwipe } from '@/hooks/use-swipe';
+import ReactMarkdown from 'react-markdown';
 import { 
   BookOpen, 
   ChevronLeft, 
@@ -611,7 +612,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     <span className="font-medium text-amber-900 text-sm truncate">{book.title}</span>
                   </div>
                   {book.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">{book.description}</p>
+                    <div className="text-xs text-muted-foreground line-clamp-2 prose prose-xs max-w-none">
+                      <ReactMarkdown>{book.description}</ReactMarkdown>
+                    </div>
                   )}
                 </div>
                 
