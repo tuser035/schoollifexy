@@ -689,28 +689,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 className="flex items-start gap-3 p-3 bg-storybook-emerald-light hover:bg-storybook-emerald/10 rounded-lg cursor-pointer transition-colors border border-storybook-emerald/20"
                 onClick={() => openBook(book)}
               >
-                {/* Cover Thumbnail */}
-                <div className="w-14 h-20 flex-shrink-0 rounded overflow-hidden bg-storybook-emerald-light border border-storybook-emerald/20">
-                  {book.cover_image_url ? (
-                    <img 
-                      src={book.cover_image_url} 
-                      alt={book.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-storybook-emerald" />
-                    </div>
-                  )}
-                </div>
-                
                 {/* Book Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge className="bg-storybook-emerald text-white min-w-[28px] justify-center text-xs">
-                      {book.book_number}
-                    </Badge>
-                    <span className="font-medium text-storybook-emerald-dark text-sm truncate">{book.title}</span>
+                    <span className="font-medium text-storybook-emerald-dark text-sm truncate">{book.title} #{book.book_number}</span>
                   </div>
                   {book.description && (
                     <div className="flex items-end gap-1">
