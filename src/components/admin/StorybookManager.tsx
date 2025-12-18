@@ -113,6 +113,19 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   // Publish confirmation dialog
   const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
   const [bookToPublish, setBookToPublish] = useState<Storybook | null>(null);
+  
+  // Recently edited book highlight
+  const [recentlyEditedBookId, setRecentlyEditedBookId] = useState<string | null>(null);
+  
+  // Clear highlight after 3 seconds
+  useEffect(() => {
+    if (recentlyEditedBookId) {
+      const timer = setTimeout(() => {
+        setRecentlyEditedBookId(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [recentlyEditedBookId]);
 
   useEffect(() => {
     loadBooks();
@@ -435,6 +448,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             duration: 3000 
           });
           loadBooks(); // 페이지 수 업데이트
+          setRecentlyEditedBookId(selectedBook.id); // 하이라이트 표시
           setIsEditDialogOpen(false); // 편집 다이얼로그 닫기
           
           // 미발행 상태인 경우 발행 확인 다이얼로그 표시
@@ -758,7 +772,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
               </TableHeader>
               <TableBody>
                 {books.map((book) => (
-                  <TableRow key={book.id}>
+                  <TableRow 
+                    key={book.id}
+                    className={recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''}
+                  >
                     <TableCell className="font-medium">{book.book_number}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -1118,7 +1135,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setBookToPublish(null)}>
+            <AlertDialogCancel onClick={() => {
+              toast.info('📚 미발행 도서는 목록에서 발행 버튼을 눌러 언제든지 발행할 수 있습니다', { duration: 4000 });
+              setBookToPublish(null);
+            }}>
               나중에
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmPublish} className="bg-emerald-600 hover:bg-emerald-700">
