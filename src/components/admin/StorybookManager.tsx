@@ -307,16 +307,17 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
         return;
       }
 
+      // Set admin session first
+      await supabase.rpc('set_admin_session', { admin_id_input: adminId });
+
       // Delete the page from database
-      const { error } = await supabase
+      const { error: deleteError } = await supabase
         .from('storybook_pages')
         .delete()
         .eq('id', pageToRemove.id);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
-      toast.success(`${pageToDelete}페이지가 삭제되었습니다`);
-      
       // Update preview pages
       const updatedPages = previewPages.filter(p => p.page_number !== pageToDelete);
       setPreviewPages(updatedPages);
@@ -328,14 +329,26 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
         setPreviewPageNumber(updatedPages.length);
       }
       
-      // Update page count in book
+      // Update page count in book using RPC to bypass RLS
+      const { error: updateError } = await supabase.rpc('admin_update_storybook_description', {
+        admin_id_input: adminId,
+        book_id_input: previewBook.id,
+        description_input: previewBook.description || ''
+      });
+
+      // Also update directly with session set
       await supabase
         .from('storybooks')
-        .update({ page_count: updatedPages.length })
+        .update({ page_count: updatedPages.length, updated_at: new Date().toISOString() })
         .eq('id', previewBook.id);
+
+      // Update local previewBook state
+      setPreviewBook(prev => prev ? { ...prev, page_count: updatedPages.length } : null);
+
+      toast.success(`${pageToDelete}페이지가 삭제되었습니다`);
       
-      // Reload books to reflect changes
-      loadBooks();
+      // Reload books to reflect changes in list
+      await loadBooks();
       
       setIsPageDeleteDialogOpen(false);
       setPageToDelete(null);
