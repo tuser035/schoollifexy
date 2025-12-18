@@ -1039,66 +1039,16 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                 </div>
               </div>
 
-              {/* Auto-move toggle and Save buttons */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">저장 후 다음 페이지로 자동 이동</span>
-                  </div>
-                  <Switch 
-                    checked={autoMoveEnabled} 
-                    onCheckedChange={setAutoMoveEnabled}
-                  />
+              {/* Auto-move toggle */}
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">저장 후 다음 페이지로 자동 이동</span>
                 </div>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => handleSavePageText(autoMoveEnabled)} 
-                    variant={autoMoveEnabled ? "default" : "outline"}
-                    className={`flex-1 ${autoMoveEnabled ? "bg-amber-600 hover:bg-amber-700" : ""}`}
-                  >
-                    <Save className="w-4 h-4 mr-1" />
-                    {autoMoveEnabled ? "저장 (→ 다음)" : "저장"}
-                  </Button>
-                  <Button 
-                    onClick={() => handleSavePageText(!autoMoveEnabled)} 
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Save className="w-4 h-4 mr-1" />
-                    {autoMoveEnabled ? "저장만" : "저장 후 다음"}
-                    {!autoMoveEnabled && <ChevronRight className="w-4 h-4 ml-1" />}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Page List */}
-              <div className="mt-4">
-                <Label>페이지 목록</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {Array.from({ length: Math.max(selectedBook?.page_count || 0, currentPageNumber) }, (_, i) => i + 1).map((num) => {
-                    const page = pages.find(p => p.page_number === num);
-                    const hasContent = page?.image_url || page?.text_content;
-                    return (
-                      <Button
-                        key={num}
-                        variant={currentPageNumber === num ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => handlePageChange(num)}
-                        className={hasContent ? 'border-amber-500' : ''}
-                      >
-                        {num}
-                      </Button>
-                    );
-                  })}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handlePageChange((selectedBook?.page_count || 0) + 1)}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Switch 
+                  checked={autoMoveEnabled} 
+                  onCheckedChange={setAutoMoveEnabled}
+                />
               </div>
             </TabsContent>
           </Tabs>
