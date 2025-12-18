@@ -106,6 +106,9 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   
   // Tab state for edit dialog
   const [editActiveTab, setEditActiveTab] = useState('cover');
+  
+  // Auto move to next page after save
+  const [autoMoveEnabled, setAutoMoveEnabled] = useState(true);
 
   useEffect(() => {
     loadBooks();
@@ -364,7 +367,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     }
   };
 
-  const handleSavePageText = async () => {
+  const handleSavePageText = async (moveToNext: boolean = false) => {
     if (!selectedBook) return;
 
     try {
@@ -377,10 +380,50 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       });
 
       toast.success('페이지가 저장되었습니다');
-      loadPages(selectedBook.id, currentPageNumber);
+      
+      // 명시적으로 다음 페이지로 이동 요청된 경우에만 이동
+      if (moveToNext) {
+        const nextPageNumber = currentPageNumber + 1;
+        
+        // 다음 페이지 데이터 로드
+        const { data: freshPages } = await supabase.rpc('admin_get_storybook_pages', {
+          admin_id_input: adminId,
+          book_id_input: selectedBook.id
+        });
+        
+        if (freshPages) {
+          setPages(freshPages);
+        }
+        
+        const nextPage = freshPages?.find((p: { page_number: number }) => p.page_number === nextPageNumber);
+        setCurrentPageNumber(nextPageNumber);
+        setPageText(nextPage?.text_content || '');
+        setPageImagePreview(nextPage?.image_url || null);
+        
+        toast.success(`${nextPageNumber}페이지로 이동했습니다`, { duration: 1500 });
+      } else {
+        loadPages(selectedBook.id, currentPageNumber);
+      }
     } catch (error) {
       console.error('Save error:', error);
       toast.error('저장에 실패했습니다');
+    }
+  };
+  
+  // 저장 없이 페이지 내용만 로드 (handlePageChange 내부용)
+  const saveCurrentPageQuietly = async () => {
+    if (!selectedBook) return;
+    
+    try {
+      await supabase.rpc('admin_upsert_storybook_page', {
+        admin_id_input: adminId,
+        book_id_input: selectedBook.id,
+        page_number_input: currentPageNumber,
+        image_url_input: pageImagePreview || null,
+        text_content_input: pageText || null
+      });
+    } catch (error) {
+      console.error('Silent save error:', error);
     }
   };
 
@@ -390,8 +433,8 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     setPageSaving(true);
     
     try {
-      // Save current page first
-      await handleSavePageText();
+      // Save current page first (quietly, without toast and auto-move)
+      await saveCurrentPageQuietly();
       
       // Reload pages to get fresh data
       const { data: freshPages } = await supabase.rpc('admin_get_storybook_pages', {
@@ -928,10 +971,38 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                 </div>
               </div>
 
-              <Button onClick={handleSavePageText} className="w-full">
-                <Save className="w-4 h-4 mr-1" />
-                이 페이지 저장
-              </Button>
+              {/* Auto-move toggle and Save buttons */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">저장 후 다음 페이지로 자동 이동</span>
+                  </div>
+                  <Switch 
+                    checked={autoMoveEnabled} 
+                    onCheckedChange={setAutoMoveEnabled}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => handleSavePageText(autoMoveEnabled)} 
+                    variant={autoMoveEnabled ? "default" : "outline"}
+                    className={`flex-1 ${autoMoveEnabled ? "bg-amber-600 hover:bg-amber-700" : ""}`}
+                  >
+                    <Save className="w-4 h-4 mr-1" />
+                    {autoMoveEnabled ? "저장 (→ 다음)" : "저장"}
+                  </Button>
+                  <Button 
+                    onClick={() => handleSavePageText(!autoMoveEnabled)} 
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Save className="w-4 h-4 mr-1" />
+                    {autoMoveEnabled ? "저장만" : "저장 후 다음"}
+                    {!autoMoveEnabled && <ChevronRight className="w-4 h-4 ml-1" />}
+                  </Button>
+                </div>
+              </div>
 
               {/* Page List */}
               <div className="mt-4">
