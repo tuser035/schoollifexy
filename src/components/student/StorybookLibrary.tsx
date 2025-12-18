@@ -102,7 +102,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRate, setSpeechRate] = useState(0.9);
   const [showSpeedControl, setShowSpeedControl] = useState(false);
+  const [autoPageTurn, setAutoPageTurn] = useState(true);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const isAutoAdvancingRef = useRef(false);
   
   // Fullscreen states
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -119,16 +121,19 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
+      isAutoAdvancingRef.current = false;
     }
   }, []);
 
-  const speakText = useCallback((text: string) => {
+  const speakText = useCallback((text: string, continueReading: boolean = false) => {
     if (!window.speechSynthesis) {
       toast.error('이 브라우저는 음성 읽기를 지원하지 않습니다');
       return;
     }
 
-    stopSpeaking();
+    if (!continueReading) {
+      stopSpeaking();
+    }
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ko-KR';
@@ -136,15 +141,28 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     utterance.pitch = 1;
     
     utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      // Auto page turn when enabled
+      if (autoPageTurn && pages.length > 0) {
+        setCurrentPage(prev => {
+          if (prev < pages.length) {
+            isAutoAdvancingRef.current = true;
+            return prev + 1;
+          }
+          return prev;
+        });
+      }
+    };
     utterance.onerror = () => {
       setIsSpeaking(false);
+      isAutoAdvancingRef.current = false;
       toast.error('음성 읽기 중 오류가 발생했습니다');
     };
 
     speechSynthRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [stopSpeaking, speechRate]);
+  }, [stopSpeaking, speechRate, autoPageTurn, pages.length]);
 
   // Fullscreen Functions
   const toggleFullscreen = useCallback(async () => {
@@ -183,9 +201,22 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     };
   }, [stopSpeaking]);
 
+  // Handle page change - continue reading if auto-advancing, otherwise stop
   useEffect(() => {
-    stopSpeaking();
-  }, [currentPage, stopSpeaking]);
+    if (isAutoAdvancingRef.current) {
+      // Auto-advancing: continue reading the new page
+      isAutoAdvancingRef.current = false;
+      const currentPageData = pages.find(p => p.page_number === currentPage);
+      if (currentPageData?.text_content) {
+        setTimeout(() => {
+          speakText(currentPageData.text_content!, true);
+        }, 300); // Small delay for smooth transition
+      }
+    } else {
+      // Manual page change: stop speaking
+      stopSpeaking();
+    }
+  }, [currentPage, pages, speakText, stopSpeaking]);
 
   useEffect(() => {
     loadBooks();
@@ -755,23 +786,32 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-56 p-3" align="end">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">읽기 속도</Label>
-                      <span className="text-sm text-muted-foreground">{speechRate.toFixed(1)}x</span>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-medium">읽기 속도</Label>
+                        <span className="text-sm text-muted-foreground">{speechRate.toFixed(1)}x</span>
+                      </div>
+                      <Slider
+                        value={[speechRate]}
+                        onValueChange={(value) => setSpeechRate(value[0])}
+                        min={0.5}
+                        max={2}
+                        step={0.1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>느리게</span>
+                        <span>보통</span>
+                        <span>빠르게</span>
+                      </div>
                     </div>
-                    <Slider
-                      value={[speechRate]}
-                      onValueChange={(value) => setSpeechRate(value[0])}
-                      min={0.5}
-                      max={2}
-                      step={0.1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>느리게</span>
-                      <span>보통</span>
-                      <span>빠르게</span>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <Label className="text-sm font-medium">자동 페이지 넘김</Label>
+                      <Switch
+                        checked={autoPageTurn}
+                        onCheckedChange={setAutoPageTurn}
+                      />
                     </div>
                   </div>
                 </PopoverContent>
