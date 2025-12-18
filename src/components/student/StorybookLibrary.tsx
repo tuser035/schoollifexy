@@ -114,8 +114,6 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [pageTransition, setPageTransition] = useState<'enter' | 'exit' | null>(null);
   const [pageTurnSound, setPageTurnSound] = useState(true); // 페이지 넘김 효과음 옵션
   const pageTurnAudioRef = useRef<HTMLAudioElement | null>(null);
-  const bookOpenAudioRef = useRef<HTMLAudioElement | null>(null);
-  const bookCloseAudioRef = useRef<HTMLAudioElement | null>(null);
   
   // Fullscreen states
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -460,16 +458,6 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   const openBook = async (book: Storybook) => {
     try {
-      // Play book open sound effect
-      if (pageTurnSound) {
-        if (!bookOpenAudioRef.current) {
-          bookOpenAudioRef.current = new Audio('/sounds/book-open.mp3');
-          bookOpenAudioRef.current.volume = 0.5;
-        }
-        bookOpenAudioRef.current.currentTime = 0;
-        bookOpenAudioRef.current.play().catch(() => {});
-      }
-
       setSelectedBook(book);
       setCurrentPage(1);
 
@@ -588,16 +576,6 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   });
 
   const closeReader = () => {
-    // Play book close sound effect
-    if (pageTurnSound) {
-      if (!bookCloseAudioRef.current) {
-        bookCloseAudioRef.current = new Audio('/sounds/book-close.mp3');
-        bookCloseAudioRef.current.volume = 0.5;
-      }
-      bookCloseAudioRef.current.currentTime = 0;
-      bookCloseAudioRef.current.play().catch(() => {});
-    }
-
     if (selectedBook) {
       saveProgress(currentPage);
     }
