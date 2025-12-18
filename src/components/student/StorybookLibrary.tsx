@@ -112,6 +112,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   
   // Page transition state
   const [pageTransition, setPageTransition] = useState<'enter' | 'exit' | null>(null);
+  const [pageTurnSound, setPageTurnSound] = useState(true); // 페이지 넘김 효과음 옵션
+  const pageTurnAudioRef = useRef<HTMLAudioElement | null>(null);
   
   // Fullscreen states
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -332,13 +334,23 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const changePage = useCallback((newPage: number) => {
     if (newPage === currentPage || newPage < 1 || newPage > pages.length) return;
     
+    // Play page turn sound effect
+    if (pageTurnSound) {
+      if (!pageTurnAudioRef.current) {
+        pageTurnAudioRef.current = new Audio('/sounds/page-turn.mp3');
+        pageTurnAudioRef.current.volume = 0.5;
+      }
+      pageTurnAudioRef.current.currentTime = 0;
+      pageTurnAudioRef.current.play().catch(() => {});
+    }
+    
     setPageTransition('exit');
     setTimeout(() => {
       setCurrentPage(newPage);
       setPageTransition('enter');
       setTimeout(() => setPageTransition(null), 400);
     }, 350); // Wait for curl exit animation
-  }, [currentPage, pages.length]);
+  }, [currentPage, pages.length, pageTurnSound]);
 
   // Handle page change - continue reading if auto-advancing, otherwise stop
   useEffect(() => {
@@ -958,6 +970,13 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         onCheckedChange={setReadTitle}
                       />
                     </div>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <Label className="text-sm font-medium">페이지 넘김 효과음</Label>
+                      <Switch
+                        checked={pageTurnSound}
+                        onCheckedChange={setPageTurnSound}
+                      />
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -1033,6 +1052,13 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       <Switch
                         checked={autoPageTurn}
                         onCheckedChange={setAutoPageTurn}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <Label className="text-sm font-medium">페이지 넘김 효과음</Label>
+                      <Switch
+                        checked={pageTurnSound}
+                        onCheckedChange={setPageTurnSound}
                       />
                     </div>
                   </div>
