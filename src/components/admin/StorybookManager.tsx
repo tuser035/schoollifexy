@@ -103,6 +103,9 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   
   // Description editing state
   const [editDescription, setEditDescription] = useState('');
+  
+  // Tab state for edit dialog
+  const [editActiveTab, setEditActiveTab] = useState('cover');
 
   useEffect(() => {
     loadBooks();
@@ -188,6 +191,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     setPageImagePreview(null);
     setCoverImagePreview(book.cover_image_url);
     setEditDescription(book.description || '');
+    setEditActiveTab('cover'); // Reset to cover tab when opening
     loadPages(book.id);
     setIsEditDialogOpen(true);
   };
@@ -205,6 +209,9 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       if (error) throw error;
       toast.success('설명이 저장되었습니다');
       loadBooks();
+      
+      // 자동으로 본문 페이지 탭으로 전환
+      setEditActiveTab('pages');
     } catch (error) {
       console.error('Error saving description:', error);
       toast.error('설명 저장에 실패했습니다');
@@ -751,7 +758,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             </DialogTitle>
           </DialogHeader>
           
-          <Tabs defaultValue="cover">
+          <Tabs value={editActiveTab} onValueChange={setEditActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="cover">표지</TabsTrigger>
               <TabsTrigger value="pages">본문 페이지</TabsTrigger>
