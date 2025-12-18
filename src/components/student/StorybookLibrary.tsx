@@ -1031,9 +1031,17 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
           {/* Mobile TTS indicator */}
           {isSpeaking && (
-            <div className="md:hidden flex items-center justify-center gap-2 py-1 bg-storybook-emerald-light text-storybook-emerald-dark text-xs">
-              <Volume2 className="w-3 h-3 animate-pulse" />
-              <span>읽는 중... (버튼을 눌러 중지)</span>
+            <div className="md:hidden flex items-center justify-center gap-2 py-1.5 bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 text-xs border-b border-amber-200">
+              <Volume2 className="w-4 h-4 animate-pulse" />
+              <span className="font-medium">읽는 중...</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={stopSpeaking}
+                className="h-6 px-2 text-xs text-amber-700 hover:text-amber-900 hover:bg-amber-200"
+              >
+                중지
+              </Button>
             </div>
           )}
 
@@ -1043,7 +1051,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           >
             {/* Mobile Single Page View */}
             <div 
-              className={`md:hidden w-full h-full flex flex-col bg-white shadow-xl overflow-hidden transition-all duration-300 ${
+              className={`md:hidden w-full h-full flex flex-col bg-white overflow-hidden transition-all duration-300 ${
                 pageTransition === 'exit' ? 'opacity-0 translate-x-4' : 
                 pageTransition === 'enter' ? 'opacity-100 translate-x-0 animate-fade-in' : ''
               }`}
@@ -1052,40 +1060,48 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
-                  <div className="flex flex-col items-center justify-center py-2 bg-gradient-to-br from-storybook-emerald-light to-white min-h-[150px]">
+                  <div className="flex flex-col items-center justify-center py-4 px-3 bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50 min-h-[140px]">
                     {selectedBook?.cover_image_url && (
-                      <img 
-                        src={selectedBook.cover_image_url} 
-                        alt="표지"
-                        className="max-h-28 shadow-lg mb-2"
-                      />
+                      <div className="relative mb-3">
+                        <img 
+                          src={selectedBook.cover_image_url} 
+                          alt="표지"
+                          className="max-h-24 rounded-lg shadow-lg"
+                        />
+                        <div className="absolute -bottom-1 -right-1 bg-storybook-emerald text-white text-[10px] px-1.5 py-0.5 rounded-full shadow">
+                          #{selectedBook?.book_number}
+                        </div>
+                      </div>
                     )}
-                    <h1 className="text-lg font-bold text-storybook-emerald-dark text-center">
-                      {selectedBook?.title} <span className="text-[0.8em] font-normal text-storybook-emerald">#{selectedBook?.book_number}</span>
+                    <h1 className="text-base font-bold text-storybook-emerald-dark text-center leading-tight">
+                      {selectedBook?.title}
                     </h1>
                   </div>
+                  
                   {/* First Page Content Mobile */}
-                  <div className="py-1 px-1 flex-1 flex flex-col">
+                  <div className="flex-1 px-3 py-2 overflow-y-auto">
                     {currentPageData?.image_url && (
-                      <img 
-                        src={currentPageData.image_url} 
-                        alt={`${currentPage}페이지`}
-                        className="w-full mb-1 max-h-44 object-contain"
-                      />
+                      <div className="flex justify-center mb-3">
+                        <img 
+                          src={currentPageData.image_url} 
+                          alt={`${currentPage}페이지`}
+                          className="max-h-40 object-contain rounded-lg shadow-md"
+                        />
+                      </div>
                     )}
                     {currentPageData?.text_content && (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div className="w-full">
+                        <div className="space-y-2">
                           {subtitle && (
-                            <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-1 px-0.5 break-words">
+                            <p className="text-sm font-semibold leading-relaxed text-storybook-emerald break-words">
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words px-0.5">
+                            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap break-words">
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1097,45 +1113,50 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               )}
 
               {currentPage > 1 && currentPageData && (
-                <div className="flex-1 flex flex-col overflow-y-auto">
-                  {/* Image Section Mobile */}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* Image Section Mobile - Fixed height */}
                   {currentPageData.image_url && (
-                    <div className="flex-shrink-0 bg-storybook-emerald-light py-1 px-0.5 flex justify-center">
-                      <img 
-                        src={currentPageData.image_url} 
-                        alt={`${currentPage}페이지 삽화`}
-                        className="max-h-36 object-contain shadow"
-                      />
+                    <div className="flex-shrink-0 bg-gradient-to-b from-storybook-emerald-light to-white py-3 px-3">
+                      <div className="flex justify-center">
+                        <img 
+                          src={currentPageData.image_url} 
+                          alt={`${currentPage}페이지 삽화`}
+                          className="max-h-32 object-contain rounded-lg shadow-md"
+                        />
+                      </div>
                     </div>
                   )}
-                  {/* Text Section Mobile */}
-                  <div className="flex-1 py-1 px-1 bg-white flex flex-col">
+                  
+                  {/* Text Section Mobile - Scrollable */}
+                  <div className="flex-1 overflow-y-auto px-3 py-2 bg-white">
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div className="w-full">
+                        <div className="space-y-2">
                           {subtitle && (
-                            <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-1 px-0.5 break-words">
+                            <p className="text-sm font-semibold leading-relaxed text-storybook-emerald break-words">
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words px-0.5">
+                            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap break-words">
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
                         </div>
                       );
                     })() : (
-                      <div className="h-full flex items-center justify-center text-muted-foreground">
+                      <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
                         내용이 없습니다
                       </div>
                     )}
-                    <div className="text-center text-xs text-storybook-emerald mt-1">
-                      - {currentPage} -
-                    </div>
+                  </div>
+                  
+                  {/* Page Number */}
+                  <div className="flex-shrink-0 text-center py-1 text-xs text-storybook-emerald bg-storybook-emerald-light/50">
+                    - {currentPage} -
                   </div>
                 </div>
               )}
@@ -1248,22 +1269,58 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
           </div>
 
-          {/* Page Dot Indicators Only */}
-          <div className="flex items-center justify-center py-0.5 bg-storybook-emerald-light">
-            <div className="flex items-center gap-1">
+          {/* Bottom Navigation */}
+          <div className="flex items-center justify-between px-2 py-2 md:py-1 bg-gradient-to-t from-storybook-emerald-light to-storybook-emerald-light/80">
+            {/* Prev Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => changePage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="md:hidden h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm disabled:opacity-30"
+            >
+              <ChevronLeft className="w-5 h-5 text-storybook-emerald-dark" />
+            </Button>
+            
+            {/* Page Dots */}
+            <div className="flex items-center gap-1.5 md:gap-1 overflow-x-auto px-2 scrollbar-hide">
               {pages.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => changePage(index + 1)}
-                  className={`w-2 h-2 rounded-full transition-all ${
+                  className={`flex-shrink-0 rounded-full transition-all duration-200 ${
                     currentPage === index + 1
-                      ? 'bg-storybook-emerald w-3'
-                      : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50'
+                      ? 'bg-storybook-emerald w-4 h-2 md:w-3 md:h-2'
+                      : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50 w-2 h-2'
                   }`}
                   aria-label={`${index + 1}페이지로 이동`}
                 />
               ))}
             </div>
+            
+            {/* Next Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => changePage(currentPage + 1)}
+              disabled={currentPage === pages.length}
+              className="md:hidden h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm disabled:opacity-30"
+            >
+              <ChevronRight className="w-5 h-5 text-storybook-emerald-dark" />
+            </Button>
+            
+            {/* Mobile Review Button */}
+            {selectedBook?.is_completed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsReviewDialogOpen(true)}
+                className="md:hidden h-8 px-3 rounded-full bg-white/80 hover:bg-white shadow-sm text-storybook-emerald-dark text-xs font-medium"
+              >
+                <PenLine className="w-4 h-4 mr-1" />
+                독후감
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
