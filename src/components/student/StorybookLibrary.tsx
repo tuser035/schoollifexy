@@ -859,12 +859,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     </h1>
                   </div>
                   {/* First Page Content Mobile */}
-                  <div className="py-2 flex-1 flex flex-col items-center">
+                  <div className="py-1 px-1 flex-1 flex flex-col">
                     {currentPageData?.image_url && (
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지`}
-                        className="w-full rounded-lg mb-2 max-h-44 object-contain"
+                        className="w-full rounded-lg mb-1 max-h-44 object-contain"
                       />
                     )}
                     {currentPageData?.text_content && (() => {
@@ -872,14 +872,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div className="w-full text-center">
+                        <div className="w-full">
                           {subtitle && (
-                            <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-2">
+                            <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-1 px-0.5 break-words">
                               📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
+                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words px-0.5">
                               {bodyText}
                             </p>
                           )}
@@ -894,7 +894,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Image Section Mobile */}
                   {currentPageData.image_url && (
-                    <div className="flex-shrink-0 bg-storybook-emerald-light py-2 flex justify-center">
+                    <div className="flex-shrink-0 bg-storybook-emerald-light py-1 px-0.5 flex justify-center">
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지 삽화`}
@@ -903,20 +903,20 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     </div>
                   )}
                   {/* Text Section Mobile */}
-                  <div className="flex-1 py-2 bg-white flex flex-col items-center">
+                  <div className="flex-1 py-1 px-1 bg-white flex flex-col">
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
                       return (
-                        <div className="w-full text-center">
+                        <div className="w-full">
                           {subtitle && (
-                            <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-2">
+                            <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-1 px-0.5 break-words">
                               📖 {subtitle}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
+                            <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words px-0.5">
                               {bodyText}
                             </p>
                           )}
@@ -927,7 +927,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         내용이 없습니다
                       </div>
                     )}
-                    <div className="text-center text-xs text-storybook-emerald mt-2">
+                    <div className="text-center text-xs text-storybook-emerald mt-1">
                       - {currentPage} -
                     </div>
                   </div>
@@ -1040,15 +1040,15 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           </div>
 
           {/* Page Dot Indicators Only */}
-          <div className="flex items-center justify-center py-1 bg-storybook-emerald-light">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-center py-0.5 bg-storybook-emerald-light">
+            <div className="flex items-center gap-1">
               {pages.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentPage(index + 1)}
-                  className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  className={`w-2 h-2 rounded-full transition-all ${
                     currentPage === index + 1
-                      ? 'bg-storybook-emerald w-4'
+                      ? 'bg-storybook-emerald w-3'
                       : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50'
                   }`}
                   aria-label={`${index + 1}페이지로 이동`}
