@@ -846,7 +846,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
-                  <div className="flex flex-col items-center justify-center p-2 bg-gradient-to-br from-storybook-emerald-light to-white min-h-[150px]">
+                  <div className="flex flex-col items-center justify-center py-2 bg-gradient-to-br from-storybook-emerald-light to-white min-h-[150px]">
                     {selectedBook?.cover_image_url && (
                       <img 
                         src={selectedBook.cover_image_url} 
@@ -859,7 +859,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     </h1>
                   </div>
                   {/* First Page Content Mobile */}
-                  <div className="p-2 flex-1 flex flex-col items-center">
+                  <div className="py-2 flex-1 flex flex-col items-center">
                     {currentPageData?.image_url && (
                       <img 
                         src={currentPageData.image_url} 
@@ -894,7 +894,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Image Section Mobile */}
                   {currentPageData.image_url && (
-                    <div className="flex-shrink-0 bg-storybook-emerald-light p-2 flex justify-center">
+                    <div className="flex-shrink-0 bg-storybook-emerald-light py-2 flex justify-center">
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지 삽화`}
@@ -903,7 +903,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     </div>
                   )}
                   {/* Text Section Mobile */}
-                  <div className="flex-1 p-2 bg-white flex flex-col items-center">
+                  <div className="flex-1 py-2 bg-white flex flex-col items-center">
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
