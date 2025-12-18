@@ -578,35 +578,55 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   새 동화책
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-3xl">
                 <DialogHeader>
                   <DialogTitle>새 동화책 만들기</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div>
-                    <Label>일련번호</Label>
-                    <Input
-                      type="number"
-                      placeholder="예: 1"
-                      value={newBookNumber}
-                      onChange={(e) => setNewBookNumber(e.target.value)}
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>일련번호</Label>
+                      <Input
+                        type="number"
+                        placeholder="예: 1"
+                        value={newBookNumber}
+                        onChange={(e) => setNewBookNumber(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>제목</Label>
+                      <Input
+                        placeholder="동화책 제목"
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                      />
+                    </div>
                   </div>
                   <div>
-                    <Label>제목</Label>
-                    <Input
-                      placeholder="동화책 제목"
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>설명 (선택)</Label>
-                    <Textarea
-                      placeholder="동화책 설명"
-                      value={newDescription}
-                      onChange={(e) => setNewDescription(e.target.value)}
-                    />
+                    <Label>설명 (마크다운 지원)</Label>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      {/* 입력 영역 */}
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">입력</p>
+                        <Textarea
+                          value={newDescription}
+                          onChange={(e) => setNewDescription(e.target.value)}
+                          placeholder="마크다운 형식으로 입력하세요...&#10;&#10;예시:&#10;# 제목&#10;## 소제목&#10;**굵게** *기울임*&#10;- 목록 항목"
+                          className="min-h-[150px] resize-none font-mono text-sm"
+                        />
+                      </div>
+                      {/* 미리보기 영역 */}
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">미리보기</p>
+                        <div className="min-h-[150px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
+                          {newDescription ? (
+                            <ReactMarkdown>{newDescription}</ReactMarkdown>
+                          ) : (
+                            <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <Button onClick={handleCreateBook} className="w-full bg-amber-600 hover:bg-amber-700">
                     생성하기

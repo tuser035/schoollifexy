@@ -32,7 +32,8 @@ import {
   Settings2,
   Heart,
   Users,
-  Globe
+  Globe,
+  Info
 } from 'lucide-react';
 
 interface Storybook {
@@ -666,6 +667,29 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             <div className="flex items-center gap-2 min-w-0">
               <BookOpen className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
               <span className="font-medium text-sm md:text-base truncate">{selectedBook?.title}</span>
+              {/* Description Popover */}
+              {selectedBook?.description && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-white hover:bg-amber-700 p-1"
+                      title="책 설명"
+                    >
+                      <Info className="w-4 h-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 max-h-60 overflow-auto" align="start">
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-amber-800">📖 책 설명</h4>
+                      <div className="prose prose-sm max-w-none text-muted-foreground">
+                        <ReactMarkdown>{selectedBook.description}</ReactMarkdown>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
             <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
               <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-xs md:text-sm">
