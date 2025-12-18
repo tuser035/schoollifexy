@@ -103,6 +103,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [speechRate, setSpeechRate] = useState(1.5); // 기본 1.5배속
   const [showSpeedControl, setShowSpeedControl] = useState(false);
   const [autoPageTurn, setAutoPageTurn] = useState(true);
+  const [readTitle, setReadTitle] = useState(false); // 책 제목 읽기 옵션
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(-1);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isAutoAdvancingRef = useRef(false);
@@ -185,13 +186,19 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   }, []);
 
   // Helper function to extract body text for TTS (skip subtitle on first line)
-  const getBodyTextForTTS = useCallback((text: string | null | undefined): string | null => {
+  const getTextForTTS = useCallback((text: string | null | undefined, bookTitle?: string): string | null => {
     if (!text) return null;
     const lines = text.split('\n');
     // Skip the first line (subtitle) and join the rest
     const bodyText = lines.slice(1).join('\n').trim();
-    return bodyText || null;
-  }, []);
+    if (!bodyText) return null;
+    
+    // If readTitle is enabled and bookTitle is provided, prepend it
+    if (readTitle && bookTitle) {
+      return `${bookTitle}. ${bodyText}`;
+    }
+    return bodyText;
+  }, [readTitle]);
 
   const speakText = useCallback((text: string, continueReading: boolean = false) => {
     if (!window.speechSynthesis) {
@@ -342,17 +349,17 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       setTimeout(() => setPageTransition(null), 300);
       
       const currentPageData = pages.find(p => p.page_number === currentPage);
-      const bodyText = getBodyTextForTTS(currentPageData?.text_content);
-      if (bodyText) {
+      const ttsText = getTextForTTS(currentPageData?.text_content, selectedBook?.title);
+      if (ttsText) {
         setTimeout(() => {
-          speakText(bodyText, true);
+          speakText(ttsText, true);
         }, 400); // Delay after animation
       }
     } else {
       // Manual page change: stop speaking
       stopSpeaking();
     }
-  }, [currentPage, pages, speakText, stopSpeaking, getBodyTextForTTS]);
+  }, [currentPage, pages, speakText, stopSpeaking, getTextForTTS, selectedBook?.title]);
 
   useEffect(() => {
     loadBooks();
@@ -882,9 +889,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   if (isSpeaking) {
                     stopSpeaking();
                   } else {
-                    const bodyText = getBodyTextForTTS(currentPageData?.text_content);
-                    if (bodyText) {
-                      speakText(bodyText);
+                    const ttsText = getTextForTTS(currentPageData?.text_content, selectedBook?.title);
+                    if (ttsText) {
+                      speakText(ttsText);
                     } else {
                       toast.error('읽을 텍스트가 없습니다');
                     }
@@ -944,6 +951,13 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         onCheckedChange={setAutoPageTurn}
                       />
                     </div>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <Label className="text-sm font-medium">책 제목 읽기</Label>
+                      <Switch
+                        checked={readTitle}
+                        onCheckedChange={setReadTitle}
+                      />
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -959,9 +973,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   if (isSpeaking) {
                     stopSpeaking();
                   } else {
-                    const bodyText = getBodyTextForTTS(currentPageData?.text_content);
-                    if (bodyText) {
-                      speakText(bodyText);
+                    const ttsText = getTextForTTS(currentPageData?.text_content, selectedBook?.title);
+                    if (ttsText) {
+                      speakText(ttsText);
                     } else {
                       toast.error('읽을 텍스트가 없습니다');
                     }
