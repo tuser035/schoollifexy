@@ -855,9 +855,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       />
                     )}
                     <h1 className="text-lg font-bold text-storybook-emerald-dark text-center">
-                      {selectedBook?.title}
+                      {selectedBook?.title} <span className="text-[0.8em] font-normal text-storybook-emerald">#{selectedBook?.book_number}</span>
                     </h1>
-                    <p className="text-storybook-emerald mt-1 text-xs">#{selectedBook?.book_number}</p>
                   </div>
                   {/* First Page Content Mobile */}
                   <div className="p-2 flex-1 flex flex-col items-center">
@@ -951,9 +950,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       />
                     )}
                     <h1 className="text-2xl font-bold text-storybook-emerald-dark text-center">
-                      {selectedBook?.title}
+                      {selectedBook?.title} <span className="text-[0.8em] font-normal text-storybook-emerald">#{selectedBook?.book_number}</span>
                     </h1>
-                    <p className="text-storybook-emerald mt-2">#{selectedBook?.book_number}</p>
                   </div>
                   
                   {/* Right - First Page Content */}
