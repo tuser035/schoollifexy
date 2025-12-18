@@ -114,6 +114,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
   const [bookToPublish, setBookToPublish] = useState<Storybook | null>(null);
   
+  // Page delete confirmation dialog
+  const [isPageDeleteDialogOpen, setIsPageDeleteDialogOpen] = useState(false);
+  const [pageToDelete, setPageToDelete] = useState<number | null>(null);
+  
   // Recently edited book highlight
   const [recentlyEditedBookId, setRecentlyEditedBookId] = useState<string | null>(null);
   
@@ -291,6 +295,55 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   useEffect(() => {
     stopTTS();
   }, [previewPageNumber, isPreviewDialogOpen]);
+
+  // Delete a specific page from preview
+  const handleDeletePreviewPage = async () => {
+    if (!previewBook || pageToDelete === null) return;
+    
+    try {
+      const pageToRemove = previewPages.find(p => p.page_number === pageToDelete);
+      if (!pageToRemove) {
+        toast.error('삭제할 페이지를 찾을 수 없습니다');
+        return;
+      }
+
+      // Delete the page from database
+      const { error } = await supabase
+        .from('storybook_pages')
+        .delete()
+        .eq('id', pageToRemove.id);
+
+      if (error) throw error;
+
+      toast.success(`${pageToDelete}페이지가 삭제되었습니다`);
+      
+      // Update preview pages
+      const updatedPages = previewPages.filter(p => p.page_number !== pageToDelete);
+      setPreviewPages(updatedPages);
+      
+      // Adjust current page number if needed
+      if (updatedPages.length === 0) {
+        setPreviewPageNumber(1);
+      } else if (previewPageNumber > updatedPages.length) {
+        setPreviewPageNumber(updatedPages.length);
+      }
+      
+      // Update page count in book
+      await supabase
+        .from('storybooks')
+        .update({ page_count: updatedPages.length })
+        .eq('id', previewBook.id);
+      
+      // Reload books to reflect changes
+      loadBooks();
+      
+      setIsPageDeleteDialogOpen(false);
+      setPageToDelete(null);
+    } catch (error) {
+      console.error('Error deleting page:', error);
+      toast.error('페이지 삭제에 실패했습니다');
+    }
+  };
 
   const handleTogglePublish = async (book: Storybook) => {
     try {
@@ -1193,7 +1246,21 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   </div>
                   
                   {/* Right: Text */}
-                  <div className="bg-amber-100/50 p-6 overflow-y-auto">
+                  <div className="bg-amber-100/50 p-6 overflow-y-auto relative">
+                    {/* Delete Page Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPageToDelete(previewPageNumber);
+                        setIsPageDeleteDialogOpen(true);
+                      }}
+                      className="absolute top-2 right-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      title="현재 페이지 삭제"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                    
                     {(() => {
                       const currentPage = previewPages.find(p => p.page_number === previewPageNumber);
                       const textContent = currentPage?.text_content || '';
@@ -1292,6 +1359,28 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Page Delete Confirmation */}
+      <AlertDialog open={isPageDeleteDialogOpen} onOpenChange={setIsPageDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>페이지 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pageToDelete}페이지를 삭제하시겠습니까?
+              삭제된 페이지는 복구할 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPageToDelete(null)}>취소</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeletePreviewPage} 
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
