@@ -379,22 +379,39 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
         text_content_input: pageText || null
       });
 
-      toast.success('페이지가 저장되었습니다');
+      // 다음 페이지 데이터 로드하여 마지막 페이지인지 확인
+      const { data: freshPages } = await supabase.rpc('admin_get_storybook_pages', {
+        admin_id_input: adminId,
+        book_id_input: selectedBook.id
+      });
       
-      // 명시적으로 다음 페이지로 이동 요청된 경우에만 이동
+      if (freshPages) {
+        setPages(freshPages);
+      }
+      
+      // 현재 페이지가 마지막 페이지인지 확인 (콘텐츠가 있는 마지막 페이지)
+      const maxPageWithContent = freshPages?.reduce((max: number, p: { page_number: number; image_url: string | null; text_content: string | null }) => {
+        if (p.image_url || p.text_content) {
+          return Math.max(max, p.page_number);
+        }
+        return max;
+      }, 0) || 0;
+      
+      const isLastPage = currentPageNumber >= maxPageWithContent && currentPageNumber > 0;
+      
+      // 명시적으로 다음 페이지로 이동 요청된 경우
       if (moveToNext) {
-        const nextPageNumber = currentPageNumber + 1;
-        
-        // 다음 페이지 데이터 로드
-        const { data: freshPages } = await supabase.rpc('admin_get_storybook_pages', {
-          admin_id_input: adminId,
-          book_id_input: selectedBook.id
-        });
-        
-        if (freshPages) {
-          setPages(freshPages);
+        // 마지막 페이지에서 다음으로 이동하려는 경우 - 편집 완료 메시지
+        if (isLastPage && (pageImagePreview || pageText)) {
+          toast.success('🎉 편집이 완료되었습니다!', { 
+            description: `총 ${currentPageNumber}페이지 편집 완료`,
+            duration: 3000 
+          });
+          loadBooks(); // 페이지 수 업데이트
+          return;
         }
         
+        const nextPageNumber = currentPageNumber + 1;
         const nextPage = freshPages?.find((p: { page_number: number }) => p.page_number === nextPageNumber);
         setCurrentPageNumber(nextPageNumber);
         setPageText(nextPage?.text_content || '');
@@ -402,7 +419,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
         
         toast.success(`${nextPageNumber}페이지로 이동했습니다`, { duration: 1500 });
       } else {
-        loadPages(selectedBook.id, currentPageNumber);
+        toast.success('페이지가 저장되었습니다');
       }
     } catch (error) {
       console.error('Save error:', error);
