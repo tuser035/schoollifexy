@@ -103,8 +103,13 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [speechRate, setSpeechRate] = useState(0.9);
   const [showSpeedControl, setShowSpeedControl] = useState(false);
   const [autoPageTurn, setAutoPageTurn] = useState(true);
+  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(-1);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isAutoAdvancingRef = useRef(false);
+  const sentencesRef = useRef<string[]>([]);
+  
+  // Page transition state
+  const [pageTransition, setPageTransition] = useState<'enter' | 'exit' | null>(null);
   
   // Fullscreen states
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -116,11 +121,19 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   // Description modal state
   const [descriptionBook, setDescriptionBook] = useState<Storybook | null>(null);
 
+  // Split text into sentences
+  const splitIntoSentences = useCallback((text: string): string[] => {
+    // Split by Korean/English sentence endings while keeping delimiters
+    const sentences = text.split(/(?<=[.!?。])\s*/g).filter(s => s.trim());
+    return sentences.length > 0 ? sentences : [text];
+  }, []);
+
   // TTS Functions
   const stopSpeaking = useCallback(() => {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
+      setCurrentSentenceIndex(-1);
       isAutoAdvancingRef.current = false;
     }
   }, []);
@@ -135,34 +148,80 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       stopSpeaking();
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'ko-KR';
-    utterance.rate = speechRate;
-    utterance.pitch = 1;
-    
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      // Auto page turn when enabled
-      if (autoPageTurn && pages.length > 0) {
-        setCurrentPage(prev => {
-          if (prev < pages.length) {
-            isAutoAdvancingRef.current = true;
-            return prev + 1;
-          }
-          return prev;
-        });
+    const sentences = splitIntoSentences(text);
+    sentencesRef.current = sentences;
+    let currentIdx = 0;
+
+    const speakNextSentence = () => {
+      if (currentIdx >= sentences.length) {
+        setIsSpeaking(false);
+        setCurrentSentenceIndex(-1);
+        // Auto page turn when enabled
+        if (autoPageTurn && pages.length > 0) {
+          setCurrentPage(prev => {
+            if (prev < pages.length) {
+              isAutoAdvancingRef.current = true;
+              return prev + 1;
+            }
+            return prev;
+          });
+        }
+        return;
       }
-    };
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      isAutoAdvancingRef.current = false;
-      toast.error('음성 읽기 중 오류가 발생했습니다');
+
+      const utterance = new SpeechSynthesisUtterance(sentences[currentIdx]);
+      utterance.lang = 'ko-KR';
+      utterance.rate = speechRate;
+      utterance.pitch = 1;
+      
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setCurrentSentenceIndex(currentIdx);
+      };
+      
+      utterance.onend = () => {
+        currentIdx++;
+        speakNextSentence();
+      };
+      
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        setCurrentSentenceIndex(-1);
+        isAutoAdvancingRef.current = false;
+        toast.error('음성 읽기 중 오류가 발생했습니다');
+      };
+
+      speechSynthRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
     };
 
-    speechSynthRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-  }, [stopSpeaking, speechRate, autoPageTurn, pages.length]);
+    speakNextSentence();
+  }, [stopSpeaking, speechRate, autoPageTurn, pages.length, splitIntoSentences]);
+
+  // Render text with sentence highlighting
+  const renderHighlightedText = useCallback((text: string, isSubtitle: boolean = false) => {
+    if (!isSpeaking || currentSentenceIndex < 0) {
+      return text;
+    }
+
+    const sentences = splitIntoSentences(text);
+    return (
+      <>
+        {sentences.map((sentence, idx) => (
+          <span
+            key={idx}
+            className={`transition-all duration-300 ${
+              idx === currentSentenceIndex
+                ? 'bg-yellow-200 text-gray-900 rounded px-0.5'
+                : ''
+            }`}
+          >
+            {sentence}{idx < sentences.length - 1 ? ' ' : ''}
+          </span>
+        ))}
+      </>
+    );
+  }, [isSpeaking, currentSentenceIndex, splitIntoSentences]);
 
   // Fullscreen Functions
   const toggleFullscreen = useCallback(async () => {
@@ -201,16 +260,31 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     };
   }, [stopSpeaking]);
 
+  // Handle page change with animation
+  const changePage = useCallback((newPage: number) => {
+    if (newPage === currentPage || newPage < 1 || newPage > pages.length) return;
+    
+    setPageTransition('exit');
+    setTimeout(() => {
+      setCurrentPage(newPage);
+      setPageTransition('enter');
+      setTimeout(() => setPageTransition(null), 300);
+    }, 150);
+  }, [currentPage, pages.length]);
+
   // Handle page change - continue reading if auto-advancing, otherwise stop
   useEffect(() => {
     if (isAutoAdvancingRef.current) {
-      // Auto-advancing: continue reading the new page
+      // Auto-advancing: continue reading the new page with animation
       isAutoAdvancingRef.current = false;
+      setPageTransition('enter');
+      setTimeout(() => setPageTransition(null), 300);
+      
       const currentPageData = pages.find(p => p.page_number === currentPage);
       if (currentPageData?.text_content) {
         setTimeout(() => {
           speakText(currentPageData.text_content!, true);
-        }, 300); // Small delay for smooth transition
+        }, 400); // Delay after animation
       }
     } else {
       // Manual page change: stop speaking
@@ -880,7 +954,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           >
             {/* Mobile Single Page View */}
             <div 
-              className="md:hidden w-full h-full flex flex-col bg-white shadow-xl overflow-hidden"
+              className={`md:hidden w-full h-full flex flex-col bg-white shadow-xl overflow-hidden transition-all duration-300 ${
+                pageTransition === 'exit' ? 'opacity-0 translate-x-4' : 
+                pageTransition === 'enter' ? 'opacity-100 translate-x-0 animate-fade-in' : ''
+              }`}
               {...swipeHandlers}
             >
               {currentPage === 1 && pages.length > 0 && (
@@ -915,12 +992,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         <div className="w-full">
                           {subtitle && (
                             <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-1 px-0.5 break-words">
-                              📖 {subtitle}
+                              📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
                             <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words px-0.5">
-                              {bodyText}
+                              {renderHighlightedText(bodyText)}
                             </p>
                           )}
                         </div>
@@ -952,12 +1029,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         <div className="w-full">
                           {subtitle && (
                             <p className="text-base font-semibold leading-relaxed text-storybook-emerald mb-1 px-0.5 break-words">
-                              📖 {subtitle}
+                              📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
                             <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words px-0.5">
-                              {bodyText}
+                              {renderHighlightedText(bodyText)}
                             </p>
                           )}
                         </div>
@@ -976,7 +1053,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
 
             {/* Desktop Two Page Spread */}
-            <div className="hidden md:flex bg-white rounded-lg shadow-2xl max-h-full overflow-hidden">
+            <div className={`hidden md:flex bg-white rounded-lg shadow-2xl max-h-full overflow-hidden transition-all duration-300 ${
+              pageTransition === 'exit' ? 'opacity-0 scale-95' : 
+              pageTransition === 'enter' ? 'opacity-100 scale-100 animate-scale-in' : ''
+            }`}>
               {/* Title Page (Page 1) */}
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
@@ -1011,12 +1091,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         <div>
                           {subtitle && (
                             <p className="text-xl font-semibold leading-relaxed text-storybook-emerald mb-3">
-                              📖 {subtitle}
+                              📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
                             <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap indent-6">
-                              {bodyText}
+                              {renderHighlightedText(bodyText)}
                             </p>
                           )}
                         </div>
@@ -1055,12 +1135,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         <div>
                           {subtitle && (
                             <p className="text-xl font-semibold leading-relaxed text-storybook-emerald mb-3">
-                              📖 {subtitle}
+                              📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
                             <p className="text-lg leading-relaxed text-gray-800 whitespace-pre-wrap indent-6">
-                              {bodyText}
+                              {renderHighlightedText(bodyText)}
                             </p>
                           )}
                         </div>
@@ -1085,7 +1165,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {pages.map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => setCurrentPage(index + 1)}
+                  onClick={() => changePage(index + 1)}
                   className={`w-2 h-2 rounded-full transition-all ${
                     currentPage === index + 1
                       ? 'bg-storybook-emerald w-3'
