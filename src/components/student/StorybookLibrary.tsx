@@ -100,13 +100,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   // TTS states
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [speechRate, setSpeechRate] = useState(0.9);
+  const [speechRate, setSpeechRate] = useState(1.5); // 기본 1.5배속
   const [showSpeedControl, setShowSpeedControl] = useState(false);
   const [autoPageTurn, setAutoPageTurn] = useState(true);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(-1);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isAutoAdvancingRef = useRef(false);
   const sentencesRef = useRef<string[]>([]);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   
   // Page transition state
   const [pageTransition, setPageTransition] = useState<'enter' | 'exit' | null>(null);
@@ -120,6 +121,51 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   // Description modal state
   const [descriptionBook, setDescriptionBook] = useState<Storybook | null>(null);
+
+  // Load available voices for TTS
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis?.getVoices() || [];
+      setAvailableVoices(voices);
+    };
+    
+    loadVoices();
+    window.speechSynthesis?.addEventListener('voiceschanged', loadVoices);
+    
+    return () => {
+      window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
+    };
+  }, []);
+
+  // Get voice based on book number (odd = male, even = female)
+  const getVoiceForBook = useCallback((bookNumber: number): SpeechSynthesisVoice | null => {
+    const koreanVoices = availableVoices.filter(v => v.lang.startsWith('ko'));
+    
+    if (koreanVoices.length === 0) return null;
+    
+    const isMaleVoice = bookNumber % 2 === 1; // 홀수 = 남자
+    
+    // Try to find appropriate gender voice
+    // Korean voices typically have naming patterns that hint at gender
+    const maleKeywords = ['male', 'man', '남', 'hyunbin', 'jinho', 'seunghoon'];
+    const femaleKeywords = ['female', 'woman', '여', 'yuna', 'heami', 'sohyun', 'sunhi', 'jihye'];
+    
+    let selectedVoice = koreanVoices.find(v => {
+      const nameLower = v.name.toLowerCase();
+      if (isMaleVoice) {
+        return maleKeywords.some(k => nameLower.includes(k));
+      } else {
+        return femaleKeywords.some(k => nameLower.includes(k));
+      }
+    });
+    
+    // Fallback: use different voices for odd/even by index
+    if (!selectedVoice && koreanVoices.length > 1) {
+      selectedVoice = isMaleVoice ? koreanVoices[0] : koreanVoices[1];
+    }
+    
+    return selectedVoice || koreanVoices[0] || null;
+  }, [availableVoices]);
 
   // Split text into sentences
   const splitIntoSentences = useCallback((text: string): string[] => {
@@ -174,6 +220,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       utterance.rate = speechRate;
       utterance.pitch = 1;
       
+      // 책 번호에 따라 성우 선택 (홀수: 남자, 짝수: 여자)
+      const voice = selectedBook ? getVoiceForBook(selectedBook.book_number) : null;
+      if (voice) {
+        utterance.voice = voice;
+      }
+      
       utterance.onstart = () => {
         setIsSpeaking(true);
         setCurrentSentenceIndex(currentIdx);
@@ -196,7 +248,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     };
 
     speakNextSentence();
-  }, [stopSpeaking, speechRate, autoPageTurn, pages.length, splitIntoSentences]);
+  }, [stopSpeaking, speechRate, autoPageTurn, pages.length, splitIntoSentences, selectedBook, getVoiceForBook]);
 
   // Render text with sentence highlighting
   const renderHighlightedText = useCallback((text: string, isSubtitle: boolean = false) => {
