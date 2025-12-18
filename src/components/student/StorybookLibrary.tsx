@@ -732,7 +732,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         </div>
       ) : (
         /* Book List */
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-storybook-emerald/30 [&::-webkit-scrollbar-thumb]:rounded-full">
           {books.map((book) => {
             const hasReview = myReviews.some(r => r.book_id === book.id);
             return (
