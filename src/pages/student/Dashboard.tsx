@@ -512,6 +512,19 @@ const StudentDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* 인문학 서점 */}
+        <Card className="mt-4 sm:mt-6">
+          <CardHeader className="pb-2 sm:pb-6 p-3 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-amber-800 text-base sm:text-lg">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+              인문학 서점
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <StorybookLibrary studentId={user.studentId} />
+          </CardContent>
+        </Card>
       </main>
 
       {/* Image Preview Dialog */}
@@ -531,19 +544,6 @@ const StudentDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* 인문학 서점 */}
-      <Card className="mt-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-amber-800">
-            <BookOpen className="w-5 h-5" />
-            인문학 서점
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <StorybookLibrary studentId={user.studentId} />
-        </CardContent>
-      </Card>
     </div>
   );
 };
