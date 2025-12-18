@@ -523,7 +523,12 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       }, 0) || 0;
       
       // 마지막 페이지에서 다음으로 이동하려는 경우 - 자동 발행
-      if (newPageNumber > currentPageNumber && currentPageNumber >= maxPageWithContent && maxPageWithContent > 0) {
+      // 조건: 4페이지 이상 콘텐츠가 있고, 현재 페이지가 마지막 콘텐츠 페이지이며, 다음 페이지로 이동하려 할 때
+      const isOnLastContentPage = currentPageNumber === maxPageWithContent;
+      const hasEnoughContent = maxPageWithContent >= 4;
+      const isMovingToNextPage = newPageNumber > currentPageNumber;
+      
+      if (isMovingToNextPage && isOnLastContentPage && hasEnoughContent) {
         // 미발행 상태인 경우 자동 발행
         if (!selectedBook.is_published) {
           await supabase.rpc('admin_publish_storybook', {
