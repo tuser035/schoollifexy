@@ -642,7 +642,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       }}>
         <DialogContent 
           ref={readerContainerRef}
-          className={`max-w-5xl w-full p-0 overflow-hidden bg-storybook-emerald-light ${
+          className={`max-w-[100vw] md:max-w-5xl w-full p-0 overflow-hidden bg-storybook-emerald-light ${
             isFullscreen ? 'h-screen max-h-screen rounded-none' : 'h-[100dvh] md:h-[90vh] landscape:h-[100dvh]'
           }`}
         >
@@ -802,8 +802,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           <div 
             className="flex-1 flex items-center justify-center p-2 md:p-4 overflow-hidden"
           >
-            {/* Mobile Single Page View - 70% width */}
-            <div className="md:hidden w-[80%] h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
+            {/* Mobile Single Page View */}
+            <div className="md:hidden w-full max-w-[90vw] h-full flex flex-col bg-white rounded-lg shadow-xl overflow-hidden">
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
