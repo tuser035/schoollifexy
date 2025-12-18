@@ -1039,6 +1039,23 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
           </div>
 
+          {/* Page Dot Indicators Only */}
+          <div className="flex items-center justify-center py-1 bg-storybook-emerald-light">
+            <div className="flex items-center gap-1.5">
+              {pages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentPage(index + 1)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${
+                    currentPage === index + 1
+                      ? 'bg-storybook-emerald w-4'
+                      : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50'
+                  }`}
+                  aria-label={`${index + 1}페이지로 이동`}
+                />
+              ))}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
