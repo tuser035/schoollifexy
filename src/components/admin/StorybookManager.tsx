@@ -329,18 +329,16 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
         setPreviewPageNumber(updatedPages.length);
       }
       
-      // Update page count in book using RPC to bypass RLS
-      const { error: updateError } = await supabase.rpc('admin_update_storybook_description', {
+      // Update page count using RPC function
+      const { error: updateError } = await supabase.rpc('admin_update_storybook_page_count', {
         admin_id_input: adminId,
         book_id_input: previewBook.id,
-        description_input: previewBook.description || ''
+        page_count_input: updatedPages.length
       });
 
-      // Also update directly with session set
-      await supabase
-        .from('storybooks')
-        .update({ page_count: updatedPages.length, updated_at: new Date().toISOString() })
-        .eq('id', previewBook.id);
+      if (updateError) {
+        console.error('Error updating page count:', updateError);
+      }
 
       // Update local previewBook state
       setPreviewBook(prev => prev ? { ...prev, page_count: updatedPages.length } : null);
