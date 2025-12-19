@@ -1124,14 +1124,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 </PopoverContent>
               </Popover>
 
-              <div className="w-px h-5 bg-white/30 mx-1 hidden md:block" />
+              <div className="w-px h-5 bg-white/30 mx-0.5 md:mx-1 hidden md:block" />
 
-              {/* Fullscreen Button */}
+              {/* Fullscreen Button - Desktop only */}
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={toggleFullscreen}
-                className="text-white hover:bg-white/20 p-1.5 h-auto rounded-full"
+                className="hidden md:flex text-white hover:bg-white/20 p-1.5 h-auto rounded-full"
                 title={isFullscreen ? '전체화면 종료' : '전체화면'}
               >
                 {isFullscreen ? (
@@ -1141,12 +1141,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 )}
               </Button>
 
-              {/* Bookmark Button */}
+              {/* Bookmark Button - Desktop only */}
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={toggleBookmark}
-                className={`p-1.5 h-auto rounded-full transition-colors ${
+                className={`hidden md:flex p-1.5 h-auto rounded-full transition-colors ${
                   pageBookmarks.includes(currentPage) 
                     ? 'text-red-400 bg-red-500/20 hover:bg-red-500/30' 
                     : 'text-white hover:bg-white/20'
@@ -1169,7 +1169,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 </Button>
               )}
 
-              <div className="w-px h-5 bg-white/30 mx-1" />
+              <div className="w-px h-5 bg-white/30 mx-0.5 md:mx-1" />
 
               {/* Close Button */}
               <Button 
