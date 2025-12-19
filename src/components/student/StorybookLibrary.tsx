@@ -1232,7 +1232,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   </div>
                   
                   {/* First Page Content Mobile */}
-                  <div className="flex-1 px-3 py-2 overflow-y-auto">
+                  <div className="flex-1 px-4 py-2 overflow-y-auto">
                     {currentPageData?.image_url && (
                       <div className="flex justify-center mb-3">
                         <img 
@@ -1281,7 +1281,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   )}
                   
                   {/* Text Section Mobile - Scrollable */}
-                  <div className="flex-1 overflow-y-auto px-3 py-2 bg-white">
+                  <div className="flex-1 overflow-y-auto px-4 py-2 bg-white">
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
