@@ -86,6 +86,7 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [aiFilter, setAiFilter] = useState<string>("all");
   const [searchGrade, setSearchGrade] = useState<number | null>(null);
   const [searchClass, setSearchClass] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("reports");
@@ -441,9 +442,21 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                     <SelectValue placeholder="상태 필터" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="all">전체 상태</SelectItem>
                     <SelectItem value="pending">대기중</SelectItem>
                     <SelectItem value="approved">승인됨</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={aiFilter} onValueChange={setAiFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <Bot className="w-4 h-4 mr-1" />
+                    <SelectValue placeholder="AI 의심도" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 AI 의심도</SelectItem>
+                    <SelectItem value="high">높음 (60%+)</SelectItem>
+                    <SelectItem value="medium">보통 (30-59%)</SelectItem>
+                    <SelectItem value="low">낮음 (0-29%)</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button onClick={loadReports} variant="outline" size="sm">
@@ -488,7 +501,19 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                 <p className="text-center text-muted-foreground py-8">로딩 중...</p>
               ) : reports.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">제출된 독후감이 없습니다</p>
-              ) : (
+              ) : (() => {
+                // AI 필터링 적용
+                const filteredReports = reports.filter((report) => {
+                  if (aiFilter === "all") return true;
+                  const aiResult = analyzeAIContent(report.content);
+                  return aiResult.level === aiFilter;
+                });
+
+                return filteredReports.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    선택한 AI 의심도에 해당하는 독후감이 없습니다
+                  </p>
+                ) : (
                 <ScrollArea className="h-[400px]">
                   <Table>
                     <TableHeader>
@@ -504,7 +529,7 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reports.map((report) => {
+                      {filteredReports.map((report) => {
                         const aiResult = analyzeAIContent(report.content);
                         return (
                           <TableRow key={report.id}>
@@ -556,7 +581,8 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                     </TableBody>
                   </Table>
                 </ScrollArea>
-              )}
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
