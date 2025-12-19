@@ -693,12 +693,92 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   const currentPageData = pages.find(p => p.page_number === currentPage);
 
-  // Group books by series
-  const wisdomBooks = books.filter(book => book.book_number <= 5);
-  const myungsimBooks = books.filter(book => book.book_number >= 6 && book.book_number <= 10);
-  const wisdomReviews = myReviews.filter(r => wisdomBooks.some(b => b.id === r.book_id));
-  const myungsimReviews = myReviews.filter(r => myungsimBooks.some(b => b.id === r.book_id));
+  // ===== 시리즈 설정 (새 시리즈 추가 시 여기에 추가) =====
+  const BOOK_SERIES = [
+    {
+      id: 'wisdom-river',
+      title: '이지영의 지혜의 강',
+      subtitle: '철학적 사고를 키우는 이야기',
+      icon: 'BookOpen',
+      bookNumberRange: { min: 1, max: 5 },
+      theme: {
+        name: 'emerald' as const,
+        headerBg: 'bg-gradient-to-r from-storybook-emerald-light to-white',
+        headerText: 'text-storybook-emerald-dark',
+        badgeBg: 'bg-storybook-emerald-light',
+        badgeText: 'text-storybook-emerald',
+        border: 'border-storybook-emerald/30',
+        buttonActive: 'bg-storybook-emerald hover:bg-storybook-emerald-hover',
+        buttonInactive: 'border-storybook-emerald/50 text-storybook-emerald hover:bg-storybook-emerald-light',
+        reviewBg: 'bg-storybook-emerald-light',
+        reviewBorder: 'border-storybook-emerald/30',
+        linkColor: 'text-storybook-emerald',
+      }
+    },
+    {
+      id: 'myungsim',
+      title: '명심보감',
+      subtitle: '마음을 밝히는 옛 지혜',
+      icon: 'BookMarked',
+      bookNumberRange: { min: 6, max: 10 },
+      theme: {
+        name: 'amber' as const,
+        headerBg: 'bg-gradient-to-r from-amber-50 to-white',
+        headerText: 'text-amber-800',
+        badgeBg: 'bg-amber-100',
+        badgeText: 'text-amber-700',
+        border: 'border-amber-300/50',
+        buttonActive: 'bg-amber-500 hover:bg-amber-600 text-white',
+        buttonInactive: 'border-amber-400/50 text-amber-700 hover:bg-amber-50',
+        reviewBg: 'bg-amber-50',
+        reviewBorder: 'border-amber-200/50',
+        linkColor: 'text-amber-600',
+      }
+    },
+    // ===== 새 시리즈 추가 예시 =====
+    // {
+    //   id: 'new-series',
+    //   title: '새 시리즈 이름',
+    //   subtitle: '시리즈 설명',
+    //   icon: 'Book',
+    //   bookNumberRange: { min: 11, max: 15 },
+    //   theme: {
+    //     name: 'blue' as const,
+    //     headerBg: 'bg-gradient-to-r from-blue-50 to-white',
+    //     headerText: 'text-blue-800',
+    //     badgeBg: 'bg-blue-100',
+    //     badgeText: 'text-blue-700',
+    //     border: 'border-blue-300/50',
+    //     buttonActive: 'bg-blue-500 hover:bg-blue-600 text-white',
+    //     buttonInactive: 'border-blue-400/50 text-blue-700 hover:bg-blue-50',
+    //     reviewBg: 'bg-blue-50',
+    //     reviewBorder: 'border-blue-200/50',
+    //     linkColor: 'text-blue-600',
+    //   }
+    // },
+  ];
 
+  // 시리즈별 책 필터링
+  const getSeriesBooks = (series: typeof BOOK_SERIES[0]) => 
+    books.filter(book => 
+      book.book_number >= series.bookNumberRange.min && 
+      book.book_number <= series.bookNumberRange.max
+    );
+
+  // 시리즈별 리뷰 필터링
+  const getSeriesReviews = (seriesBooks: Storybook[]) => 
+    myReviews.filter(r => seriesBooks.some(b => b.id === r.book_id));
+
+  // 아이콘 렌더링
+  const renderIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'BookMarked': return <BookMarked className="w-6 h-6" />;
+      case 'BookOpen': 
+      default: return <BookOpen className="w-6 h-6" />;
+    }
+  };
+
+  // 책 목록 렌더링
   const renderBookList = (bookList: Storybook[], colorTheme: 'emerald' | 'amber') => {
     const themeClasses = colorTheme === 'emerald' 
       ? {
@@ -708,7 +788,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           title: 'text-storybook-emerald-dark',
           badge: 'border-storybook-emerald/50 text-storybook-emerald',
           arrow: 'text-storybook-emerald/60',
-          scrollbar: '[&::-webkit-scrollbar-thumb]:bg-storybook-emerald/30'
+          scrollbar: '[&::-webkit-scrollbar-thumb]:bg-storybook-emerald/30',
+          linkColor: 'text-storybook-emerald'
         }
       : {
           bg: 'bg-amber-50',
@@ -717,7 +798,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           title: 'text-amber-800',
           badge: 'border-amber-400/50 text-amber-600',
           arrow: 'text-amber-400',
-          scrollbar: '[&::-webkit-scrollbar-thumb]:bg-amber-300/50'
+          scrollbar: '[&::-webkit-scrollbar-thumb]:bg-amber-300/50',
+          linkColor: 'text-amber-600'
         };
 
     return (
@@ -730,7 +812,6 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               className={`flex items-start gap-3 p-3 ${themeClasses.bg} ${themeClasses.hoverBg} rounded-lg cursor-pointer transition-colors border ${themeClasses.border}`}
               onClick={() => openBook(book)}
             >
-              {/* Book Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`font-medium ${themeClasses.title} text-sm truncate`}>{book.title}</span>
@@ -745,15 +826,13 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         e.stopPropagation();
                         setDescriptionBook(book);
                       }}
-                      className={`text-xs ${colorTheme === 'emerald' ? 'text-storybook-emerald' : 'text-amber-600'} hover:underline flex-shrink-0`}
+                      className={`text-xs ${themeClasses.linkColor} hover:underline flex-shrink-0`}
                     >
                       더보기
                     </button>
                   </div>
                 )}
               </div>
-              
-              {/* Status Badges */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 {hasReview && (
                   <span title="독후감 작성됨">
@@ -778,197 +857,120 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     );
   };
 
+  // 리뷰 섹션 렌더링
+  const renderReviewSection = (reviews: Review[], theme: typeof BOOK_SERIES[0]['theme']) => {
+    if (reviews.length === 0) return null;
+    
+    return (
+      <Card className={`mb-6 ${theme.reviewBorder}`}>
+        <CardContent className="pt-4">
+          <h3 className={`font-semibold ${theme.headerText} mb-3 flex items-center gap-2`}>
+            <PenLine className="w-5 h-5" />
+            내가 쓴 독후감
+          </h3>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {reviews.map((review) => (
+              <div key={review.id} className={`p-3 ${theme.reviewBg} rounded-lg`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`font-medium ${theme.headerText}`}>{review.book_title}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                        />
+                      ))}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleReviewVisibility(review.id, !review.is_public)}
+                      className="h-6 px-2"
+                      title={review.is_public ? '공개됨 - 클릭하여 비공개' : '비공개 - 클릭하여 공개'}
+                    >
+                      {review.is_public ? (
+                        <Globe className="w-3 h-3 text-green-600" />
+                      ) : (
+                        <Users className="w-3 h-3 text-gray-400" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(review.created_at).toLocaleDateString('ko-KR')}
+                  </p>
+                  {review.is_public && (
+                    <span className="text-xs text-green-600 flex items-center gap-1">
+                      <Globe className="w-3 h-3" /> 공개중
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="p-4">
       {/* Celebration Animation Overlay */}
       <CelebrationOverlay />
       
-      <Accordion type="multiple" defaultValue={["wisdom-river"]} className="w-full space-y-3">
-        {/* 이지영의 지혜의 강 */}
-        <AccordionItem value="wisdom-river" className="border-storybook-emerald/30 rounded-lg overflow-hidden">
-          <AccordionTrigger className="hover:no-underline py-3 px-4 bg-gradient-to-r from-storybook-emerald-light to-white">
-            <div className="flex items-center gap-2 text-storybook-emerald-dark">
-              <BookOpen className="w-6 h-6" />
-              <span className="text-xl font-bold">이지영의 지혜의 강</span>
-              <Badge variant="secondary" className="ml-2 bg-storybook-emerald-light text-storybook-emerald">
-                {wisdomBooks.length}권
-              </Badge>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <div className="flex items-center justify-between mb-4 pt-2">
-              <p className="text-muted-foreground text-sm">철학적 사고를 키우는 이야기</p>
-              <Button 
-                variant={showMyReviews ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowMyReviews(!showMyReviews)}
-                className={showMyReviews ? "bg-storybook-emerald hover:bg-storybook-emerald-hover" : "border-storybook-emerald/50 text-storybook-emerald hover:bg-storybook-emerald-light"}
-              >
-                <PenLine className="w-4 h-4 mr-1" />
-                내 독후감 ({wisdomReviews.length})
-              </Button>
-            </div>
+      <Accordion type="multiple" defaultValue={[BOOK_SERIES[0]?.id || '']} className="w-full space-y-3">
+        {BOOK_SERIES.map((series) => {
+          const seriesBooks = getSeriesBooks(series);
+          const seriesReviews = getSeriesReviews(seriesBooks);
+          
+          // 해당 시리즈에 책이 없으면 표시하지 않음
+          if (seriesBooks.length === 0) return null;
 
-            {/* My Reviews Section for Wisdom River */}
-            {showMyReviews && wisdomReviews.length > 0 && (
-              <Card className="mb-6 border-storybook-emerald/30">
-                <CardContent className="pt-4">
-                  <h3 className="font-semibold text-storybook-emerald-dark mb-3 flex items-center gap-2">
-                    <PenLine className="w-5 h-5" />
-                    내가 쓴 독후감
-                  </h3>
-                  <div className="space-y-3 max-h-60 overflow-y-auto">
-                    {wisdomReviews.map((review) => (
-                      <div key={review.id} className="p-3 bg-storybook-emerald-light rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-storybook-emerald-dark">{review.book_title}</span>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
-                                />
-                              ))}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleReviewVisibility(review.id, !review.is_public)}
-                              className="h-6 px-2"
-                              title={review.is_public ? '공개됨 - 클릭하여 비공개' : '비공개 - 클릭하여 공개'}
-                            >
-                              {review.is_public ? (
-                                <Globe className="w-3 h-3 text-green-600" />
-                              ) : (
-                                <Users className="w-3 h-3 text-gray-400" />
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
-                        <div className="flex items-center justify-between mt-2">
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(review.created_at).toLocaleDateString('ko-KR')}
-                          </p>
-                          {review.is_public && (
-                            <span className="text-xs text-green-600 flex items-center gap-1">
-                              <Globe className="w-3 h-3" /> 공개중
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {loading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                책꽂이를 정리하는 중...
-              </div>
-            ) : wisdomBooks.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                아직 등록된 책이 없습니다
-              </div>
-            ) : (
-              renderBookList(wisdomBooks, 'emerald')
-            )}
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* 명심보감 */}
-        {myungsimBooks.length > 0 && (
-          <AccordionItem value="myungsim" className="border-amber-300/50 rounded-lg overflow-hidden">
-            <AccordionTrigger className="hover:no-underline py-3 px-4 bg-gradient-to-r from-amber-50 to-white">
-              <div className="flex items-center gap-2 text-amber-800">
-                <BookMarked className="w-6 h-6" />
-                <span className="text-xl font-bold">명심보감</span>
-                <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-700">
-                  {myungsimBooks.length}권
-                </Badge>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <div className="flex items-center justify-between mb-4 pt-2">
-                <p className="text-muted-foreground text-sm">마음을 밝히는 옛 지혜</p>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowMyReviews(!showMyReviews)}
-                  className="border-amber-400/50 text-amber-700 hover:bg-amber-50"
-                >
-                  <PenLine className="w-4 h-4 mr-1" />
-                  내 독후감 ({myungsimReviews.length})
-                </Button>
-              </div>
-
-              {/* My Reviews Section for Myungsim */}
-              {showMyReviews && myungsimReviews.length > 0 && (
-                <Card className="mb-6 border-amber-200/50">
-                  <CardContent className="pt-4">
-                    <h3 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                      <PenLine className="w-5 h-5" />
-                      내가 쓴 독후감
-                    </h3>
-                    <div className="space-y-3 max-h-60 overflow-y-auto">
-                      {myungsimReviews.map((review) => (
-                        <div key={review.id} className="p-3 bg-amber-50 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-amber-800">{review.book_title}</span>
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star 
-                                    key={i} 
-                                    className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
-                                  />
-                                ))}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleReviewVisibility(review.id, !review.is_public)}
-                                className="h-6 px-2"
-                                title={review.is_public ? '공개됨 - 클릭하여 비공개' : '비공개 - 클릭하여 공개'}
-                              >
-                                {review.is_public ? (
-                                  <Globe className="w-3 h-3 text-green-600" />
-                                ) : (
-                                  <Users className="w-3 h-3 text-gray-400" />
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(review.created_at).toLocaleDateString('ko-KR')}
-                            </p>
-                            {review.is_public && (
-                              <span className="text-xs text-green-600 flex items-center gap-1">
-                                <Globe className="w-3 h-3" /> 공개중
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  책꽂이를 정리하는 중...
+          return (
+            <AccordionItem 
+              key={series.id} 
+              value={series.id} 
+              className={`${series.theme.border} rounded-lg overflow-hidden`}
+            >
+              <AccordionTrigger className={`hover:no-underline py-3 px-4 ${series.theme.headerBg}`}>
+                <div className={`flex items-center gap-2 ${series.theme.headerText}`}>
+                  {renderIcon(series.icon)}
+                  <span className="text-xl font-bold">{series.title}</span>
+                  <Badge variant="secondary" className={`ml-2 ${series.theme.badgeBg} ${series.theme.badgeText}`}>
+                    {seriesBooks.length}권
+                  </Badge>
                 </div>
-              ) : (
-                renderBookList(myungsimBooks, 'amber')
-              )}
-            </AccordionContent>
-          </AccordionItem>
-        )}
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4">
+                <div className="flex items-center justify-between mb-4 pt-2">
+                  <p className="text-muted-foreground text-sm">{series.subtitle}</p>
+                  <Button 
+                    variant={showMyReviews ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowMyReviews(!showMyReviews)}
+                    className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
+                  >
+                    <PenLine className="w-4 h-4 mr-1" />
+                    내 독후감 ({seriesReviews.length})
+                  </Button>
+                </div>
+
+                {showMyReviews && renderReviewSection(seriesReviews, series.theme)}
+
+                {loading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    책꽂이를 정리하는 중...
+                  </div>
+                ) : (
+                  renderBookList(seriesBooks, series.theme.name)
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
       </Accordion>
 
       {/* Book Description Modal */}
