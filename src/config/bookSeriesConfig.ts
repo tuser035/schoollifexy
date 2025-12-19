@@ -76,8 +76,8 @@ export const BOOK_SERIES: BookSeries[] = [
   },
   {
     id: 'myungsim',
-    title: '명심보감',
-    subtitle: '추천도서',
+    title: '추천도서',
+    subtitle: '',
     icon: 'BookMarked',
     bookNumberRange: { min: 6, max: 10 },
     theme: {
