@@ -37,7 +37,9 @@ import {
   Volume2,
   VolumeX,
   Maximize,
-  Minimize
+  Minimize,
+  Link,
+  ExternalLink
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
@@ -146,6 +148,12 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   // Subtitle editing state
   const [editingSubtitleId, setEditingSubtitleId] = useState<string | null>(null);
   const [editingSubtitleValue, setEditingSubtitleValue] = useState('');
+  
+  // External URL dialog state
+  const [isExternalUrlDialogOpen, setIsExternalUrlDialogOpen] = useState(false);
+  const [externalUrlTitle, setExternalUrlTitle] = useState('');
+  const [externalUrlValue, setExternalUrlValue] = useState('');
+  const [externalUrlBookNumber, setExternalUrlBookNumber] = useState('');
   
   // Clear highlight after 3 seconds
   useEffect(() => {
@@ -264,6 +272,47 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       loadBooks();
     } catch (error: any) {
       console.error('Error creating book:', error);
+      if (error.message?.includes('duplicate')) {
+        toast.error('이미 존재하는 일련번호입니다');
+      } else {
+        toast.error('동화책 생성에 실패했습니다');
+      }
+    }
+  };
+
+  const handleCreateExternalUrlBook = async () => {
+    if (!externalUrlBookNumber || !externalUrlTitle || !externalUrlValue) {
+      toast.error('일련번호, 제목, URL을 모두 입력해주세요');
+      return;
+    }
+
+    // URL 유효성 검사
+    try {
+      new URL(externalUrlValue);
+    } catch {
+      toast.error('올바른 URL 형식을 입력해주세요');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('admin_insert_storybook', {
+        admin_id_input: adminId,
+        book_number_input: parseInt(externalUrlBookNumber),
+        title_input: externalUrlTitle,
+        description_input: null,
+        external_url_input: externalUrlValue
+      });
+
+      if (error) throw error;
+
+      toast.success('외부 URL 동화책이 생성되었습니다');
+      setIsExternalUrlDialogOpen(false);
+      setExternalUrlBookNumber('');
+      setExternalUrlTitle('');
+      setExternalUrlValue('');
+      loadBooks();
+    } catch (error: any) {
+      console.error('Error creating external URL book:', error);
       if (error.message?.includes('duplicate')) {
         toast.error('이미 존재하는 일련번호입니다');
       } else {
@@ -1095,6 +1144,58 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   </div>
                   <Button onClick={handleCreateBook} className="w-full bg-amber-600 hover:bg-amber-700">
                     생성하기
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            {/* 외부 URL 동화책 추가 버튼 및 모달 */}
+            <Dialog open={isExternalUrlDialogOpen} onOpenChange={setIsExternalUrlDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="border-emerald-600 text-emerald-600 hover:bg-emerald-50">
+                  <Link className="w-4 h-4 mr-1" />
+                  새 동화책 주소
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <ExternalLink className="w-5 h-5" />
+                    외부 URL 동화책 등록
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>일련번호</Label>
+                    <Input
+                      type="number"
+                      placeholder="예: 1"
+                      value={externalUrlBookNumber}
+                      onChange={(e) => setExternalUrlBookNumber(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>제목</Label>
+                    <Input
+                      placeholder="동화책 제목"
+                      value={externalUrlTitle}
+                      onChange={(e) => setExternalUrlTitle(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>외부 URL</Label>
+                    <Input
+                      type="url"
+                      placeholder="https://example.com/storybook"
+                      value={externalUrlValue}
+                      onChange={(e) => setExternalUrlValue(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      외부 사이트의 동화책 URL을 입력하세요
+                    </p>
+                  </div>
+                  <Button onClick={handleCreateExternalUrlBook} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                    등록하기
                   </Button>
                 </div>
               </DialogContent>
