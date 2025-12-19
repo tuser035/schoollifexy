@@ -302,7 +302,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     speakNextSentence();
   }, [stopSpeaking, speechRate, autoPageTurn, pages.length, splitIntoSentences, selectedBook, getVoiceForBook]);
 
-  // Render text with sentence highlighting
+  // Render text with sentence highlighting and auto-scroll
   const renderHighlightedText = useCallback((text: string, isSubtitle: boolean = false) => {
     if (!isSpeaking || currentSentenceIndex < 0) {
       return text;
@@ -314,6 +314,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         {sentences.map((sentence, idx) => (
           <span
             key={idx}
+            ref={(el) => {
+              // Auto-scroll to the currently highlighted sentence
+              if (el && idx === currentSentenceIndex) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }}
             className={`transition-all duration-300 ${
               idx === currentSentenceIndex
                 ? 'bg-amber-100 text-amber-900 rounded px-0.5'
