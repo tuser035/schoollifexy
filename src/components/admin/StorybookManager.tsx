@@ -1080,7 +1080,6 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   </span>
                 )}
               </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">이지영의 지혜의 강</p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
