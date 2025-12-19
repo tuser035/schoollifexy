@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen, Award, Trophy, Search, FileText, Check, Clock, Plus, Pencil, Trash2, Library, Calendar, RefreshCw, Upload } from "lucide-react";
+import { BookOpen, Award, Trophy, Search, FileText, Check, Clock, Plus, Pencil, Trash2, Library, Calendar, RefreshCw, Upload, Bot, AlertTriangle } from "lucide-react";
 import Papa from 'papaparse';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { analyzeAIContent, getAILevelLabel, getAILevelBadgeVariant } from "@/lib/aiDetection";
 
 interface BookReportManagerProps {
   adminId: string;
@@ -494,6 +496,7 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                         <TableHead className="text-xs">학생</TableHead>
                         <TableHead className="text-xs">학년/반</TableHead>
                         <TableHead className="text-xs">책 제목</TableHead>
+                        <TableHead className="text-xs">AI 의심도</TableHead>
                         <TableHead className="text-xs">상태</TableHead>
                         <TableHead className="text-xs">포인트</TableHead>
                         <TableHead className="text-xs">제출일</TableHead>
@@ -501,37 +504,55 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reports.map((report) => (
-                        <TableRow key={report.id}>
-                          <TableCell className="text-xs font-medium">
-                            {report.student_name}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {report.student_grade}-{report.student_class}-{report.student_number}
-                          </TableCell>
-                          <TableCell className="text-xs">{report.book_title}</TableCell>
-                          <TableCell>{getStatusBadge(report.status)}</TableCell>
-                          <TableCell className="text-xs font-medium text-primary">
-                            {report.points_awarded > 0 ? `${report.points_awarded}점` : '-'}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {new Date(report.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedReport(report);
-                                setPointsToAward(report.points_awarded > 0 ? String(report.points_awarded) : "5");
-                                setIsDetailOpen(true);
-                              }}
-                            >
-                              상세
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {reports.map((report) => {
+                        const aiResult = analyzeAIContent(report.content);
+                        return (
+                          <TableRow key={report.id}>
+                            <TableCell className="text-xs font-medium">
+                              {report.student_name}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {report.student_grade}-{report.student_class}-{report.student_number}
+                            </TableCell>
+                            <TableCell className="text-xs">{report.book_title}</TableCell>
+                            <TableCell>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant={getAILevelBadgeVariant(aiResult.level)} className="text-xs gap-1">
+                                      <Bot className="w-3 h-3" />
+                                      {aiResult.score}%
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>AI 작성 의심도: {getAILevelLabel(aiResult.level)}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(report.status)}</TableCell>
+                            <TableCell className="text-xs font-medium text-primary">
+                              {report.points_awarded > 0 ? `${report.points_awarded}점` : '-'}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {new Date(report.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedReport(report);
+                                  setPointsToAward(report.points_awarded > 0 ? String(report.points_awarded) : "5");
+                                  setIsDetailOpen(true);
+                                }}
+                              >
+                                상세
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </ScrollArea>
@@ -1011,7 +1032,9 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
             </DialogTitle>
           </DialogHeader>
           
-          {selectedReport && (
+          {selectedReport && (() => {
+            const aiResult = analyzeAIContent(selectedReport.content);
+            return (
             <div className="space-y-4">
               {/* 학생 정보 */}
               <div className="bg-muted/50 p-3 rounded-lg">
@@ -1029,6 +1052,56 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                 </p>
                 <p className="text-sm">
                   <strong>글자 수:</strong> {selectedReport.content.length}자
+                </p>
+              </div>
+
+              {/* AI 분석 결과 */}
+              <div className={`border rounded-lg p-4 ${
+                aiResult.level === 'high' ? 'border-red-300 bg-red-50 dark:bg-red-950/20' :
+                aiResult.level === 'medium' ? 'border-yellow-300 bg-yellow-50 dark:bg-yellow-950/20' :
+                'border-green-300 bg-green-50 dark:bg-green-950/20'
+              }`}>
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <Bot className="w-4 h-4" />
+                  AI 작성 분석 결과
+                  {aiResult.level === 'high' && <AlertTriangle className="w-4 h-4 text-red-500" />}
+                </h4>
+                
+                <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">AI 의심도</p>
+                    <p className="text-2xl font-bold">
+                      <Badge variant={getAILevelBadgeVariant(aiResult.level)} className="text-lg px-3 py-1">
+                        {aiResult.score}% ({getAILevelLabel(aiResult.level)})
+                      </Badge>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">분석 지표</p>
+                    <div className="text-xs space-y-1 mt-1">
+                      <p>어휘 다양성(TTR): {aiResult.details.ttr}</p>
+                      <p>평균 문장 길이: {aiResult.details.avgSentenceLength}자</p>
+                      <p>문장 길이 편차: {aiResult.details.sentenceLengthVariance}</p>
+                      <p>접속사 비율: {aiResult.details.connectorRatio}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {aiResult.indicators.length > 0 && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">감지된 패턴:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {aiResult.indicators.map((indicator, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {indicator}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground mt-3 italic">
+                  ※ 이 분석은 통계적 패턴 기반이며 참고용입니다. 최종 판단은 교사의 검토가 필요합니다.
                 </p>
               </div>
 
@@ -1053,7 +1126,8 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                 <span className="text-sm text-muted-foreground">점</span>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
