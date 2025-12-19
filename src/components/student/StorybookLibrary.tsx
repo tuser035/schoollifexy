@@ -75,6 +75,14 @@ interface PublicReview {
   created_at: string;
 }
 
+interface RecommendedBook {
+  id: string;
+  title: string;
+  author: string | null;
+  description: string | null;
+  display_order: number;
+}
+
 interface StorybookLibraryProps {
   studentId: string;
 }
@@ -158,6 +166,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   // Description modal state
   const [descriptionBook, setDescriptionBook] = useState<Storybook | null>(null);
+
+  // Recommended books state
+  const [recommendedBooks, setRecommendedBooks] = useState<RecommendedBook[]>([]);
+  const [showRecommendedBooks, setShowRecommendedBooks] = useState(false);
+  const [loadingRecommendedBooks, setLoadingRecommendedBooks] = useState(false);
 
   // Load available voices for TTS
   useEffect(() => {
@@ -489,10 +502,28 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     }
   };
 
+  // 추천도서 목록 불러오기
+  const loadRecommendedBooks = async () => {
+    try {
+      setLoadingRecommendedBooks(true);
+      const { data, error } = await supabase.rpc('student_get_current_recommended_books', {
+        student_id_input: studentId
+      });
+      if (error) throw error;
+      setRecommendedBooks(data || []);
+      setShowRecommendedBooks(true);
+    } catch (error) {
+      console.error('Error loading recommended books:', error);
+      toast.error('추천도서 목록을 불러오는데 실패했습니다');
+    } finally {
+      setLoadingRecommendedBooks(false);
+    }
+  };
+
   const openBook = async (book: Storybook) => {
-    // 외부 URL이 있는 경우 새 탭에서 열기
+    // 외부 URL이 있는 경우 추천도서 목록 표시
     if (book.external_url) {
-      window.open(book.external_url, '_blank', 'noopener,noreferrer');
+      loadRecommendedBooks();
       return;
     }
 
@@ -744,7 +775,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        setDescriptionBook(book);
+                        // 외부 URL이 있는 책은 추천도서 목록 표시
+                        if (book.external_url) {
+                          loadRecommendedBooks();
+                        } else {
+                          setDescriptionBook(book);
+                        }
                       }}
                       className={`text-xs ${themeClasses.linkColor} hover:underline flex-shrink-0`}
                     >
@@ -1658,6 +1694,54 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               )}
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* 추천도서 목록 다이얼로그 */}
+      <Dialog open={showRecommendedBooks} onOpenChange={setShowRecommendedBooks}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookMarked className="w-5 h-5 text-amber-600" />
+              이번 학기 추천도서
+            </DialogTitle>
+          </DialogHeader>
+          
+          {loadingRecommendedBooks ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+            </div>
+          ) : recommendedBooks.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <BookMarked className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>등록된 추천도서가 없습니다</p>
+              <p className="text-sm">관리자가 추천도서를 등록하면 여기에 표시됩니다</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {recommendedBooks.map((book, index) => (
+                <div 
+                  key={book.id} 
+                  className="p-4 bg-amber-50 rounded-lg border border-amber-200/50"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-semibold text-sm">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-amber-800">{book.title}</h4>
+                      {book.author && (
+                        <p className="text-sm text-amber-600">{book.author}</p>
+                      )}
+                      {book.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{book.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
