@@ -1028,7 +1028,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </div>
 
             {/* Right: Action Buttons */}
-            <div className="flex items-center gap-0 md:gap-1 flex-shrink-0">
+            <div className="flex items-center gap-0 md:gap-1 flex-shrink-0 -ml-1">
               {/* Mobile TTS Button */}
               <Button 
                 variant="ghost" 
@@ -1192,14 +1192,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
           {/* Mobile TTS indicator */}
           {isSpeaking && (
-            <div className="md:hidden flex items-center justify-center gap-2 py-1.5 bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 text-xs border-b border-amber-200">
-              <Volume2 className="w-4 h-4 animate-pulse" />
+            <div className="md:hidden flex items-center justify-center gap-1.5 py-0.5 bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 text-[10px] border-b border-amber-200">
+              <Volume2 className="w-3 h-3 animate-pulse" />
               <span className="font-medium">읽는 중...</span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={stopSpeaking}
-                className="h-6 px-2 text-xs text-amber-700 hover:text-amber-900 hover:bg-amber-200"
+                className="h-4 px-1.5 text-[10px] text-amber-700 hover:text-amber-900 hover:bg-amber-200"
               >
                 중지
               </Button>
@@ -1462,10 +1462,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   }
                   closeReader();
                 }}
-                className="md:hidden h-8 px-3 rounded-full bg-storybook-emerald text-white hover:bg-storybook-emerald-hover shadow-sm text-xs font-medium"
+                className="md:hidden h-8 w-8 p-0 rounded-full bg-storybook-emerald text-white hover:bg-storybook-emerald-hover shadow-sm"
+                title="나가기"
               >
-                <X className="w-4 h-4 mr-1" />
-                나가기
+                <X className="w-5 h-5" />
               </Button>
             ) : (
               <Button
