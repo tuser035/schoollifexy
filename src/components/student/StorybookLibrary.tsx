@@ -1376,7 +1376,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
                   {/* Left - Title */}
-                  <div className="w-[350px] h-[500px] flex flex-col items-center justify-center p-8 bg-gradient-to-br from-storybook-emerald-light to-white border-r border-storybook-emerald/20">
+                  <div className="w-[350px] h-[650px] flex flex-col items-center justify-center p-8 bg-gradient-to-br from-storybook-emerald-light to-white border-r border-storybook-emerald/20">
                     <Badge className="bg-storybook-emerald text-white text-sm px-3 py-1 mb-4">
                       #{selectedBook?.book_number}
                     </Badge>
@@ -1386,7 +1386,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   </div>
                   
                   {/* Right - First Page Content */}
-                  <div className="w-[350px] h-[500px] p-6 overflow-y-auto">
+                  <div className="w-[350px] h-[650px] p-6 overflow-y-auto">
                     {currentPageData?.image_url && (
                       <img 
                         src={currentPageData.image_url} 
@@ -1421,7 +1421,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage > 1 && currentPageData && (
                 <div className="flex">
                   {/* Left - Image */}
-                  <div className="w-[350px] h-[500px] flex items-center justify-center bg-storybook-emerald-light border-r border-storybook-emerald/20 p-4">
+                  <div className="w-[350px] h-[650px] flex items-center justify-center bg-storybook-emerald-light border-r border-storybook-emerald/20 p-4">
                     {currentPageData.image_url ? (
                       <img 
                         src={currentPageData.image_url} 
@@ -1437,7 +1437,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   </div>
                   
                   {/* Right - Text */}
-                  <div className="w-[350px] h-[500px] p-6 overflow-y-auto bg-white">
+                  <div className="w-[350px] h-[650px] p-6 overflow-y-auto bg-white">
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
