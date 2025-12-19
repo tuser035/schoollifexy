@@ -155,6 +155,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [externalUrlValue, setExternalUrlValue] = useState('');
   const [externalUrlBookNumber, setExternalUrlBookNumber] = useState('');
   
+  // Page count editing state
+  const [editingPageCountId, setEditingPageCountId] = useState<string | null>(null);
+  const [editingPageCountValue, setEditingPageCountValue] = useState<number>(0);
+  
   // Clear highlight after 3 seconds
   useEffect(() => {
     if (recentlyEditedBookId) {
@@ -638,6 +642,40 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const handleCancelInlineDescription = () => {
     setEditingDescriptionId(null);
     setEditingDescriptionValue('');
+  };
+
+  // Page count editing handlers
+  const handleStartEditPageCount = (book: Storybook) => {
+    setEditingPageCountId(book.id);
+    setEditingPageCountValue(book.page_count);
+  };
+
+  const handleSavePageCount = async () => {
+    if (!editingPageCountId || editingPageCountValue < 0) {
+      toast.error('유효한 페이지 수를 입력해주세요');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('admin_update_storybook_page_count', {
+        admin_id_input: adminId,
+        book_id_input: editingPageCountId,
+        page_count_input: editingPageCountValue
+      });
+
+      if (error) throw error;
+
+      toast.success('페이지 수가 수정되었습니다');
+      setEditingPageCountId(null);
+      loadBooks();
+    } catch (error) {
+      console.error('Error updating page count:', error);
+      toast.error('페이지 수 수정에 실패했습니다');
+    }
+  };
+
+  const handleCancelEditPageCount = () => {
+    setEditingPageCountId(null);
   };
 
   const handleInlineCoverUpload = async (file: File, bookId: string) => {
@@ -1353,7 +1391,35 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>{book.page_count}쪽</TableCell>
+                    <TableCell>
+                      {editingPageCountId === book.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={editingPageCountValue}
+                            onChange={(e) => setEditingPageCountValue(parseInt(e.target.value) || 0)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSavePageCount();
+                              if (e.key === 'Escape') handleCancelEditPageCount();
+                            }}
+                            className="w-16 h-7 text-sm"
+                            autoFocus
+                          />
+                          <Button size="sm" variant="ghost" onClick={handleSavePageCount} className="h-7 w-7 p-0 text-emerald-600">
+                            <Save className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span 
+                          className="cursor-pointer hover:text-amber-600 hover:underline transition-colors"
+                          onClick={() => handleStartEditPageCount(book)}
+                          title="클릭하여 페이지 수 수정"
+                        >
+                          {book.page_count}쪽
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge 
                         variant={book.is_published ? 'default' : 'secondary'}
