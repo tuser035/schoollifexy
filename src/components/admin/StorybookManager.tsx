@@ -45,6 +45,7 @@ interface Storybook {
   id: string;
   book_number: number;
   title: string;
+  subtitle: string | null;
   cover_image_url: string | null;
   description: string | null;
   page_count: number;
@@ -140,6 +141,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [uploadingCoverBookId, setUploadingCoverBookId] = useState<string | null>(null);
   const inlineCoverInputRef = useRef<HTMLInputElement>(null);
   const [inlineCoverBookId, setInlineCoverBookId] = useState<string | null>(null);
+  
+  // Subtitle editing state
+  const [editingSubtitleId, setEditingSubtitleId] = useState<string | null>(null);
+  const [editingSubtitleValue, setEditingSubtitleValue] = useState('');
   
   // Clear highlight after 3 seconds
   useEffect(() => {
