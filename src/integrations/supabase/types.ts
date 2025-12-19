@@ -842,6 +842,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           description: string | null
+          external_url: string | null
           id: string
           is_published: boolean | null
           page_count: number | null
@@ -854,6 +855,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          external_url?: string | null
           id?: string
           is_published?: boolean | null
           page_count?: number | null
@@ -866,6 +868,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
+          external_url?: string | null
           id?: string
           is_published?: boolean | null
           page_count?: number | null
@@ -1455,6 +1458,7 @@ export type Database = {
           cover_image_url: string
           created_at: string
           description: string
+          external_url: string
           id: string
           is_published: boolean
           page_count: number
@@ -1619,6 +1623,7 @@ export type Database = {
           admin_id_input: string
           book_number_input: number
           description_input?: string
+          external_url_input?: string
           title_input: string
         }
         Returns: string
@@ -1743,6 +1748,14 @@ export type Database = {
           admin_id_input: string
           book_id_input: string
           description_input: string
+        }
+        Returns: boolean
+      }
+      admin_update_storybook_external_url: {
+        Args: {
+          admin_id_input: string
+          book_id_input: string
+          external_url_input: string
         }
         Returns: boolean
       }
@@ -2136,6 +2149,7 @@ export type Database = {
           book_number: number
           cover_image_url: string
           description: string
+          external_url: string
           id: string
           is_completed: boolean
           last_page: number
