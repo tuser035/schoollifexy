@@ -128,6 +128,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [editingTitleBookId, setEditingTitleBookId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState('');
   
+  // Book number editing state
+  const [editingBookNumberId, setEditingBookNumberId] = useState<string | null>(null);
+  const [editingBookNumberValue, setEditingBookNumberValue] = useState<number>(0);
+  
   // Clear highlight after 3 seconds
   useEffect(() => {
     if (recentlyEditedBookId) {
@@ -494,6 +498,39 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const handleCancelEditTitle = () => {
     setEditingTitleBookId(null);
     setEditingTitleValue('');
+  };
+
+  const handleStartEditBookNumber = (book: Storybook) => {
+    setEditingBookNumberId(book.id);
+    setEditingBookNumberValue(book.book_number);
+  };
+
+  const handleSaveBookNumber = async () => {
+    if (!editingBookNumberId || editingBookNumberValue < 1) {
+      toast.error('유효한 일련번호를 입력해주세요');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('admin_update_storybook_book_number', {
+        admin_id_input: adminId,
+        book_id_input: editingBookNumberId,
+        book_number_input: editingBookNumberValue
+      });
+
+      if (error) throw error;
+
+      toast.success('일련번호가 수정되었습니다');
+      setEditingBookNumberId(null);
+      loadBooks();
+    } catch (error) {
+      console.error('Error updating book number:', error);
+      toast.error('일련번호 수정에 실패했습니다');
+    }
+  };
+
+  const handleCancelEditBookNumber = () => {
+    setEditingBookNumberId(null);
   };
 
   const handleImageUpload = async (file: File, type: 'cover' | 'page') => {
@@ -983,7 +1020,35 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                     key={book.id}
                     className={recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''}
                   >
-                    <TableCell className="font-medium">{book.book_number}</TableCell>
+                    <TableCell className="font-medium">
+                      {editingBookNumberId === book.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            value={editingBookNumberValue}
+                            onChange={(e) => setEditingBookNumberValue(Number(e.target.value))}
+                            className="h-8 w-16"
+                            min={1}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveBookNumber();
+                              if (e.key === 'Escape') handleCancelEditBookNumber();
+                            }}
+                            autoFocus
+                          />
+                          <Button size="sm" variant="ghost" onClick={handleSaveBookNumber} className="h-8 w-8 p-0 text-emerald-600">
+                            <Save className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span 
+                          className="cursor-pointer hover:text-amber-600 hover:underline transition-colors"
+                          onClick={() => handleStartEditBookNumber(book)}
+                          title="클릭하여 일련번호 수정"
+                        >
+                          {book.book_number}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {book.cover_image_url && (
