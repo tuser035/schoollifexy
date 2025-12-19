@@ -43,6 +43,7 @@ interface Storybook {
   title: string;
   cover_image_url: string | null;
   description: string | null;
+  external_url: string | null;
   page_count: number;
   last_page: number;
   is_completed: boolean;
@@ -489,6 +490,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   };
 
   const openBook = async (book: Storybook) => {
+    // 외부 URL이 있는 경우 새 탭에서 열기
+    if (book.external_url) {
+      window.open(book.external_url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     try {
       setSelectedBook(book);
       setCurrentPage(1);
