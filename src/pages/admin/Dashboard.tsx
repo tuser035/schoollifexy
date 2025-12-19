@@ -200,7 +200,7 @@ const DashboardContent = ({
                     return (
                       <SidebarMenuItem key={item.value} className="relative">
                         {isActive && (
-                          <div className={`absolute left-0 top-1 bottom-1 w-1 rounded-r ${borderColor.replace('border-', 'bg-')}`} />
+                          <div className={`absolute left-0 top-1 bottom-1 w-1.5 rounded-r ${borderColor.replace('border-', 'bg-')}`} />
                         )}
                         <SidebarMenuButton
                           onClick={() => handleMenuClick(item.value)}
