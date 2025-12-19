@@ -194,13 +194,19 @@ const DashboardContent = ({
                 <SidebarMenu className="gap-0.5">
                   {group.items.map((item) => {
                     const Icon = item.icon;
+                    const isActive = activeTab === item.value;
+                    // 아이콘 색상에서 border 색상 추출 (text-xxx-500 -> border-xxx-500)
+                    const borderColor = item.color.replace('text-', 'border-');
                     return (
-                      <SidebarMenuItem key={item.value}>
+                      <SidebarMenuItem key={item.value} className="relative">
+                        {isActive && (
+                          <div className={`absolute left-0 top-1 bottom-1 w-1 rounded-r ${borderColor.replace('border-', 'bg-')}`} />
+                        )}
                         <SidebarMenuButton
                           onClick={() => handleMenuClick(item.value)}
-                          isActive={activeTab === item.value}
+                          isActive={isActive}
                           tooltip={item.label}
-                          className="w-full text-xs"
+                          className="w-full text-xs pl-3"
                         >
                           <Icon className={`h-4 w-4 flex-shrink-0 ${item.color}`} />
                           <span className="truncate">{item.label}</span>
