@@ -109,8 +109,8 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
       return;
     }
 
-    if (content.length < 500) {
-      toast.error(`독후감은 최소 500자 이상이어야 합니다. (현재 ${content.length}자)`);
+    if (content.length < 200) {
+      toast.error(`독후감은 최소 200자 이상이어야 합니다. (현재 ${content.length}자)`);
       return;
     }
 
@@ -333,23 +333,23 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
                     "{selectedBook}" 독후감
                   </label>
                   <span className={`text-xs ${
-                    content.length < 500 ? 'text-destructive' : 
+                    content.length < 200 ? 'text-destructive' : 
                     content.length > 1000 ? 'text-destructive' : 
                     'text-green-500'
                   }`}>
-                    {content.length}/1000자 (최소 500자)
+                    {content.length}/1000자 (최소 200자)
                   </span>
                 </div>
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="독후감을 작성해주세요. (500자 이상 1000자 이하)"
+                  placeholder="독후감을 작성해주세요. (200자 이상 1000자 이하)"
                   className="min-h-[200px] resize-none"
                   maxLength={1000}
                 />
                 <Button 
                   onClick={handleSubmit} 
-                  disabled={submitting || content.length < 500 || content.length > 1000}
+                  disabled={submitting || content.length < 200 || content.length > 1000}
                   className="w-full"
                 >
                   <Send className="w-4 h-4 mr-2" />
