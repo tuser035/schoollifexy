@@ -29,6 +29,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -37,42 +38,105 @@ import {
   useSidebar,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { LucideIcon } from "lucide-react";
+
+type MenuItem = {
+  value: string;
+  label: string;
+  icon: LucideIcon;
+  color: string;
+};
+
+type MenuGroup = {
+  title: string;
+  items: MenuItem[];
+};
+
+const getMenuGroups = (user: AuthUser): MenuGroup[] => {
+  const isSystemAdmin = user.type === "admin";
+  
+  const groups: MenuGroup[] = [];
+  
+  // 시스템 관리자만 - 데이터 관리
+  if (isSystemAdmin) {
+    groups.push({
+      title: "데이터 관리",
+      items: [
+        { value: "upload", label: "업로드", icon: Upload, color: "text-slate-500" },
+        { value: "data", label: "데이터", icon: Database, color: "text-slate-500" },
+      ]
+    });
+  }
+  
+  // 계정 관리
+  groups.push({
+    title: "계정 관리",
+    items: [
+      { value: "password", label: "비밀번호 재설정", icon: Key, color: "text-amber-500" },
+      { value: "leaderboard", label: "순위", icon: Trophy, color: "text-yellow-500" },
+    ]
+  });
+  
+  // 상벌점/통계
+  groups.push({
+    title: "상벌점",
+    items: [
+      { value: "points", label: "상점", icon: BarChart, color: "text-emerald-500" },
+      { value: "statistics", label: "통계", icon: TrendingUp, color: "text-emerald-500" },
+    ]
+  });
+  
+  // 커뮤니케이션
+  groups.push({
+    title: "커뮤니케이션",
+    items: [
+      { value: "email-history", label: "이메일", icon: Mail, color: "text-blue-500" },
+      { value: "email-templates", label: "템플릿", icon: FileText, color: "text-blue-500" },
+      { value: "counseling", label: "상담", icon: ClipboardCheck, color: "text-violet-500" },
+    ]
+  });
+  
+  // 마음톡
+  groups.push({
+    title: "마음톡",
+    items: [
+      { value: "mindtalk", label: "마음톡", icon: MessageCircle, color: "text-pink-500" },
+      { value: "mindtalk-keywords", label: "키워드관리", icon: AlertTriangle, color: "text-pink-500" },
+      { value: "mindtalk-music", label: "힐링뮤직", icon: Music, color: "text-pink-500" },
+    ]
+  });
+  
+  // 독서
+  groups.push({
+    title: "독서",
+    items: [
+      { value: "storybooks", label: "동화책", icon: BookOpen, color: "text-orange-500" },
+      { value: "book-reports", label: "독후감", icon: PenLine, color: "text-orange-500" },
+      { value: "reading-stats", label: "읽기통계", icon: BarChart3, color: "text-orange-500" },
+    ]
+  });
+  
+  // 시스템 관리자만 - 시스템 설정
+  if (isSystemAdmin) {
+    groups.push({
+      title: "시스템",
+      items: [
+        { value: "system-settings", label: "시스템설정", icon: Cog, color: "text-slate-500" },
+        { value: "export", label: "백업", icon: PackageOpen, color: "text-slate-500" },
+        { value: "auto-backup", label: "자동백업", icon: Settings, color: "text-slate-500" },
+        { value: "storage", label: "파일", icon: FolderOpen, color: "text-slate-500" },
+        { value: "security-logs", label: "보안로그", icon: Shield, color: "text-slate-500" },
+        { value: "db-logs", label: "DB로그", icon: FileCode, color: "text-slate-500" },
+      ]
+    });
+  }
+  
+  return groups;
+};
 
 const menuItems = (user: AuthUser) => {
-  const isSystemAdmin = user.type === "admin";
-  const isAdminTeacher = user.type === "teacher" && user.isAdmin;
-  
-  const items = [
-    // 시스템 관리자만 (회색 - 시스템)
-    ...(isSystemAdmin ? [
-      { value: "upload", label: "업로드", icon: Upload, color: "text-slate-500" },
-      { value: "data", label: "데이터", icon: Database, color: "text-slate-500" },
-    ] : []),
-    // 모든 사용자 (관리자 교사와 시스템 관리자)
-    { value: "password", label: "비밀번호 재설정", icon: Key, color: "text-amber-500" },
-    { value: "leaderboard", label: "순위", icon: Trophy, color: "text-yellow-500" },
-    { value: "points", label: "상점", icon: BarChart, color: "text-emerald-500" },
-    { value: "statistics", label: "통계", icon: TrendingUp, color: "text-emerald-500" },
-    { value: "email-history", label: "이메일", icon: Mail, color: "text-blue-500" },
-    { value: "email-templates", label: "템플릿", icon: FileText, color: "text-blue-500" },
-    { value: "counseling", label: "상담", icon: ClipboardCheck, color: "text-violet-500" },
-    { value: "mindtalk", label: "마음톡", icon: MessageCircle, color: "text-pink-500" },
-    { value: "mindtalk-keywords", label: "키워드관리", icon: AlertTriangle, color: "text-pink-500" },
-    { value: "mindtalk-music", label: "힐링뮤직", icon: Music, color: "text-pink-500" },
-    { value: "storybooks", label: "동화책", icon: BookOpen, color: "text-orange-500" },
-    { value: "book-reports", label: "독후감", icon: PenLine, color: "text-orange-500" },
-    { value: "reading-stats", label: "읽기통계", icon: BarChart3, color: "text-orange-500" },
-    // 시스템 관리자만 (회색 - 시스템)
-    ...(isSystemAdmin ? [
-      { value: "system-settings", label: "시스템설정", icon: Cog, color: "text-slate-500" },
-      { value: "export", label: "백업", icon: PackageOpen, color: "text-slate-500" },
-      { value: "auto-backup", label: "자동백업", icon: Settings, color: "text-slate-500" },
-      { value: "storage", label: "파일", icon: FolderOpen, color: "text-slate-500" },
-      { value: "security-logs", label: "보안로그", icon: Shield, color: "text-slate-500" },
-      { value: "db-logs", label: "DB로그", icon: FileCode, color: "text-slate-500" },
-    ] : []),
-  ];
-  return items;
+  return getMenuGroups(user).flatMap(group => group.items);
 };
 
 // 사이드바 콘텐츠 컴포넌트 (useSidebar 훅 사용을 위해 분리)
@@ -87,7 +151,8 @@ const DashboardContent = ({
   setActiveTab: (tab: string) => void; 
   renderContent: () => React.ReactNode;
 }) => {
-  const { setOpen, setOpenMobile, isMobile } = useSidebar();
+  const { setOpen, setOpenMobile, isMobile, state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   const handleMenuClick = (value: string) => {
     setActiveTab(value);
@@ -99,6 +164,8 @@ const DashboardContent = ({
     }
   };
 
+  const menuGroups = getMenuGroups(user);
+
   return (
     <div className="flex flex-1 w-full">
       <Sidebar collapsible="icon" className="border-r w-32 data-[state=collapsed]:w-14 landscape:w-48">
@@ -108,28 +175,38 @@ const DashboardContent = ({
           </SidebarTrigger>
         </SidebarHeader>
         <SidebarContent className="overflow-y-auto">
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
-                {menuItems(user).map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <SidebarMenuItem key={item.value}>
-                      <SidebarMenuButton
-                        onClick={() => handleMenuClick(item.value)}
-                        isActive={activeTab === item.value}
-                        tooltip={item.label}
-                        className="w-full text-xs"
-                      >
-                        <Icon className={`h-4 w-4 flex-shrink-0 ${item.color}`} />
-                        <span className="truncate">{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {menuGroups.map((group, groupIndex) => (
+            <SidebarGroup key={group.title}>
+              {!isCollapsed && (
+                <SidebarGroupLabel className="text-xs text-muted-foreground px-2 py-1">
+                  {group.title}
+                </SidebarGroupLabel>
+              )}
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-0.5">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <SidebarMenuItem key={item.value}>
+                        <SidebarMenuButton
+                          onClick={() => handleMenuClick(item.value)}
+                          isActive={activeTab === item.value}
+                          tooltip={item.label}
+                          className="w-full text-xs"
+                        >
+                          <Icon className={`h-4 w-4 flex-shrink-0 ${item.color}`} />
+                          <span className="truncate">{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+              {groupIndex < menuGroups.length - 1 && (
+                <Separator className="my-1" />
+              )}
+            </SidebarGroup>
+          ))}
         </SidebarContent>
       </Sidebar>
 
