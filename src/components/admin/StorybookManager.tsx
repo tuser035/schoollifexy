@@ -1276,7 +1276,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                 {books.map((book) => (
                   <TableRow 
                     key={book.id}
-                    className={recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''}
+                    className={`${recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''} ${book.external_url ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                   >
                     <TableCell className="font-medium">
                       {editingBookNumberId === book.id ? (
