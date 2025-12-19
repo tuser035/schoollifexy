@@ -176,7 +176,7 @@ const DashboardContent = ({
 
   return (
     <div className="flex flex-1 w-full">
-      <Sidebar collapsible="icon" className="border-r w-32 data-[state=collapsed]:w-14 landscape:w-48">
+      <Sidebar collapsible="icon" className="border-r w-24 data-[state=collapsed]:w-12 landscape:w-36">
         <SidebarHeader className="border-b p-2">
           <SidebarTrigger className="ml-auto">
             <ChevronLeft className="h-4 w-4" />
