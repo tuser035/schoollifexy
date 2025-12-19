@@ -43,33 +43,33 @@ const menuItems = (user: AuthUser) => {
   const isAdminTeacher = user.type === "teacher" && user.isAdmin;
   
   const items = [
-    // 시스템 관리자만
+    // 시스템 관리자만 (회색 - 시스템)
     ...(isSystemAdmin ? [
-      { value: "upload", label: "업로드", icon: Upload },
-      { value: "data", label: "데이터", icon: Database },
+      { value: "upload", label: "업로드", icon: Upload, color: "text-slate-500" },
+      { value: "data", label: "데이터", icon: Database, color: "text-slate-500" },
     ] : []),
     // 모든 사용자 (관리자 교사와 시스템 관리자)
-    { value: "password", label: "비밀번호 재설정", icon: Key },
-    { value: "leaderboard", label: "순위", icon: Trophy },
-    { value: "points", label: "상점", icon: BarChart },
-    { value: "statistics", label: "통계", icon: TrendingUp },
-    { value: "email-history", label: "이메일", icon: Mail },
-    { value: "email-templates", label: "템플릿", icon: FileText },
-    { value: "counseling", label: "상담", icon: ClipboardCheck },
-    { value: "mindtalk", label: "마음톡", icon: MessageCircle },
-    { value: "mindtalk-keywords", label: "키워드관리", icon: AlertTriangle },
-    { value: "mindtalk-music", label: "힐링뮤직", icon: Music },
-    { value: "storybooks", label: "동화책", icon: BookOpen },
-    { value: "book-reports", label: "독후감", icon: PenLine },
-    { value: "reading-stats", label: "읽기통계", icon: BarChart3 },
-    // 시스템 관리자만
+    { value: "password", label: "비밀번호 재설정", icon: Key, color: "text-amber-500" },
+    { value: "leaderboard", label: "순위", icon: Trophy, color: "text-yellow-500" },
+    { value: "points", label: "상점", icon: BarChart, color: "text-emerald-500" },
+    { value: "statistics", label: "통계", icon: TrendingUp, color: "text-emerald-500" },
+    { value: "email-history", label: "이메일", icon: Mail, color: "text-blue-500" },
+    { value: "email-templates", label: "템플릿", icon: FileText, color: "text-blue-500" },
+    { value: "counseling", label: "상담", icon: ClipboardCheck, color: "text-violet-500" },
+    { value: "mindtalk", label: "마음톡", icon: MessageCircle, color: "text-pink-500" },
+    { value: "mindtalk-keywords", label: "키워드관리", icon: AlertTriangle, color: "text-pink-500" },
+    { value: "mindtalk-music", label: "힐링뮤직", icon: Music, color: "text-pink-500" },
+    { value: "storybooks", label: "동화책", icon: BookOpen, color: "text-orange-500" },
+    { value: "book-reports", label: "독후감", icon: PenLine, color: "text-orange-500" },
+    { value: "reading-stats", label: "읽기통계", icon: BarChart3, color: "text-orange-500" },
+    // 시스템 관리자만 (회색 - 시스템)
     ...(isSystemAdmin ? [
-      { value: "system-settings", label: "시스템설정", icon: Cog },
-      { value: "export", label: "백업", icon: PackageOpen },
-      { value: "auto-backup", label: "자동백업", icon: Settings },
-      { value: "storage", label: "파일", icon: FolderOpen },
-      { value: "security-logs", label: "보안로그", icon: Shield },
-      { value: "db-logs", label: "DB로그", icon: FileCode },
+      { value: "system-settings", label: "시스템설정", icon: Cog, color: "text-slate-500" },
+      { value: "export", label: "백업", icon: PackageOpen, color: "text-slate-500" },
+      { value: "auto-backup", label: "자동백업", icon: Settings, color: "text-slate-500" },
+      { value: "storage", label: "파일", icon: FolderOpen, color: "text-slate-500" },
+      { value: "security-logs", label: "보안로그", icon: Shield, color: "text-slate-500" },
+      { value: "db-logs", label: "DB로그", icon: FileCode, color: "text-slate-500" },
     ] : []),
   ];
   return items;
@@ -121,7 +121,7 @@ const DashboardContent = ({
                         tooltip={item.label}
                         className="w-full text-xs"
                       >
-                        <Icon className="h-4 w-4 flex-shrink-0" />
+                        <Icon className={`h-4 w-4 flex-shrink-0 ${item.color}`} />
                         <span className="truncate">{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
