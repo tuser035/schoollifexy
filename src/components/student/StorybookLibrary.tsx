@@ -1443,16 +1443,33 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               ))}
             </div>
             
-            {/* Next Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => changePage(currentPage + 1)}
-              disabled={currentPage === pages.length}
-              className="md:hidden h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm disabled:opacity-30"
-            >
-              <ChevronRight className="w-5 h-5 text-storybook-emerald-dark" />
-            </Button>
+            {/* Next Button or Exit Button on last page */}
+            {currentPage === pages.length ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  stopSpeaking();
+                  if (isFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                  }
+                  closeReader();
+                }}
+                className="md:hidden h-8 px-3 rounded-full bg-storybook-emerald text-white hover:bg-storybook-emerald-hover shadow-sm text-xs font-medium"
+              >
+                <X className="w-4 h-4 mr-1" />
+                나가기
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => changePage(currentPage + 1)}
+                className="md:hidden h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm"
+              >
+                <ChevronRight className="w-5 h-5 text-storybook-emerald-dark" />
+              </Button>
+            )}
             
             {/* Mobile Review Button */}
             {selectedBook?.is_completed && (
