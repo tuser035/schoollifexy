@@ -182,7 +182,7 @@ const DashboardContent = ({
             <ChevronLeft className="h-4 w-4" />
           </SidebarTrigger>
         </SidebarHeader>
-        <SidebarContent className="overflow-y-auto">
+        <SidebarContent className="overflow-y-auto scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
           {menuGroups.map((group, groupIndex) => (
             <SidebarGroup key={group.title} className="py-1">
               {!isCollapsed && (
