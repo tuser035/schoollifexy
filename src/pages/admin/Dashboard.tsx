@@ -51,6 +51,7 @@ type MenuItem = {
 type MenuGroup = {
   title: string;
   items: MenuItem[];
+  bgColor: string;
 };
 
 const getMenuGroups = (user: AuthUser): MenuGroup[] => {
@@ -62,6 +63,7 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
   if (isSystemAdmin) {
     groups.push({
       title: "데이터 관리",
+      bgColor: "bg-slate-100 dark:bg-slate-800",
       items: [
         { value: "upload", label: "업로드", icon: Upload, color: "text-slate-500" },
         { value: "data", label: "데이터", icon: Database, color: "text-slate-500" },
@@ -72,6 +74,7 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
   // 계정 관리
   groups.push({
     title: "계정 관리",
+    bgColor: "bg-amber-50 dark:bg-amber-900/20",
     items: [
       { value: "password", label: "비밀번호 재설정", icon: Key, color: "text-amber-500" },
       { value: "leaderboard", label: "순위", icon: Trophy, color: "text-yellow-500" },
@@ -81,6 +84,7 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
   // 상벌점/통계
   groups.push({
     title: "상벌점",
+    bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
     items: [
       { value: "points", label: "상점", icon: BarChart, color: "text-emerald-500" },
       { value: "statistics", label: "통계", icon: TrendingUp, color: "text-emerald-500" },
@@ -90,6 +94,7 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
   // 커뮤니케이션
   groups.push({
     title: "커뮤니케이션",
+    bgColor: "bg-blue-50 dark:bg-blue-900/20",
     items: [
       { value: "email-history", label: "이메일", icon: Mail, color: "text-blue-500" },
       { value: "email-templates", label: "템플릿", icon: FileText, color: "text-blue-500" },
@@ -100,6 +105,7 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
   // 마음톡
   groups.push({
     title: "마음톡",
+    bgColor: "bg-pink-50 dark:bg-pink-900/20",
     items: [
       { value: "mindtalk", label: "마음톡", icon: MessageCircle, color: "text-pink-500" },
       { value: "mindtalk-keywords", label: "키워드관리", icon: AlertTriangle, color: "text-pink-500" },
@@ -110,6 +116,7 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
   // 독서
   groups.push({
     title: "독서",
+    bgColor: "bg-orange-50 dark:bg-orange-900/20",
     items: [
       { value: "storybooks", label: "동화책", icon: BookOpen, color: "text-orange-500" },
       { value: "book-reports", label: "독후감", icon: PenLine, color: "text-orange-500" },
@@ -121,6 +128,7 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
   if (isSystemAdmin) {
     groups.push({
       title: "시스템",
+      bgColor: "bg-slate-100 dark:bg-slate-800",
       items: [
         { value: "system-settings", label: "시스템설정", icon: Cog, color: "text-slate-500" },
         { value: "export", label: "백업", icon: PackageOpen, color: "text-slate-500" },
@@ -178,7 +186,7 @@ const DashboardContent = ({
           {menuGroups.map((group, groupIndex) => (
             <SidebarGroup key={group.title} className="py-1">
               {!isCollapsed && (
-                <SidebarGroupLabel className="text-xs text-muted-foreground px-2 py-1">
+                <SidebarGroupLabel className={`text-xs font-medium px-2 py-1.5 mx-1 rounded ${group.bgColor}`}>
                   {group.title}
                 </SidebarGroupLabel>
               )}
