@@ -11,12 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen, Award, Trophy, Search, FileText, Check, Clock, Plus, Pencil, Trash2, Library, Calendar, RefreshCw, Upload, Bot, AlertTriangle } from "lucide-react";
+import { BookOpen, Award, Trophy, Search, FileText, Check, Clock, Plus, Pencil, Trash2, Library, Calendar, RefreshCw, Upload, Bot, AlertTriangle, BarChart3 } from "lucide-react";
 import Papa from 'papaparse';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { analyzeAIContent, getAILevelLabel, getAILevelBadgeVariant } from "@/lib/aiDetection";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Tooltip as RechartsTooltip } from "recharts";
 
 interface BookReportManagerProps {
   adminId: string;
@@ -493,6 +494,116 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
               )}
             </CardContent>
           </Card>
+
+          {/* AI 의심도 통계 */}
+          {reports.length > 0 && (() => {
+            const aiStats = reports.reduce((acc, report) => {
+              const result = analyzeAIContent(report.content);
+              acc[result.level] = (acc[result.level] || 0) + 1;
+              acc.totalScore += result.score;
+              return acc;
+            }, { low: 0, medium: 0, high: 0, totalScore: 0 } as Record<string, number>);
+
+            const pieData = [
+              { name: '낮음 (0-29%)', value: aiStats.low, color: '#22c55e' },
+              { name: '보통 (30-59%)', value: aiStats.medium, color: '#eab308' },
+              { name: '높음 (60%+)', value: aiStats.high, color: '#ef4444' },
+            ].filter(d => d.value > 0);
+
+            const barData = [
+              { name: '낮음', count: aiStats.low, fill: '#22c55e' },
+              { name: '보통', count: aiStats.medium, fill: '#eab308' },
+              { name: '높음', count: aiStats.high, fill: '#ef4444' },
+            ];
+
+            const avgScore = reports.length > 0 ? Math.round(aiStats.totalScore / reports.length) : 0;
+
+            return (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    AI 의심도 통계
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <p className="text-2xl font-bold text-green-600">{aiStats.low}</p>
+                      <p className="text-xs text-muted-foreground">낮음 (0-29%)</p>
+                    </div>
+                    <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                      <p className="text-2xl font-bold text-yellow-600">{aiStats.medium}</p>
+                      <p className="text-xs text-muted-foreground">보통 (30-59%)</p>
+                    </div>
+                    <div className="text-center p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                      <p className="text-2xl font-bold text-red-600">{aiStats.high}</p>
+                      <p className="text-xs text-muted-foreground">높음 (60%+)</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* 파이 차트 */}
+                    <div className="h-[200px]">
+                      <p className="text-xs text-muted-foreground text-center mb-2">분포 비율</p>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={70}
+                            paddingAngle={2}
+                            dataKey="value"
+                            label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                            labelLine={false}
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Legend 
+                            verticalAlign="bottom" 
+                            height={36}
+                            formatter={(value) => <span className="text-xs">{value}</span>}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* 바 차트 */}
+                    <div className="h-[200px]">
+                      <p className="text-xs text-muted-foreground text-center mb-2">건수 비교</p>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={barData} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                          <XAxis type="number" allowDecimals={false} fontSize={12} />
+                          <YAxis type="category" dataKey="name" width={40} fontSize={12} />
+                          <RechartsTooltip 
+                            formatter={(value: number) => [`${value}건`, '독후감 수']}
+                          />
+                          <Bar dataKey="count" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-sm">
+                      전체 <strong>{reports.length}</strong>건 중 평균 AI 의심도: 
+                      <Badge 
+                        variant={avgScore >= 60 ? 'destructive' : avgScore >= 30 ? 'default' : 'secondary'}
+                        className="ml-2"
+                      >
+                        {avgScore}%
+                      </Badge>
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           {/* 독후감 목록 테이블 */}
           <Card>
