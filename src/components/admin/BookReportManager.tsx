@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen, Award, Trophy, Search, FileText, Check, Clock, Plus, Pencil, Trash2, Library, Calendar, RefreshCw } from "lucide-react";
+import { BookOpen, Award, Trophy, Search, FileText, Check, Clock, Plus, Pencil, Trash2, Library, Calendar, RefreshCw, Upload } from "lucide-react";
+import Papa from 'papaparse';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -109,6 +110,14 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
   const [formOrder, setFormOrder] = useState(1);
   const [formActive, setFormActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  
+  // CSV Import 관련 상태
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvPreview, setCsvPreview] = useState<Array<{title: string; author: string; description: string}>>([]);
+  const [importYear, setImportYear] = useState(getCurrentYear());
+  const [importSemester, setImportSemester] = useState(getCurrentSemester());
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     loadReports();
@@ -300,6 +309,76 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
     }
   };
 
+  // CSV 파일 처리
+  const handleCsvFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCsvFile(file);
+    
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      encoding: 'UTF-8',
+      complete: (results) => {
+        const data = results.data as Array<Record<string, string>>;
+        const preview = data.map(row => ({
+          title: row['제목'] || row['title'] || row['도서명'] || '',
+          author: row['저자'] || row['author'] || '',
+          description: row['설명'] || row['description'] || row['내용'] || ''
+        })).filter(item => item.title.trim() !== '');
+        
+        setCsvPreview(preview);
+      },
+      error: (error) => {
+        console.error('CSV parsing error:', error);
+        toast.error('CSV 파일을 읽는데 실패했습니다');
+      }
+    });
+  };
+
+  const handleCsvImport = async () => {
+    if (csvPreview.length === 0) {
+      toast.error('가져올 도서가 없습니다');
+      return;
+    }
+
+    try {
+      setImporting(true);
+      let successCount = 0;
+
+      for (let i = 0; i < csvPreview.length; i++) {
+        const book = csvPreview[i];
+        const { error } = await supabase.rpc('admin_insert_recommended_book', {
+          admin_id_input: adminId,
+          title_input: book.title.trim(),
+          author_input: book.author.trim() || null,
+          description_input: book.description.trim() || null,
+          year_input: importYear,
+          quarter_input: importSemester,
+          display_order_input: i + 1
+        });
+
+        if (!error) {
+          successCount++;
+        } else {
+          console.error(`Error importing book "${book.title}":`, error);
+        }
+      }
+
+      toast.success(`${successCount}권의 추천도서가 추가되었습니다`);
+      setIsImportDialogOpen(false);
+      setCsvFile(null);
+      setCsvPreview([]);
+      loadBooks();
+    } catch (error: any) {
+      console.error('Error importing books:', error);
+      toast.error(error.message || '가져오기에 실패했습니다');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const getSemesterLabel = (semester: number) => {
     return SEMESTERS.find(s => s.value === semester)?.label || `${semester}학기`;
   };
@@ -473,10 +552,16 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                   setIsBookDialogOpen(open);
                   if (!open) resetBookForm();
                 }}>
-                  <Button size="sm" onClick={() => setIsBookDialogOpen(true)}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    추천도서 추가
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+                      <Upload className="w-4 h-4 mr-1" />
+                      CSV 가져오기
+                    </Button>
+                    <Button size="sm" onClick={() => setIsBookDialogOpen(true)}>
+                      <Plus className="w-4 h-4 mr-1" />
+                      추천도서 추가
+                    </Button>
+                  </div>
                   <DialogContent className="max-w-md">
                     <DialogHeader>
                       <DialogTitle>
@@ -574,6 +659,117 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
                         className="w-full"
                       >
                         {submitting ? '저장 중...' : editingBook ? '수정' : '추가'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* CSV Import Dialog */}
+                <Dialog open={isImportDialogOpen} onOpenChange={(open) => {
+                  setIsImportDialogOpen(open);
+                  if (!open) {
+                    setCsvFile(null);
+                    setCsvPreview([]);
+                  }
+                }}>
+                  <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Upload className="w-5 h-5" />
+                        CSV로 추천도서 가져오기
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <div className="p-3 bg-muted rounded-lg text-sm">
+                        <p className="font-medium mb-2">CSV 파일 형식 안내:</p>
+                        <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                          <li>첫 행: 헤더 (제목, 저자, 설명)</li>
+                          <li>필수 열: 제목 (또는 title, 도서명)</li>
+                          <li>선택 열: 저자 (또는 author), 설명 (또는 description, 내용)</li>
+                        </ul>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>연도</Label>
+                          <Select
+                            value={importYear.toString()}
+                            onValueChange={(v) => setImportYear(parseInt(v))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {yearOptions.map(y => (
+                                <SelectItem key={y} value={y.toString()}>{y}년</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>학기</Label>
+                          <Select
+                            value={importSemester.toString()}
+                            onValueChange={(v) => setImportSemester(parseInt(v))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SEMESTERS.map(s => (
+                                <SelectItem key={s.value} value={s.value.toString()}>
+                                  {s.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label>CSV 파일 선택</Label>
+                        <Input
+                          type="file"
+                          accept=".csv"
+                          onChange={handleCsvFileChange}
+                          className="mt-1"
+                        />
+                      </div>
+
+                      {csvPreview.length > 0 && (
+                        <div>
+                          <Label className="mb-2 block">미리보기 ({csvPreview.length}권)</Label>
+                          <ScrollArea className="h-48 border rounded-md">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="text-xs">순서</TableHead>
+                                  <TableHead className="text-xs">제목</TableHead>
+                                  <TableHead className="text-xs">저자</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {csvPreview.map((book, idx) => (
+                                  <TableRow key={idx}>
+                                    <TableCell className="text-xs">{idx + 1}</TableCell>
+                                    <TableCell className="text-xs font-medium">{book.title}</TableCell>
+                                    <TableCell className="text-xs text-muted-foreground">
+                                      {book.author || '-'}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </ScrollArea>
+                        </div>
+                      )}
+
+                      <Button 
+                        onClick={handleCsvImport} 
+                        disabled={importing || csvPreview.length === 0}
+                        className="w-full"
+                      >
+                        {importing ? '가져오는 중...' : `${csvPreview.length}권 가져오기`}
                       </Button>
                     </div>
                   </DialogContent>
