@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen, Send, Award, Check, Clock, FileText } from "lucide-react";
+import { BookOpen, Send, Award, Check, Clock, FileText, Info } from "lucide-react";
 
 interface BookReportFormProps {
   studentId: string;
@@ -27,16 +27,19 @@ interface BookReport {
   created_at: string;
 }
 
-// 7권의 책 목록
-const BOOK_TITLES = [
-  "호밀밭의 파수꾼",
-  "변신",
-  "프랑켄슈타인",
-  "데미안",
-  "동물농장",
-  "젊은 베르테르의 슬픔",
-  "지킬박사와 하이드"
-];
+interface RecommendedBook {
+  id: string;
+  title: string;
+  author: string | null;
+  description: string | null;
+  display_order: number;
+}
+
+const getCurrentQuarter = () => Math.ceil((new Date().getMonth() + 1) / 3);
+const getQuarterLabel = (quarter: number) => {
+  const labels = ["1분기 (1~3월)", "2분기 (4~6월)", "3분기 (7~9월)", "4분기 (10~12월)"];
+  return labels[quarter - 1] || `${quarter}분기`;
+};
 
 const BookReportForm: React.FC<BookReportFormProps> = ({
   studentId,
@@ -47,27 +50,37 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
   deptName
 }) => {
   const [reports, setReports] = useState<BookReport[]>([]);
+  const [recommendedBooks, setRecommendedBooks] = useState<RecommendedBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBook, setSelectedBook] = useState<string | null>(null);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("write");
 
+  const currentQuarter = getCurrentQuarter();
+  const currentYear = new Date().getFullYear();
+
   useEffect(() => {
-    loadReports();
+    loadData();
   }, [studentId]);
 
-  const loadReports = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('student_get_book_reports', {
-        student_id_input: studentId
-      });
+      
+      // 독후감 목록과 추천도서 동시 로드
+      const [reportsResult, booksResult] = await Promise.all([
+        supabase.rpc('student_get_book_reports', { student_id_input: studentId }),
+        supabase.rpc('student_get_current_recommended_books', { student_id_input: studentId })
+      ]);
 
-      if (error) throw error;
-      setReports(data || []);
+      if (reportsResult.error) throw reportsResult.error;
+      if (booksResult.error) throw booksResult.error;
+      
+      setReports(reportsResult.data || []);
+      setRecommendedBooks(booksResult.data || []);
     } catch (error) {
-      console.error('Error loading reports:', error);
+      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -108,7 +121,7 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
       toast.success('독후감이 성공적으로 제출되었습니다!');
       setContent("");
       setSelectedBook(null);
-      loadReports();
+      loadData();
       setActiveTab("history");
     } catch (error: any) {
       console.error('Error submitting report:', error);
@@ -146,9 +159,14 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
           <BookOpen className="w-5 h-5 text-primary" />
           독후감 쓰기
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          시간을 건너온 일곱 개의 문 - 입문자를 위한 고전문학
-        </p>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            {currentYear}년 {getQuarterLabel(currentQuarter)}
+          </Badge>
+          <span className="text-sm text-muted-foreground">
+            추천도서 {recommendedBooks.length}권
+          </span>
+        </div>
       </CardHeader>
       <CardContent>
         {/* 학생 정보 */}
@@ -160,7 +178,7 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
           </p>
           <div className="flex items-center gap-2 mt-2">
             <Badge variant="outline">
-              제출: {reports.length}/7권
+              제출: {reports.length}/{recommendedBooks.length || 7}권
             </Badge>
             <Badge className="bg-primary">
               <Award className="w-3 h-3 mr-1" />
@@ -185,29 +203,46 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
             {/* 책 선택 */}
             <div>
               <label className="text-sm font-medium mb-2 block">책 선택</label>
-              <div className="grid grid-cols-1 gap-2">
-                {BOOK_TITLES.map((title, idx) => {
-                  const isSubmitted = submittedBooks.includes(title);
-                  return (
-                    <Button
-                      key={idx}
-                      variant={selectedBook === title ? "default" : "outline"}
-                      className={`justify-start text-left h-auto py-2 ${isSubmitted ? 'opacity-50' : ''}`}
-                      onClick={() => !isSubmitted && setSelectedBook(title)}
-                      disabled={isSubmitted}
-                    >
-                      <span className="mr-2">{idx + 1}.</span>
-                      {title}
-                      {isSubmitted && (
-                        <Badge className="ml-auto bg-green-500 text-white text-xs">
-                          <Check className="w-3 h-3 mr-1" />
-                          제출완료
-                        </Badge>
-                      )}
-                    </Button>
-                  );
-                })}
-              </div>
+              {recommendedBooks.length === 0 ? (
+                <div className="text-center py-6 border rounded-lg bg-muted/50">
+                  <Info className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    현재 분기에 등록된 추천도서가 없습니다
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    관리자가 추천도서를 등록하면 여기에 표시됩니다
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2">
+                  {recommendedBooks.map((book, idx) => {
+                    const isSubmitted = submittedBooks.includes(book.title);
+                    return (
+                      <Button
+                        key={book.id}
+                        variant={selectedBook === book.title ? "default" : "outline"}
+                        className={`justify-start text-left h-auto py-2 ${isSubmitted ? 'opacity-50' : ''}`}
+                        onClick={() => !isSubmitted && setSelectedBook(book.title)}
+                        disabled={isSubmitted}
+                      >
+                        <span className="mr-2">{idx + 1}.</span>
+                        <div className="flex-1 min-w-0">
+                          <div>{book.title}</div>
+                          {book.author && (
+                            <div className="text-xs opacity-70">{book.author}</div>
+                          )}
+                        </div>
+                        {isSubmitted && (
+                          <Badge className="ml-auto bg-green-500 text-white text-xs">
+                            <Check className="w-3 h-3 mr-1" />
+                            제출완료
+                          </Badge>
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* 독후감 작성 */}

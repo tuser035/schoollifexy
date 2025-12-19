@@ -642,6 +642,48 @@ export type Database = {
           },
         ]
       }
+      recommended_books: {
+        Row: {
+          author: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          quarter: number
+          title: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          quarter: number
+          title: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          quarter?: number
+          title?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       storybook_page_bookmarks: {
         Row: {
           book_id: string
@@ -1062,6 +1104,10 @@ export type Database = {
         Args: { admin_id_input: string; template_id_input: string }
         Returns: boolean
       }
+      admin_delete_recommended_book: {
+        Args: { admin_id_input: string; book_id_input: string }
+        Returns: boolean
+      }
       admin_delete_storybook: {
         Args: { admin_id_input: string; book_id_input: string }
         Returns: boolean
@@ -1361,6 +1407,24 @@ export type Database = {
           total_reviews: number
         }[]
       }
+      admin_get_recommended_books: {
+        Args: {
+          admin_id_input: string
+          quarter_filter?: number
+          year_filter?: number
+        }
+        Returns: {
+          author: string
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          is_active: boolean
+          quarter: number
+          title: string
+          year: number
+        }[]
+      }
       admin_get_storage_files: {
         Args: { admin_id_input: string; bucket_name_input: string }
         Returns: {
@@ -1538,6 +1602,18 @@ export type Database = {
         }
         Returns: string
       }
+      admin_insert_recommended_book: {
+        Args: {
+          admin_id_input: string
+          author_input?: string
+          description_input?: string
+          display_order_input?: number
+          quarter_input?: number
+          title_input: string
+          year_input?: number
+        }
+        Returns: string
+      }
       admin_insert_storybook: {
         Args: {
           admin_id_input: string
@@ -1630,6 +1706,18 @@ export type Database = {
           subject_input: string
           template_id_input: string
           template_type_input: string
+          title_input: string
+        }
+        Returns: boolean
+      }
+      admin_update_recommended_book: {
+        Args: {
+          admin_id_input: string
+          author_input?: string
+          book_id_input: string
+          description_input?: string
+          display_order_input?: number
+          is_active_input?: boolean
           title_input: string
         }
         Returns: boolean
@@ -1929,6 +2017,16 @@ export type Database = {
           id: string
           points_awarded: number
           status: string
+        }[]
+      }
+      student_get_current_recommended_books: {
+        Args: { student_id_input: string }
+        Returns: {
+          author: string
+          description: string
+          display_order: number
+          id: string
+          title: string
         }[]
       }
       student_get_demerits: {
