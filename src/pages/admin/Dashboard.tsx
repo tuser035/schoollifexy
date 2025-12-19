@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle, AlertTriangle, Music, BookOpen, BarChart3 } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, ChevronLeft, ChevronRight, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle, AlertTriangle, Music, BookOpen, BarChart3, PenLine } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -23,6 +23,7 @@ import MindTalkKeywords from "@/components/admin/MindTalkKeywords";
 import MindTalkMusic from "@/components/admin/MindTalkMusic";
 import StorybookManager from "@/components/admin/StorybookManager";
 import ReadingStatistics from "@/components/admin/ReadingStatistics";
+import BookReportManager from "@/components/admin/BookReportManager";
 import {
   Sidebar,
   SidebarContent,
@@ -56,6 +57,7 @@ const menuItems = (user: AuthUser) => {
     { value: "mindtalk-music", label: "힐링뮤직", icon: Music },
     { value: "storybooks", label: "동화책", icon: BookOpen },
     { value: "reading-stats", label: "읽기통계", icon: BarChart3 },
+    { value: "book-reports", label: "독후감", icon: PenLine },
     { value: "statistics", label: "통계", icon: TrendingUp },
     { value: "leaderboard", label: "순위", icon: Trophy },
     { value: "email-history", label: "이메일", icon: Mail },
@@ -194,6 +196,8 @@ const AdminDashboard = () => {
         return <StorybookManager adminId={user.id} />;
       case "reading-stats":
         return <ReadingStatistics adminId={user.id} />;
+      case "book-reports":
+        return <BookReportManager adminId={user.id} />;
       case "statistics":
         return <UnifiedStatistics />;
       case "leaderboard":

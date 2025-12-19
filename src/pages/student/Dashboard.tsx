@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen } from "lucide-react";
+import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen, PenLine } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import Papa from "papaparse";
 import { useRealtimeSync, type TableSubscription } from "@/hooks/use-realtime-sync";
 import MindTalk from "@/components/student/MindTalk";
 import StorybookLibrary from "@/components/student/StorybookLibrary";
+import BookReportForm from "@/components/student/BookReportForm";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -528,6 +529,17 @@ const StudentDashboard = () => {
             <StorybookLibrary studentId={user.studentId} />
           </CardContent>
         </Card>
+
+        {/* 독후감 */}
+        <div className="mt-4 sm:mt-6">
+          <BookReportForm
+            studentId={user.studentId}
+            studentName={user.name}
+            studentGrade={user.grade || 1}
+            studentClass={user.class || 1}
+            studentNumber={1}
+          />
+        </div>
       </main>
 
       {/* Image Preview Dialog */}
