@@ -693,25 +693,111 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   const currentPageData = pages.find(p => p.page_number === currentPage);
 
+  // Group books by series
+  const wisdomBooks = books.filter(book => book.book_number <= 5);
+  const myungsimBooks = books.filter(book => book.book_number >= 6 && book.book_number <= 10);
+  const wisdomReviews = myReviews.filter(r => wisdomBooks.some(b => b.id === r.book_id));
+  const myungsimReviews = myReviews.filter(r => myungsimBooks.some(b => b.id === r.book_id));
+
+  const renderBookList = (bookList: Storybook[], colorTheme: 'emerald' | 'amber') => {
+    const themeClasses = colorTheme === 'emerald' 
+      ? {
+          bg: 'bg-storybook-emerald-light',
+          hoverBg: 'hover:bg-storybook-emerald/10',
+          border: 'border-storybook-emerald/20',
+          title: 'text-storybook-emerald-dark',
+          badge: 'border-storybook-emerald/50 text-storybook-emerald',
+          arrow: 'text-storybook-emerald/60',
+          scrollbar: '[&::-webkit-scrollbar-thumb]:bg-storybook-emerald/30'
+        }
+      : {
+          bg: 'bg-amber-50',
+          hoverBg: 'hover:bg-amber-100/50',
+          border: 'border-amber-200/50',
+          title: 'text-amber-800',
+          badge: 'border-amber-400/50 text-amber-600',
+          arrow: 'text-amber-400',
+          scrollbar: '[&::-webkit-scrollbar-thumb]:bg-amber-300/50'
+        };
+
+    return (
+      <div className={`space-y-2 max-h-[400px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent ${themeClasses.scrollbar} [&::-webkit-scrollbar-thumb]:rounded-full`}>
+        {bookList.map((book) => {
+          const hasReview = myReviews.some(r => r.book_id === book.id);
+          return (
+            <div
+              key={book.id}
+              className={`flex items-start gap-3 p-3 ${themeClasses.bg} ${themeClasses.hoverBg} rounded-lg cursor-pointer transition-colors border ${themeClasses.border}`}
+              onClick={() => openBook(book)}
+            >
+              {/* Book Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`font-medium ${themeClasses.title} text-sm truncate`}>{book.title}</span>
+                </div>
+                {book.description && (
+                  <div className="flex items-end gap-1">
+                    <div className="text-xs text-muted-foreground line-clamp-2 prose prose-xs max-w-none flex-1">
+                      <ReactMarkdown>{book.description}</ReactMarkdown>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDescriptionBook(book);
+                      }}
+                      className={`text-xs ${colorTheme === 'emerald' ? 'text-storybook-emerald' : 'text-amber-600'} hover:underline flex-shrink-0`}
+                    >
+                      더보기
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Status Badges */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {hasReview && (
+                  <span title="독후감 작성됨">
+                    <PenLine className="w-4 h-4 text-blue-500" />
+                  </span>
+                )}
+                {book.is_completed ? (
+                  <span title="완독">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  </span>
+                ) : book.last_page > 0 ? (
+                  <Badge variant="outline" className={`text-xs ${themeClasses.badge}`}>
+                    {book.last_page}p
+                  </Badge>
+                ) : null}
+                <ChevronRight className={`w-5 h-5 ${themeClasses.arrow}`} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="p-4">
       {/* Celebration Animation Overlay */}
       <CelebrationOverlay />
       
-      <Accordion type="single" collapsible defaultValue="storybook-library" className="w-full">
-        <AccordionItem value="storybook-library" className="border-storybook-emerald/30">
-          <AccordionTrigger className="hover:no-underline py-3">
+      <Accordion type="multiple" defaultValue={["wisdom-river"]} className="w-full space-y-3">
+        {/* 이지영의 지혜의 강 */}
+        <AccordionItem value="wisdom-river" className="border-storybook-emerald/30 rounded-lg overflow-hidden">
+          <AccordionTrigger className="hover:no-underline py-3 px-4 bg-gradient-to-r from-storybook-emerald-light to-white">
             <div className="flex items-center gap-2 text-storybook-emerald-dark">
               <BookOpen className="w-6 h-6" />
               <span className="text-xl font-bold">이지영의 지혜의 강</span>
               <Badge variant="secondary" className="ml-2 bg-storybook-emerald-light text-storybook-emerald">
-                {books.length}권
+                {wisdomBooks.length}권
               </Badge>
             </div>
           </AccordionTrigger>
-          <AccordionContent>
+          <AccordionContent className="px-4 pb-4">
             <div className="flex items-center justify-between mb-4 pt-2">
-              <p className="text-muted-foreground text-sm">매일 한 권씩 읽어보세요</p>
+              <p className="text-muted-foreground text-sm">철학적 사고를 키우는 이야기</p>
               <Button 
                 variant={showMyReviews ? "default" : "outline"}
                 size="sm"
@@ -719,136 +805,170 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 className={showMyReviews ? "bg-storybook-emerald hover:bg-storybook-emerald-hover" : "border-storybook-emerald/50 text-storybook-emerald hover:bg-storybook-emerald-light"}
               >
                 <PenLine className="w-4 h-4 mr-1" />
-                내 독후감 ({myReviews.length})
+                내 독후감 ({wisdomReviews.length})
               </Button>
             </div>
 
-      {/* My Reviews Section */}
-      {showMyReviews && (
-        <Card className="mb-6 border-storybook-emerald/30">
-          <CardContent className="pt-4">
-            <h3 className="font-semibold text-storybook-emerald-dark mb-3 flex items-center gap-2">
-              <PenLine className="w-5 h-5" />
-              내가 쓴 독후감
-            </h3>
-            {myReviews.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">아직 작성한 독후감이 없습니다</p>
-            ) : (
-              <div className="space-y-3 max-h-60 overflow-y-auto">
-                {myReviews.map((review) => (
-                  <div key={review.id} className="p-3 bg-storybook-emerald-light rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-storybook-emerald-dark">{review.book_title}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star 
-                              key={i} 
-                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
-                            />
-                          ))}
+            {/* My Reviews Section for Wisdom River */}
+            {showMyReviews && wisdomReviews.length > 0 && (
+              <Card className="mb-6 border-storybook-emerald/30">
+                <CardContent className="pt-4">
+                  <h3 className="font-semibold text-storybook-emerald-dark mb-3 flex items-center gap-2">
+                    <PenLine className="w-5 h-5" />
+                    내가 쓴 독후감
+                  </h3>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {wisdomReviews.map((review) => (
+                      <div key={review.id} className="p-3 bg-storybook-emerald-light rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-storybook-emerald-dark">{review.book_title}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i} 
+                                  className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                                />
+                              ))}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleReviewVisibility(review.id, !review.is_public)}
+                              className="h-6 px-2"
+                              title={review.is_public ? '공개됨 - 클릭하여 비공개' : '비공개 - 클릭하여 공개'}
+                            >
+                              {review.is_public ? (
+                                <Globe className="w-3 h-3 text-green-600" />
+                              ) : (
+                                <Users className="w-3 h-3 text-gray-400" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleReviewVisibility(review.id, !review.is_public)}
-                          className="h-6 px-2"
-                          title={review.is_public ? '공개됨 - 클릭하여 비공개' : '비공개 - 클릭하여 공개'}
-                        >
-                          {review.is_public ? (
-                            <Globe className="w-3 h-3 text-green-600" />
-                          ) : (
-                            <Users className="w-3 h-3 text-gray-400" />
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(review.created_at).toLocaleDateString('ko-KR')}
+                          </p>
+                          {review.is_public && (
+                            <span className="text-xs text-green-600 flex items-center gap-1">
+                              <Globe className="w-3 h-3" /> 공개중
+                            </span>
                           )}
-                        </Button>
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(review.created_at).toLocaleDateString('ko-KR')}
-                      </p>
-                      {review.is_public && (
-                        <span className="text-xs text-green-600 flex items-center gap-1">
-                          <Globe className="w-3 h-3" /> 공개중
-                        </span>
-                      )}
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
-      )}
 
-      {loading ? (
-        <div className="text-center py-8 text-muted-foreground">
-          책꽂이를 정리하는 중...
-        </div>
-      ) : books.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          아직 등록된 동화책이 없습니다
-        </div>
-      ) : (
-        /* Book List */
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-storybook-emerald/30 [&::-webkit-scrollbar-thumb]:rounded-full">
-          {books.map((book) => {
-            const hasReview = myReviews.some(r => r.book_id === book.id);
-            return (
-              <div
-                key={book.id}
-                className="flex items-start gap-3 p-3 bg-storybook-emerald-light hover:bg-storybook-emerald/10 rounded-lg cursor-pointer transition-colors border border-storybook-emerald/20"
-                onClick={() => openBook(book)}
-              >
-                {/* Book Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-storybook-emerald-dark text-sm truncate">{book.title} #{book.book_number}</span>
-                  </div>
-                  {book.description && (
-                    <div className="flex items-end gap-1">
-                      <div className="text-xs text-muted-foreground line-clamp-2 prose prose-xs max-w-none flex-1">
-                        <ReactMarkdown>{book.description}</ReactMarkdown>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDescriptionBook(book);
-                        }}
-                        className="text-xs text-storybook-emerald hover:underline flex-shrink-0"
-                      >
-                        더보기
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Status Badges */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {hasReview && (
-                    <span title="독후감 작성됨">
-                      <PenLine className="w-4 h-4 text-blue-500" />
-                    </span>
-                  )}
-                  {book.is_completed ? (
-                    <span title="완독">
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    </span>
-                  ) : book.last_page > 0 ? (
-                    <Badge variant="outline" className="text-xs border-storybook-emerald/50 text-storybook-emerald">
-                      {book.last_page}p
-                    </Badge>
-                  ) : null}
-                  <ChevronRight className="w-5 h-5 text-storybook-emerald/60" />
-                </div>
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                책꽂이를 정리하는 중...
               </div>
-            );
-          })}
-        </div>
-      )}
+            ) : wisdomBooks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                아직 등록된 책이 없습니다
+              </div>
+            ) : (
+              renderBookList(wisdomBooks, 'emerald')
+            )}
           </AccordionContent>
         </AccordionItem>
+
+        {/* 명심보감 */}
+        {myungsimBooks.length > 0 && (
+          <AccordionItem value="myungsim" className="border-amber-300/50 rounded-lg overflow-hidden">
+            <AccordionTrigger className="hover:no-underline py-3 px-4 bg-gradient-to-r from-amber-50 to-white">
+              <div className="flex items-center gap-2 text-amber-800">
+                <BookMarked className="w-6 h-6" />
+                <span className="text-xl font-bold">명심보감</span>
+                <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-700">
+                  {myungsimBooks.length}권
+                </Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="flex items-center justify-between mb-4 pt-2">
+                <p className="text-muted-foreground text-sm">마음을 밝히는 옛 지혜</p>
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowMyReviews(!showMyReviews)}
+                  className="border-amber-400/50 text-amber-700 hover:bg-amber-50"
+                >
+                  <PenLine className="w-4 h-4 mr-1" />
+                  내 독후감 ({myungsimReviews.length})
+                </Button>
+              </div>
+
+              {/* My Reviews Section for Myungsim */}
+              {showMyReviews && myungsimReviews.length > 0 && (
+                <Card className="mb-6 border-amber-200/50">
+                  <CardContent className="pt-4">
+                    <h3 className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                      <PenLine className="w-5 h-5" />
+                      내가 쓴 독후감
+                    </h3>
+                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                      {myungsimReviews.map((review) => (
+                        <div key={review.id} className="p-3 bg-amber-50 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-amber-800">{review.book_title}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star 
+                                    key={i} 
+                                    className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                                  />
+                                ))}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleReviewVisibility(review.id, !review.is_public)}
+                                className="h-6 px-2"
+                                title={review.is_public ? '공개됨 - 클릭하여 비공개' : '비공개 - 클릭하여 공개'}
+                              >
+                                {review.is_public ? (
+                                  <Globe className="w-3 h-3 text-green-600" />
+                                ) : (
+                                  <Users className="w-3 h-3 text-gray-400" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.content}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(review.created_at).toLocaleDateString('ko-KR')}
+                            </p>
+                            {review.is_public && (
+                              <span className="text-xs text-green-600 flex items-center gap-1">
+                                <Globe className="w-3 h-3" /> 공개중
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  책꽂이를 정리하는 중...
+                </div>
+              ) : (
+                renderBookList(myungsimBooks, 'amber')
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        )}
       </Accordion>
 
       {/* Book Description Modal */}
