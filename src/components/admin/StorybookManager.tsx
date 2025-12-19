@@ -136,6 +136,11 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
   const [editingDescriptionValue, setEditingDescriptionValue] = useState('');
   
+  // Inline cover image upload
+  const [uploadingCoverBookId, setUploadingCoverBookId] = useState<string | null>(null);
+  const inlineCoverInputRef = useRef<HTMLInputElement>(null);
+  const [inlineCoverBookId, setInlineCoverBookId] = useState<string | null>(null);
+  
   // Clear highlight after 3 seconds
   useEffect(() => {
     if (recentlyEditedBookId) {
@@ -567,6 +572,60 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const handleCancelInlineDescription = () => {
     setEditingDescriptionId(null);
     setEditingDescriptionValue('');
+  };
+
+  const handleInlineCoverUpload = async (file: File, bookId: string) => {
+    setUploadingCoverBookId(bookId);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+
+        const { data, error } = await supabase.functions.invoke('upload-storybook-image', {
+          body: {
+            admin_id: adminId,
+            book_id: bookId,
+            page_number: null,
+            filename: file.name,
+            image_base64: base64,
+            image_type: 'cover'
+          }
+        });
+
+        if (error) throw error;
+
+        await supabase.rpc('admin_update_storybook_cover', {
+          admin_id_input: adminId,
+          book_id_input: bookId,
+          cover_image_url_input: data.publicUrl
+        });
+
+        toast.success('표지 이미지가 교체되었습니다');
+        setUploadingCoverBookId(null);
+        loadBooks();
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Cover upload error:', error);
+      toast.error('표지 이미지 업로드에 실패했습니다');
+      setUploadingCoverBookId(null);
+    }
+  };
+
+  const handleClickInlineCover = (bookId: string) => {
+    setInlineCoverBookId(bookId);
+    setTimeout(() => {
+      inlineCoverInputRef.current?.click();
+    }, 0);
+  };
+
+  const handleInlineCoverInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && inlineCoverBookId) {
+      handleInlineCoverUpload(file, inlineCoverBookId);
+    }
+    e.target.value = '';
+    setInlineCoverBookId(null);
   };
 
   const handleImageUpload = async (file: File, type: 'cover' | 'page') => {
@@ -1032,6 +1091,14 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Hidden input for inline cover upload */}
+          <input
+            ref={inlineCoverInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleInlineCoverInputChange}
+            className="hidden"
+          />
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
           ) : books.length === 0 ? (
@@ -1087,13 +1154,32 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {book.cover_image_url && (
-                          <img 
-                            src={book.cover_image_url} 
-                            alt={book.title}
-                            className="w-10 h-14 object-cover rounded"
-                          />
-                        )}
+                        <div 
+                          className="relative cursor-pointer group"
+                          onClick={() => handleClickInlineCover(book.id)}
+                          title="클릭하여 표지 이미지 교체"
+                        >
+                          {uploadingCoverBookId === book.id ? (
+                            <div className="w-10 h-14 flex items-center justify-center bg-muted rounded">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            </div>
+                          ) : book.cover_image_url ? (
+                            <>
+                              <img 
+                                src={book.cover_image_url} 
+                                alt={book.title}
+                                className="w-10 h-14 object-cover rounded group-hover:opacity-70 transition-opacity"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ImageIcon className="w-4 h-4 text-white drop-shadow-lg" />
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-10 h-14 flex items-center justify-center bg-muted rounded hover:bg-muted/80 transition-colors">
+                              <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
                         {editingTitleBookId === book.id ? (
                           <div className="flex items-center gap-1">
                             <Input
