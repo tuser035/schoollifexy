@@ -132,6 +132,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [editingBookNumberId, setEditingBookNumberId] = useState<string | null>(null);
   const [editingBookNumberValue, setEditingBookNumberValue] = useState<number>(0);
   
+  // Description editing state
+  const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
+  const [editingDescriptionValue, setEditingDescriptionValue] = useState('');
+  
   // Clear highlight after 3 seconds
   useEffect(() => {
     if (recentlyEditedBookId) {
@@ -531,6 +535,38 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
 
   const handleCancelEditBookNumber = () => {
     setEditingBookNumberId(null);
+  };
+
+  const handleStartEditInlineDescription = (book: Storybook) => {
+    setEditingDescriptionId(book.id);
+    setEditingDescriptionValue(book.description || '');
+  };
+
+  const handleSaveInlineDescription = async () => {
+    if (!editingDescriptionId) return;
+
+    try {
+      const { error } = await supabase.rpc('admin_update_storybook_description', {
+        admin_id_input: adminId,
+        book_id_input: editingDescriptionId,
+        description_input: editingDescriptionValue.trim()
+      });
+
+      if (error) throw error;
+
+      toast.success('설명이 수정되었습니다');
+      setEditingDescriptionId(null);
+      setEditingDescriptionValue('');
+      loadBooks();
+    } catch (error) {
+      console.error('Error updating description:', error);
+      toast.error('설명 수정에 실패했습니다');
+    }
+  };
+
+  const handleCancelInlineDescription = () => {
+    setEditingDescriptionId(null);
+    setEditingDescriptionValue('');
   };
 
   const handleImageUpload = async (file: File, type: 'cover' | 'page') => {
@@ -1085,8 +1121,33 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground text-sm">
-                      {book.description || '-'}
+                    <TableCell className="max-w-[200px] text-muted-foreground text-sm">
+                      {editingDescriptionId === book.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={editingDescriptionValue}
+                            onChange={(e) => setEditingDescriptionValue(e.target.value)}
+                            className="h-8 w-full"
+                            placeholder="설명을 입력하세요"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveInlineDescription();
+                              if (e.key === 'Escape') handleCancelInlineDescription();
+                            }}
+                            autoFocus
+                          />
+                          <Button size="sm" variant="ghost" onClick={handleSaveInlineDescription} className="h-8 w-8 p-0 text-emerald-600 shrink-0">
+                            <Save className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <span 
+                          className="cursor-pointer hover:text-amber-600 hover:underline transition-colors truncate block"
+                          onClick={() => handleStartEditInlineDescription(book)}
+                          title="클릭하여 설명 수정"
+                        >
+                          {book.description || '-'}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell>{book.page_count}쪽</TableCell>
                     <TableCell>
