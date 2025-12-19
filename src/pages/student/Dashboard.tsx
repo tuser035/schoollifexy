@@ -522,7 +522,6 @@ const StudentDashboard = () => {
                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                 인문학 서점
               </CardTitle>
-              <p className="text-xs sm:text-sm text-storybook-emerald/70 mt-1 ml-5 sm:ml-7">이지영의 지혜의 강</p>
             </div>
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
