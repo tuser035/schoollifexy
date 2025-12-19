@@ -35,10 +35,24 @@ interface RecommendedBook {
   display_order: number;
 }
 
-const getCurrentQuarter = () => Math.ceil((new Date().getMonth() + 1) / 3);
-const getQuarterLabel = (quarter: number) => {
-  const labels = ["1분기 (1~3월)", "2분기 (4~6월)", "3분기 (7~9월)", "4분기 (10~12월)"];
-  return labels[quarter - 1] || `${quarter}분기`;
+// 학기 정보 (1학기: 3-8월, 2학기: 9-2월)
+const getCurrentSemester = () => {
+  const month = new Date().getMonth() + 1;
+  return (month >= 3 && month <= 8) ? 1 : 2;
+};
+
+const getCurrentYear = () => {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  // 1-2월은 전년도 2학기
+  if (month <= 2) {
+    return now.getFullYear() - 1;
+  }
+  return now.getFullYear();
+};
+
+const getSemesterLabel = (semester: number) => {
+  return semester === 1 ? "1학기 (3~8월)" : "2학기 (9~2월)";
 };
 
 const BookReportForm: React.FC<BookReportFormProps> = ({
@@ -57,8 +71,8 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("write");
 
-  const currentQuarter = getCurrentQuarter();
-  const currentYear = new Date().getFullYear();
+  const currentSemester = getCurrentSemester();
+  const currentYear = getCurrentYear();
 
   useEffect(() => {
     loadData();
@@ -161,7 +175,7 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
         </CardTitle>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
-            {currentYear}년 {getQuarterLabel(currentQuarter)}
+            {currentYear}년 {getSemesterLabel(currentSemester)}
           </Badge>
           <span className="text-sm text-muted-foreground">
             추천도서 {recommendedBooks.length}권
@@ -207,7 +221,7 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
                 <div className="text-center py-6 border rounded-lg bg-muted/50">
                   <Info className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    현재 분기에 등록된 추천도서가 없습니다
+                    현재 학기에 등록된 추천도서가 없습니다
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     관리자가 추천도서를 등록하면 여기에 표시됩니다
