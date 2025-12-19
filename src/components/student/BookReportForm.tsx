@@ -102,6 +102,8 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called', { selectedBook, contentLength: content.length, studentId });
+    
     if (!selectedBook) {
       toast.error('책을 선택해주세요');
       return;
@@ -125,11 +127,15 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
 
     try {
       setSubmitting(true);
-      const { error } = await supabase.rpc('student_submit_book_report', {
+      console.log('Submitting book report...', { studentId, selectedBook, contentLength: content.length });
+      
+      const { data, error } = await supabase.rpc('student_submit_book_report', {
         student_id_input: studentId,
         book_title_input: selectedBook,
         content_input: content
       });
+
+      console.log('Submit result:', { data, error });
 
       if (error) throw error;
 
