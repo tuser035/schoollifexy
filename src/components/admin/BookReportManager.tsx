@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen, Award, Trophy, Search, FileText, Check, Clock, Plus, Pencil, Trash2, Library, Calendar, RefreshCw, Upload, Bot, AlertTriangle, BarChart3 } from "lucide-react";
+import { BookOpen, Award, Trophy, Search, FileText, Check, Clock, Plus, Pencil, Trash2, Library, Calendar, RefreshCw, Upload, Bot, AlertTriangle, BarChart3, Download } from "lucide-react";
 import Papa from 'papaparse';
+import html2pdf from 'html2pdf.js';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -497,10 +498,14 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
 
           {/* AI 의심도 통계 */}
           {reports.length > 0 && (() => {
-            const aiStats = reports.reduce((acc, report) => {
+            const reportsWithAI = reports.map(report => {
               const result = analyzeAIContent(report.content);
-              acc[result.level] = (acc[result.level] || 0) + 1;
-              acc.totalScore += result.score;
+              return { ...report, aiResult: result };
+            });
+
+            const aiStats = reportsWithAI.reduce((acc, report) => {
+              acc[report.aiResult.level] = (acc[report.aiResult.level] || 0) + 1;
+              acc.totalScore += report.aiResult.score;
               return acc;
             }, { low: 0, medium: 0, high: 0, totalScore: 0 } as Record<string, number>);
 
@@ -518,13 +523,121 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
 
             const avgScore = reports.length > 0 ? Math.round(aiStats.totalScore / reports.length) : 0;
 
+            // CSV 내보내기
+            const exportToCsv = () => {
+              const csvData = reportsWithAI.map(report => ({
+                '학생명': report.student_name,
+                '학년': report.student_grade,
+                '반': report.student_class,
+                '번호': report.student_number,
+                '학과': report.dept_name || '',
+                '책제목': report.book_title,
+                'AI의심도(%)': report.aiResult.score,
+                'AI의심레벨': getAILevelLabel(report.aiResult.level),
+                '어휘다양성(TTR)': report.aiResult.details.ttr,
+                '평균문장길이': report.aiResult.details.avgSentenceLength,
+                '문장길이편차': report.aiResult.details.sentenceLengthVariance,
+                '접속사비율': report.aiResult.details.connectorRatio,
+                '상태': report.status === 'approved' ? '승인됨' : '대기중',
+                '포인트': report.points_awarded || 0,
+                '제출일': new Date(report.created_at).toLocaleDateString(),
+              }));
+
+              const csv = Papa.unparse(csvData);
+              const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `AI의심도_분석_${new Date().toISOString().split('T')[0]}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+              toast.success('CSV 파일이 다운로드되었습니다');
+            };
+
+            // PDF 내보내기
+            const exportToPdf = () => {
+              const content = document.createElement('div');
+              content.style.padding = '20px';
+              content.style.fontFamily = 'Arial, sans-serif';
+              content.innerHTML = `
+                <h1 style="text-align: center; color: #333; margin-bottom: 20px;">독후감 AI 의심도 분석 보고서</h1>
+                <p style="text-align: center; color: #666; margin-bottom: 30px;">생성일: ${new Date().toLocaleString()}</p>
+                
+                <h2 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">📊 요약 통계</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                  <tr style="background: #f5f5f5;">
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;"><strong>전체 독후감</strong></td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;"><strong>평균 AI 의심도</strong></td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: #22c55e;"><strong>낮음</strong></td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: #eab308;"><strong>보통</strong></td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; color: #ef4444;"><strong>높음</strong></td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-size: 18px;">${reports.length}건</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-size: 18px;">${avgScore}%</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-size: 18px;">${aiStats.low}건</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-size: 18px;">${aiStats.medium}건</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-size: 18px;">${aiStats.high}건</td>
+                  </tr>
+                </table>
+
+                <h2 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">📋 상세 목록</h2>
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                  <tr style="background: #333; color: white;">
+                    <th style="padding: 8px; border: 1px solid #ddd;">학생</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">학년/반/번</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">책 제목</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">AI 의심도</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">레벨</th>
+                    <th style="padding: 8px; border: 1px solid #ddd;">제출일</th>
+                  </tr>
+                  ${reportsWithAI.sort((a, b) => b.aiResult.score - a.aiResult.score).map((report, idx) => `
+                    <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f9f9f9'};">
+                      <td style="padding: 6px; border: 1px solid #ddd;">${report.student_name}</td>
+                      <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">${report.student_grade}-${report.student_class}-${report.student_number}</td>
+                      <td style="padding: 6px; border: 1px solid #ddd;">${report.book_title}</td>
+                      <td style="padding: 6px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: ${report.aiResult.level === 'high' ? '#ef4444' : report.aiResult.level === 'medium' ? '#eab308' : '#22c55e'};">${report.aiResult.score}%</td>
+                      <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">${getAILevelLabel(report.aiResult.level)}</td>
+                      <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">${new Date(report.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  `).join('')}
+                </table>
+
+                <p style="margin-top: 30px; color: #999; font-size: 10px; text-align: center;">
+                  ※ 이 분석은 통계적 패턴 기반이며 참고용입니다. 최종 판단은 교사의 검토가 필요합니다.
+                </p>
+              `;
+
+              html2pdf().set({
+                margin: 10,
+                filename: `AI의심도_분석_${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              }).from(content).save();
+              
+              toast.success('PDF 파일이 다운로드되었습니다');
+            };
+
             return (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4" />
-                    AI 의심도 통계
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4" />
+                      AI 의심도 통계
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={exportToCsv}>
+                        <Download className="w-3 h-3 mr-1" />
+                        CSV
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={exportToPdf}>
+                        <Download className="w-3 h-3 mr-1" />
+                        PDF
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
