@@ -98,17 +98,39 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   // Bookmark states
   const [pageBookmarks, setPageBookmarks] = useState<number[]>([]);
 
-  // TTS states
+  // TTS states - load from localStorage
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [speechRate, setSpeechRate] = useState(1.25); // 기본 1.25배속
+  const [speechRate, setSpeechRate] = useState(() => {
+    const saved = localStorage.getItem('storybook-speech-rate');
+    return saved ? parseFloat(saved) : 1.25;
+  });
   const [showSpeedControl, setShowSpeedControl] = useState(false);
-  const [autoPageTurn, setAutoPageTurn] = useState(true);
-  const [readTitle, setReadTitle] = useState(false); // 책 제목 읽기 옵션
+  const [autoPageTurn, setAutoPageTurn] = useState(() => {
+    const saved = localStorage.getItem('storybook-auto-page-turn');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const [readTitle, setReadTitle] = useState(() => {
+    const saved = localStorage.getItem('storybook-read-title');
+    return saved === 'true';
+  });
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(-1);
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isAutoAdvancingRef = useRef(false);
   const sentencesRef = useRef<string[]>([]);
-  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>();
+  
+  // Save TTS settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('storybook-speech-rate', speechRate.toString());
+  }, [speechRate]);
+  
+  useEffect(() => {
+    localStorage.setItem('storybook-auto-page-turn', autoPageTurn.toString());
+  }, [autoPageTurn]);
+  
+  useEffect(() => {
+    localStorage.setItem('storybook-read-title', readTitle.toString());
+  }, [readTitle]);
   
   // Page transition state
   const [pageTransition, setPageTransition] = useState<'enter' | 'exit' | null>(null);
