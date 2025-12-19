@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen, Send, Award, Check, Clock, FileText, Info } from "lucide-react";
+import { BookOpen, Send, Award, Check, Clock, FileText, Info, Upload } from "lucide-react";
 
 interface BookReportFormProps {
   studentId: string;
@@ -70,6 +70,7 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("write");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentSemester = getCurrentSemester();
   const currentYear = getCurrentYear();
@@ -148,6 +149,41 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
   const getSubmittedBooks = () => reports.map(r => r.book_title);
   const submittedBooks = getSubmittedBooks();
   const totalPoints = reports.reduce((sum, r) => sum + (r.points_awarded || 0), 0);
+
+  const handleTxtUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.txt')) {
+      toast.error('txt 파일만 업로드 가능합니다');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        // 공백 정리 및 길이 체크
+        const trimmedText = text.trim();
+        if (trimmedText.length > 1000) {
+          toast.warning(`파일 내용이 1000자를 초과하여 잘렸습니다 (${trimmedText.length}자 → 1000자)`);
+          setContent(trimmedText.substring(0, 1000));
+        } else {
+          setContent(trimmedText);
+          toast.success('파일이 성공적으로 불러왔습니다');
+        }
+      }
+    };
+    reader.onerror = () => {
+      toast.error('파일 읽기 중 오류가 발생했습니다');
+    };
+    reader.readAsText(file, 'UTF-8');
+    
+    // 파일 입력 초기화
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const getStatusBadge = (status: string, points: number) => {
     if (status === 'approved') {
@@ -232,27 +268,51 @@ const BookReportForm: React.FC<BookReportFormProps> = ({
                   {recommendedBooks.map((book, idx) => {
                     const isSubmitted = submittedBooks.includes(book.title);
                     return (
-                      <Button
-                        key={book.id}
-                        variant={selectedBook === book.title ? "default" : "outline"}
-                        className={`justify-start text-left h-auto py-2 ${isSubmitted ? 'opacity-50' : ''}`}
-                        onClick={() => !isSubmitted && setSelectedBook(book.title)}
-                        disabled={isSubmitted}
-                      >
-                        <span className="mr-2">{idx + 1}.</span>
-                        <div className="flex-1 min-w-0">
-                          <div>{book.title}</div>
-                          {book.author && (
-                            <div className="text-xs opacity-70">{book.author}</div>
+                      <div key={book.id} className="flex items-center gap-2">
+                        <Button
+                          variant={selectedBook === book.title ? "default" : "outline"}
+                          className={`flex-1 justify-start text-left h-auto py-2 ${isSubmitted ? 'opacity-50' : ''}`}
+                          onClick={() => !isSubmitted && setSelectedBook(book.title)}
+                          disabled={isSubmitted}
+                        >
+                          <span className="mr-2">{idx + 1}.</span>
+                          <div className="flex-1 min-w-0">
+                            <div>{book.title}</div>
+                            {book.author && (
+                              <div className="text-xs opacity-70">{book.author}</div>
+                            )}
+                          </div>
+                          {isSubmitted && (
+                            <Badge className="ml-auto bg-green-500 text-white text-xs">
+                              <Check className="w-3 h-3 mr-1" />
+                              제출완료
+                            </Badge>
                           )}
-                        </div>
-                        {isSubmitted && (
-                          <Badge className="ml-auto bg-green-500 text-white text-xs">
-                            <Check className="w-3 h-3 mr-1" />
-                            제출완료
-                          </Badge>
+                        </Button>
+                        {!isSubmitted && (
+                          <>
+                            <input
+                              type="file"
+                              accept=".txt"
+                              className="hidden"
+                              id={`txt-upload-${book.id}`}
+                              onChange={(e) => {
+                                setSelectedBook(book.title);
+                                handleTxtUpload(e);
+                              }}
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="shrink-0"
+                              onClick={() => document.getElementById(`txt-upload-${book.id}`)?.click()}
+                              title="txt 파일 업로드"
+                            >
+                              <Upload className="w-4 h-4" />
+                            </Button>
+                          </>
                         )}
-                      </Button>
+                      </div>
                     );
                   })}
                 </div>
