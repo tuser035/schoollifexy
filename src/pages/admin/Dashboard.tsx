@@ -176,7 +176,7 @@ const DashboardContent = ({
         </SidebarHeader>
         <SidebarContent className="overflow-y-auto">
           {menuGroups.map((group, groupIndex) => (
-            <SidebarGroup key={group.title}>
+            <SidebarGroup key={group.title} className="py-1">
               {!isCollapsed && (
                 <SidebarGroupLabel className="text-xs text-muted-foreground px-2 py-1">
                   {group.title}
@@ -203,7 +203,7 @@ const DashboardContent = ({
                 </SidebarMenu>
               </SidebarGroupContent>
               {groupIndex < menuGroups.length - 1 && (
-                <Separator className="my-1" />
+                <Separator className="mt-2 mx-1" />
               )}
             </SidebarGroup>
           ))}
