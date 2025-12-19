@@ -124,6 +124,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   // Real-time update indicator
   const [realtimeUpdated, setRealtimeUpdated] = useState(false);
   
+  // Title editing state
+  const [editingTitleBookId, setEditingTitleBookId] = useState<string | null>(null);
+  const [editingTitleValue, setEditingTitleValue] = useState('');
+  
   // Clear highlight after 3 seconds
   useEffect(() => {
     if (recentlyEditedBookId) {
@@ -455,6 +459,41 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       console.error('Error deleting book:', error);
       toast.error('동화책 삭제에 실패했습니다');
     }
+  };
+
+  const handleStartEditTitle = (book: Storybook) => {
+    setEditingTitleBookId(book.id);
+    setEditingTitleValue(book.title);
+  };
+
+  const handleSaveTitle = async () => {
+    if (!editingTitleBookId || !editingTitleValue.trim()) {
+      toast.error('제목을 입력해주세요');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('admin_update_storybook_title', {
+        admin_id_input: adminId,
+        book_id_input: editingTitleBookId,
+        title_input: editingTitleValue.trim()
+      });
+
+      if (error) throw error;
+
+      toast.success('제목이 수정되었습니다');
+      setEditingTitleBookId(null);
+      setEditingTitleValue('');
+      loadBooks();
+    } catch (error) {
+      console.error('Error updating title:', error);
+      toast.error('제목 수정에 실패했습니다');
+    }
+  };
+
+  const handleCancelEditTitle = () => {
+    setEditingTitleBookId(null);
+    setEditingTitleValue('');
   };
 
   const handleImageUpload = async (file: File, type: 'cover' | 'page') => {
@@ -954,7 +993,31 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                             className="w-10 h-14 object-cover rounded"
                           />
                         )}
-                        <span>{book.title}</span>
+                        {editingTitleBookId === book.id ? (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              value={editingTitleValue}
+                              onChange={(e) => setEditingTitleValue(e.target.value)}
+                              className="h-8 w-40"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveTitle();
+                                if (e.key === 'Escape') handleCancelEditTitle();
+                              }}
+                              autoFocus
+                            />
+                            <Button size="sm" variant="ghost" onClick={handleSaveTitle} className="h-8 w-8 p-0 text-emerald-600">
+                              <Save className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span 
+                            className="cursor-pointer hover:text-amber-600 hover:underline transition-colors"
+                            onClick={() => handleStartEditTitle(book)}
+                            title="클릭하여 제목 수정"
+                          >
+                            {book.title}
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate text-muted-foreground text-sm">
