@@ -100,7 +100,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   // TTS states
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [speechRate, setSpeechRate] = useState(1.5); // 기본 1.5배속
+  const [speechRate, setSpeechRate] = useState(1.25); // 기본 1.25배속
   const [showSpeedControl, setShowSpeedControl] = useState(false);
   const [autoPageTurn, setAutoPageTurn] = useState(true);
   const [readTitle, setReadTitle] = useState(false); // 책 제목 읽기 옵션
