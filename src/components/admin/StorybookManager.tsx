@@ -48,6 +48,7 @@ interface Storybook {
   subtitle: string | null;
   cover_image_url: string | null;
   description: string | null;
+  external_url: string | null;
   page_count: number;
   is_published: boolean;
   created_at: string;
