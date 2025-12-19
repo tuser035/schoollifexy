@@ -285,11 +285,14 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         speakNextSentence();
       };
       
-      utterance.onerror = () => {
+      utterance.onerror = (event) => {
         setIsSpeaking(false);
         setCurrentSentenceIndex(-1);
         isAutoAdvancingRef.current = false;
-        toast.error('음성 읽기 중 오류가 발생했습니다');
+        // 'interrupted'와 'canceled'는 사용자가 중단한 것이므로 에러 표시하지 않음
+        if (event.error !== 'interrupted' && event.error !== 'canceled') {
+          toast.error('음성 읽기 중 오류가 발생했습니다');
+        }
       };
 
       speechSynthRef.current = utterance;
