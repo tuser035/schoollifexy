@@ -33,16 +33,9 @@ import {
   Heart,
   Users,
   Globe,
-  Info,
-  Sparkles,
-  ScrollText,
-  Library,
-  Feather,
-  GraduationCap,
-  Lightbulb,
-  Flower2,
-  TreePine
+  Info
 } from 'lucide-react';
+import { BOOK_SERIES, THEME_STYLES, getSeriesIcon, type BookSeries, type ThemeName } from '@/config/bookSeriesConfig';
 
 interface Storybook {
   id: string;
@@ -701,72 +694,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   const currentPageData = pages.find(p => p.page_number === currentPage);
 
-  // ===== 시리즈 설정 (새 시리즈 추가 시 여기에 추가) =====
-  const BOOK_SERIES = [
-    {
-      id: 'wisdom-river',
-      title: '이지영의 지혜의 강',
-      subtitle: '철학적 사고를 키우는 이야기',
-      icon: 'BookOpen',
-      bookNumberRange: { min: 1, max: 5 },
-      theme: {
-        name: 'emerald' as const,
-        headerBg: 'bg-gradient-to-r from-storybook-emerald-light to-white',
-        headerText: 'text-storybook-emerald-dark',
-        badgeBg: 'bg-storybook-emerald-light',
-        badgeText: 'text-storybook-emerald',
-        border: 'border-storybook-emerald/30',
-        buttonActive: 'bg-storybook-emerald hover:bg-storybook-emerald-hover',
-        buttonInactive: 'border-storybook-emerald/50 text-storybook-emerald hover:bg-storybook-emerald-light',
-        reviewBg: 'bg-storybook-emerald-light',
-        reviewBorder: 'border-storybook-emerald/30',
-        linkColor: 'text-storybook-emerald',
-      }
-    },
-    {
-      id: 'myungsim',
-      title: '명심보감',
-      subtitle: '마음을 밝히는 옛 지혜',
-      icon: 'BookMarked',
-      bookNumberRange: { min: 6, max: 10 },
-      theme: {
-        name: 'amber' as const,
-        headerBg: 'bg-gradient-to-r from-amber-50 to-white',
-        headerText: 'text-amber-800',
-        badgeBg: 'bg-amber-100',
-        badgeText: 'text-amber-700',
-        border: 'border-amber-300/50',
-        buttonActive: 'bg-amber-500 hover:bg-amber-600 text-white',
-        buttonInactive: 'border-amber-400/50 text-amber-700 hover:bg-amber-50',
-        reviewBg: 'bg-amber-50',
-        reviewBorder: 'border-amber-200/50',
-        linkColor: 'text-amber-600',
-      }
-    },
-    {
-      id: 'analects',
-      title: '논어',
-      subtitle: '공자의 가르침',
-      icon: 'ScrollText',
-      bookNumberRange: { min: 11, max: 15 },
-      theme: {
-        name: 'blue' as const,
-        headerBg: 'bg-gradient-to-r from-blue-50 to-white',
-        headerText: 'text-blue-800',
-        badgeBg: 'bg-blue-100',
-        badgeText: 'text-blue-700',
-        border: 'border-blue-300/50',
-        buttonActive: 'bg-blue-500 hover:bg-blue-600 text-white',
-        buttonInactive: 'border-blue-400/50 text-blue-700 hover:bg-blue-50',
-        reviewBg: 'bg-blue-50',
-        reviewBorder: 'border-blue-200/50',
-        linkColor: 'text-blue-600',
-      }
-    },
-  ];
-
   // 시리즈별 책 필터링
-  const getSeriesBooks = (series: typeof BOOK_SERIES[0]) => 
+  const getSeriesBooks = (series: BookSeries) => 
     books.filter(book => 
       book.book_number >= series.bookNumberRange.min && 
       book.book_number <= series.bookNumberRange.max
@@ -776,61 +705,15 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const getSeriesReviews = (seriesBooks: Storybook[]) => 
     myReviews.filter(r => seriesBooks.some(b => b.id === r.book_id));
 
-  // 아이콘 렌더링 - 사용 가능한 아이콘 목록
-  // 새 시리즈 추가 시 아래 목록에서 아이콘 이름을 선택하세요
-  const AVAILABLE_ICONS = {
-    BookOpen: BookOpen,
-    BookMarked: BookMarked,
-    ScrollText: ScrollText,
-    Sparkles: Sparkles,
-    Library: Library,
-    Feather: Feather,
-    GraduationCap: GraduationCap,
-    Lightbulb: Lightbulb,
-    Flower2: Flower2,
-    TreePine: TreePine,
-  };
-
+  // 아이콘 렌더링
   const renderIcon = (iconName: string) => {
-    const IconComponent = AVAILABLE_ICONS[iconName as keyof typeof AVAILABLE_ICONS] || BookOpen;
+    const IconComponent = getSeriesIcon(iconName);
     return <IconComponent className="w-6 h-6" />;
   };
 
   // 책 목록 렌더링
-  const renderBookList = (bookList: Storybook[], colorTheme: 'emerald' | 'amber' | 'blue') => {
-    const themeMap = {
-      emerald: {
-        bg: 'bg-storybook-emerald-light',
-        hoverBg: 'hover:bg-storybook-emerald/10',
-        border: 'border-storybook-emerald/20',
-        title: 'text-storybook-emerald-dark',
-        badge: 'border-storybook-emerald/50 text-storybook-emerald',
-        arrow: 'text-storybook-emerald/60',
-        scrollbar: '[&::-webkit-scrollbar-thumb]:bg-storybook-emerald/30',
-        linkColor: 'text-storybook-emerald'
-      },
-      amber: {
-        bg: 'bg-amber-50',
-        hoverBg: 'hover:bg-amber-100/50',
-        border: 'border-amber-200/50',
-        title: 'text-amber-800',
-        badge: 'border-amber-400/50 text-amber-600',
-        arrow: 'text-amber-400',
-        scrollbar: '[&::-webkit-scrollbar-thumb]:bg-amber-300/50',
-        linkColor: 'text-amber-600'
-      },
-      blue: {
-        bg: 'bg-blue-50',
-        hoverBg: 'hover:bg-blue-100/50',
-        border: 'border-blue-200/50',
-        title: 'text-blue-800',
-        badge: 'border-blue-400/50 text-blue-600',
-        arrow: 'text-blue-400',
-        scrollbar: '[&::-webkit-scrollbar-thumb]:bg-blue-300/50',
-        linkColor: 'text-blue-600'
-      }
-    };
-    const themeClasses = themeMap[colorTheme] || themeMap.emerald;
+  const renderBookList = (bookList: Storybook[], colorTheme: ThemeName) => {
+    const themeClasses = THEME_STYLES[colorTheme] || THEME_STYLES.emerald;
 
     return (
       <div className={`space-y-2 max-h-[400px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent ${themeClasses.scrollbar} [&::-webkit-scrollbar-thumb]:rounded-full`}>
