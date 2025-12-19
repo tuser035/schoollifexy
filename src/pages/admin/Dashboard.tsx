@@ -46,22 +46,22 @@ const menuItems = (user: AuthUser) => {
     // 시스템 관리자만
     ...(isSystemAdmin ? [
       { value: "upload", label: "업로드", icon: Upload },
+      { value: "data", label: "데이터", icon: Database },
     ] : []),
     // 모든 사용자 (관리자 교사와 시스템 관리자)
-    { value: "data", label: "데이터", icon: Database },
     { value: "password", label: "비밀번호 재설정", icon: Key },
+    { value: "leaderboard", label: "순위", icon: Trophy },
     { value: "points", label: "상점", icon: BarChart },
+    { value: "statistics", label: "통계", icon: TrendingUp },
+    { value: "email-history", label: "이메일", icon: Mail },
+    { value: "email-templates", label: "템플릿", icon: FileText },
     { value: "counseling", label: "상담", icon: ClipboardCheck },
     { value: "mindtalk", label: "마음톡", icon: MessageCircle },
     { value: "mindtalk-keywords", label: "키워드관리", icon: AlertTriangle },
     { value: "mindtalk-music", label: "힐링뮤직", icon: Music },
     { value: "storybooks", label: "동화책", icon: BookOpen },
-    { value: "reading-stats", label: "읽기통계", icon: BarChart3 },
     { value: "book-reports", label: "독후감", icon: PenLine },
-    { value: "statistics", label: "통계", icon: TrendingUp },
-    { value: "leaderboard", label: "순위", icon: Trophy },
-    { value: "email-history", label: "이메일", icon: Mail },
-    { value: "email-templates", label: "템플릿", icon: FileText },
+    { value: "reading-stats", label: "읽기통계", icon: BarChart3 },
     // 시스템 관리자만
     ...(isSystemAdmin ? [
       { value: "system-settings", label: "시스템설정", icon: Cog },
