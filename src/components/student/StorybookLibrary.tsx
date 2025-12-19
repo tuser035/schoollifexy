@@ -838,6 +838,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         {BOOK_SERIES.map((series) => {
           const seriesBooks = getSeriesBooks(series);
           const seriesReviews = getSeriesReviews(seriesBooks);
+          const completedBooksCount = seriesBooks.filter(book => book.is_completed).length;
           
           // 해당 시리즈에 책이 없으면 표시하지 않음
           if (seriesBooks.length === 0) return null;
@@ -855,6 +856,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   <Badge variant="secondary" className={`ml-2 ${series.theme.badgeBg} ${series.theme.badgeText}`}>
                     {seriesBooks.length}권
                   </Badge>
+                  {completedBooksCount > 0 && (
+                    <Badge className="ml-1 bg-green-500 text-white hover:bg-green-600">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      {completedBooksCount}권 완독
+                    </Badge>
+                  )}
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
