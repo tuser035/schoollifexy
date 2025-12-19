@@ -104,7 +104,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     const saved = localStorage.getItem('storybook-speech-rate');
     return saved ? parseFloat(saved) : 1.25;
   });
-  const [showSpeedControl, setShowSpeedControl] = useState(false);
+  const [showSpeedControlDesktop, setShowSpeedControlDesktop] = useState(false);
+  const [showSpeedControlMobile, setShowSpeedControlMobile] = useState(false);
   const [autoPageTurn, setAutoPageTurn] = useState(() => {
     const saved = localStorage.getItem('storybook-auto-page-turn');
     return saved !== null ? saved === 'true' : true;
@@ -954,7 +955,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               </Button>
 
               {/* Speed Control */}
-              <Popover open={showSpeedControl} onOpenChange={setShowSpeedControl}>
+              <Popover open={showSpeedControlDesktop} onOpenChange={setShowSpeedControlDesktop}>
                 <PopoverTrigger asChild>
                   <Button 
                     variant="ghost" 
@@ -1059,7 +1060,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               </Button>
 
               {/* Mobile Speed Control */}
-              <Popover open={showSpeedControl} onOpenChange={setShowSpeedControl}>
+              <Popover open={showSpeedControlMobile} onOpenChange={setShowSpeedControlMobile}>
                 <PopoverTrigger asChild>
                   <Button 
                     variant="ghost" 
