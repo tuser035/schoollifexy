@@ -92,6 +92,45 @@ export type Database = {
         }
         Relationships: []
       }
+      book_reports: {
+        Row: {
+          book_title: string
+          content: string
+          created_at: string
+          id: string
+          points_awarded: number | null
+          points_awarded_at: string | null
+          points_awarded_by: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          book_title: string
+          content: string
+          created_at?: string
+          id?: string
+          points_awarded?: number | null
+          points_awarded_at?: string | null
+          points_awarded_by?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          book_title?: string
+          content?: string
+          created_at?: string
+          id?: string
+          points_awarded?: number | null
+          points_awarded_at?: string | null
+          points_awarded_by?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       career_counseling: {
         Row: {
           admin_id: string
@@ -1007,6 +1046,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_award_book_report_points: {
+        Args: {
+          admin_id_input: string
+          points_input: number
+          report_id_input: string
+        }
+        Returns: boolean
+      }
       admin_delete_all_from_table: {
         Args: { admin_id_input: string; table_name_input: string }
         Returns: number
@@ -1038,6 +1085,40 @@ export type Database = {
           id: string
           student_id: string
           student_name: string
+        }[]
+      }
+      admin_get_book_report_leaderboard: {
+        Args: {
+          admin_id_input: string
+          search_class?: number
+          search_grade?: number
+        }
+        Returns: {
+          class: number
+          dept_name: string
+          grade: number
+          name: string
+          number: number
+          student_id: string
+          total_points: number
+          total_reports: number
+        }[]
+      }
+      admin_get_book_reports: {
+        Args: { admin_id_input: string; status_filter?: string }
+        Returns: {
+          book_title: string
+          content: string
+          created_at: string
+          dept_name: string
+          id: string
+          points_awarded: number
+          status: string
+          student_class: number
+          student_grade: number
+          student_id: string
+          student_name: string
+          student_number: number
         }[]
       }
       admin_get_counseling_records: {
@@ -1313,6 +1394,7 @@ export type Database = {
           id: string
           is_published: boolean
           page_count: number
+          subtitle: string
           title: string
         }[]
       }
@@ -1838,6 +1920,17 @@ export type Database = {
         Args: { playlist_id_input: string; student_id_input: string }
         Returns: boolean
       }
+      student_get_book_reports: {
+        Args: { student_id_input: string }
+        Returns: {
+          book_title: string
+          content: string
+          created_at: string
+          id: string
+          points_awarded: number
+          status: string
+        }[]
+      }
       student_get_demerits: {
         Args: { student_id_input: string }
         Returns: {
@@ -1949,6 +2042,7 @@ export type Database = {
           is_completed: boolean
           last_page: number
           page_count: number
+          subtitle: string
           title: string
         }[]
       }
@@ -1981,6 +2075,14 @@ export type Database = {
           book_id_input: string
           content_input: string
           rating_input: number
+          student_id_input: string
+        }
+        Returns: string
+      }
+      student_submit_book_report: {
+        Args: {
+          book_title_input: string
+          content_input: string
           student_id_input: string
         }
         Returns: string

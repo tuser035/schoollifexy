@@ -201,7 +201,12 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       });
 
       if (error) throw error;
-      setBooks(data || []);
+      // RPC에서 subtitle을 반환하지 않으면 기본값 추가
+      const booksWithSubtitle = (data || []).map((book: any) => ({
+        ...book,
+        subtitle: book.subtitle ?? null
+      }));
+      setBooks(booksWithSubtitle);
     } catch (error) {
       console.error('Error loading books:', error);
       toast.error('동화책 목록을 불러오는데 실패했습니다');
