@@ -521,9 +521,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   };
 
   const openBook = async (book: Storybook) => {
-    // 외부 URL이 있는 경우 추천도서 목록 표시
+    // 외부 URL이 있는 경우 새 탭에서 열기
     if (book.external_url) {
-      loadRecommendedBooks();
+      window.open(book.external_url, '_blank', 'noopener,noreferrer');
       return;
     }
 
