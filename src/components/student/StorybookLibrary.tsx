@@ -1249,7 +1249,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div className="space-y-2" style={{ fontSize: `${fontSize}rem` }}>
                           {subtitle && (
-                            <p className="font-semibold leading-relaxed text-storybook-emerald break-words" style={{ fontSize: `${fontSize}rem` }}>
+                            <p className="font-semibold leading-relaxed text-storybook-emerald break-words" style={{ fontSize: `${fontSize * 0.875}rem` }}>
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
@@ -1289,7 +1289,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       return (
                         <div className="space-y-2" style={{ fontSize: `${fontSize}rem` }}>
                           {subtitle && (
-                            <p className="font-semibold leading-relaxed text-storybook-emerald break-words" style={{ fontSize: `${fontSize}rem` }}>
+                            <p className="font-semibold leading-relaxed text-storybook-emerald break-words" style={{ fontSize: `${fontSize * 0.875}rem` }}>
                               📖 {renderHighlightedText(subtitle)}
                             </p>
                           )}
