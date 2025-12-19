@@ -33,7 +33,15 @@ import {
   Heart,
   Users,
   Globe,
-  Info
+  Info,
+  Sparkles,
+  ScrollText,
+  Library,
+  Feather,
+  GraduationCap,
+  Lightbulb,
+  Flower2,
+  TreePine
 } from 'lucide-react';
 
 interface Storybook {
@@ -735,27 +743,26 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         linkColor: 'text-amber-600',
       }
     },
-    // ===== 새 시리즈 추가 예시 =====
-    // {
-    //   id: 'new-series',
-    //   title: '새 시리즈 이름',
-    //   subtitle: '시리즈 설명',
-    //   icon: 'Book',
-    //   bookNumberRange: { min: 11, max: 15 },
-    //   theme: {
-    //     name: 'blue' as const,
-    //     headerBg: 'bg-gradient-to-r from-blue-50 to-white',
-    //     headerText: 'text-blue-800',
-    //     badgeBg: 'bg-blue-100',
-    //     badgeText: 'text-blue-700',
-    //     border: 'border-blue-300/50',
-    //     buttonActive: 'bg-blue-500 hover:bg-blue-600 text-white',
-    //     buttonInactive: 'border-blue-400/50 text-blue-700 hover:bg-blue-50',
-    //     reviewBg: 'bg-blue-50',
-    //     reviewBorder: 'border-blue-200/50',
-    //     linkColor: 'text-blue-600',
-    //   }
-    // },
+    {
+      id: 'analects',
+      title: '논어',
+      subtitle: '공자의 가르침',
+      icon: 'ScrollText',
+      bookNumberRange: { min: 11, max: 15 },
+      theme: {
+        name: 'blue' as const,
+        headerBg: 'bg-gradient-to-r from-blue-50 to-white',
+        headerText: 'text-blue-800',
+        badgeBg: 'bg-blue-100',
+        badgeText: 'text-blue-700',
+        border: 'border-blue-300/50',
+        buttonActive: 'bg-blue-500 hover:bg-blue-600 text-white',
+        buttonInactive: 'border-blue-400/50 text-blue-700 hover:bg-blue-50',
+        reviewBg: 'bg-blue-50',
+        reviewBorder: 'border-blue-200/50',
+        linkColor: 'text-blue-600',
+      }
+    },
   ];
 
   // 시리즈별 책 필터링
@@ -769,38 +776,61 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const getSeriesReviews = (seriesBooks: Storybook[]) => 
     myReviews.filter(r => seriesBooks.some(b => b.id === r.book_id));
 
-  // 아이콘 렌더링
+  // 아이콘 렌더링 - 사용 가능한 아이콘 목록
+  // 새 시리즈 추가 시 아래 목록에서 아이콘 이름을 선택하세요
+  const AVAILABLE_ICONS = {
+    BookOpen: BookOpen,
+    BookMarked: BookMarked,
+    ScrollText: ScrollText,
+    Sparkles: Sparkles,
+    Library: Library,
+    Feather: Feather,
+    GraduationCap: GraduationCap,
+    Lightbulb: Lightbulb,
+    Flower2: Flower2,
+    TreePine: TreePine,
+  };
+
   const renderIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'BookMarked': return <BookMarked className="w-6 h-6" />;
-      case 'BookOpen': 
-      default: return <BookOpen className="w-6 h-6" />;
-    }
+    const IconComponent = AVAILABLE_ICONS[iconName as keyof typeof AVAILABLE_ICONS] || BookOpen;
+    return <IconComponent className="w-6 h-6" />;
   };
 
   // 책 목록 렌더링
-  const renderBookList = (bookList: Storybook[], colorTheme: 'emerald' | 'amber') => {
-    const themeClasses = colorTheme === 'emerald' 
-      ? {
-          bg: 'bg-storybook-emerald-light',
-          hoverBg: 'hover:bg-storybook-emerald/10',
-          border: 'border-storybook-emerald/20',
-          title: 'text-storybook-emerald-dark',
-          badge: 'border-storybook-emerald/50 text-storybook-emerald',
-          arrow: 'text-storybook-emerald/60',
-          scrollbar: '[&::-webkit-scrollbar-thumb]:bg-storybook-emerald/30',
-          linkColor: 'text-storybook-emerald'
-        }
-      : {
-          bg: 'bg-amber-50',
-          hoverBg: 'hover:bg-amber-100/50',
-          border: 'border-amber-200/50',
-          title: 'text-amber-800',
-          badge: 'border-amber-400/50 text-amber-600',
-          arrow: 'text-amber-400',
-          scrollbar: '[&::-webkit-scrollbar-thumb]:bg-amber-300/50',
-          linkColor: 'text-amber-600'
-        };
+  const renderBookList = (bookList: Storybook[], colorTheme: 'emerald' | 'amber' | 'blue') => {
+    const themeMap = {
+      emerald: {
+        bg: 'bg-storybook-emerald-light',
+        hoverBg: 'hover:bg-storybook-emerald/10',
+        border: 'border-storybook-emerald/20',
+        title: 'text-storybook-emerald-dark',
+        badge: 'border-storybook-emerald/50 text-storybook-emerald',
+        arrow: 'text-storybook-emerald/60',
+        scrollbar: '[&::-webkit-scrollbar-thumb]:bg-storybook-emerald/30',
+        linkColor: 'text-storybook-emerald'
+      },
+      amber: {
+        bg: 'bg-amber-50',
+        hoverBg: 'hover:bg-amber-100/50',
+        border: 'border-amber-200/50',
+        title: 'text-amber-800',
+        badge: 'border-amber-400/50 text-amber-600',
+        arrow: 'text-amber-400',
+        scrollbar: '[&::-webkit-scrollbar-thumb]:bg-amber-300/50',
+        linkColor: 'text-amber-600'
+      },
+      blue: {
+        bg: 'bg-blue-50',
+        hoverBg: 'hover:bg-blue-100/50',
+        border: 'border-blue-200/50',
+        title: 'text-blue-800',
+        badge: 'border-blue-400/50 text-blue-600',
+        arrow: 'text-blue-400',
+        scrollbar: '[&::-webkit-scrollbar-thumb]:bg-blue-300/50',
+        linkColor: 'text-blue-600'
+      }
+    };
+    const themeClasses = themeMap[colorTheme] || themeMap.emerald;
 
     return (
       <div className={`space-y-2 max-h-[400px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent ${themeClasses.scrollbar} [&::-webkit-scrollbar-thumb]:rounded-full`}>
