@@ -834,7 +834,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       {/* Celebration Animation Overlay */}
       <CelebrationOverlay />
       
-      <Accordion type="multiple" defaultValue={[BOOK_SERIES[0]?.id || '']} className="w-full space-y-3">
+      <Accordion type="multiple" defaultValue={[]} className="w-full space-y-3">
         {BOOK_SERIES.map((series) => {
           const seriesBooks = getSeriesBooks(series);
           const seriesReviews = getSeriesReviews(seriesBooks);
