@@ -113,8 +113,16 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   // Page transition state
   const [pageTransition, setPageTransition] = useState<'enter' | 'exit' | null>(null);
   
-  // Font size state (0.8 = 작게, 1 = 보통, 1.2 = 크게, 1.4 = 매우 크게)
-  const [fontSize, setFontSize] = useState(1);
+  // Font size state (0.85 = 작게, 1 = 보통, 1.15 = 크게, 1.3 = 매우 크게)
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem('storybook-font-size');
+    return saved ? parseFloat(saved) : 1;
+  });
+  
+  // Save font size to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('storybook-font-size', fontSize.toString());
+  }, [fontSize]);
   
   // Fullscreen states
   const [isFullscreen, setIsFullscreen] = useState(false);
