@@ -764,6 +764,7 @@ export type Database = {
           id: string
           is_published: boolean | null
           page_count: number | null
+          subtitle: string | null
           title: string
           updated_at: string
         }
@@ -775,6 +776,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           page_count?: number | null
+          subtitle?: string | null
           title: string
           updated_at?: string
         }
@@ -786,6 +788,7 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           page_count?: number | null
+          subtitle?: string | null
           title?: string
           updated_at?: string
         }
@@ -1578,6 +1581,14 @@ export type Database = {
           admin_id_input: string
           book_id_input: string
           page_count_input: number
+        }
+        Returns: boolean
+      }
+      admin_update_storybook_subtitle: {
+        Args: {
+          admin_id_input: string
+          book_id_input: string
+          subtitle_input: string
         }
         Returns: boolean
       }
