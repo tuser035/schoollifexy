@@ -1851,7 +1851,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           )}
 
           {activeSubTab === 'recommended' && (
-            <div className="border rounded-lg p-6 bg-gradient-to-br from-teal-50 to-white dark:from-teal-950/20 dark:to-background">
+            <>
               {/* 등록된 추천도서 목록 */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
@@ -2027,7 +2027,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   )}
                 </Button>
               </div>
-            </div>
+            </>
           )}
           
           {activeSubTab === 'poetry' && (
