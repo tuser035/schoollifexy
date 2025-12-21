@@ -232,12 +232,12 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
       },
       { 
         value: "storybooks", 
-        label: "동화책 관리", 
+        label: "인문학 서점", 
         icon: BookOpen, 
         activeClass: "data-[state=active]:bg-teal-500 data-[state=active]:text-white",
         borderClass: "border-teal-500/30",
         textClass: "text-teal-600",
-        cardTitle: "동화책 관리",
+        cardTitle: "인문학 서점",
         category: "reading"
       },
       { 
