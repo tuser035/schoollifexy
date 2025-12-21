@@ -2150,6 +2150,7 @@ export type Database = {
         Args: { student_id_input: string }
         Returns: {
           book_number: number
+          category: string
           cover_image_url: string
           description: string
           external_url: string
