@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe, RotateCcw, MessageCircle } from "lucide-react";
+import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe, RotateCcw, MessageCircle, CheckCircle2, XCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +51,7 @@ const SystemSettings = () => {
   const [kakaoQrUrl, setKakaoQrUrl] = useState<string | null>(null);
   const [uploadingKakaoQr, setUploadingKakaoQr] = useState(false);
   const [kakaoChatUrl, setKakaoChatUrl] = useState("");
+  const [kakaoChatUrlError, setKakaoChatUrlError] = useState("");
   const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
@@ -1249,19 +1250,47 @@ const SystemSettings = () => {
               카카오톡 오픈채팅방 URL을 입력하면 QR 코드 확대 화면에서 '카카오톡으로 열기' 버튼이 표시됩니다.
             </p>
             <div className="flex gap-2">
-              <Input
-                id="kakao-chat-url"
-                type="url"
-                value={kakaoChatUrl}
-                onChange={(e) => setKakaoChatUrl(e.target.value)}
-                placeholder="https://open.kakao.com/o/..."
-                className="flex-1"
-              />
-              <Button onClick={handleSaveKakaoChatUrl} disabled={saving}>
+              <div className="flex-1 relative">
+                <Input
+                  id="kakao-chat-url"
+                  type="url"
+                  value={kakaoChatUrl}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setKakaoChatUrl(value);
+                    const validation = validateKakaoChatUrl(value);
+                    setKakaoChatUrlError(validation.isValid ? "" : validation.message);
+                  }}
+                  placeholder="https://open.kakao.com/o/..."
+                  className={`pr-10 ${kakaoChatUrlError ? "border-destructive focus-visible:ring-destructive" : kakaoChatUrl.trim() ? "border-green-500 focus-visible:ring-green-500" : ""}`}
+                />
+                {kakaoChatUrl.trim() && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {kakaoChatUrlError ? (
+                      <XCircle className="w-4 h-4 text-destructive" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              <Button onClick={handleSaveKakaoChatUrl} disabled={saving || !!kakaoChatUrlError}>
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? "저장 중..." : "저장"}
               </Button>
             </div>
+            {kakaoChatUrlError && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <XCircle className="w-3 h-3" />
+                {kakaoChatUrlError}
+              </p>
+            )}
+            {kakaoChatUrl.trim() && !kakaoChatUrlError && (
+              <p className="text-sm text-green-600 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                유효한 카카오톡 URL입니다
+              </p>
+            )}
           </div>
 
           {settings.find((s) => s.setting_key === "kakao_chat_url")?.updated_at && (
