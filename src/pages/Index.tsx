@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import SystemAdminLogin from "@/components/auth/SystemAdminLogin";
-import { School, MessageCircle } from "lucide-react";
+import { School } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,7 +28,6 @@ const Index = () => {
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [schoolNameEn, setSchoolNameEn] = useState<string | null>(null);
-  const [kakaoChatUrl, setKakaoChatUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -45,13 +44,12 @@ const Index = () => {
         const { data } = await supabase
           .from('system_settings')
           .select('setting_key, setting_value')
-          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en', 'kakao_chat_url']);
+          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en']);
         
         if (data) {
           const symbolSetting = data.find(s => s.setting_key === 'school_symbol_url');
           const nameSetting = data.find(s => s.setting_key === 'school_name');
           const nameEnSetting = data.find(s => s.setting_key === 'school_name_en');
-          const kakaoChatSetting = data.find(s => s.setting_key === 'kakao_chat_url');
           if (symbolSetting?.setting_value) {
             setSchoolSymbolUrl(symbolSetting.setting_value);
           }
@@ -60,9 +58,6 @@ const Index = () => {
           }
           if (nameEnSetting?.setting_value) {
             setSchoolNameEn(nameEnSetting.setting_value);
-          }
-          if (kakaoChatSetting?.setting_value) {
-            setKakaoChatUrl(kakaoChatSetting.setting_value);
           }
         }
       } catch (error) {
@@ -166,22 +161,6 @@ const Index = () => {
               </TabsContent>
             </Tabs>
 
-            {/* 카카오톡 오픈채팅방 안내 */}
-            {kakaoChatUrl && (
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-center">
-                  <a 
-                    href={kakaoChatUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-yellow-600 transition-colors"
-                  >
-                    <MessageCircle className="w-5 h-5 text-yellow-500" />
-                    <span className="hover:underline">오픈채팅방</span>
-                  </a>
-                </div>
-              </div>
-            )}
           </div>
         </Card>
       </div>
