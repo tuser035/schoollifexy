@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import SystemAdminLogin from "@/components/auth/SystemAdminLogin";
-import { School, MessageCircle, ExternalLink } from "lucide-react";
+import { School, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,11 +25,9 @@ const Index = () => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showSystemAdminDialog, setShowSystemAdminDialog] = useState(false);
-  const [showQrDialog, setShowQrDialog] = useState(false);
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [schoolNameEn, setSchoolNameEn] = useState<string | null>(null);
-  const [kakaoQrUrl, setKakaoQrUrl] = useState<string | null>(null);
   const [kakaoChatUrl, setKakaoChatUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,13 +45,12 @@ const Index = () => {
         const { data } = await supabase
           .from('system_settings')
           .select('setting_key, setting_value')
-          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en', 'kakao_qr_url', 'kakao_chat_url']);
+          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en', 'kakao_chat_url']);
         
         if (data) {
           const symbolSetting = data.find(s => s.setting_key === 'school_symbol_url');
           const nameSetting = data.find(s => s.setting_key === 'school_name');
           const nameEnSetting = data.find(s => s.setting_key === 'school_name_en');
-          const kakaoQrSetting = data.find(s => s.setting_key === 'kakao_qr_url');
           const kakaoChatSetting = data.find(s => s.setting_key === 'kakao_chat_url');
           if (symbolSetting?.setting_value) {
             setSchoolSymbolUrl(symbolSetting.setting_value);
@@ -63,9 +60,6 @@ const Index = () => {
           }
           if (nameEnSetting?.setting_value) {
             setSchoolNameEn(nameEnSetting.setting_value);
-          }
-          if (kakaoQrSetting?.setting_value) {
-            setKakaoQrUrl(kakaoQrSetting.setting_value);
           }
           if (kakaoChatSetting?.setting_value) {
             setKakaoChatUrl(kakaoChatSetting.setting_value);
@@ -172,23 +166,19 @@ const Index = () => {
               </TabsContent>
             </Tabs>
 
-            {/* 카카오톡 채팅방 안내 */}
-            {kakaoQrUrl && (
+            {/* 카카오톡 오픈채팅방 안내 */}
+            {kakaoChatUrl && (
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
-                      <MessageCircle className="w-4 h-4 text-yellow-500" />
-                      <span>카톡 채팅방</span>
-                    </div>
-                    <img 
-                      src={kakaoQrUrl} 
-                      alt="카카오톡 채팅방 QR" 
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg shadow-md mx-auto object-contain bg-white p-1 cursor-pointer hover:scale-105 transition-transform duration-200"
-                      onClick={() => setShowQrDialog(true)}
-                      title="클릭하여 확대"
-                    />
-                  </div>
+                <div className="flex items-center justify-center">
+                  <a 
+                    href={kakaoChatUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-yellow-600 transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5 text-yellow-500" />
+                    <span className="hover:underline">오픈채팅방</span>
+                  </a>
                 </div>
               </div>
             )}
@@ -208,36 +198,6 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      {/* QR Code Zoom Dialog */}
-      <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-center flex items-center justify-center gap-2">
-              <MessageCircle className="w-5 h-5 text-yellow-500" />
-              카카오톡 채팅방
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4 p-4">
-            {kakaoQrUrl && (
-              <img 
-                src={kakaoQrUrl} 
-                alt="카카오톡 채팅방 QR" 
-                className="w-64 h-64 rounded-lg shadow-lg object-contain bg-white p-2"
-              />
-            )}
-            {kakaoChatUrl && (
-              <Button 
-                className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium"
-                onClick={() => window.open(kakaoChatUrl, '_blank')}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                카카오톡으로 열기
-                <ExternalLink className="w-4 h-4 ml-2" />
-              </Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
