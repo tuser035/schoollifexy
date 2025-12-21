@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen, PenLine } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen, PenLine, ChevronDown, ChevronUp } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,6 +29,10 @@ const StudentDashboard = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState<string>("merits");
+  const [isMeritsExpanded, setIsMeritsExpanded] = useState(false);
+  const [isDemeritsExpanded, setIsDemeritsExpanded] = useState(false);
+  const [isMonthlyExpanded, setIsMonthlyExpanded] = useState(false);
+  const INITIAL_DISPLAY_COUNT = 3;
 
   const fetchStudentData = useCallback(async (studentId: string) => {
     setIsLoading(true);
@@ -348,152 +353,306 @@ const StudentDashboard = () => {
                 </TabsList>
 
                 <TabsContent value="merits">
-                  <div className="border rounded-lg overflow-auto max-h-[400px] border-merit-blue/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm">날짜</TableHead>
-                          <TableHead className="text-xs sm:text-sm hidden sm:table-cell">교사</TableHead>
-                          <TableHead className="text-xs sm:text-sm">카테고리</TableHead>
-                          <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
-                          <TableHead className="text-xs sm:text-sm">점수</TableHead>
-                          <TableHead className="text-xs sm:text-sm">사진</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {merits.length === 0 ? (
+                  <Collapsible open={isMeritsExpanded} onOpenChange={setIsMeritsExpanded}>
+                    <div className="border rounded-lg overflow-hidden border-merit-blue/30">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
-                              상점 내역이 없습니다
-                            </TableCell>
+                            <TableHead className="text-xs sm:text-sm">날짜</TableHead>
+                            <TableHead className="text-xs sm:text-sm hidden sm:table-cell">교사</TableHead>
+                            <TableHead className="text-xs sm:text-sm">카테고리</TableHead>
+                            <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
+                            <TableHead className="text-xs sm:text-sm">점수</TableHead>
+                            <TableHead className="text-xs sm:text-sm">사진</TableHead>
                           </TableRow>
-                        ) : (
-                          merits.map((merit, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(merit.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{merit.teacher_name || "-"}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{merit.category}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{merit.reason || "-"}</TableCell>
-                              <TableCell className="text-merit-blue font-medium text-xs sm:text-sm py-2 sm:py-4">{merit.score}</TableCell>
-                              <TableCell className="py-2 sm:py-4">
-                                {merit.image_url && merit.image_url.length > 0 ? (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleImageClick(merit.image_url[0])}
-                                    className="h-7 sm:h-8 px-2 text-xs"
-                                  >
-                                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                                    <span className="hidden sm:inline">보기</span>
-                                  </Button>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">없음</span>
-                                )}
+                        </TableHeader>
+                        <TableBody>
+                          {merits.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
+                                상점 내역이 없습니다
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                          ) : (
+                            <>
+                              {merits.slice(0, INITIAL_DISPLAY_COUNT).map((merit, idx) => (
+                                <TableRow key={idx}>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(merit.created_at).toLocaleDateString()}</TableCell>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{merit.teacher_name || "-"}</TableCell>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{merit.category}</TableCell>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{merit.reason || "-"}</TableCell>
+                                  <TableCell className="text-merit-blue font-medium text-xs sm:text-sm py-2 sm:py-4">{merit.score}</TableCell>
+                                  <TableCell className="py-2 sm:py-4">
+                                    {merit.image_url && merit.image_url.length > 0 ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleImageClick(merit.image_url[0])}
+                                        className="h-7 sm:h-8 px-2 text-xs"
+                                      >
+                                        <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                        <span className="hidden sm:inline">보기</span>
+                                      </Button>
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs">없음</span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              <CollapsibleContent asChild>
+                                <>
+                                  {merits.slice(INITIAL_DISPLAY_COUNT).map((merit, idx) => (
+                                    <TableRow key={idx + INITIAL_DISPLAY_COUNT} className="animate-fade-in">
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(merit.created_at).toLocaleDateString()}</TableCell>
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{merit.teacher_name || "-"}</TableCell>
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{merit.category}</TableCell>
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{merit.reason || "-"}</TableCell>
+                                      <TableCell className="text-merit-blue font-medium text-xs sm:text-sm py-2 sm:py-4">{merit.score}</TableCell>
+                                      <TableCell className="py-2 sm:py-4">
+                                        {merit.image_url && merit.image_url.length > 0 ? (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleImageClick(merit.image_url[0])}
+                                            className="h-7 sm:h-8 px-2 text-xs"
+                                          >
+                                            <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                            <span className="hidden sm:inline">보기</span>
+                                          </Button>
+                                        ) : (
+                                          <span className="text-muted-foreground text-xs">없음</span>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </>
+                              </CollapsibleContent>
+                            </>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {merits.length > INITIAL_DISPLAY_COUNT && (
+                      <CollapsibleTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          className="w-full mt-2 text-merit-blue hover:text-merit-blue hover:bg-merit-blue/10 text-xs sm:text-sm"
+                        >
+                          {isMeritsExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-1" />
+                              접기
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-1" />
+                              {merits.length - INITIAL_DISPLAY_COUNT}개 더 보기
+                            </>
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                    )}
+                  </Collapsible>
                 </TabsContent>
 
                 <TabsContent value="demerits">
-                  <div className="border rounded-lg overflow-auto max-h-[400px] border-demerit-orange/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm">날짜</TableHead>
-                          <TableHead className="text-xs sm:text-sm">카테고리</TableHead>
-                          <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
-                          <TableHead className="text-xs sm:text-sm">점수</TableHead>
-                          <TableHead className="text-xs sm:text-sm">사진</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {demerits.length === 0 ? (
+                  <Collapsible open={isDemeritsExpanded} onOpenChange={setIsDemeritsExpanded}>
+                    <div className="border rounded-lg overflow-hidden border-demerit-orange/30">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
-                              벌점 내역이 없습니다
-                            </TableCell>
+                            <TableHead className="text-xs sm:text-sm">날짜</TableHead>
+                            <TableHead className="text-xs sm:text-sm">카테고리</TableHead>
+                            <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
+                            <TableHead className="text-xs sm:text-sm">점수</TableHead>
+                            <TableHead className="text-xs sm:text-sm">사진</TableHead>
                           </TableRow>
-                        ) : (
-                          demerits.map((demerit, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(demerit.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{demerit.category}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{demerit.reason || "-"}</TableCell>
-                              <TableCell className="text-demerit-orange font-medium text-xs sm:text-sm py-2 sm:py-4">{demerit.score}</TableCell>
-                              <TableCell className="py-2 sm:py-4">
-                                {demerit.image_url && demerit.image_url.length > 0 ? (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleImageClick(demerit.image_url[0])}
-                                    className="h-7 sm:h-8 px-2 text-xs"
-                                  >
-                                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                                    <span className="hidden sm:inline">보기</span>
-                                  </Button>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">없음</span>
-                                )}
+                        </TableHeader>
+                        <TableBody>
+                          {demerits.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
+                                벌점 내역이 없습니다
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                          ) : (
+                            <>
+                              {demerits.slice(0, INITIAL_DISPLAY_COUNT).map((demerit, idx) => (
+                                <TableRow key={idx}>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(demerit.created_at).toLocaleDateString()}</TableCell>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{demerit.category}</TableCell>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{demerit.reason || "-"}</TableCell>
+                                  <TableCell className="text-demerit-orange font-medium text-xs sm:text-sm py-2 sm:py-4">{demerit.score}</TableCell>
+                                  <TableCell className="py-2 sm:py-4">
+                                    {demerit.image_url && demerit.image_url.length > 0 ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleImageClick(demerit.image_url[0])}
+                                        className="h-7 sm:h-8 px-2 text-xs"
+                                      >
+                                        <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                        <span className="hidden sm:inline">보기</span>
+                                      </Button>
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs">없음</span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              <CollapsibleContent asChild>
+                                <>
+                                  {demerits.slice(INITIAL_DISPLAY_COUNT).map((demerit, idx) => (
+                                    <TableRow key={idx + INITIAL_DISPLAY_COUNT} className="animate-fade-in">
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(demerit.created_at).toLocaleDateString()}</TableCell>
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{demerit.category}</TableCell>
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{demerit.reason || "-"}</TableCell>
+                                      <TableCell className="text-demerit-orange font-medium text-xs sm:text-sm py-2 sm:py-4">{demerit.score}</TableCell>
+                                      <TableCell className="py-2 sm:py-4">
+                                        {demerit.image_url && demerit.image_url.length > 0 ? (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleImageClick(demerit.image_url[0])}
+                                            className="h-7 sm:h-8 px-2 text-xs"
+                                          >
+                                            <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                            <span className="hidden sm:inline">보기</span>
+                                          </Button>
+                                        ) : (
+                                          <span className="text-muted-foreground text-xs">없음</span>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </>
+                              </CollapsibleContent>
+                            </>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {demerits.length > INITIAL_DISPLAY_COUNT && (
+                      <CollapsibleTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          className="w-full mt-2 text-demerit-orange hover:text-demerit-orange hover:bg-demerit-orange/10 text-xs sm:text-sm"
+                        >
+                          {isDemeritsExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-1" />
+                              접기
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-1" />
+                              {demerits.length - INITIAL_DISPLAY_COUNT}개 더 보기
+                            </>
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                    )}
+                  </Collapsible>
                 </TabsContent>
 
                 <TabsContent value="monthly">
-                  <div className="border rounded-lg overflow-auto max-h-[400px] border-monthly-green/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm">날짜</TableHead>
-                          <TableHead className="text-xs sm:text-sm hidden sm:table-cell">교사</TableHead>
-                          <TableHead className="text-xs sm:text-sm">구분</TableHead>
-                          <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
-                          <TableHead className="text-xs sm:text-sm">사진</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {monthly.length === 0 ? (
+                  <Collapsible open={isMonthlyExpanded} onOpenChange={setIsMonthlyExpanded}>
+                    <div className="border rounded-lg overflow-hidden border-monthly-green/30">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
-                              이달의 학생 추천 내역이 없습니다
-                            </TableCell>
+                            <TableHead className="text-xs sm:text-sm">날짜</TableHead>
+                            <TableHead className="text-xs sm:text-sm hidden sm:table-cell">교사</TableHead>
+                            <TableHead className="text-xs sm:text-sm">구분</TableHead>
+                            <TableHead className="text-xs sm:text-sm hidden md:table-cell">사유</TableHead>
+                            <TableHead className="text-xs sm:text-sm">사진</TableHead>
                           </TableRow>
-                        ) : (
-                          monthly.map((item, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(item.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{item.teacher_name || "-"}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{item.category || "-"}</TableCell>
-                              <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{item.reason || "-"}</TableCell>
-                              <TableCell className="py-2 sm:py-4">
-                                {item.image_url && item.image_url.length > 0 ? (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleImageClick(item.image_url[0])}
-                                    className="h-7 sm:h-8 px-2 text-xs"
-                                  >
-                                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
-                                    <span className="hidden sm:inline">보기</span>
-                                  </Button>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">없음</span>
-                                )}
+                        </TableHeader>
+                        <TableBody>
+                          {monthly.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center text-muted-foreground text-xs sm:text-sm py-4">
+                                이달의 학생 추천 내역이 없습니다
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                          ) : (
+                            <>
+                              {monthly.slice(0, INITIAL_DISPLAY_COUNT).map((item, idx) => (
+                                <TableRow key={idx}>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{item.teacher_name || "-"}</TableCell>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{item.category || "-"}</TableCell>
+                                  <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{item.reason || "-"}</TableCell>
+                                  <TableCell className="py-2 sm:py-4">
+                                    {item.image_url && item.image_url.length > 0 ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleImageClick(item.image_url[0])}
+                                        className="h-7 sm:h-8 px-2 text-xs"
+                                      >
+                                        <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                        <span className="hidden sm:inline">보기</span>
+                                      </Button>
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs">없음</span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              <CollapsibleContent asChild>
+                                <>
+                                  {monthly.slice(INITIAL_DISPLAY_COUNT).map((item, idx) => (
+                                    <TableRow key={idx + INITIAL_DISPLAY_COUNT} className="animate-fade-in">
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4 whitespace-nowrap">{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden sm:table-cell">{item.teacher_name || "-"}</TableCell>
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4">{item.category || "-"}</TableCell>
+                                      <TableCell className="text-xs sm:text-sm py-2 sm:py-4 hidden md:table-cell max-w-[150px] truncate">{item.reason || "-"}</TableCell>
+                                      <TableCell className="py-2 sm:py-4">
+                                        {item.image_url && item.image_url.length > 0 ? (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleImageClick(item.image_url[0])}
+                                            className="h-7 sm:h-8 px-2 text-xs"
+                                          >
+                                            <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                                            <span className="hidden sm:inline">보기</span>
+                                          </Button>
+                                        ) : (
+                                          <span className="text-muted-foreground text-xs">없음</span>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </>
+                              </CollapsibleContent>
+                            </>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {monthly.length > INITIAL_DISPLAY_COUNT && (
+                      <CollapsibleTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          className="w-full mt-2 text-monthly-green hover:text-monthly-green hover:bg-monthly-green/10 text-xs sm:text-sm"
+                        >
+                          {isMonthlyExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-1" />
+                              접기
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-1" />
+                              {monthly.length - INITIAL_DISPLAY_COUNT}개 더 보기
+                            </>
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                    )}
+                  </Collapsible>
                 </TabsContent>
               </Tabs>
             )}
