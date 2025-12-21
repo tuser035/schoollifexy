@@ -4,35 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Eye, EyeOff, MessageCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 const StudentLogin = () => {
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [kakaoChatUrl, setKakaoChatUrl] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const loadKakaoUrl = async () => {
-      try {
-        const { data } = await supabase
-          .from('system_settings')
-          .select('setting_value')
-          .eq('setting_key', 'kakao_chat_url')
-          .single();
-        if (data?.setting_value) {
-          setKakaoChatUrl(data.setting_value);
-        }
-      } catch (error) {
-        console.error('Failed to load kakao chat url:', error);
-      }
-    };
-    loadKakaoUrl();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,23 +80,6 @@ const StudentLogin = () => {
       >
         {isLoading ? "로그인 중..." : "학생 로그인"}
       </Button>
-      
-      <p className="text-xs sm:text-sm text-center text-muted-foreground whitespace-nowrap flex items-center justify-center gap-1">
-        스쿨라이프.KR 시스템 문의가 있을까요?{" "}
-        {kakaoChatUrl ? (
-          <a 
-            href={kakaoChatUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-yellow-600 hover:underline"
-          >
-            <MessageCircle className="w-4 h-4" />
-            오픈채팅방
-          </a>
-        ) : (
-          <span className="text-muted-foreground">오픈채팅방</span>
-        )}
-      </p>
     </form>
   );
 };
