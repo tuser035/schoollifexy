@@ -458,55 +458,43 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     try {
       const text = await file.text();
       Papa.parse(text, {
-        header: false,
+        header: true,
         skipEmptyLines: true,
         complete: async (results) => {
-          const rawRows = results.data as string[][];
+          const rows = results.data as any[];
           
-          if (rawRows.length < 2) {
+          if (rows.length === 0) {
             toast.error('CSV 파일에 데이터가 없습니다');
             return;
           }
 
-          // 헤더 인덱스 찾기 (공백 제거하여 비교)
+          // 첫 번째 행의 키로 헤더 확인
+          const headers = Object.keys(rows[0]);
+          console.log('CSV 헤더:', headers);
+          
+          // 헤더 정규화 함수
           const normalizeKey = (key: string) => key?.replace(/\s+/g, '').toLowerCase() || '';
           
-          const findHeaderIndexInRow = (row: string[], ...possibleNames: string[]) => {
-            for (let i = 0; i < row.length; i++) {
-              const normalizedHeader = normalizeKey(row[i]);
+          const findHeader = (...possibleNames: string[]) => {
+            for (const header of headers) {
+              const normalizedHeader = normalizeKey(header);
               for (const name of possibleNames) {
                 if (normalizedHeader === normalizeKey(name)) {
-                  return i;
+                  return header;
                 }
               }
             }
-            return -1;
+            return null;
           };
           
-          // 첫 번째 줄에서 헤더 찾기 시도
-          let headerRow = rawRows[0];
-          let dataStartIndex = 1;
+          const collectionTitleKey = findHeader('시집제목', '시집 제목', 'title');
+          const poetKey = findHeader('시인', 'poet');
+          const poemTitleKey = findHeader('시제목', '시 제목', 'poem_title');
+          const poemContentKey = findHeader('시내용', '시 내용', 'content');
+          const hashtagsKey = findHeader('해시태그', '해시 태그', 'hashtags');
           
-          let collectionTitleIdx = findHeaderIndexInRow(headerRow, '시집제목', '시집 제목', 'title');
-          
-          // 첫 번째 줄에 헤더가 없으면 (Column1, Column2 형식) 두 번째 줄 확인
-          if (collectionTitleIdx === -1 && rawRows.length >= 2) {
-            headerRow = rawRows[1];
-            dataStartIndex = 2;
-            collectionTitleIdx = findHeaderIndexInRow(headerRow, '시집제목', '시집 제목', 'title');
-          }
-          
-          console.log('감지된 헤더:', headerRow, '데이터 시작 인덱스:', dataStartIndex);
-          
-          const poetIdx = findHeaderIndexInRow(headerRow, '시인', 'poet');
-          const poemTitleIdx = findHeaderIndexInRow(headerRow, '시제목', '시 제목', 'poem_title');
-          const poemContentIdx = findHeaderIndexInRow(headerRow, '시내용', '시 내용', 'content');
-          const hashtagsIdx = findHeaderIndexInRow(headerRow, '해시태그', '해시 태그', 'hashtags');
-          
-          console.log('헤더 인덱스:', { collectionTitleIdx, poetIdx, poemTitleIdx, poemContentIdx, hashtagsIdx });
-          
-          if (collectionTitleIdx === -1 || poetIdx === -1 || poemTitleIdx === -1 || poemContentIdx === -1) {
-            toast.error('CSV 헤더를 찾을 수 없습니다. 시집 제목, 시인, 시 제목, 시 내용 열이 필요합니다.');
+          if (!collectionTitleKey || !poetKey || !poemTitleKey || !poemContentKey) {
+            toast.error('CSV 첫 줄에 올바른 헤더가 필요합니다: 시집 제목, 시인, 시 제목, 시 내용');
             return;
           }
 
@@ -519,15 +507,12 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
 
           let skipCount = 0;
           
-          // 데이터 행 추출
-          const dataRows = rawRows.slice(dataStartIndex);
-          
-          for (const row of dataRows) {
-            const collectionTitle = row[collectionTitleIdx]?.trim() || '';
-            const poet = row[poetIdx]?.trim() || '';
-            const poemTitle = row[poemTitleIdx]?.trim() || '';
-            const poemContent = row[poemContentIdx]?.trim() || '';
-            const hashtags = hashtagsIdx !== -1 ? (row[hashtagsIdx]?.trim() || '') : '';
+          for (const row of rows) {
+            const collectionTitle = row[collectionTitleKey]?.trim() || '';
+            const poet = row[poetKey]?.trim() || '';
+            const poemTitle = row[poemTitleKey]?.trim() || '';
+            const poemContent = row[poemContentKey]?.trim() || '';
+            const hashtags = hashtagsKey ? (row[hashtagsKey]?.trim() || '') : '';
 
             if (!collectionTitle || !poet || !poemTitle || !poemContent) {
               console.log('Skipping row due to missing fields:', { collectionTitle, poet, poemTitle, poemContent: poemContent?.substring(0, 50) });
@@ -601,7 +586,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           }
 
           if (successCount > 0) {
-            toast.success(`${successCount}개의 시집이 등록되었습니다 (총 ${dataRows.length - skipCount}편의 시)`);
+            toast.success(`${successCount}개의 시집이 등록되었습니다 (총 ${rows.length - skipCount}편의 시)`);
           }
           if (errorCount > 0) {
             toast.error(`${errorCount}개의 시집 등록에 실패했습니다`);
