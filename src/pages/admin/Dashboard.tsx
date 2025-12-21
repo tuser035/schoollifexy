@@ -232,6 +232,7 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         borderClass: "border-teal-500/30",
         textClass: "text-teal-600",
         cardTitle: "카테고리 관리",
+        hideCardTitle: true,
         category: "reading"
       },
       { 
