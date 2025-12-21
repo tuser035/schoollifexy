@@ -428,15 +428,46 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const loadBooks = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('student_get_storybooks', {
+      
+      // Load storybooks
+      const { data: storybooksData, error: storybooksError } = await supabase.rpc('student_get_storybooks', {
         student_id_input: studentId
       });
 
-      if (error) throw error;
-      setBooks((data || []).map((book: any) => ({ ...book, category: book.category || 'recommended' })));
+      if (storybooksError) throw storybooksError;
+      
+      // Load poetry collections
+      const { data: poetryData, error: poetryError } = await supabase.rpc('student_get_poetry_collections', {
+        student_id_input: studentId
+      });
+      
+      if (poetryError) {
+        console.error('Error loading poetry collections:', poetryError);
+      }
+      
+      // Convert poetry collections to Storybook format
+      const poetryBooks: Storybook[] = (poetryData || []).map((poetry: any, index: number) => ({
+        id: poetry.id,
+        book_number: index + 1,
+        title: poetry.title,
+        cover_image_url: poetry.cover_image_url,
+        description: `${poetry.poet} 시인`,
+        external_url: null,
+        page_count: poetry.poem_count || 1,
+        last_page: poetry.last_poem_order || 0,
+        is_completed: poetry.is_completed || false,
+        category: 'poetry'
+      }));
+      
+      const storybooks = (storybooksData || []).map((book: any) => ({ 
+        ...book, 
+        category: book.category || 'recommended' 
+      }));
+      
+      setBooks([...storybooks, ...poetryBooks]);
     } catch (error) {
       console.error('Error loading books:', error);
-      toast.error('동화책을 불러오는데 실패했습니다');
+      toast.error('도서를 불러오는데 실패했습니다');
     } finally {
       setLoading(false);
     }
