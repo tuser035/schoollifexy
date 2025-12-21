@@ -345,6 +345,7 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [activeGroup, setActiveGroup] = useState<string>("account");
   const [activeTab, setActiveTab] = useState<string>("data");
 
   useEffect(() => {
@@ -362,11 +363,20 @@ const AdminDashboard = () => {
     
     setUser(parsedUser);
     const isSystemAdmin = parsedUser.type === "admin";
+    setActiveGroup(isSystemAdmin ? "upload" : "account");
     setActiveTab(isSystemAdmin ? "upload" : "data");
   }, [navigate]);
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleGroupChange = (groupName: string) => {
+    setActiveGroup(groupName);
+    const group = tabGroups.find(g => g.name === groupName);
+    if (group && group.items.length > 0) {
+      setActiveTab(group.items[0].value);
+    }
   };
 
   if (!user) {
@@ -376,6 +386,7 @@ const AdminDashboard = () => {
   const tabGroups = getTabGroups(user);
   const allItems = tabGroups.flatMap(g => g.items);
   const currentTab = allItems.find(t => t.value === activeTab);
+  const currentGroup = tabGroups.find(g => g.name === activeGroup);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -460,24 +471,47 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="mb-4 sm:mb-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full" style={{ gridTemplateColumns: `repeat(${allItems.length}, minmax(0, 1fr))` }}>
-              {allItems.map((item) => {
-                const Icon = item.icon;
+        {/* 카테고리 그룹 탭바 */}
+        <Tabs value={activeGroup} onValueChange={handleGroupChange} className="w-full mb-4">
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full bg-muted/50" style={{ gridTemplateColumns: `repeat(${tabGroups.length}, minmax(0, 1fr))` }}>
+              {tabGroups.map((group) => {
+                const firstItem = group.items[0];
                 return (
                   <TabsTrigger
-                    key={item.value}
-                    value={item.value}
-                    className={`whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 ${item.activeClass}`}
+                    key={group.name}
+                    value={group.name}
+                    className={`whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 font-medium ${firstItem.activeClass}`}
                   >
-                    <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    <span>{item.label}</span>
+                    {group.label}
                   </TabsTrigger>
                 );
               })}
             </TabsList>
           </div>
+        </Tabs>
+
+        {/* 하위 메뉴 탭바 */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {currentGroup && currentGroup.items.length > 1 && (
+            <div className="mb-4 sm:mb-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+              <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full bg-muted/30" style={{ gridTemplateColumns: `repeat(${currentGroup.items.length}, minmax(0, 1fr))` }}>
+                {currentGroup.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <TabsTrigger
+                      key={item.value}
+                      value={item.value}
+                      className={`whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 ${item.activeClass}`}
+                    >
+                      <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                      <span>{item.label}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </div>
+          )}
 
           {allItems.map((item) => (
             <TabsContent key={item.value} value={item.value}>
