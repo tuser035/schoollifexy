@@ -236,6 +236,37 @@ const SystemSettings = () => {
     }
   };
 
+  // 이미지를 64x64로 리사이즈하는 함수
+  const resizeImage = (file: File, size: number): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement("img");
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas context not available"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, size, size);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Failed to create blob"));
+            }
+          },
+          "image/png",
+          1.0
+        );
+      };
+      img.onerror = () => reject(new Error("Failed to load image"));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFaviconUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -266,9 +297,11 @@ const SystemSettings = () => {
       // Admin 세션 설정 (스토리지 RLS 정책을 위해)
       await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
-      // 파일명 생성
-      const fileExt = file.name.split(".").pop();
-      const fileName = `favicon-${Date.now()}.${fileExt}`;
+      // 이미지를 64x64로 리사이즈
+      const resizedBlob = await resizeImage(file, 64);
+
+      // 파일명 생성 (PNG로 저장)
+      const fileName = `favicon-${Date.now()}.png`;
 
       // 기존 파일 삭제 (있는 경우)
       if (faviconUrl) {
@@ -281,7 +314,7 @@ const SystemSettings = () => {
       // 새 파일 업로드 (school-symbols 버킷 재사용)
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("school-symbols")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, resizedBlob, { upsert: true, contentType: "image/png" });
 
       if (uploadError) throw uploadError;
 
