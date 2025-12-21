@@ -1152,6 +1152,7 @@ export type Database = {
           grade: number | null
           id: string
           is_admin: boolean | null
+          is_counselor: boolean | null
           is_homeroom: boolean | null
           name: string
           password_hash: string
@@ -1169,6 +1170,7 @@ export type Database = {
           grade?: number | null
           id?: string
           is_admin?: boolean | null
+          is_counselor?: boolean | null
           is_homeroom?: boolean | null
           name: string
           password_hash?: string
@@ -1186,6 +1188,7 @@ export type Database = {
           grade?: number | null
           id?: string
           is_admin?: boolean | null
+          is_counselor?: boolean | null
           is_homeroom?: boolean | null
           name?: string
           password_hash?: string
