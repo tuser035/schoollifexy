@@ -186,9 +186,9 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         value: "mindtalk", 
         label: "마음톡", 
         icon: MessageCircle, 
-        activeClass: "data-[state=active]:bg-teal-500 data-[state=active]:text-white",
-        borderClass: "border-teal-500/30",
-        textClass: "text-teal-600",
+        activeClass: "data-[state=active]:bg-pink-500 data-[state=active]:text-white",
+        borderClass: "border-pink-500/30",
+        textClass: "text-pink-600",
         cardTitle: "마음톡 조회",
         category: "mindtalk"
       },
@@ -196,9 +196,9 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         value: "mindtalk-keywords", 
         label: "키워드", 
         icon: AlertTriangle, 
-        activeClass: "data-[state=active]:bg-teal-500 data-[state=active]:text-white",
-        borderClass: "border-teal-500/30",
-        textClass: "text-teal-600",
+        activeClass: "data-[state=active]:bg-pink-500 data-[state=active]:text-white",
+        borderClass: "border-pink-500/30",
+        textClass: "text-pink-600",
         cardTitle: "키워드 관리",
         category: "mindtalk"
       },
@@ -206,9 +206,9 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         value: "mindtalk-music", 
         label: "뮤직", 
         icon: Music, 
-        activeClass: "data-[state=active]:bg-teal-500 data-[state=active]:text-white",
-        borderClass: "border-teal-500/30",
-        textClass: "text-teal-600",
+        activeClass: "data-[state=active]:bg-pink-500 data-[state=active]:text-white",
+        borderClass: "border-pink-500/30",
+        textClass: "text-pink-600",
         cardTitle: "힐링 뮤직",
         category: "mindtalk"
       }
