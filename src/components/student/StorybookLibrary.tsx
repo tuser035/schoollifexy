@@ -917,7 +917,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
                   >
                     <PenLine className="w-4 h-4 mr-1" />
-                    내 독후감 ({seriesReviews.length})
+                    {series.id === 'poetry' ? '시를 따라 적어보는 필사' : '내 독후감'} ({seriesReviews.length})
                   </Button>
                 </div>
 
