@@ -26,6 +26,7 @@ const Index = () => {
   const [showSystemAdminDialog, setShowSystemAdminDialog] = useState(false);
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
   const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [schoolNameEn, setSchoolNameEn] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,17 +43,21 @@ const Index = () => {
         const { data } = await supabase
           .from('system_settings')
           .select('setting_key, setting_value')
-          .in('setting_key', ['school_symbol_url', 'school_name']);
+          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en']);
         
         if (data) {
           const symbolSetting = data.find(s => s.setting_key === 'school_symbol_url');
           const nameSetting = data.find(s => s.setting_key === 'school_name');
+          const nameEnSetting = data.find(s => s.setting_key === 'school_name_en');
           
           if (symbolSetting?.setting_value) {
             setSchoolSymbolUrl(symbolSetting.setting_value);
           }
           if (nameSetting?.setting_value) {
             setSchoolName(nameSetting.setting_value);
+          }
+          if (nameEnSetting?.setting_value) {
+            setSchoolNameEn(nameEnSetting.setting_value);
           }
         }
       } catch (error) {
@@ -101,16 +106,33 @@ const Index = () => {
                 {schoolName || "스쿨라이프.KR"}
               </h1>
               <p className="text-lg sm:text-2xl font-semibold">
-                <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
-                  SchoolLife.
-                </span>
-                <span 
-                  onClick={() => setShowSystemAdminDialog(true)}
-                  className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent cursor-pointer hover:opacity-70 transition-opacity underline decoration-2"
-                  title="시스템 관리자 로그인"
-                >
-                  KR
-                </span>
+                {schoolNameEn ? (
+                  <>
+                    <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
+                      {schoolNameEn.replace(/\s*\.\s*$/, "")}.
+                    </span>
+                    <span 
+                      onClick={() => setShowSystemAdminDialog(true)}
+                      className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent cursor-pointer hover:opacity-70 transition-opacity underline decoration-2"
+                      title="시스템 관리자 로그인"
+                    >
+                      KR
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
+                      SchoolLife.
+                    </span>
+                    <span 
+                      onClick={() => setShowSystemAdminDialog(true)}
+                      className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent cursor-pointer hover:opacity-70 transition-opacity underline decoration-2"
+                      title="시스템 관리자 로그인"
+                    >
+                      KR
+                    </span>
+                  </>
+                )}
               </p>
             </div>
 
