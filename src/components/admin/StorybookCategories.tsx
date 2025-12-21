@@ -156,20 +156,19 @@ export default function StorybookCategories({ adminId }: StorybookCategoriesProp
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-teal-600">카테고리 관리</h3>
+        <Button 
+          onClick={openAddDialog}
+          className="bg-pink-500 hover:bg-pink-600 text-white"
+          size="sm"
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          카테고리 추가
+        </Button>
+      </div>
       {/* Categories List */}
       <Card className="border-pink-200/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-end">
-            <Button 
-              onClick={openAddDialog}
-              className="bg-pink-500 hover:bg-pink-600 text-white"
-              size="sm"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              카테고리 추가
-            </Button>
-          </div>
-        </CardHeader>
         <CardContent>
           <div className="border rounded-lg overflow-hidden border-pink-200/50">
             <Table>
