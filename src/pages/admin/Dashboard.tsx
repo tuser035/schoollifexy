@@ -32,7 +32,9 @@ type TabItem = {
   value: string;
   label: string;
   icon: LucideIcon;
-  bgColor: string;
+  activeClass: string;
+  borderClass: string;
+  textClass: string;
   cardTitle: string;
 };
 
@@ -41,43 +43,211 @@ const getTabItems = (user: AuthUser): TabItem[] => {
   
   const items: TabItem[] = [];
   
-  // 시스템 관리자만 - 업로드
+  // 시스템 관리자만 - 업로드 (data-inquiry-indigo 사용)
   if (isSystemAdmin) {
-    items.push({ value: "upload", label: "업로드", icon: Upload, bgColor: "#64748b", cardTitle: "데이터 업로드" });
+    items.push({ 
+      value: "upload", 
+      label: "업로드", 
+      icon: Upload, 
+      activeClass: "data-[state=active]:bg-data-inquiry-indigo data-[state=active]:text-white",
+      borderClass: "border-data-inquiry-indigo/30",
+      textClass: "text-data-inquiry-indigo",
+      cardTitle: "데이터 업로드" 
+    });
   }
   
-  // 계정 관리
-  items.push({ value: "data", label: "데이터", icon: Database, bgColor: "#f59e0b", cardTitle: "데이터 조회" });
-  items.push({ value: "password", label: "비밀번호", icon: Key, bgColor: "#f59e0b", cardTitle: "비밀번호 재설정" });
+  // 계정 관리 - merit-blue 사용
+  items.push({ 
+    value: "data", 
+    label: "데이터", 
+    icon: Database, 
+    activeClass: "data-[state=active]:bg-merit-blue data-[state=active]:text-white",
+    borderClass: "border-merit-blue/30",
+    textClass: "text-merit-blue",
+    cardTitle: "데이터 조회" 
+  });
+  items.push({ 
+    value: "password", 
+    label: "비밀번호", 
+    icon: Key, 
+    activeClass: "data-[state=active]:bg-merit-blue data-[state=active]:text-white",
+    borderClass: "border-merit-blue/30",
+    textClass: "text-merit-blue",
+    cardTitle: "비밀번호 재설정" 
+  });
   
-  // 상벌점
-  items.push({ value: "points", label: "상점", icon: BarChart, bgColor: "#10b981", cardTitle: "상점 조회" });
-  items.push({ value: "statistics", label: "통계", icon: TrendingUp, bgColor: "#10b981", cardTitle: "통계" });
-  items.push({ value: "leaderboard", label: "순위", icon: Trophy, bgColor: "#10b981", cardTitle: "학생 순위" });
-  items.push({ value: "counseling", label: "상담", icon: ClipboardCheck, bgColor: "#10b981", cardTitle: "상담 기록" });
+  // 상벌점 - demerit-orange 사용
+  items.push({ 
+    value: "points", 
+    label: "상점", 
+    icon: BarChart, 
+    activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
+    borderClass: "border-demerit-orange/30",
+    textClass: "text-demerit-orange",
+    cardTitle: "상점 조회" 
+  });
+  items.push({ 
+    value: "statistics", 
+    label: "통계", 
+    icon: TrendingUp, 
+    activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
+    borderClass: "border-demerit-orange/30",
+    textClass: "text-demerit-orange",
+    cardTitle: "통계" 
+  });
+  items.push({ 
+    value: "leaderboard", 
+    label: "순위", 
+    icon: Trophy, 
+    activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
+    borderClass: "border-demerit-orange/30",
+    textClass: "text-demerit-orange",
+    cardTitle: "학생 순위" 
+  });
+  items.push({ 
+    value: "counseling", 
+    label: "상담", 
+    icon: ClipboardCheck, 
+    activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
+    borderClass: "border-demerit-orange/30",
+    textClass: "text-demerit-orange",
+    cardTitle: "상담 기록" 
+  });
   
-  // 일괄메일
-  items.push({ value: "email-history", label: "이메일", icon: Mail, bgColor: "#3b82f6", cardTitle: "이메일 발송 이력" });
-  items.push({ value: "email-templates", label: "템플릿", icon: FileText, bgColor: "#3b82f6", cardTitle: "이메일 템플릿" });
+  // 일괄메일 - monthly-green 사용
+  items.push({ 
+    value: "email-history", 
+    label: "이메일", 
+    icon: Mail, 
+    activeClass: "data-[state=active]:bg-monthly-green data-[state=active]:text-white",
+    borderClass: "border-monthly-green/30",
+    textClass: "text-monthly-green",
+    cardTitle: "이메일 발송 이력" 
+  });
+  items.push({ 
+    value: "email-templates", 
+    label: "템플릿", 
+    icon: FileText, 
+    activeClass: "data-[state=active]:bg-monthly-green data-[state=active]:text-white",
+    borderClass: "border-monthly-green/30",
+    textClass: "text-monthly-green",
+    cardTitle: "이메일 템플릿" 
+  });
   
-  // 마음톡
-  items.push({ value: "mindtalk", label: "마음톡", icon: MessageCircle, bgColor: "#ec4899", cardTitle: "마음톡 조회" });
-  items.push({ value: "mindtalk-keywords", label: "키워드", icon: AlertTriangle, bgColor: "#ec4899", cardTitle: "키워드 관리" });
-  items.push({ value: "mindtalk-music", label: "뮤직", icon: Music, bgColor: "#ec4899", cardTitle: "힐링 뮤직" });
+  // 마음톡 - groups-purple 사용
+  items.push({ 
+    value: "mindtalk", 
+    label: "마음톡", 
+    icon: MessageCircle, 
+    activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
+    borderClass: "border-groups-purple/30",
+    textClass: "text-groups-purple",
+    cardTitle: "마음톡 조회" 
+  });
+  items.push({ 
+    value: "mindtalk-keywords", 
+    label: "키워드", 
+    icon: AlertTriangle, 
+    activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
+    borderClass: "border-groups-purple/30",
+    textClass: "text-groups-purple",
+    cardTitle: "키워드 관리" 
+  });
+  items.push({ 
+    value: "mindtalk-music", 
+    label: "뮤직", 
+    icon: Music, 
+    activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
+    borderClass: "border-groups-purple/30",
+    textClass: "text-groups-purple",
+    cardTitle: "힐링 뮤직" 
+  });
   
-  // 독서
-  items.push({ value: "storybooks", label: "추천도서", icon: BookOpen, bgColor: "#f97316", cardTitle: "추천도서 관리" });
-  items.push({ value: "book-reports", label: "독후감", icon: PenLine, bgColor: "#f97316", cardTitle: "독후감 관리" });
-  items.push({ value: "reading-stats", label: "읽기통계", icon: BarChart3, bgColor: "#f97316", cardTitle: "읽기 통계" });
+  // 독서 - bulk-email-pink 사용
+  items.push({ 
+    value: "storybooks", 
+    label: "추천도서", 
+    icon: BookOpen, 
+    activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
+    borderClass: "border-bulk-email-pink/30",
+    textClass: "text-bulk-email-pink",
+    cardTitle: "추천도서 관리" 
+  });
+  items.push({ 
+    value: "book-reports", 
+    label: "독후감", 
+    icon: PenLine, 
+    activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
+    borderClass: "border-bulk-email-pink/30",
+    textClass: "text-bulk-email-pink",
+    cardTitle: "독후감 관리" 
+  });
+  items.push({ 
+    value: "reading-stats", 
+    label: "읽기통계", 
+    icon: BarChart3, 
+    activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
+    borderClass: "border-bulk-email-pink/30",
+    textClass: "text-bulk-email-pink",
+    cardTitle: "읽기 통계" 
+  });
   
-  // 시스템 관리자만 - 시스템 설정
+  // 시스템 관리자만 - 시스템 설정 (email-history-teal 사용)
   if (isSystemAdmin) {
-    items.push({ value: "system-settings", label: "설정", icon: Cog, bgColor: "#475569", cardTitle: "시스템 설정" });
-    items.push({ value: "export", label: "백업", icon: PackageOpen, bgColor: "#475569", cardTitle: "데이터 백업" });
-    items.push({ value: "auto-backup", label: "자동백업", icon: Settings, bgColor: "#475569", cardTitle: "자동 백업 설정" });
-    items.push({ value: "storage", label: "파일", icon: FolderOpen, bgColor: "#475569", cardTitle: "파일 관리" });
-    items.push({ value: "security-logs", label: "보안", icon: Shield, bgColor: "#475569", cardTitle: "보안 로그" });
-    items.push({ value: "db-logs", label: "DB", icon: FileCode, bgColor: "#475569", cardTitle: "DB 로그" });
+    items.push({ 
+      value: "system-settings", 
+      label: "설정", 
+      icon: Cog, 
+      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+      borderClass: "border-email-history-teal/30",
+      textClass: "text-email-history-teal",
+      cardTitle: "시스템 설정" 
+    });
+    items.push({ 
+      value: "export", 
+      label: "백업", 
+      icon: PackageOpen, 
+      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+      borderClass: "border-email-history-teal/30",
+      textClass: "text-email-history-teal",
+      cardTitle: "데이터 백업" 
+    });
+    items.push({ 
+      value: "auto-backup", 
+      label: "자동백업", 
+      icon: Settings, 
+      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+      borderClass: "border-email-history-teal/30",
+      textClass: "text-email-history-teal",
+      cardTitle: "자동 백업 설정" 
+    });
+    items.push({ 
+      value: "storage", 
+      label: "파일", 
+      icon: FolderOpen, 
+      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+      borderClass: "border-email-history-teal/30",
+      textClass: "text-email-history-teal",
+      cardTitle: "파일 관리" 
+    });
+    items.push({ 
+      value: "security-logs", 
+      label: "보안", 
+      icon: Shield, 
+      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+      borderClass: "border-email-history-teal/30",
+      textClass: "text-email-history-teal",
+      cardTitle: "보안 로그" 
+    });
+    items.push({ 
+      value: "db-logs", 
+      label: "DB", 
+      icon: FileCode, 
+      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+      borderClass: "border-email-history-teal/30",
+      textClass: "text-email-history-teal",
+      cardTitle: "DB 로그" 
+    });
   }
   
   return items;
@@ -203,17 +373,12 @@ const AdminDashboard = () => {
             <TabsList className="inline-flex w-auto min-w-full">
               {tabItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = activeTab === item.value;
                 
                 return (
                   <TabsTrigger
                     key={item.value}
                     value={item.value}
-                    className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
-                    style={{
-                      backgroundColor: isActive ? item.bgColor : undefined,
-                      color: isActive ? 'white' : undefined
-                    }}
+                    className={`whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 ${item.activeClass}`}
                   >
                     <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                     <span>{item.label}</span>
@@ -225,9 +390,9 @@ const AdminDashboard = () => {
 
           {tabItems.map((item) => (
             <TabsContent key={item.value} value={item.value}>
-              <Card style={{ borderColor: `${item.bgColor}4D` }}>
+              <Card className={item.borderClass}>
                 <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
-                  <CardTitle className="text-base sm:text-lg" style={{ color: item.bgColor }}>
+                  <CardTitle className={`text-base sm:text-lg ${item.textClass}`}>
                     {item.cardTitle}
                   </CardTitle>
                 </CardHeader>
