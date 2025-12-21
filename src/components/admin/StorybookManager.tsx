@@ -1696,60 +1696,6 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                 </DialogContent>
               </Dialog>
             )}
-            
-            {/* + 추천도서 버튼 - 이번학기 추천도서 탭에서만 표시 */}
-            {activeSubTab === 'recommended' && (
-              <Dialog open={isExternalUrlDialogOpen} onOpenChange={setIsExternalUrlDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
-                    <Plus className="w-4 h-4 mr-1" />
-                    추가
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <ExternalLink className="w-5 h-5" />
-                      이번학기 추천도서 등록
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>일련번호</Label>
-                      <Input
-                        type="number"
-                        placeholder="예: 1"
-                        value={externalUrlBookNumber}
-                        onChange={(e) => setExternalUrlBookNumber(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>제목</Label>
-                      <Input
-                        placeholder="도서 제목"
-                        value={externalUrlTitle}
-                        onChange={(e) => setExternalUrlTitle(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label>외부 URL</Label>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com/book"
-                        value={externalUrlValue}
-                        onChange={(e) => setExternalUrlValue(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        외부 사이트의 도서 URL을 입력하세요
-                      </p>
-                    </div>
-                    <Button onClick={handleCreateExternalUrlBook} className="w-full bg-teal-600 hover:bg-teal-700">
-                      등록하기
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -1859,18 +1805,31 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                     <BookOpen className="w-5 h-5" />
                     등록된 추천도서 목록 ({recommendedBooks.length}권)
                   </h3>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={loadRecommendedBooks}
-                    disabled={loadingRecommendedBooks}
-                  >
-                    {loadingRecommendedBooks ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      '새로고침'
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={loadRecommendedBooks}
+                      disabled={loadingRecommendedBooks}
+                    >
+                      {loadingRecommendedBooks ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        '새로고침'
+                      )}
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="bg-teal-600 hover:bg-teal-700"
+                      onClick={() => {
+                        const element = document.getElementById('new-recommended-book-form');
+                        element?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      추가
+                    </Button>
+                  </div>
                 </div>
                 
                 {loadingRecommendedBooks ? (
@@ -1954,7 +1913,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
               </div>
 
               {/* 새 추천도서 등록 */}
-              <div className="border-t pt-6">
+              <div id="new-recommended-book-form" className="border-t pt-6">
                 <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-400 flex items-center gap-2 mb-4">
                   <Plus className="w-5 h-5" />
                   새 추천도서 등록
