@@ -231,6 +231,14 @@ const EmailTemplateManager = () => {
         </Dialog>
       </div>
 
+      <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all">전체</TabsTrigger>
+          <TabsTrigger value="email">이메일</TabsTrigger>
+          <TabsTrigger value="messenger">메신저</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <Table>
           <TableHeader>
             <TableRow>
