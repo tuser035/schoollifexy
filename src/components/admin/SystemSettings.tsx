@@ -146,6 +146,9 @@ const SystemSettings = () => {
 
       const user = JSON.parse(authUser);
 
+      // Admin 세션 설정 (스토리지 RLS 정책을 위해)
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+
       // 파일명 생성
       const fileExt = file.name.split(".").pop();
       const fileName = `school-symbol-${Date.now()}.${fileExt}`;
@@ -259,6 +262,9 @@ const SystemSettings = () => {
       }
 
       const user = JSON.parse(authUser);
+
+      // Admin 세션 설정 (스토리지 RLS 정책을 위해)
+      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
 
       // 파일명 생성
       const fileExt = file.name.split(".").pop();
