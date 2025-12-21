@@ -24,6 +24,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showSystemAdminDialog, setShowSystemAdminDialog] = useState(false);
+  const [showQrDialog, setShowQrDialog] = useState(false);
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [schoolNameEn, setSchoolNameEn] = useState<string | null>(null);
@@ -177,7 +178,9 @@ const Index = () => {
                     <img 
                       src={kakaoQrUrl} 
                       alt="카카오톡 채팅방 QR" 
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg shadow-md mx-auto object-contain bg-white p-1"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg shadow-md mx-auto object-contain bg-white p-1 cursor-pointer hover:scale-105 transition-transform duration-200"
+                      onClick={() => setShowQrDialog(true)}
+                      title="클릭하여 확대"
                     />
                   </div>
                 </div>
@@ -196,6 +199,27 @@ const Index = () => {
             </DialogTitle>
           </DialogHeader>
           <SystemAdminLogin onSuccess={() => setShowSystemAdminDialog(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Zoom Dialog */}
+      <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center flex items-center justify-center gap-2">
+              <MessageCircle className="w-5 h-5 text-yellow-500" />
+              카카오톡 채팅방
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center p-4">
+            {kakaoQrUrl && (
+              <img 
+                src={kakaoQrUrl} 
+                alt="카카오톡 채팅방 QR" 
+                className="w-64 h-64 rounded-lg shadow-lg object-contain bg-white p-2"
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
