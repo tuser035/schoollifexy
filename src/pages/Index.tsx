@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import SystemAdminLogin from "@/components/auth/SystemAdminLogin";
-import { School, MessageCircle } from "lucide-react";
+import { School, MessageCircle, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,6 +30,7 @@ const Index = () => {
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [schoolNameEn, setSchoolNameEn] = useState<string | null>(null);
   const [kakaoQrUrl, setKakaoQrUrl] = useState<string | null>(null);
+  const [kakaoChatUrl, setKakaoChatUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -45,13 +47,14 @@ const Index = () => {
         const { data } = await supabase
           .from('system_settings')
           .select('setting_key, setting_value')
-          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en', 'kakao_qr_url']);
+          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en', 'kakao_qr_url', 'kakao_chat_url']);
         
         if (data) {
           const symbolSetting = data.find(s => s.setting_key === 'school_symbol_url');
           const nameSetting = data.find(s => s.setting_key === 'school_name');
           const nameEnSetting = data.find(s => s.setting_key === 'school_name_en');
           const kakaoQrSetting = data.find(s => s.setting_key === 'kakao_qr_url');
+          const kakaoChatSetting = data.find(s => s.setting_key === 'kakao_chat_url');
           if (symbolSetting?.setting_value) {
             setSchoolSymbolUrl(symbolSetting.setting_value);
           }
@@ -63,6 +66,9 @@ const Index = () => {
           }
           if (kakaoQrSetting?.setting_value) {
             setKakaoQrUrl(kakaoQrSetting.setting_value);
+          }
+          if (kakaoChatSetting?.setting_value) {
+            setKakaoChatUrl(kakaoChatSetting.setting_value);
           }
         }
       } catch (error) {
@@ -211,13 +217,23 @@ const Index = () => {
               카카오톡 채팅방
             </DialogTitle>
           </DialogHeader>
-          <div className="flex justify-center p-4">
+          <div className="flex flex-col items-center gap-4 p-4">
             {kakaoQrUrl && (
               <img 
                 src={kakaoQrUrl} 
                 alt="카카오톡 채팅방 QR" 
                 className="w-64 h-64 rounded-lg shadow-lg object-contain bg-white p-2"
               />
+            )}
+            {kakaoChatUrl && (
+              <Button 
+                className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium"
+                onClick={() => window.open(kakaoChatUrl, '_blank')}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                카카오톡으로 열기
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </Button>
             )}
           </div>
         </DialogContent>

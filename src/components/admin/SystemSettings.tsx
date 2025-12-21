@@ -50,6 +50,7 @@ const SystemSettings = () => {
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [kakaoQrUrl, setKakaoQrUrl] = useState<string | null>(null);
   const [uploadingKakaoQr, setUploadingKakaoQr] = useState(false);
+  const [kakaoChatUrl, setKakaoChatUrl] = useState("");
   const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
@@ -247,6 +248,14 @@ const SystemSettings = () => {
       if (kakaoQrSetting && kakaoQrSetting.setting_value) {
         setKakaoQrUrl(kakaoQrSetting.setting_value);
       }
+
+      // 카카오톡 채팅방 URL 찾기
+      const kakaoChatSetting = (data || []).find(
+        (s: SystemSetting) => s.setting_key === "kakao_chat_url"
+      );
+      if (kakaoChatSetting && kakaoChatSetting.setting_value) {
+        setKakaoChatUrl(kakaoChatSetting.setting_value);
+      }
     } catch (error: any) {
       console.error("Failed to fetch settings:", error);
       toast.error("설정을 불러오는데 실패했습니다");
@@ -346,6 +355,32 @@ const SystemSettings = () => {
       fetchSettings();
     } catch (error: any) {
       console.error("Failed to save school name en:", error);
+      toast.error("저장에 실패했습니다");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveKakaoChatUrl = async () => {
+    setSaving(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "kakao_chat_url",
+        setting_value_input: kakaoChatUrl.trim(),
+      });
+
+      if (error) throw error;
+
+      toast.success("카카오톡 채팅방 URL이 저장되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to save kakao chat url:", error);
       toast.error("저장에 실패했습니다");
     } finally {
       setSaving(false);
@@ -1156,6 +1191,47 @@ const SystemSettings = () => {
               마지막 수정:{" "}
               {new Date(
                 settings.find((s) => s.setting_key === "kakao_qr_url")!.updated_at
+              ).toLocaleString("ko-KR")}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 카카오톡 채팅방 URL 설정 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="w-5 h-5" />
+            카카오톡 채팅방 URL
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="kakao-chat-url">오픈채팅방 URL</Label>
+            <p className="text-sm text-muted-foreground">
+              카카오톡 오픈채팅방 URL을 입력하면 QR 코드 확대 화면에서 '카카오톡으로 열기' 버튼이 표시됩니다.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                id="kakao-chat-url"
+                type="url"
+                value={kakaoChatUrl}
+                onChange={(e) => setKakaoChatUrl(e.target.value)}
+                placeholder="https://open.kakao.com/o/..."
+                className="flex-1"
+              />
+              <Button onClick={handleSaveKakaoChatUrl} disabled={saving}>
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? "저장 중..." : "저장"}
+              </Button>
+            </div>
+          </div>
+
+          {settings.find((s) => s.setting_key === "kakao_chat_url")?.updated_at && (
+            <p className="text-xs text-muted-foreground">
+              마지막 수정:{" "}
+              {new Date(
+                settings.find((s) => s.setting_key === "kakao_chat_url")!.updated_at
               ).toLocaleString("ko-KR")}
             </p>
           )}
