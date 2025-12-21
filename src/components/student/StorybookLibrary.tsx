@@ -1329,15 +1329,22 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
+                      const isPoetry = selectedBook?.category === 'poetry';
                       return (
-                        <div className="space-y-2" style={{ fontSize: `${fontSize}rem` }}>
+                        <div className={`space-y-2 ${isPoetry ? 'text-center' : ''}`} style={{ fontSize: `${fontSize}rem` }}>
                           {subtitle && (
-                            <p className="font-semibold leading-relaxed text-storybook-emerald break-words" style={{ fontSize: `${fontSize * 0.875}rem` }}>
-                              📖 {renderHighlightedText(subtitle)}
+                            <p className={`font-semibold leading-relaxed text-storybook-emerald break-words ${isPoetry ? 'text-center' : ''}`} style={{ fontSize: `${fontSize * 0.875}rem` }}>
+                              {isPoetry ? '🌸' : '📖'} {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="leading-relaxed text-gray-700 whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}rem` }}>
+                            <p 
+                              className={`text-gray-700 whitespace-pre-wrap break-words ${isPoetry ? 'text-center leading-loose tracking-wide font-light italic' : 'leading-relaxed'}`} 
+                              style={{ 
+                                fontSize: `${fontSize}rem`,
+                                lineHeight: isPoetry ? '2.2' : undefined
+                              }}
+                            >
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1369,15 +1376,22 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
+                      const isPoetry = selectedBook?.category === 'poetry';
                       return (
-                        <div className="space-y-2" style={{ fontSize: `${fontSize}rem` }}>
+                        <div className={`space-y-2 ${isPoetry ? 'text-center' : ''}`} style={{ fontSize: `${fontSize}rem` }}>
                           {subtitle && (
-                            <p className="font-semibold leading-relaxed text-storybook-emerald break-words" style={{ fontSize: `${fontSize * 0.875}rem` }}>
-                              📖 {renderHighlightedText(subtitle)}
+                            <p className={`font-semibold leading-relaxed text-storybook-emerald break-words ${isPoetry ? 'text-center' : ''}`} style={{ fontSize: `${fontSize * 0.875}rem` }}>
+                              {isPoetry ? '🌸' : '📖'} {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="leading-relaxed text-gray-700 whitespace-pre-wrap break-words" style={{ fontSize: `${fontSize}rem` }}>
+                            <p 
+                              className={`text-gray-700 whitespace-pre-wrap break-words ${isPoetry ? 'text-center leading-loose tracking-wide font-light italic' : 'leading-relaxed'}`}
+                              style={{ 
+                                fontSize: `${fontSize}rem`,
+                                lineHeight: isPoetry ? '2.2' : undefined
+                              }}
+                            >
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1432,15 +1446,22 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
+                      const isPoetry = selectedBook?.category === 'poetry';
                       return (
-                        <div style={{ fontSize: `${fontSize * 1.25}rem` }}>
+                        <div className={isPoetry ? 'text-center' : ''} style={{ fontSize: `${fontSize * 1.25}rem` }}>
                           {subtitle && (
-                            <p className="font-semibold leading-relaxed text-storybook-emerald mb-3" style={{ fontSize: `${fontSize * 1.25}rem` }}>
-                              📖 {renderHighlightedText(subtitle)}
+                            <p className={`font-semibold leading-relaxed text-storybook-emerald mb-3 ${isPoetry ? 'text-center' : ''}`} style={{ fontSize: `${fontSize * 1.25}rem` }}>
+                              {isPoetry ? '🌸' : '📖'} {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="leading-relaxed text-gray-800 whitespace-pre-wrap indent-6" style={{ fontSize: `${fontSize * 1.125}rem` }}>
+                            <p 
+                              className={`text-gray-800 whitespace-pre-wrap ${isPoetry ? 'text-center tracking-wide font-light italic' : 'leading-relaxed indent-6'}`}
+                              style={{ 
+                                fontSize: `${fontSize * 1.125}rem`,
+                                lineHeight: isPoetry ? '2.5' : undefined
+                              }}
+                            >
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
@@ -1476,15 +1497,22 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
                       const bodyText = lines.slice(1).join('\n');
+                      const isPoetry = selectedBook?.category === 'poetry';
                       return (
-                        <div style={{ fontSize: `${fontSize * 1.25}rem` }}>
+                        <div className={isPoetry ? 'text-center' : ''} style={{ fontSize: `${fontSize * 1.25}rem` }}>
                           {subtitle && (
-                            <p className="font-semibold leading-relaxed text-storybook-emerald mb-3" style={{ fontSize: `${fontSize * 1.25}rem` }}>
-                              📖 {renderHighlightedText(subtitle)}
+                            <p className={`font-semibold leading-relaxed text-storybook-emerald mb-3 ${isPoetry ? 'text-center' : ''}`} style={{ fontSize: `${fontSize * 1.25}rem` }}>
+                              {isPoetry ? '🌸' : '📖'} {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
-                            <p className="leading-relaxed text-gray-800 whitespace-pre-wrap indent-6" style={{ fontSize: `${fontSize * 1.125}rem` }}>
+                            <p 
+                              className={`text-gray-800 whitespace-pre-wrap ${isPoetry ? 'text-center tracking-wide font-light italic' : 'leading-relaxed indent-6'}`}
+                              style={{ 
+                                fontSize: `${fontSize * 1.125}rem`,
+                                lineHeight: isPoetry ? '2.5' : undefined
+                              }}
+                            >
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
