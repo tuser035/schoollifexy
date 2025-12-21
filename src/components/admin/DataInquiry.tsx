@@ -2549,10 +2549,7 @@ const DataInquiry = () => {
   return (
     <div className="space-y-4">
       <Card className="border-data-inquiry-indigo/30">
-        <CardHeader>
-          <CardTitle className="text-data-inquiry-indigo">데이터 조회</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="flex gap-4 flex-wrap">
             <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); setColumnFilters({}); setSearchDepartment(""); setSearchSubject(""); setSearchHomeroom(""); setSearchDeptName(""); }}>
               <SelectTrigger className="w-[200px]">
