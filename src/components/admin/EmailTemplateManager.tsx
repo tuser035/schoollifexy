@@ -150,32 +150,23 @@ const EmailTemplateManager = () => {
   }, [filterType]);
 
   return (
-    <Card>
-      <CardHeader className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-            <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)}>
-              <TabsList className="h-8">
-                <TabsTrigger value="all" className="text-xs px-2">전체</TabsTrigger>
-                <TabsTrigger value="email" className="text-xs px-2">이메일</TabsTrigger>
-                <TabsTrigger value="messenger" className="text-xs px-2">메신저</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" onClick={() => handleDialogClose()}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">새 템플릿</span>
-                  <span className="sm:hidden">추가</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{editingTemplate ? "템플릿 수정" : "새 템플릿 만들기"}</DialogTitle>
-                <DialogDescription>
-                  이메일 템플릿의 제목, 제목, 본문을 입력하세요
-                </DialogDescription>
-              </DialogHeader>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-monthly-green">이메일 템플릿</h3>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" onClick={() => handleDialogClose()}>
+              <Plus className="w-4 h-4 mr-1" />
+              새 템플릿
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{editingTemplate ? "템플릿 수정" : "새 템플릿 만들기"}</DialogTitle>
+              <DialogDescription>
+                이메일 템플릿의 제목, 제목, 본문을 입력하세요
+              </DialogDescription>
+            </DialogHeader>
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
                   <div>
@@ -235,14 +226,12 @@ const EmailTemplateManager = () => {
                     {editingTemplate ? "수정" : "생성"}
                   </Button>
                 </DialogFooter>
-              </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>유형</TableHead>
@@ -297,8 +286,7 @@ const EmailTemplateManager = () => {
             )}
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
+    </div>
   );
 };
 
