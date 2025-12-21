@@ -113,7 +113,7 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
         borderClass: "border-demerit-orange/30",
         textClass: "text-demerit-orange",
-        cardTitle: "상점 조회",
+        cardTitle: "상점/벌점 조회",
         category: "points"
       },
       { 
