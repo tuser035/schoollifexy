@@ -36,7 +36,8 @@ import {
   Maximize,
   Minimize,
   Link,
-  ExternalLink
+  ExternalLink,
+  PenLine
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
@@ -447,6 +448,90 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     } finally {
       setSavingPoetry(false);
     }
+  };
+
+  // CSV 업로드로 시집 일괄 등록
+  const handlePoetryCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          const rows = results.data as any[];
+          if (rows.length === 0) {
+            toast.error('CSV 파일에 데이터가 없습니다');
+            return;
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const row of rows) {
+            const title = row['시집제목'] || row['title'] || '';
+            const poet = row['시인'] || row['poet'] || '';
+            const poemTitle = row['시제목'] || row['poem_title'] || '';
+            const poemContent = row['시내용'] || row['content'] || '';
+            const hashtags = row['해시태그'] || row['hashtags'] || '';
+
+            if (!title || !poet || !poemTitle || !poemContent) {
+              errorCount++;
+              continue;
+            }
+
+            try {
+              const hashtagsArray = hashtags
+                .split(',')
+                .map((tag: string) => tag.trim())
+                .filter((tag: string) => tag.length > 0);
+
+              const { data: collectionId, error: collectionError } = await supabase.rpc('admin_insert_poetry_collection', {
+                admin_id_input: adminId,
+                title_input: title.trim(),
+                poet_input: poet.trim(),
+                hashtags_input: hashtagsArray.length > 0 ? hashtagsArray : null
+              });
+
+              if (collectionError) throw collectionError;
+
+              const { error: poemError } = await supabase.rpc('admin_insert_poem', {
+                admin_id_input: adminId,
+                collection_id_input: collectionId,
+                title_input: poemTitle.trim(),
+                content_input: poemContent.trim(),
+                poem_order_input: 1
+              });
+
+              if (poemError) throw poemError;
+              successCount++;
+            } catch (error) {
+              console.error('Error creating poetry:', error);
+              errorCount++;
+            }
+          }
+
+          if (successCount > 0) {
+            toast.success(`${successCount}개의 시집이 등록되었습니다`);
+          }
+          if (errorCount > 0) {
+            toast.error(`${errorCount}개의 시집 등록에 실패했습니다`);
+          }
+        },
+        error: (error) => {
+          console.error('CSV parse error:', error);
+          toast.error('CSV 파일 파싱에 실패했습니다');
+        }
+      });
+    } catch (error) {
+      console.error('Error reading CSV:', error);
+      toast.error('CSV 파일을 읽는데 실패했습니다');
+    }
+
+    // Reset input
+    e.target.value = '';
   };
 
   const handleSelectBook = (book: Storybook) => {
@@ -1734,10 +1819,27 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           
           {activeSubTab === 'poetry' && (
             <div className="border rounded-lg p-6 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-background">
-              <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400 mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                새 시집 등록
-              </h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                  <PenLine className="w-5 h-5" />
+                  새 시집 등록
+                </h3>
+                <div>
+                  <Label htmlFor="poetry-csv-upload" className="cursor-pointer">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors text-sm font-medium">
+                      <Upload className="w-4 h-4" />
+                      CSV 업로드
+                    </div>
+                  </Label>
+                  <input
+                    id="poetry-csv-upload"
+                    type="file"
+                    accept=".csv"
+                    className="hidden"
+                    onChange={handlePoetryCsvUpload}
+                  />
+                </div>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* 왼쪽: 시집 정보 */}
