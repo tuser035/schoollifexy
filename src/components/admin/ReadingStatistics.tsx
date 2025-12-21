@@ -219,7 +219,7 @@ export default function ReadingStatistics({ adminId }: ReadingStatisticsProps) {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="popular" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            인기 동화책
+            인기 인문학
           </TabsTrigger>
           <TabsTrigger value="poetry" className="flex items-center gap-2">
             <Feather className="w-4 h-4" />
