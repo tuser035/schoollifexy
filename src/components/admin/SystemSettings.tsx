@@ -31,6 +31,7 @@ const SystemSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [replyToEmail, setReplyToEmail] = useState("");
+  const [schoolName, setSchoolName] = useState("");
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
   const [uploadingSymbol, setUploadingSymbol] = useState(false);
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
@@ -59,6 +60,14 @@ const SystemSettings = () => {
       );
       if (replyToSetting) {
         setReplyToEmail(replyToSetting.setting_value);
+      }
+
+      // 학교명 설정 찾기
+      const schoolNameSetting = (data || []).find(
+        (s: SystemSetting) => s.setting_key === "school_name"
+      );
+      if (schoolNameSetting) {
+        setSchoolName(schoolNameSetting.setting_value);
       }
 
       // 학교 심볼 URL 찾기
@@ -114,6 +123,37 @@ const SystemSettings = () => {
       fetchSettings();
     } catch (error: any) {
       console.error("Failed to save setting:", error);
+      toast.error("저장에 실패했습니다");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveSchoolName = async () => {
+    if (!schoolName.trim()) {
+      toast.error("학교명을 입력해주세요");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "school_name",
+        setting_value_input: schoolName.trim(),
+      });
+
+      if (error) throw error;
+
+      toast.success("학교명이 저장되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to save school name:", error);
       toast.error("저장에 실패했습니다");
     } finally {
       setSaving(false);
@@ -402,6 +442,49 @@ const SystemSettings = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">시스템 설정</h2>
       </div>
+
+      {/* 학교명 설정 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Globe className="w-5 h-5" />
+            학교명
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="schoolName">학교명</Label>
+            <p className="text-sm text-muted-foreground">
+              온보딩 화면 등에 표시될 학교명을 입력합니다. 미입력 시 기본값 "스쿨라이프.KR"이 표시됩니다.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                id="schoolName"
+                type="text"
+                value={schoolName}
+                onChange={(e) => setSchoolName(e.target.value)}
+                placeholder="예: ○○고등학교"
+                className="flex-1"
+              />
+              <Button
+                onClick={handleSaveSchoolName}
+                disabled={saving}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? "저장 중..." : "저장"}
+              </Button>
+            </div>
+          </div>
+          {settings.find((s) => s.setting_key === "school_name")?.updated_at && (
+            <p className="text-xs text-muted-foreground">
+              마지막 수정:{" "}
+              {new Date(
+                settings.find((s) => s.setting_key === "school_name")!.updated_at
+              ).toLocaleString("ko-KR")}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 학교 심볼 설정 */}
       <Card>

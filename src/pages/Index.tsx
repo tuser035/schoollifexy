@@ -25,6 +25,7 @@ const Index = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showSystemAdminDialog, setShowSystemAdminDialog] = useState(false);
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
+  const [schoolName, setSchoolName] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,24 +35,31 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 학교 심볼 URL 로드
+  // 학교 심볼 URL 및 학교명 로드
   useEffect(() => {
-    const loadSchoolSymbol = async () => {
+    const loadSchoolSettings = async () => {
       try {
         const { data } = await supabase
           .from('system_settings')
-          .select('setting_value')
-          .eq('setting_key', 'school_symbol_url')
-          .maybeSingle();
+          .select('setting_key, setting_value')
+          .in('setting_key', ['school_symbol_url', 'school_name']);
         
-        if (data?.setting_value) {
-          setSchoolSymbolUrl(data.setting_value);
+        if (data) {
+          const symbolSetting = data.find(s => s.setting_key === 'school_symbol_url');
+          const nameSetting = data.find(s => s.setting_key === 'school_name');
+          
+          if (symbolSetting?.setting_value) {
+            setSchoolSymbolUrl(symbolSetting.setting_value);
+          }
+          if (nameSetting?.setting_value) {
+            setSchoolName(nameSetting.setting_value);
+          }
         }
       } catch (error) {
-        console.error('Failed to load school symbol:', error);
+        console.error('Failed to load school settings:', error);
       }
     };
-    loadSchoolSymbol();
+    loadSchoolSettings();
   }, []);
 
   return (
@@ -90,7 +98,7 @@ const Index = () => {
                 )}
               </div>
               <h1 className="text-[1.75rem] sm:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
-                스쿨라이프.KR
+                {schoolName || "스쿨라이프.KR"}
               </h1>
               <p className="text-lg sm:text-2xl font-semibold">
                 <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
