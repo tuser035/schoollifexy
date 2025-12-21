@@ -54,7 +54,18 @@ interface Storybook {
   page_count: number;
   is_published: boolean;
   created_at: string;
+  category: string | null;
 }
+
+// 카테고리 옵션
+const CATEGORY_OPTIONS = [
+  { value: 'recommended', label: '추천' },
+  { value: 'philosophy', label: '철학' },
+  { value: 'classic', label: '고전' },
+  { value: 'science', label: '과학' },
+  { value: 'history', label: '역사' },
+  { value: 'art', label: '예술' },
+];
 
 interface StorybookPage {
   id: string;
@@ -159,6 +170,9 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [editingPageCountId, setEditingPageCountId] = useState<string | null>(null);
   const [editingPageCountValue, setEditingPageCountValue] = useState<number>(0);
   
+  // Category editing state
+  const [savingCategoryId, setSavingCategoryId] = useState<string | null>(null);
+  
   // Clear highlight after 3 seconds
   useEffect(() => {
     if (recentlyEditedBookId) {
@@ -214,12 +228,13 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       });
 
       if (error) throw error;
-      // RPC에서 subtitle을 반환하지 않으면 기본값 추가
-      const booksWithSubtitle = (data || []).map((book: any) => ({
+      // RPC에서 subtitle, category를 반환하지 않으면 기본값 추가
+      const booksWithDefaults = (data || []).map((book: any) => ({
         ...book,
-        subtitle: book.subtitle ?? null
+        subtitle: book.subtitle ?? null,
+        category: book.category ?? 'recommended'
       }));
-      setBooks(booksWithSubtitle);
+      setBooks(booksWithDefaults);
     } catch (error) {
       console.error('Error loading books:', error);
       toast.error('동화책 목록을 불러오는데 실패했습니다');
@@ -497,6 +512,27 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     } catch (error) {
       console.error('Error toggling publish:', error);
       toast.error('발행 상태 변경에 실패했습니다');
+    }
+  };
+
+  const handleUpdateCategory = async (bookId: string, newCategory: string) => {
+    setSavingCategoryId(bookId);
+    try {
+      const { error } = await supabase.rpc('admin_update_storybook_category', {
+        admin_id_input: adminId,
+        book_id_input: bookId,
+        category_input: newCategory
+      });
+
+      if (error) throw error;
+
+      toast.success('카테고리가 변경되었습니다');
+      loadBooks();
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('카테고리 변경에 실패했습니다');
+    } finally {
+      setSavingCategoryId(null);
     }
   };
 
@@ -1267,6 +1303,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   <TableHead className="w-16">번호</TableHead>
                   <TableHead>제목</TableHead>
                   <TableHead className="max-w-[200px]">설명</TableHead>
+                  <TableHead className="w-24">카테고리</TableHead>
                   <TableHead className="w-20">페이지</TableHead>
                   <TableHead className="w-20">상태</TableHead>
                   <TableHead className="w-32">작업</TableHead>
@@ -1389,6 +1426,20 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                           {book.description || '-'}
                         </span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <select
+                        value={book.category || 'recommended'}
+                        onChange={(e) => handleUpdateCategory(book.id, e.target.value)}
+                        disabled={savingCategoryId === book.id}
+                        className="text-sm border rounded px-2 py-1 bg-background cursor-pointer hover:border-amber-500 transition-colors disabled:opacity-50"
+                      >
+                        {CATEGORY_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
                     </TableCell>
                     <TableCell>
                       {editingPageCountId === book.id ? (

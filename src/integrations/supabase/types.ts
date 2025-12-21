@@ -1738,6 +1738,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_storybook_category: {
+        Args: {
+          admin_id_input: string
+          book_id_input: string
+          category_input: string
+        }
+        Returns: boolean
+      }
       admin_update_storybook_cover: {
         Args: {
           admin_id_input: string
