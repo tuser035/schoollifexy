@@ -27,6 +27,7 @@ const StudentDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [activeDetailTab, setActiveDetailTab] = useState<string>("merits");
 
   const fetchStudentData = useCallback(async (studentId: string) => {
     setIsLoading(true);
@@ -305,9 +306,8 @@ const StudentDashboard = () => {
               {!isLoading && (
                 <Button 
                   onClick={() => {
-                    const activeTab = document.querySelector('[data-state="active"][role="tab"]')?.getAttribute('value') || 'merits';
-                    if (activeTab === 'merits') downloadCSV(merits, 'merits');
-                    else if (activeTab === 'demerits') downloadCSV(demerits, 'demerits');
+                    if (activeDetailTab === 'merits') downloadCSV(merits, 'merits');
+                    else if (activeDetailTab === 'demerits') downloadCSV(demerits, 'demerits');
                     else downloadCSV(monthly, 'monthly');
                   }}
                   variant="outline"
@@ -325,7 +325,7 @@ const StudentDashboard = () => {
             {isLoading ? (
               <p className="text-muted-foreground text-sm">로딩 중...</p>
             ) : (
-              <Tabs defaultValue="merits" className="w-full">
+              <Tabs defaultValue="merits" value={activeDetailTab} onValueChange={setActiveDetailTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10 bg-muted/50">
                   <TabsTrigger value="merits" className="text-xs sm:text-sm px-1 sm:px-3 data-[state=active]:bg-merit-blue data-[state=active]:text-white">
                     <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
