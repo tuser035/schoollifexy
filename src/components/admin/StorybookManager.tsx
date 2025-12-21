@@ -480,12 +480,34 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
 
           let skipCount = 0;
 
+          // 키 이름 정규화 함수 (공백 제거)
+          const normalizeKey = (key: string) => key.replace(/\s+/g, '').toLowerCase();
+          
+          // 각 행에서 값을 가져오는 헬퍼 함수
+          const getRowValue = (row: any, ...possibleKeys: string[]) => {
+            for (const key of possibleKeys) {
+              // 원본 키로 먼저 시도
+              if (row[key]) return row[key];
+            }
+            // 정규화된 키로 비교
+            const rowKeys = Object.keys(row);
+            for (const possibleKey of possibleKeys) {
+              const normalizedPossible = normalizeKey(possibleKey);
+              for (const rowKey of rowKeys) {
+                if (normalizeKey(rowKey) === normalizedPossible) {
+                  return row[rowKey];
+                }
+              }
+            }
+            return '';
+          };
+
           for (const row of rows) {
-            const collectionTitle = row['시집제목'] || row['시집 제목'] || row['title'] || '';
-            const poet = row['시인'] || row['poet'] || '';
-            const poemTitle = row['시제목'] || row['시 제목'] || row['poem_title'] || '';
-            const poemContent = row['시내용'] || row['시 내용'] || row['content'] || '';
-            const hashtags = row['해시태그'] || row['해시 태그'] || row['hashtags'] || '';
+            const collectionTitle = getRowValue(row, '시집제목', '시집 제목', 'title');
+            const poet = getRowValue(row, '시인', 'poet');
+            const poemTitle = getRowValue(row, '시제목', '시 제목', 'poem_title');
+            const poemContent = getRowValue(row, '시내용', '시 내용', 'content');
+            const hashtags = getRowValue(row, '해시태그', '해시 태그', 'hashtags');
 
             if (!collectionTitle || !poet || !poemTitle || !poemContent) {
               console.log('Skipping row due to missing fields:', { collectionTitle, poet, poemTitle, poemContent: poemContent?.substring(0, 50) });
