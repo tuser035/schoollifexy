@@ -38,6 +38,7 @@ type TabItem = {
   borderClass: string;
   textClass: string;
   cardTitle: string;
+  cardIcon?: LucideIcon;
   category: string;
   description?: string;
 };
@@ -189,7 +190,8 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         activeClass: "data-[state=active]:bg-pink-500 data-[state=active]:text-white",
         borderClass: "border-pink-500/30",
         textClass: "text-pink-600",
-        cardTitle: "마음톡 조회",
+        cardTitle: "마음톡 상담 조회",
+        cardIcon: MessageCircle,
         category: "mindtalk"
       },
       { 
@@ -519,7 +521,8 @@ const AdminDashboard = () => {
                 <TabsContent key={item.value} value={item.value}>
                   <Card className={item.borderClass}>
                     <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
-                      <CardTitle className={`text-base sm:text-lg ${item.textClass}`}>
+                      <CardTitle className={`text-base sm:text-lg ${item.textClass} flex items-center gap-2`}>
+                        {item.cardIcon && <item.cardIcon className="w-5 h-5" />}
                         {item.cardTitle}
                       </CardTitle>
                       {item.description && (
