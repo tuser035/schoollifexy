@@ -62,6 +62,7 @@ const CATEGORY_OPTIONS = [
   { value: 'science', label: '과학' },
   { value: 'history', label: '역사' },
   { value: 'art', label: '예술' },
+  { value: 'poetry', label: '시집' },
 ];
 
 interface StorybookPage {
@@ -157,6 +158,12 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [externalUrlTitle, setExternalUrlTitle] = useState('');
   const [externalUrlValue, setExternalUrlValue] = useState('');
   const [externalUrlBookNumber, setExternalUrlBookNumber] = useState('');
+  
+  // Poetry dialog state
+  const [isPoetryDialogOpen, setIsPoetryDialogOpen] = useState(false);
+  const [poetryBookNumber, setPoetryBookNumber] = useState('');
+  const [poetryTitle, setPoetryTitle] = useState('');
+  const [poetryDescription, setPoetryDescription] = useState('');
   
   // Page count editing state
   const [editingPageCountId, setEditingPageCountId] = useState<string | null>(null);
@@ -328,6 +335,48 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
         toast.error('이미 존재하는 일련번호입니다');
       } else {
         toast.error('동화책 생성에 실패했습니다');
+      }
+    }
+  };
+
+  const handleCreatePoetryBook = async () => {
+    if (!poetryBookNumber || !poetryTitle) {
+      toast.error('일련번호와 제목을 입력해주세요');
+      return;
+    }
+
+    try {
+      // 시집 생성 후 카테고리를 poetry로 업데이트
+      const { data, error } = await supabase.rpc('admin_insert_storybook', {
+        admin_id_input: adminId,
+        book_number_input: parseInt(poetryBookNumber),
+        title_input: poetryTitle,
+        description_input: poetryDescription || null
+      });
+
+      if (error) throw error;
+
+      // 생성된 책의 카테고리를 poetry로 업데이트
+      if (data) {
+        await supabase.rpc('admin_update_storybook_category', {
+          admin_id_input: adminId,
+          book_id_input: data,
+          category_input: 'poetry'
+        });
+      }
+
+      toast.success('시집이 생성되었습니다');
+      setIsPoetryDialogOpen(false);
+      setPoetryBookNumber('');
+      setPoetryTitle('');
+      setPoetryDescription('');
+      loadBooks();
+    } catch (error: any) {
+      console.error('Error creating poetry book:', error);
+      if (error.message?.includes('duplicate')) {
+        toast.error('이미 존재하는 일련번호입니다');
+      } else {
+        toast.error('시집 생성에 실패했습니다');
       }
     }
   };
@@ -1110,11 +1159,68 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
               </DialogContent>
             </Dialog>
             
-            {/* + 시집 버튼 (시집 카테고리용 - 동일한 기능이지만 시집 카테고리로 분류) */}
-            <Button size="sm" variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
-              <Plus className="w-4 h-4 mr-1" />
-              시집
-            </Button>
+            {/* + 시집 버튼 */}
+            <Dialog open={isPoetryDialogOpen} onOpenChange={setIsPoetryDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
+                  <Plus className="w-4 h-4 mr-1" />
+                  시집
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>새 시집 만들기</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>일련번호</Label>
+                      <Input
+                        type="number"
+                        placeholder="예: 1"
+                        value={poetryBookNumber}
+                        onChange={(e) => setPoetryBookNumber(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>제목</Label>
+                      <Input
+                        placeholder="시집 제목"
+                        value={poetryTitle}
+                        onChange={(e) => setPoetryTitle(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>설명 (마크다운 지원)</Label>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">입력</p>
+                        <Textarea
+                          value={poetryDescription}
+                          onChange={(e) => setPoetryDescription(e.target.value)}
+                          placeholder="마크다운 형식으로 입력하세요..."
+                          className="min-h-[150px] resize-none font-mono text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">미리보기</p>
+                        <div className="min-h-[150px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
+                          {poetryDescription ? (
+                            <ReactMarkdown>{poetryDescription}</ReactMarkdown>
+                          ) : (
+                            <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <Button onClick={handleCreatePoetryBook} className="w-full bg-purple-600 hover:bg-purple-700">
+                    시집 생성하기
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
             
             {/* + 추천도서 버튼 (외부 URL 동화책) */}
             <Dialog open={isExternalUrlDialogOpen} onOpenChange={setIsExternalUrlDialogOpen}>
