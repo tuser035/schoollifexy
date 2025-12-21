@@ -1891,7 +1891,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                           <TableHead>도서 제목</TableHead>
                           <TableHead>저자</TableHead>
                           <TableHead className="w-24 text-center">학기</TableHead>
-                          <TableHead className="w-24 text-center">활성</TableHead>
+                          <TableHead className="w-24 text-center">발행</TableHead>
                           <TableHead className="w-32 text-center">관리</TableHead>
                         </TableRow>
                       </TableHeader>
