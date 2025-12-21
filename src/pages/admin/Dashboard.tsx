@@ -38,6 +38,7 @@ type TabItem = {
   textClass: string;
   cardTitle: string;
   category: string;
+  description?: string;
 };
 
 type TabGroup = {
@@ -264,8 +265,9 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
           activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
           borderClass: "border-email-history-teal/30",
           textClass: "text-email-history-teal",
-          cardTitle: "시스템 설정",
-          category: "system"
+          cardTitle: "설정",
+          category: "system",
+          description: "학교명, 심볼, 파비콘, 이메일 회신 주소 등 기본 설정을 관리합니다."
         },
         { 
           value: "export", 
@@ -275,7 +277,8 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
           borderClass: "border-email-history-teal/30",
           textClass: "text-email-history-teal",
           cardTitle: "데이터 백업",
-          category: "system"
+          category: "system",
+          description: "모든 데이터를 CSV 또는 JSON 형식으로 내보내고 복원합니다."
         },
         { 
           value: "auto-backup", 
@@ -285,7 +288,8 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
           borderClass: "border-email-history-teal/30",
           textClass: "text-email-history-teal",
           cardTitle: "자동 백업 설정",
-          category: "system"
+          category: "system",
+          description: "정기적인 자동 백업 스케줄을 설정하고 관리합니다."
         },
         { 
           value: "storage", 
@@ -295,7 +299,8 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
           borderClass: "border-email-history-teal/30",
           textClass: "text-email-history-teal",
           cardTitle: "파일 관리",
-          category: "system"
+          category: "system",
+          description: "업로드된 이미지, 첨부파일 등 저장소 파일을 관리합니다."
         },
         { 
           value: "security-logs", 
@@ -305,7 +310,8 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
           borderClass: "border-email-history-teal/30",
           textClass: "text-email-history-teal",
           cardTitle: "보안 로그",
-          category: "system"
+          category: "system",
+          description: "로그인 시도, 권한 변경 등 보안 관련 활동 기록을 확인합니다."
         },
         { 
           value: "db-logs", 
@@ -315,7 +321,8 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
           borderClass: "border-email-history-teal/30",
           textClass: "text-email-history-teal",
           cardTitle: "DB 로그",
-          category: "system"
+          category: "system",
+          description: "데이터베이스 변경 이력 및 감사 로그를 조회합니다."
         }
       ]
     });
@@ -466,6 +473,11 @@ const AdminDashboard = () => {
                   <CardTitle className={`text-base sm:text-lg ${item.textClass}`}>
                     {item.cardTitle}
                   </CardTitle>
+                  {item.description && (
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                      {item.description}
+                    </p>
+                  )}
                 </CardHeader>
                 <CardContent className="px-3 sm:px-6">
                   {renderContent()}
