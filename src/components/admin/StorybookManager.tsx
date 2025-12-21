@@ -467,6 +467,10 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             return;
           }
 
+          // CSV 파일의 열 이름 확인
+          console.log('CSV 헤더 (열 이름):', Object.keys(rows[0]));
+          console.log('첫 번째 행 데이터:', rows[0]);
+
           // 시집별로 시들을 그룹화
           const collectionsMap = new Map<string, {
             poet: string;
@@ -475,7 +479,6 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           }>();
 
           let skipCount = 0;
-          let poemOrder = 1;
 
           for (const row of rows) {
             const collectionTitle = row['시집제목'] || row['시집 제목'] || row['title'] || '';
