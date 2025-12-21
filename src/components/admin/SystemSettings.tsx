@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe, RotateCcw, MessageCircle, CheckCircle2, XCircle } from "lucide-react";
+import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe, RotateCcw, MessageCircle, CheckCircle2, XCircle, History, ChevronDown, ChevronUp } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +26,18 @@ interface SystemSetting {
   updated_at: string;
 }
 
+interface AuditLog {
+  id: string;
+  created_at: string;
+  action_type: string;
+  table_name: string | null;
+  record_id: string | null;
+  old_data: any;
+  new_data: any;
+  user_type: string | null;
+  user_name?: string;
+}
+
 // 동적으로 파비콘 변경하는 함수
 const updateFavicon = (url: string) => {
   const link: HTMLLinkElement =
@@ -35,6 +47,29 @@ const updateFavicon = (url: string) => {
   link.rel = "shortcut icon";
   link.href = url;
   document.getElementsByTagName("head")[0].appendChild(link);
+};
+
+// 설정 키를 한글 라벨로 변환
+const getSettingKeyLabel = (key: string | undefined): string => {
+  const labels: Record<string, string> = {
+    school_name: "학교명",
+    school_name_en: "학교 영문명",
+    school_symbol_url: "학교 심볼",
+    favicon_url: "파비콘",
+    kakao_qr_url: "카카오톡 QR 코드",
+    kakao_chat_url: "카카오톡 채팅방 URL",
+    reply_to_email: "답장 이메일",
+  };
+  return labels[key || ""] || key || "알 수 없음";
+};
+
+// 긴 값 자르기 (URL 등)
+const truncateValue = (value: string | undefined): string => {
+  if (!value) return "";
+  if (value.length > 50) {
+    return value.substring(0, 50) + "...";
+  }
+  return value;
 };
 
 const SystemSettings = () => {
@@ -53,6 +88,9 @@ const SystemSettings = () => {
   const [kakaoChatUrl, setKakaoChatUrl] = useState("");
   const [kakaoChatUrlError, setKakaoChatUrlError] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const kakaoQrInputRef = useRef<HTMLInputElement>(null);
@@ -265,9 +303,44 @@ const SystemSettings = () => {
     }
   };
 
+  const fetchAuditLogs = async () => {
+    setLoadingHistory(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      const { data, error } = await supabase.rpc("get_audit_logs", {
+        p_admin_id: user.id,
+        p_limit: 50,
+      });
+
+      if (error) throw error;
+
+      // system_settings 테이블 관련 로그만 필터링
+      const settingsLogs = (data || []).filter(
+        (log: AuditLog) => log.table_name === "system_settings"
+      );
+
+      setAuditLogs(settingsLogs);
+    } catch (error: any) {
+      console.error("Failed to fetch audit logs:", error);
+      toast.error("변경 내역을 불러오는데 실패했습니다");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
   }, []);
+
+  useEffect(() => {
+    if (showHistory) {
+      fetchAuditLogs();
+    }
+  }, [showHistory]);
 
   const handleSaveReplyToEmail = async () => {
     if (!replyToEmail || !replyToEmail.includes("@")) {
@@ -1343,6 +1416,99 @@ const SystemSettings = () => {
             </p>
           )}
         </CardContent>
+      </Card>
+
+      {/* 설정 변경 히스토리 */}
+      <Card>
+        <CardHeader 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => setShowHistory(!showHistory)}
+        >
+          <CardTitle className="flex items-center justify-between text-lg">
+            <div className="flex items-center gap-2">
+              <History className="w-5 h-5" />
+              설정 변경 히스토리
+            </div>
+            {showHistory ? (
+              <ChevronUp className="w-5 h-5" />
+            ) : (
+              <ChevronDown className="w-5 h-5" />
+            )}
+          </CardTitle>
+        </CardHeader>
+        {showHistory && (
+          <CardContent className="space-y-4">
+            {loadingHistory ? (
+              <div className="flex items-center justify-center p-4">
+                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                <span className="text-muted-foreground">로딩 중...</span>
+              </div>
+            ) : auditLogs.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                변경 내역이 없습니다
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {auditLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="border rounded-lg p-3 bg-muted/30"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm">
+                        {getSettingKeyLabel(log.new_data?.setting_key || log.old_data?.setting_key)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(log.created_at).toLocaleString("ko-KR")}
+                      </span>
+                    </div>
+                    <div className="text-sm space-y-1">
+                      {log.action_type === "UPDATE" && (
+                        <>
+                          <div className="flex items-start gap-2">
+                            <span className="text-muted-foreground shrink-0">이전:</span>
+                            <span className="text-red-600 break-all">
+                              {truncateValue(log.old_data?.setting_value) || "(없음)"}
+                            </span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="text-muted-foreground shrink-0">변경:</span>
+                            <span className="text-green-600 break-all">
+                              {truncateValue(log.new_data?.setting_value) || "(없음)"}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                      {log.action_type === "INSERT" && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-muted-foreground shrink-0">생성:</span>
+                          <span className="text-green-600 break-all">
+                            {truncateValue(log.new_data?.setting_value)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {log.user_name && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        변경자: {log.user_name}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchAuditLogs}
+              disabled={loadingHistory}
+              className="w-full"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loadingHistory ? 'animate-spin' : ''}`} />
+              새로고침
+            </Button>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
