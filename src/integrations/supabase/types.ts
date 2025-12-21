@@ -839,6 +839,7 @@ export type Database = {
       storybooks: {
         Row: {
           book_number: number
+          category: string | null
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -852,6 +853,7 @@ export type Database = {
         }
         Insert: {
           book_number: number
+          category?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -865,6 +867,7 @@ export type Database = {
         }
         Update: {
           book_number?: number
+          category?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
