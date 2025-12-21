@@ -445,7 +445,7 @@ const AdminDashboard = () => {
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center">
           <div className="min-w-0 flex-1">
             <h1 className="text-lg sm:text-2xl font-bold text-foreground">
-              {user.type === "admin" ? "시스템 관리자" : user.isAdmin ? "관리자" : "데이터 조회"}
+              {user.type === "admin" ? "시스템 관리자" : user.isAdmin ? "관리자 대시보드" : "데이터 조회"}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground truncate">
               {user.type === "admin" 
