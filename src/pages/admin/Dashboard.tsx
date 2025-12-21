@@ -474,14 +474,14 @@ const AdminDashboard = () => {
         {/* 카테고리 그룹 탭바 */}
         <Tabs value={activeGroup} onValueChange={handleGroupChange} className="w-full mb-4">
           <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-            <TabsList className="flex w-full bg-muted/50">
+            <TabsList className="flex w-full bg-muted/50 rounded-lg p-1">
               {tabGroups.map((group) => {
                 const firstItem = group.items[0];
                 return (
                   <TabsTrigger
                     key={group.name}
                     value={group.name}
-                    className={`flex-1 whitespace-nowrap text-xs sm:text-sm px-1 sm:px-3 py-2 font-medium ${firstItem.activeClass}`}
+                    className={`flex-1 whitespace-nowrap text-xs sm:text-sm px-1 sm:px-3 py-2 font-medium rounded-md ${firstItem.activeClass}`}
                   >
                     {group.label}
                   </TabsTrigger>
@@ -503,14 +503,14 @@ const AdminDashboard = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {currentGroup.items.length > 1 && (
                 <div className="mb-4 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                  <TabsList className="flex w-full bg-muted/30">
+                  <TabsList className="flex w-full bg-muted/30 rounded-lg p-1">
                     {currentGroup.items.map((item) => {
                       const Icon = item.icon;
                       return (
                         <TabsTrigger
                           key={item.value}
                           value={item.value}
-                          className={`flex-1 whitespace-nowrap text-xs sm:text-sm px-1 sm:px-2 ${item.activeClass}`}
+                          className={`flex-1 whitespace-nowrap text-xs sm:text-sm px-1 sm:px-2 rounded-md ${item.activeClass}`}
                         >
                           <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                           <span>{item.label}</span>
