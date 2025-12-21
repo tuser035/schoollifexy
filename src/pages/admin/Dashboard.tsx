@@ -337,9 +337,8 @@ const AdminDashboard = () => {
             </div>
             <div className="flex gap-1 sm:gap-2">
               {user.type === "teacher" && (
-                <Button onClick={() => navigate("/teacher/dashboard")} variant="outline" size="sm">
-                  <GraduationCap className="w-4 h-4 mr-1" />
-                  교사 대시보드
+                <Button onClick={() => navigate("/teacher/dashboard")} variant="outline" size="sm" title="교사 대시보드">
+                  <GraduationCap className="w-4 h-4" />
                 </Button>
               )}
               <Button onClick={handleLogout} variant="outline" size="sm">
