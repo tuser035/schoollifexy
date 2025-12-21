@@ -59,7 +59,7 @@ export const BOOK_SERIES: BookSeries[] = [
     title: '철학',
     subtitle: '철학적 사고를 키우는 이야기',
     icon: 'BookOpen',
-    bookNumberRange: { min: 1, max: 5 },
+    bookNumberRange: { min: 1, max: 99 },
     theme: {
       name: 'pink',
       headerBg: 'bg-gradient-to-r from-pink-50 to-white',
@@ -79,7 +79,7 @@ export const BOOK_SERIES: BookSeries[] = [
     title: '시집',
     subtitle: '마음을 울리는 시의 세계',
     icon: 'Feather',
-    bookNumberRange: { min: 6, max: 10 },
+    bookNumberRange: { min: 1, max: 99 },
     theme: {
       name: 'rose',
       headerBg: 'bg-gradient-to-r from-rose-50 to-white',
@@ -99,7 +99,7 @@ export const BOOK_SERIES: BookSeries[] = [
     title: '추천도서',
     subtitle: '선생님이 추천하는 도서',
     icon: 'BookMarked',
-    bookNumberRange: { min: 11, max: 15 },
+    bookNumberRange: { min: 1, max: 99 },
     theme: {
       name: 'amber',
       headerBg: 'bg-gradient-to-r from-amber-50 to-white',
