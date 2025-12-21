@@ -243,7 +243,7 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         activeClass: "data-[state=active]:bg-teal-500 data-[state=active]:text-white",
         borderClass: "border-teal-500/30",
         textClass: "text-teal-600",
-        cardTitle: "도서 추가",
+        cardTitle: "",
         category: "reading",
         hasSubTabs: true
       },
