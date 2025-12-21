@@ -81,16 +81,39 @@ serve(async (req) => {
       .from("school-symbols")
       .getPublicUrl(storagePath);
 
-    // 설정에 URL 저장
+    // 설정에 URL 저장 - 먼저 기존 설정이 있는지 확인
     const settingKey = image_type === "favicon" ? "favicon_url" : "school_symbol_url";
-    const { error: settingError } = await supabase
+    
+    const { data: existingSetting } = await supabase
       .from("system_settings")
-      .upsert({
-        setting_key: settingKey,
-        setting_value: publicUrlData.publicUrl,
-        updated_at: new Date().toISOString(),
-        updated_by: admin_id,
-      }, { onConflict: "setting_key" });
+      .select("id")
+      .eq("setting_key", settingKey)
+      .single();
+
+    let settingError;
+    if (existingSetting) {
+      // 기존 설정 업데이트
+      const { error } = await supabase
+        .from("system_settings")
+        .update({
+          setting_value: publicUrlData.publicUrl,
+          updated_at: new Date().toISOString(),
+          updated_by: admin_id,
+        })
+        .eq("setting_key", settingKey);
+      settingError = error;
+    } else {
+      // 새 설정 삽입
+      const { error } = await supabase
+        .from("system_settings")
+        .insert({
+          setting_key: settingKey,
+          setting_value: publicUrlData.publicUrl,
+          updated_at: new Date().toISOString(),
+          updated_by: admin_id,
+        });
+      settingError = error;
+    }
 
     if (settingError) {
       console.error("Setting update error:", settingError);
