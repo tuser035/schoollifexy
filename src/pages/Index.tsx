@@ -167,7 +167,7 @@ const Index = () => {
             </Tabs>
 
             {/* 카카오톡 오픈채팅방 안내 */}
-            <p className="mt-4 text-xs sm:text-sm text-center text-muted-foreground whitespace-nowrap flex items-center justify-center gap-1">
+            <p className="mt-2 text-xs sm:text-sm text-center text-muted-foreground whitespace-nowrap flex items-center justify-center gap-1">
               스쿨라이프.KR 시스템 문의가 있을까요?{" "}
               {kakaoChatUrl ? (
                 <a 
