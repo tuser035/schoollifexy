@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import SystemAdminLogin from "@/components/auth/SystemAdminLogin";
-import { School } from "lucide-react";
+import { School, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +28,7 @@ const Index = () => {
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [schoolNameEn, setSchoolNameEn] = useState<string | null>(null);
+  const [kakaoChatUrl, setKakaoChatUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -44,12 +45,13 @@ const Index = () => {
         const { data } = await supabase
           .from('system_settings')
           .select('setting_key, setting_value')
-          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en']);
+          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en', 'kakao_chat_url']);
         
         if (data) {
           const symbolSetting = data.find(s => s.setting_key === 'school_symbol_url');
           const nameSetting = data.find(s => s.setting_key === 'school_name');
           const nameEnSetting = data.find(s => s.setting_key === 'school_name_en');
+          const kakaoChatSetting = data.find(s => s.setting_key === 'kakao_chat_url');
           if (symbolSetting?.setting_value) {
             setSchoolSymbolUrl(symbolSetting.setting_value);
           }
@@ -58,6 +60,9 @@ const Index = () => {
           }
           if (nameEnSetting?.setting_value) {
             setSchoolNameEn(nameEnSetting.setting_value);
+          }
+          if (kakaoChatSetting?.setting_value) {
+            setKakaoChatUrl(kakaoChatSetting.setting_value);
           }
         }
       } catch (error) {
@@ -160,6 +165,24 @@ const Index = () => {
                 <TeacherLogin />
               </TabsContent>
             </Tabs>
+
+            {/* 카카오톡 오픈채팅방 안내 */}
+            <p className="mt-4 text-xs sm:text-sm text-center text-muted-foreground whitespace-nowrap flex items-center justify-center gap-1">
+              스쿨라이프.KR 시스템 문의가 있을까요?{" "}
+              {kakaoChatUrl ? (
+                <a 
+                  href={kakaoChatUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-yellow-600 hover:underline"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  오픈채팅방
+                </a>
+              ) : (
+                <span className="text-muted-foreground">오픈채팅방</span>
+              )}
+            </p>
 
           </div>
         </Card>
