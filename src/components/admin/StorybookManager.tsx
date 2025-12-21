@@ -1694,84 +1694,91 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   등록된 추천도서가 없습니다
                 </div>
               ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">번호</TableHead>
-                  <TableHead>제목</TableHead>
-                  <TableHead className="max-w-[200px]">URL</TableHead>
-                  <TableHead className="w-20">상태</TableHead>
-                  <TableHead className="w-32">작업</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {books.filter(b => b.external_url).map((book) => (
-                  <TableRow 
-                    key={book.id}
-                    className={`${recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''} bg-blue-50 dark:bg-blue-900/20`}
-                  >
-                    <TableCell className="font-medium">{book.book_number}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {book.cover_image_url ? (
-                          <img 
-                            src={book.cover_image_url} 
-                            alt={book.title}
-                            className="w-10 h-14 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-10 h-14 flex items-center justify-center bg-muted rounded">
-                            <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                          </div>
-                        )}
-                        <span>{book.title}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[200px]">
-                      <a 
-                        href={book.external_url || '#'} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline truncate block"
-                      >
-                        {book.external_url}
-                      </a>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={book.is_published ? "default" : "secondary"}
-                        className={book.is_published ? "bg-emerald-500" : ""}
-                      >
-                        {book.is_published ? "발행" : "미발행"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handlePreviewBook(book)}
-                          title="새 탭에서 열기"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => {
-                            setBookToDelete(book);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-teal-50 dark:bg-teal-950/30">
+                    <TableHead className="w-16">번호</TableHead>
+                    <TableHead>제목</TableHead>
+                    <TableHead className="max-w-[200px]">URL</TableHead>
+                    <TableHead className="w-24 text-center">발행</TableHead>
+                    <TableHead className="w-32 text-center">관리</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {books.filter(b => b.external_url).map((book, index) => (
+                    <TableRow 
+                      key={book.id}
+                      className={`hover:bg-teal-50/50 dark:hover:bg-teal-950/10 ${recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''}`}
+                    >
+                      <TableCell className="font-medium text-center">{book.book_number}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {book.cover_image_url ? (
+                            <img 
+                              src={book.cover_image_url} 
+                              alt={book.title}
+                              className="w-8 h-10 rounded object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-10 bg-teal-100 dark:bg-teal-900/30 rounded flex items-center justify-center">
+                              <ExternalLink className="w-4 h-4 text-teal-500" />
+                            </div>
+                          )}
+                          <span className="font-medium">{book.title}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <a 
+                          href={book.external_url || '#'} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-teal-600 hover:underline truncate block text-sm"
+                        >
+                          {book.external_url}
+                        </a>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={book.is_published}
+                          onCheckedChange={() => handleTogglePublish(book)}
+                          className="data-[state=checked]:bg-teal-600"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                            onClick={() => {
+                              if (book.external_url) {
+                                window.open(book.external_url, '_blank');
+                              }
+                            }}
+                            title="새 탭에서 열기"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => {
+                              setBookToDelete(book);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                            title="삭제"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
               )}
             </>
           )}
