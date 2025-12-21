@@ -415,13 +415,7 @@ const MindTalkInquiry = ({ userId }: MindTalkInquiryProps) => {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-mindtalk-chat-cyan" />
-            마음톡 상담 조회
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Tabs defaultValue="alerts" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger 
