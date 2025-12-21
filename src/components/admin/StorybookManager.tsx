@@ -213,6 +213,35 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   // Category editing state
   const [savingCategoryId, setSavingCategoryId] = useState<string | null>(null);
   
+  // Recommended books state (학기별 추천도서)
+  interface RecommendedBook {
+    id: string;
+    title: string;
+    author: string | null;
+    description: string | null;
+    year: number;
+    quarter: number;
+    display_order: number | null;
+    is_active: boolean;
+    created_at: string;
+  }
+  const [recommendedBooks, setRecommendedBooks] = useState<RecommendedBook[]>([]);
+  const [loadingRecommendedBooks, setLoadingRecommendedBooks] = useState(false);
+  const [newRecBookTitle, setNewRecBookTitle] = useState('');
+  const [newRecBookAuthor, setNewRecBookAuthor] = useState('');
+  const [newRecBookDescription, setNewRecBookDescription] = useState('');
+  const [newRecBookYear, setNewRecBookYear] = useState(new Date().getFullYear());
+  const [newRecBookQuarter, setNewRecBookQuarter] = useState(Math.ceil((new Date().getMonth() + 1) / 3));
+  const [savingRecBook, setSavingRecBook] = useState(false);
+  const [recBookToDelete, setRecBookToDelete] = useState<RecommendedBook | null>(null);
+  const [isRecBookDeleteDialogOpen, setIsRecBookDeleteDialogOpen] = useState(false);
+  const [editingRecBook, setEditingRecBook] = useState<RecommendedBook | null>(null);
+  const [isRecBookEditDialogOpen, setIsRecBookEditDialogOpen] = useState(false);
+  const [editRecBookTitle, setEditRecBookTitle] = useState('');
+  const [editRecBookAuthor, setEditRecBookAuthor] = useState('');
+  const [editRecBookDescription, setEditRecBookDescription] = useState('');
+  const [editRecBookDisplayOrder, setEditRecBookDisplayOrder] = useState(1);
+  
   // Clear highlight after 3 seconds
   useEffect(() => {
     if (recentlyEditedBookId) {
@@ -236,6 +265,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   useEffect(() => {
     loadBooks();
     loadPoetryCollections();
+    loadRecommendedBooks();
   }, [adminId]);
   
   // Real-time subscription for storybooks
@@ -300,6 +330,141 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     } finally {
       setLoadingPoetry(false);
     }
+  };
+
+  // Load recommended books
+  const loadRecommendedBooks = async () => {
+    try {
+      setLoadingRecommendedBooks(true);
+      const { data, error } = await supabase.rpc('admin_get_recommended_books', {
+        admin_id_input: adminId
+      });
+
+      if (error) throw error;
+      setRecommendedBooks(data || []);
+    } catch (error) {
+      console.error('Error loading recommended books:', error);
+      toast.error('추천도서 목록을 불러오는데 실패했습니다');
+    } finally {
+      setLoadingRecommendedBooks(false);
+    }
+  };
+
+  // Create recommended book
+  const handleCreateRecommendedBook = async () => {
+    if (!newRecBookTitle.trim()) {
+      toast.error('제목을 입력해주세요');
+      return;
+    }
+
+    try {
+      setSavingRecBook(true);
+      const { error } = await supabase.rpc('admin_insert_recommended_book', {
+        admin_id_input: adminId,
+        title_input: newRecBookTitle.trim(),
+        author_input: newRecBookAuthor.trim() || null,
+        description_input: newRecBookDescription.trim() || null,
+        year_input: newRecBookYear,
+        quarter_input: newRecBookQuarter
+      });
+
+      if (error) throw error;
+
+      toast.success('추천도서가 등록되었습니다');
+      setNewRecBookTitle('');
+      setNewRecBookAuthor('');
+      setNewRecBookDescription('');
+      loadRecommendedBooks();
+    } catch (error) {
+      console.error('Error creating recommended book:', error);
+      toast.error('추천도서 등록에 실패했습니다');
+    } finally {
+      setSavingRecBook(false);
+    }
+  };
+
+  // Update recommended book
+  const handleUpdateRecommendedBook = async () => {
+    if (!editingRecBook || !editRecBookTitle.trim()) {
+      toast.error('제목을 입력해주세요');
+      return;
+    }
+
+    try {
+      setSavingRecBook(true);
+      const { error } = await supabase.rpc('admin_update_recommended_book', {
+        admin_id_input: adminId,
+        book_id_input: editingRecBook.id,
+        title_input: editRecBookTitle.trim(),
+        author_input: editRecBookAuthor.trim() || null,
+        description_input: editRecBookDescription.trim() || null,
+        display_order_input: editRecBookDisplayOrder
+      });
+
+      if (error) throw error;
+
+      toast.success('추천도서가 수정되었습니다');
+      setIsRecBookEditDialogOpen(false);
+      setEditingRecBook(null);
+      loadRecommendedBooks();
+    } catch (error) {
+      console.error('Error updating recommended book:', error);
+      toast.error('추천도서 수정에 실패했습니다');
+    } finally {
+      setSavingRecBook(false);
+    }
+  };
+
+  // Delete recommended book
+  const handleDeleteRecommendedBook = async () => {
+    if (!recBookToDelete) return;
+
+    try {
+      const { error } = await supabase.rpc('admin_delete_recommended_book', {
+        admin_id_input: adminId,
+        book_id_input: recBookToDelete.id
+      });
+
+      if (error) throw error;
+
+      toast.success('추천도서가 삭제되었습니다');
+      setIsRecBookDeleteDialogOpen(false);
+      setRecBookToDelete(null);
+      loadRecommendedBooks();
+    } catch (error) {
+      console.error('Error deleting recommended book:', error);
+      toast.error('추천도서 삭제에 실패했습니다');
+    }
+  };
+
+  // Toggle recommended book active status
+  const handleToggleRecommendedBookActive = async (book: RecommendedBook) => {
+    try {
+      const { error } = await supabase.rpc('admin_update_recommended_book', {
+        admin_id_input: adminId,
+        book_id_input: book.id,
+        title_input: book.title,
+        is_active_input: !book.is_active
+      });
+
+      if (error) throw error;
+
+      toast.success(book.is_active ? '비활성화되었습니다' : '활성화되었습니다');
+      loadRecommendedBooks();
+    } catch (error) {
+      console.error('Error toggling recommended book active:', error);
+      toast.error('상태 변경에 실패했습니다');
+    }
+  };
+
+  // Open edit dialog
+  const openRecBookEditDialog = (book: RecommendedBook) => {
+    setEditingRecBook(book);
+    setEditRecBookTitle(book.title);
+    setEditRecBookAuthor(book.author || '');
+    setEditRecBookDescription(book.description || '');
+    setEditRecBookDisplayOrder(book.display_order || 1);
+    setIsRecBookEditDialogOpen(true);
   };
 
   // Toggle poetry collection publish status
@@ -1686,101 +1851,188 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           )}
 
           {activeSubTab === 'recommended' && (
-            <>
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
-              ) : books.filter(b => b.external_url).length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  등록된 추천도서가 없습니다
+            <div className="border rounded-lg p-6 bg-gradient-to-br from-teal-50 to-white dark:from-teal-950/20 dark:to-background">
+              {/* 등록된 추천도서 목록 */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-400 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    등록된 추천도서 목록 ({recommendedBooks.length}권)
+                  </h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={loadRecommendedBooks}
+                    disabled={loadingRecommendedBooks}
+                  >
+                    {loadingRecommendedBooks ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      '새로고침'
+                    )}
+                  </Button>
                 </div>
-              ) : (
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-teal-50 dark:bg-teal-950/30">
-                    <TableHead className="w-16">번호</TableHead>
-                    <TableHead>제목</TableHead>
-                    <TableHead className="max-w-[200px]">URL</TableHead>
-                    <TableHead className="w-24 text-center">발행</TableHead>
-                    <TableHead className="w-32 text-center">관리</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {books.filter(b => b.external_url).map((book, index) => (
-                    <TableRow 
-                      key={book.id}
-                      className={`hover:bg-teal-50/50 dark:hover:bg-teal-950/10 ${recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''}`}
+                
+                {loadingRecommendedBooks ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+                    <span className="ml-2 text-muted-foreground">추천도서 목록 불러오는 중...</span>
+                  </div>
+                ) : recommendedBooks.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    등록된 추천도서가 없습니다. 아래 양식을 통해 새 추천도서를 등록해주세요.
+                  </div>
+                ) : (
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-teal-50 dark:bg-teal-950/30">
+                          <TableHead className="w-16">순서</TableHead>
+                          <TableHead>제목</TableHead>
+                          <TableHead>저자</TableHead>
+                          <TableHead className="w-24 text-center">학기</TableHead>
+                          <TableHead className="w-24 text-center">활성</TableHead>
+                          <TableHead className="w-32 text-center">관리</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {recommendedBooks.map((book) => (
+                          <TableRow key={book.id} className="hover:bg-teal-50/50 dark:hover:bg-teal-950/10">
+                            <TableCell className="font-medium text-center">{book.display_order || '-'}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-10 bg-teal-100 dark:bg-teal-900/30 rounded flex items-center justify-center">
+                                  <BookOpen className="w-4 h-4 text-teal-500" />
+                                </div>
+                                <div>
+                                  <span className="font-medium">{book.title}</span>
+                                  {book.description && (
+                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">{book.description}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{book.author || '-'}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="bg-teal-50 dark:bg-teal-950/30">
+                                {book.year}년 {book.quarter}분기
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch
+                                checked={book.is_active}
+                                onCheckedChange={() => handleToggleRecommendedBookActive(book)}
+                                className="data-[state=checked]:bg-teal-600"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                                  onClick={() => openRecBookEditDialog(book)}
+                                  title="수정"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    setRecBookToDelete(book);
+                                    setIsRecBookDeleteDialogOpen(true);
+                                  }}
+                                  title="삭제"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+
+              {/* 새 추천도서 등록 */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-teal-700 dark:text-teal-400 flex items-center gap-2 mb-4">
+                  <Plus className="w-5 h-5" />
+                  새 추천도서 등록
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>제목 *</Label>
+                    <Input
+                      value={newRecBookTitle}
+                      onChange={(e) => setNewRecBookTitle(e.target.value)}
+                      placeholder="도서 제목을 입력하세요"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>저자</Label>
+                    <Input
+                      value={newRecBookAuthor}
+                      onChange={(e) => setNewRecBookAuthor(e.target.value)}
+                      placeholder="저자를 입력하세요"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>년도</Label>
+                    <Input
+                      type="number"
+                      value={newRecBookYear}
+                      onChange={(e) => setNewRecBookYear(parseInt(e.target.value) || new Date().getFullYear())}
+                      min={2020}
+                      max={2100}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>분기</Label>
+                    <select
+                      value={newRecBookQuarter}
+                      onChange={(e) => setNewRecBookQuarter(parseInt(e.target.value))}
+                      className="w-full h-10 px-3 border rounded-md bg-background"
                     >
-                      <TableCell className="font-medium text-center">{book.book_number}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {book.cover_image_url ? (
-                            <img 
-                              src={book.cover_image_url} 
-                              alt={book.title}
-                              className="w-8 h-10 rounded object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-10 bg-teal-100 dark:bg-teal-900/30 rounded flex items-center justify-center">
-                              <ExternalLink className="w-4 h-4 text-teal-500" />
-                            </div>
-                          )}
-                          <span className="font-medium">{book.title}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-[200px]">
-                        <a 
-                          href={book.external_url || '#'} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-teal-600 hover:underline truncate block text-sm"
-                        >
-                          {book.external_url}
-                        </a>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Switch
-                          checked={book.is_published}
-                          onCheckedChange={() => handleTogglePublish(book)}
-                          className="data-[state=checked]:bg-teal-600"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
-                            onClick={() => {
-                              if (book.external_url) {
-                                window.open(book.external_url, '_blank');
-                              }
-                            }}
-                            title="새 탭에서 열기"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              setBookToDelete(book);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                            title="삭제"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      <option value={1}>1분기 (1-3월)</option>
+                      <option value={2}>2분기 (4-6월)</option>
+                      <option value={3}>3분기 (7-9월)</option>
+                      <option value={4}>4분기 (10-12월)</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label>설명</Label>
+                    <Textarea
+                      value={newRecBookDescription}
+                      onChange={(e) => setNewRecBookDescription(e.target.value)}
+                      placeholder="도서에 대한 간단한 설명을 입력하세요"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={handleCreateRecommendedBook}
+                  disabled={savingRecBook || !newRecBookTitle.trim()}
+                  className="mt-4 bg-teal-600 hover:bg-teal-700"
+                >
+                  {savingRecBook ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      등록 중...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      추천도서 등록
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-              )}
-            </>
           )}
           
           {activeSubTab === 'poetry' && (
@@ -2595,6 +2847,101 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Recommended Book Delete Confirmation */}
+      <AlertDialog open={isRecBookDeleteDialogOpen} onOpenChange={setIsRecBookDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>추천도서 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{recBookToDelete?.title}"을(를) 삭제하시겠습니까?
+              삭제된 추천도서는 복구할 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setRecBookToDelete(null)}>취소</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteRecommendedBook} 
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Recommended Book Edit Dialog */}
+      <Dialog open={isRecBookEditDialogOpen} onOpenChange={setIsRecBookEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5" />
+              추천도서 수정
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>제목 *</Label>
+              <Input
+                value={editRecBookTitle}
+                onChange={(e) => setEditRecBookTitle(e.target.value)}
+                placeholder="도서 제목을 입력하세요"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>저자</Label>
+              <Input
+                value={editRecBookAuthor}
+                onChange={(e) => setEditRecBookAuthor(e.target.value)}
+                placeholder="저자를 입력하세요"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>표시 순서</Label>
+              <Input
+                type="number"
+                value={editRecBookDisplayOrder}
+                onChange={(e) => setEditRecBookDisplayOrder(parseInt(e.target.value) || 1)}
+                min={1}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>설명</Label>
+              <Textarea
+                value={editRecBookDescription}
+                onChange={(e) => setEditRecBookDescription(e.target.value)}
+                placeholder="도서에 대한 간단한 설명을 입력하세요"
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsRecBookEditDialogOpen(false)}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleUpdateRecommendedBook}
+                disabled={savingRecBook || !editRecBookTitle.trim()}
+                className="bg-teal-600 hover:bg-teal-700"
+              >
+                {savingRecBook ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    저장 중...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    저장
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
