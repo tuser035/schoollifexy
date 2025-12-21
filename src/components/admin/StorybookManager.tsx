@@ -458,27 +458,22 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     try {
       const text = await file.text();
       Papa.parse(text, {
-        header: false, // 첫 번째 줄이 Column1, Column2 등이므로 header: false로 설정
+        header: false,
         skipEmptyLines: true,
         complete: async (results) => {
           const rawRows = results.data as string[][];
           
-          // 최소 3행이 있어야 함 (Column 헤더 + 실제 헤더 + 데이터)
-          if (rawRows.length < 3) {
+          if (rawRows.length < 2) {
             toast.error('CSV 파일에 데이터가 없습니다');
             return;
           }
 
-          // 첫 번째 줄(Column1, Column2...)은 건너뛰고, 두 번째 줄을 실제 헤더로 사용
-          const headerRow = rawRows[1]; // 두 번째 줄: 시집 제목, 시 제목, 시인, 시 내용, 해시 태그
-          console.log('실제 헤더:', headerRow);
-          
           // 헤더 인덱스 찾기 (공백 제거하여 비교)
           const normalizeKey = (key: string) => key?.replace(/\s+/g, '').toLowerCase() || '';
           
-          const findHeaderIndex = (...possibleNames: string[]) => {
-            for (let i = 0; i < headerRow.length; i++) {
-              const normalizedHeader = normalizeKey(headerRow[i]);
+          const findHeaderIndexInRow = (row: string[], ...possibleNames: string[]) => {
+            for (let i = 0; i < row.length; i++) {
+              const normalizedHeader = normalizeKey(row[i]);
               for (const name of possibleNames) {
                 if (normalizedHeader === normalizeKey(name)) {
                   return i;
@@ -488,11 +483,25 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             return -1;
           };
           
-          const collectionTitleIdx = findHeaderIndex('시집제목', '시집 제목', 'title');
-          const poetIdx = findHeaderIndex('시인', 'poet');
-          const poemTitleIdx = findHeaderIndex('시제목', '시 제목', 'poem_title');
-          const poemContentIdx = findHeaderIndex('시내용', '시 내용', 'content');
-          const hashtagsIdx = findHeaderIndex('해시태그', '해시 태그', 'hashtags');
+          // 첫 번째 줄에서 헤더 찾기 시도
+          let headerRow = rawRows[0];
+          let dataStartIndex = 1;
+          
+          let collectionTitleIdx = findHeaderIndexInRow(headerRow, '시집제목', '시집 제목', 'title');
+          
+          // 첫 번째 줄에 헤더가 없으면 (Column1, Column2 형식) 두 번째 줄 확인
+          if (collectionTitleIdx === -1 && rawRows.length >= 2) {
+            headerRow = rawRows[1];
+            dataStartIndex = 2;
+            collectionTitleIdx = findHeaderIndexInRow(headerRow, '시집제목', '시집 제목', 'title');
+          }
+          
+          console.log('감지된 헤더:', headerRow, '데이터 시작 인덱스:', dataStartIndex);
+          
+          const poetIdx = findHeaderIndexInRow(headerRow, '시인', 'poet');
+          const poemTitleIdx = findHeaderIndexInRow(headerRow, '시제목', '시 제목', 'poem_title');
+          const poemContentIdx = findHeaderIndexInRow(headerRow, '시내용', '시 내용', 'content');
+          const hashtagsIdx = findHeaderIndexInRow(headerRow, '해시태그', '해시 태그', 'hashtags');
           
           console.log('헤더 인덱스:', { collectionTitleIdx, poetIdx, poemTitleIdx, poemContentIdx, hashtagsIdx });
           
@@ -510,8 +519,8 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
 
           let skipCount = 0;
           
-          // 세 번째 줄부터 실제 데이터
-          const dataRows = rawRows.slice(2);
+          // 데이터 행 추출
+          const dataRows = rawRows.slice(dataStartIndex);
           
           for (const row of dataRows) {
             const collectionTitle = row[collectionTitleIdx]?.trim() || '';
