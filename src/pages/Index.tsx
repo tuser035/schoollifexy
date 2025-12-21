@@ -92,7 +92,7 @@ const Index = () => {
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
         <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl">
-          <div className="p-4 sm:p-8">
+          <div className="p-4 sm:p-8 pb-3 sm:pb-5">
             <div className="text-center mb-4 sm:mb-8">
               <div className="flex justify-center mb-3 sm:mb-6">
                 {schoolSymbolUrl ? (
