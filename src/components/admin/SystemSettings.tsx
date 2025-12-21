@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Mail, RefreshCw, Upload, Image, Trash2 } from "lucide-react";
+import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe } from "lucide-react";
 
 interface SystemSetting {
   id: string;
@@ -15,6 +15,17 @@ interface SystemSetting {
   updated_at: string;
 }
 
+// 동적으로 파비콘 변경하는 함수
+const updateFavicon = (url: string) => {
+  const link: HTMLLinkElement =
+    document.querySelector("link[rel*='icon']") ||
+    document.createElement("link");
+  link.type = "image/x-icon";
+  link.rel = "shortcut icon";
+  link.href = url;
+  document.getElementsByTagName("head")[0].appendChild(link);
+};
+
 const SystemSettings = () => {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +33,10 @@ const SystemSettings = () => {
   const [replyToEmail, setReplyToEmail] = useState("");
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
   const [uploadingSymbol, setUploadingSymbol] = useState(false);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
 
   const fetchSettings = async () => {
     try {
@@ -53,6 +67,15 @@ const SystemSettings = () => {
       );
       if (symbolSetting) {
         setSchoolSymbolUrl(symbolSetting.setting_value);
+      }
+
+      // 파비콘 URL 찾기
+      const faviconSetting = (data || []).find(
+        (s: SystemSetting) => s.setting_key === "favicon_url"
+      );
+      if (faviconSetting && faviconSetting.setting_value) {
+        setFaviconUrl(faviconSetting.setting_value);
+        updateFavicon(faviconSetting.setting_value);
       }
     } catch (error: any) {
       console.error("Failed to fetch settings:", error);
@@ -210,6 +233,123 @@ const SystemSettings = () => {
     }
   };
 
+  const handleFaviconUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 파일 타입 검증 (ICO, PNG, JPG 허용)
+    const validTypes = ["image/x-icon", "image/vnd.microsoft.icon", "image/png", "image/jpeg", "image/gif"];
+    if (!validTypes.includes(file.type) && !file.name.endsWith(".ico")) {
+      toast.error("ICO, PNG, JPG, GIF 파일만 업로드 가능합니다");
+      return;
+    }
+
+    // 파일 크기 검증 (1MB)
+    if (file.size > 1 * 1024 * 1024) {
+      toast.error("파일 크기는 1MB 이하여야 합니다");
+      return;
+    }
+
+    setUploadingFavicon(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+
+      // 파일명 생성
+      const fileExt = file.name.split(".").pop();
+      const fileName = `favicon-${Date.now()}.${fileExt}`;
+
+      // 기존 파일 삭제 (있는 경우)
+      if (faviconUrl) {
+        const oldPath = faviconUrl.split("/school-symbols/").pop();
+        if (oldPath) {
+          await supabase.storage.from("school-symbols").remove([oldPath]);
+        }
+      }
+
+      // 새 파일 업로드 (school-symbols 버킷 재사용)
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("school-symbols")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // 공개 URL 가져오기
+      const { data: publicUrlData } = supabase.storage
+        .from("school-symbols")
+        .getPublicUrl(fileName);
+
+      const publicUrl = publicUrlData.publicUrl;
+
+      // 설정에 URL 저장
+      const { error: settingError } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "favicon_url",
+        setting_value_input: publicUrl,
+      });
+
+      if (settingError) throw settingError;
+
+      setFaviconUrl(publicUrl);
+      updateFavicon(publicUrl);
+      toast.success("파비콘이 업로드되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to upload favicon:", error);
+      toast.error("업로드에 실패했습니다: " + error.message);
+    } finally {
+      setUploadingFavicon(false);
+      if (faviconInputRef.current) {
+        faviconInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleDeleteFavicon = async () => {
+    if (!faviconUrl) return;
+
+    if (!confirm("파비콘을 삭제하시겠습니까? 기본 파비콘으로 복원됩니다.")) return;
+
+    setUploadingFavicon(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      // 스토리지에서 파일 삭제
+      const oldPath = faviconUrl.split("/school-symbols/").pop();
+      if (oldPath) {
+        await supabase.storage.from("school-symbols").remove([oldPath]);
+      }
+
+      // 설정에서 URL 제거
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "favicon_url",
+        setting_value_input: "",
+      });
+
+      if (error) throw error;
+
+      setFaviconUrl(null);
+      // 기본 파비콘으로 복원
+      updateFavicon("/favicon.png");
+      toast.success("파비콘이 삭제되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to delete favicon:", error);
+      toast.error("삭제에 실패했습니다");
+    } finally {
+      setUploadingFavicon(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -291,6 +431,79 @@ const SystemSettings = () => {
               마지막 수정:{" "}
               {new Date(
                 settings.find((s) => s.setting_key === "school_symbol_url")!.updated_at
+              ).toLocaleString("ko-KR")}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 파비콘 설정 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Globe className="w-5 h-5" />
+            파비콘 설정
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>파비콘 이미지</Label>
+            <p className="text-sm text-muted-foreground">
+              브라우저 탭에 표시될 파비콘 이미지를 업로드합니다. (권장: 32x32px 또는 64x64px, ICO/PNG/JPG)
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              {/* 미리보기 */}
+              <div className="w-16 h-16 border rounded-lg flex items-center justify-center bg-muted overflow-hidden">
+                {faviconUrl ? (
+                  <img
+                    src={faviconUrl}
+                    alt="파비콘"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <Globe className="w-8 h-8 text-muted-foreground" />
+                )}
+              </div>
+
+              {/* 업로드 버튼 */}
+              <div className="flex flex-col gap-2">
+                <input
+                  ref={faviconInputRef}
+                  type="file"
+                  accept=".ico,.png,.jpg,.jpeg,.gif,image/x-icon,image/png,image/jpeg,image/gif"
+                  onChange={handleFaviconUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => faviconInputRef.current?.click()}
+                  disabled={uploadingFavicon}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploadingFavicon ? "업로드 중..." : "파비콘 업로드"}
+                </Button>
+                
+                {faviconUrl && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteFavicon}
+                    disabled={uploadingFavicon}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    삭제
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {settings.find((s) => s.setting_key === "favicon_url")?.updated_at && (
+            <p className="text-xs text-muted-foreground">
+              마지막 수정:{" "}
+              {new Date(
+                settings.find((s) => s.setting_key === "favicon_url")!.updated_at
               ).toLocaleString("ko-KR")}
             </p>
           )}
