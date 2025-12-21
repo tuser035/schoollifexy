@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle, AlertTriangle, Music, BookOpen, BarChart3, PenLine } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
@@ -36,221 +37,291 @@ type TabItem = {
   borderClass: string;
   textClass: string;
   cardTitle: string;
+  category: string;
 };
 
-const getTabItems = (user: AuthUser): TabItem[] => {
+type TabGroup = {
+  name: string;
+  label: string;
+  items: TabItem[];
+};
+
+const getTabGroups = (user: AuthUser): TabGroup[] => {
   const isSystemAdmin = user.type === "admin";
   
-  const items: TabItem[] = [];
+  const groups: TabGroup[] = [];
   
-  // 시스템 관리자만 - 업로드 (data-inquiry-indigo 사용)
+  // 시스템 관리자만 - 업로드
   if (isSystemAdmin) {
-    items.push({ 
-      value: "upload", 
-      label: "업로드", 
-      icon: Upload, 
-      activeClass: "data-[state=active]:bg-data-inquiry-indigo data-[state=active]:text-white",
-      borderClass: "border-data-inquiry-indigo/30",
-      textClass: "text-data-inquiry-indigo",
-      cardTitle: "데이터 업로드" 
+    groups.push({
+      name: "upload",
+      label: "업로드",
+      items: [
+        { 
+          value: "upload", 
+          label: "업로드", 
+          icon: Upload, 
+          activeClass: "data-[state=active]:bg-data-inquiry-indigo data-[state=active]:text-white",
+          borderClass: "border-data-inquiry-indigo/30",
+          textClass: "text-data-inquiry-indigo",
+          cardTitle: "데이터 업로드",
+          category: "upload"
+        }
+      ]
     });
   }
   
-  // 계정 관리 - merit-blue 사용
-  items.push({ 
-    value: "data", 
-    label: "데이터", 
-    icon: Database, 
-    activeClass: "data-[state=active]:bg-merit-blue data-[state=active]:text-white",
-    borderClass: "border-merit-blue/30",
-    textClass: "text-merit-blue",
-    cardTitle: "데이터 조회" 
-  });
-  items.push({ 
-    value: "password", 
-    label: "비밀번호", 
-    icon: Key, 
-    activeClass: "data-[state=active]:bg-merit-blue data-[state=active]:text-white",
-    borderClass: "border-merit-blue/30",
-    textClass: "text-merit-blue",
-    cardTitle: "비밀번호 재설정" 
-  });
-  
-  // 상벌점 - demerit-orange 사용
-  items.push({ 
-    value: "points", 
-    label: "상점", 
-    icon: BarChart, 
-    activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
-    borderClass: "border-demerit-orange/30",
-    textClass: "text-demerit-orange",
-    cardTitle: "상점 조회" 
-  });
-  items.push({ 
-    value: "statistics", 
-    label: "통계", 
-    icon: TrendingUp, 
-    activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
-    borderClass: "border-demerit-orange/30",
-    textClass: "text-demerit-orange",
-    cardTitle: "통계" 
-  });
-  items.push({ 
-    value: "leaderboard", 
-    label: "순위", 
-    icon: Trophy, 
-    activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
-    borderClass: "border-demerit-orange/30",
-    textClass: "text-demerit-orange",
-    cardTitle: "학생 순위" 
-  });
-  items.push({ 
-    value: "counseling", 
-    label: "상담", 
-    icon: ClipboardCheck, 
-    activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
-    borderClass: "border-demerit-orange/30",
-    textClass: "text-demerit-orange",
-    cardTitle: "상담 기록" 
+  // 계정 관리
+  groups.push({
+    name: "account",
+    label: "계정",
+    items: [
+      { 
+        value: "data", 
+        label: "데이터", 
+        icon: Database, 
+        activeClass: "data-[state=active]:bg-merit-blue data-[state=active]:text-white",
+        borderClass: "border-merit-blue/30",
+        textClass: "text-merit-blue",
+        cardTitle: "데이터 조회",
+        category: "account"
+      },
+      { 
+        value: "password", 
+        label: "비밀번호", 
+        icon: Key, 
+        activeClass: "data-[state=active]:bg-merit-blue data-[state=active]:text-white",
+        borderClass: "border-merit-blue/30",
+        textClass: "text-merit-blue",
+        cardTitle: "비밀번호 재설정",
+        category: "account"
+      }
+    ]
   });
   
-  // 일괄메일 - monthly-green 사용
-  items.push({ 
-    value: "email-history", 
-    label: "이메일", 
-    icon: Mail, 
-    activeClass: "data-[state=active]:bg-monthly-green data-[state=active]:text-white",
-    borderClass: "border-monthly-green/30",
-    textClass: "text-monthly-green",
-    cardTitle: "이메일 발송 이력" 
-  });
-  items.push({ 
-    value: "email-templates", 
-    label: "템플릿", 
-    icon: FileText, 
-    activeClass: "data-[state=active]:bg-monthly-green data-[state=active]:text-white",
-    borderClass: "border-monthly-green/30",
-    textClass: "text-monthly-green",
-    cardTitle: "이메일 템플릿" 
-  });
-  
-  // 마음톡 - groups-purple 사용
-  items.push({ 
-    value: "mindtalk", 
-    label: "마음톡", 
-    icon: MessageCircle, 
-    activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
-    borderClass: "border-groups-purple/30",
-    textClass: "text-groups-purple",
-    cardTitle: "마음톡 조회" 
-  });
-  items.push({ 
-    value: "mindtalk-keywords", 
-    label: "키워드", 
-    icon: AlertTriangle, 
-    activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
-    borderClass: "border-groups-purple/30",
-    textClass: "text-groups-purple",
-    cardTitle: "키워드 관리" 
-  });
-  items.push({ 
-    value: "mindtalk-music", 
-    label: "뮤직", 
-    icon: Music, 
-    activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
-    borderClass: "border-groups-purple/30",
-    textClass: "text-groups-purple",
-    cardTitle: "힐링 뮤직" 
-  });
-  
-  // 독서 - bulk-email-pink 사용
-  items.push({ 
-    value: "storybooks", 
-    label: "추천도서", 
-    icon: BookOpen, 
-    activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
-    borderClass: "border-bulk-email-pink/30",
-    textClass: "text-bulk-email-pink",
-    cardTitle: "추천도서 관리" 
-  });
-  items.push({ 
-    value: "book-reports", 
-    label: "독후감", 
-    icon: PenLine, 
-    activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
-    borderClass: "border-bulk-email-pink/30",
-    textClass: "text-bulk-email-pink",
-    cardTitle: "독후감 관리" 
-  });
-  items.push({ 
-    value: "reading-stats", 
-    label: "읽기통계", 
-    icon: BarChart3, 
-    activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
-    borderClass: "border-bulk-email-pink/30",
-    textClass: "text-bulk-email-pink",
-    cardTitle: "읽기 통계" 
+  // 상벌점
+  groups.push({
+    name: "points",
+    label: "상벌점",
+    items: [
+      { 
+        value: "points", 
+        label: "상점", 
+        icon: BarChart, 
+        activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
+        borderClass: "border-demerit-orange/30",
+        textClass: "text-demerit-orange",
+        cardTitle: "상점 조회",
+        category: "points"
+      },
+      { 
+        value: "statistics", 
+        label: "통계", 
+        icon: TrendingUp, 
+        activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
+        borderClass: "border-demerit-orange/30",
+        textClass: "text-demerit-orange",
+        cardTitle: "통계",
+        category: "points"
+      },
+      { 
+        value: "leaderboard", 
+        label: "순위", 
+        icon: Trophy, 
+        activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
+        borderClass: "border-demerit-orange/30",
+        textClass: "text-demerit-orange",
+        cardTitle: "학생 순위",
+        category: "points"
+      },
+      { 
+        value: "counseling", 
+        label: "상담", 
+        icon: ClipboardCheck, 
+        activeClass: "data-[state=active]:bg-demerit-orange data-[state=active]:text-white",
+        borderClass: "border-demerit-orange/30",
+        textClass: "text-demerit-orange",
+        cardTitle: "상담 기록",
+        category: "points"
+      }
+    ]
   });
   
-  // 시스템 관리자만 - 시스템 설정 (email-history-teal 사용)
+  // 일괄메일
+  groups.push({
+    name: "email",
+    label: "메일",
+    items: [
+      { 
+        value: "email-history", 
+        label: "이메일", 
+        icon: Mail, 
+        activeClass: "data-[state=active]:bg-monthly-green data-[state=active]:text-white",
+        borderClass: "border-monthly-green/30",
+        textClass: "text-monthly-green",
+        cardTitle: "이메일 발송 이력",
+        category: "email"
+      },
+      { 
+        value: "email-templates", 
+        label: "템플릿", 
+        icon: FileText, 
+        activeClass: "data-[state=active]:bg-monthly-green data-[state=active]:text-white",
+        borderClass: "border-monthly-green/30",
+        textClass: "text-monthly-green",
+        cardTitle: "이메일 템플릿",
+        category: "email"
+      }
+    ]
+  });
+  
+  // 마음톡
+  groups.push({
+    name: "mindtalk",
+    label: "마음톡",
+    items: [
+      { 
+        value: "mindtalk", 
+        label: "마음톡", 
+        icon: MessageCircle, 
+        activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
+        borderClass: "border-groups-purple/30",
+        textClass: "text-groups-purple",
+        cardTitle: "마음톡 조회",
+        category: "mindtalk"
+      },
+      { 
+        value: "mindtalk-keywords", 
+        label: "키워드", 
+        icon: AlertTriangle, 
+        activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
+        borderClass: "border-groups-purple/30",
+        textClass: "text-groups-purple",
+        cardTitle: "키워드 관리",
+        category: "mindtalk"
+      },
+      { 
+        value: "mindtalk-music", 
+        label: "뮤직", 
+        icon: Music, 
+        activeClass: "data-[state=active]:bg-groups-purple data-[state=active]:text-white",
+        borderClass: "border-groups-purple/30",
+        textClass: "text-groups-purple",
+        cardTitle: "힐링 뮤직",
+        category: "mindtalk"
+      }
+    ]
+  });
+  
+  // 독서
+  groups.push({
+    name: "reading",
+    label: "독서",
+    items: [
+      { 
+        value: "storybooks", 
+        label: "추천도서", 
+        icon: BookOpen, 
+        activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
+        borderClass: "border-bulk-email-pink/30",
+        textClass: "text-bulk-email-pink",
+        cardTitle: "추천도서 관리",
+        category: "reading"
+      },
+      { 
+        value: "book-reports", 
+        label: "독후감", 
+        icon: PenLine, 
+        activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
+        borderClass: "border-bulk-email-pink/30",
+        textClass: "text-bulk-email-pink",
+        cardTitle: "독후감 관리",
+        category: "reading"
+      },
+      { 
+        value: "reading-stats", 
+        label: "읽기통계", 
+        icon: BarChart3, 
+        activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
+        borderClass: "border-bulk-email-pink/30",
+        textClass: "text-bulk-email-pink",
+        cardTitle: "읽기 통계",
+        category: "reading"
+      }
+    ]
+  });
+  
+  // 시스템 관리자만 - 시스템 설정
   if (isSystemAdmin) {
-    items.push({ 
-      value: "system-settings", 
-      label: "설정", 
-      icon: Cog, 
-      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
-      borderClass: "border-email-history-teal/30",
-      textClass: "text-email-history-teal",
-      cardTitle: "시스템 설정" 
-    });
-    items.push({ 
-      value: "export", 
-      label: "백업", 
-      icon: PackageOpen, 
-      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
-      borderClass: "border-email-history-teal/30",
-      textClass: "text-email-history-teal",
-      cardTitle: "데이터 백업" 
-    });
-    items.push({ 
-      value: "auto-backup", 
-      label: "자동백업", 
-      icon: Settings, 
-      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
-      borderClass: "border-email-history-teal/30",
-      textClass: "text-email-history-teal",
-      cardTitle: "자동 백업 설정" 
-    });
-    items.push({ 
-      value: "storage", 
-      label: "파일", 
-      icon: FolderOpen, 
-      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
-      borderClass: "border-email-history-teal/30",
-      textClass: "text-email-history-teal",
-      cardTitle: "파일 관리" 
-    });
-    items.push({ 
-      value: "security-logs", 
-      label: "보안", 
-      icon: Shield, 
-      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
-      borderClass: "border-email-history-teal/30",
-      textClass: "text-email-history-teal",
-      cardTitle: "보안 로그" 
-    });
-    items.push({ 
-      value: "db-logs", 
-      label: "DB", 
-      icon: FileCode, 
-      activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
-      borderClass: "border-email-history-teal/30",
-      textClass: "text-email-history-teal",
-      cardTitle: "DB 로그" 
+    groups.push({
+      name: "system",
+      label: "시스템",
+      items: [
+        { 
+          value: "system-settings", 
+          label: "설정", 
+          icon: Cog, 
+          activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+          borderClass: "border-email-history-teal/30",
+          textClass: "text-email-history-teal",
+          cardTitle: "시스템 설정",
+          category: "system"
+        },
+        { 
+          value: "export", 
+          label: "백업", 
+          icon: PackageOpen, 
+          activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+          borderClass: "border-email-history-teal/30",
+          textClass: "text-email-history-teal",
+          cardTitle: "데이터 백업",
+          category: "system"
+        },
+        { 
+          value: "auto-backup", 
+          label: "자동백업", 
+          icon: Settings, 
+          activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+          borderClass: "border-email-history-teal/30",
+          textClass: "text-email-history-teal",
+          cardTitle: "자동 백업 설정",
+          category: "system"
+        },
+        { 
+          value: "storage", 
+          label: "파일", 
+          icon: FolderOpen, 
+          activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+          borderClass: "border-email-history-teal/30",
+          textClass: "text-email-history-teal",
+          cardTitle: "파일 관리",
+          category: "system"
+        },
+        { 
+          value: "security-logs", 
+          label: "보안", 
+          icon: Shield, 
+          activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+          borderClass: "border-email-history-teal/30",
+          textClass: "text-email-history-teal",
+          cardTitle: "보안 로그",
+          category: "system"
+        },
+        { 
+          value: "db-logs", 
+          label: "DB", 
+          icon: FileCode, 
+          activeClass: "data-[state=active]:bg-email-history-teal data-[state=active]:text-white",
+          borderClass: "border-email-history-teal/30",
+          textClass: "text-email-history-teal",
+          cardTitle: "DB 로그",
+          category: "system"
+        }
+      ]
     });
   }
   
-  return items;
+  return groups;
 };
 
 const AdminDashboard = () => {
@@ -284,8 +355,9 @@ const AdminDashboard = () => {
     return null;
   }
 
-  const tabItems = getTabItems(user);
-  const currentTab = tabItems.find(t => t.value === activeTab);
+  const tabGroups = getTabGroups(user);
+  const allItems = tabGroups.flatMap(g => g.items);
+  const currentTab = allItems.find(t => t.value === activeTab);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -369,65 +441,48 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* 모바일: 그리드 2줄 배치 / 데스크톱: 가로 스크롤 */}
+          {/* 모바일: 카테고리별 그리드 / 데스크톱: 가로 스크롤 */}
           <div className="mb-4 sm:mb-6">
-            {/* 모바일 뷰 - 그리드 2줄 */}
-            <div className="sm:hidden">
-              <TabsList className="grid grid-cols-4 gap-1 h-auto p-1">
-                {tabItems.slice(0, 8).map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <TabsTrigger
-                      key={item.value}
-                      value={item.value}
-                      className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="truncate w-full text-center">{item.label}</span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-              {tabItems.length > 8 && (
-                <TabsList className="grid grid-cols-4 gap-1 h-auto p-1 mt-1">
-                  {tabItems.slice(8, 16).map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <TabsTrigger
-                        key={item.value}
-                        value={item.value}
-                        className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="truncate w-full text-center">{item.label}</span>
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
-              )}
-              {tabItems.length > 16 && (
-                <TabsList className="grid grid-cols-4 gap-1 h-auto p-1 mt-1">
-                  {tabItems.slice(16).map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <TabsTrigger
-                        key={item.value}
-                        value={item.value}
-                        className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="truncate w-full text-center">{item.label}</span>
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
-              )}
+            {/* 모바일 뷰 - 카테고리별 구분 */}
+            <div className="sm:hidden space-y-3">
+              {tabGroups.map((group, groupIndex) => (
+                <div key={group.name}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                      {group.label}
+                    </span>
+                    <Separator className="flex-1" />
+                  </div>
+                  <TabsList className={`grid gap-1 h-auto p-1 ${
+                    group.items.length === 1 ? 'grid-cols-2' :
+                    group.items.length === 2 ? 'grid-cols-2' :
+                    group.items.length === 3 ? 'grid-cols-3' :
+                    group.items.length === 4 ? 'grid-cols-4' :
+                    group.items.length === 5 ? 'grid-cols-3' :
+                    'grid-cols-3'
+                  }`}>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <TabsTrigger
+                          key={item.value}
+                          value={item.value}
+                          className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span className="truncate w-full text-center">{item.label}</span>
+                        </TabsTrigger>
+                      );
+                    })}
+                  </TabsList>
+                </div>
+              ))}
             </div>
             
             {/* 데스크톱 뷰 - 가로 스크롤 */}
             <div className="hidden sm:block overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
               <TabsList className="inline-flex w-auto min-w-full">
-                {tabItems.map((item) => {
+                {allItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <TabsTrigger
@@ -444,7 +499,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {tabItems.map((item) => (
+          {allItems.map((item) => (
             <TabsContent key={item.value} value={item.value}>
               <Card className={item.borderClass}>
                 <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
