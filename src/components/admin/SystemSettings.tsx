@@ -200,6 +200,16 @@ const SystemSettings = () => {
     }
   };
 
+  // 파일을 Base64로 변환하는 함수
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleSymbolUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -226,45 +236,24 @@ const SystemSettings = () => {
 
       const user = JSON.parse(authUser);
 
-      // Admin 세션 설정 (스토리지 RLS 정책을 위해)
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
+      // 파일을 Base64로 변환
+      const base64Data = await fileToBase64(file);
 
-      // 파일명 생성
-      const fileExt = file.name.split(".").pop();
-      const fileName = `school-symbol-${Date.now()}.${fileExt}`;
-
-      // 기존 파일 삭제 (있는 경우)
-      if (schoolSymbolUrl) {
-        const oldPath = schoolSymbolUrl.split("/school-symbols/").pop();
-        if (oldPath) {
-          await supabase.storage.from("school-symbols").remove([oldPath]);
-        }
-      }
-
-      // 새 파일 업로드
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("school-symbols")
-        .upload(fileName, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // 공개 URL 가져오기
-      const { data: publicUrlData } = supabase.storage
-        .from("school-symbols")
-        .getPublicUrl(fileName);
-
-      const publicUrl = publicUrlData.publicUrl;
-
-      // 설정에 URL 저장
-      const { error: settingError } = await supabase.rpc("admin_update_system_setting", {
-        admin_id_input: user.id,
-        setting_key_input: "school_symbol_url",
-        setting_value_input: publicUrl,
+      // Edge Function을 통해 업로드
+      const { data, error } = await supabase.functions.invoke("upload-school-symbol", {
+        body: {
+          admin_id: user.id,
+          image_base64: base64Data,
+          filename: file.name,
+          image_type: "symbol",
+          old_url: schoolSymbolUrl,
+        },
       });
 
-      if (settingError) throw settingError;
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-      setSchoolSymbolUrl(publicUrl);
+      setSchoolSymbolUrl(data.publicUrl);
       toast.success("학교 심볼이 업로드되었습니다");
       fetchSettings();
     } catch (error: any) {
@@ -374,48 +363,33 @@ const SystemSettings = () => {
 
       const user = JSON.parse(authUser);
 
-      // Admin 세션 설정 (스토리지 RLS 정책을 위해)
-      await supabase.rpc("set_admin_session", { admin_id_input: user.id });
-
       // 이미지를 64x64로 리사이즈
       const resizedBlob = await resizeImage(file, 64);
 
-      // 파일명 생성 (PNG로 저장)
-      const fileName = `favicon-${Date.now()}.png`;
-
-      // 기존 파일 삭제 (있는 경우)
-      if (faviconUrl) {
-        const oldPath = faviconUrl.split("/school-symbols/").pop();
-        if (oldPath) {
-          await supabase.storage.from("school-symbols").remove([oldPath]);
-        }
-      }
-
-      // 새 파일 업로드 (school-symbols 버킷 재사용)
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("school-symbols")
-        .upload(fileName, resizedBlob, { upsert: true, contentType: "image/png" });
-
-      if (uploadError) throw uploadError;
-
-      // 공개 URL 가져오기
-      const { data: publicUrlData } = supabase.storage
-        .from("school-symbols")
-        .getPublicUrl(fileName);
-
-      const publicUrl = publicUrlData.publicUrl;
-
-      // 설정에 URL 저장
-      const { error: settingError } = await supabase.rpc("admin_update_system_setting", {
-        admin_id_input: user.id,
-        setting_key_input: "favicon_url",
-        setting_value_input: publicUrl,
+      // Blob을 Base64로 변환
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(resizedBlob);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
       });
 
-      if (settingError) throw settingError;
+      // Edge Function을 통해 업로드
+      const { data, error } = await supabase.functions.invoke("upload-school-symbol", {
+        body: {
+          admin_id: user.id,
+          image_base64: base64Data,
+          filename: "favicon.png",
+          image_type: "favicon",
+          old_url: faviconUrl,
+        },
+      });
 
-      setFaviconUrl(publicUrl);
-      updateFavicon(publicUrl);
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setFaviconUrl(data.publicUrl);
+      updateFavicon(data.publicUrl);
       toast.success("파비콘이 업로드되었습니다");
       fetchSettings();
     } catch (error: any) {
