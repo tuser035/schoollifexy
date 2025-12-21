@@ -142,18 +142,18 @@ const Index = () => {
             </div>
 
             <Tabs defaultValue="student" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 h-11 sm:h-12 p-1 bg-muted/60 rounded-xl">
+              <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
                 <TabsTrigger 
                   value="student"
-                  className="rounded-lg font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
+                  className="data-[state=active]:bg-student data-[state=active]:text-white"
                 >
-                  👨‍🎓 학생
+                  학생
                 </TabsTrigger>
                 <TabsTrigger 
                   value="teacher"
-                  className="rounded-lg font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
+                  className="data-[state=active]:bg-teacher data-[state=active]:text-white"
                 >
-                  👩‍🏫 교사
+                  교사
                 </TabsTrigger>
               </TabsList>
 
