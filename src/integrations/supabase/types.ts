@@ -1685,6 +1685,7 @@ export type Database = {
           grade: number
           id: string
           is_admin: boolean
+          is_counselor: boolean
           is_homeroom: boolean
           name: string
           photo_url: string
@@ -1820,38 +1821,23 @@ export type Database = {
         }
         Returns: string
       }
-      admin_insert_teacher:
-        | {
-            Args: {
-              admin_id_input: string
-              call_t_input: string
-              class_input?: number
-              department_input?: string
-              dept_code_input?: string
-              grade_input?: number
-              is_homeroom_input?: boolean
-              name_input: string
-              subject_input?: string
-              teacher_email_input: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              admin_id_input: string
-              call_t_input: string
-              class_input?: number
-              department_input?: string
-              dept_code_input?: string
-              grade_input?: number
-              is_admin_input?: boolean
-              is_homeroom_input?: boolean
-              name_input: string
-              subject_input?: string
-              teacher_email_input: string
-            }
-            Returns: string
-          }
+      admin_insert_teacher: {
+        Args: {
+          admin_id_input: string
+          call_t_input: string
+          class_input?: number
+          department_input?: string
+          dept_code_input?: string
+          grade_input?: number
+          is_admin_input?: boolean
+          is_counselor_input?: boolean
+          is_homeroom_input?: boolean
+          name_input: string
+          subject_input?: string
+          teacher_email_input: string
+        }
+        Returns: string
+      }
       admin_insert_teacher_group: {
         Args: {
           admin_id_input: string
@@ -1987,38 +1973,23 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_update_teacher:
-        | {
-            Args: {
-              admin_id_input: string
-              call_t_input: string
-              class_input: number
-              department_input: string
-              grade_input: number
-              is_homeroom_input: boolean
-              name_input: string
-              original_email_input: string
-              subject_input: string
-              teacher_email_input: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              admin_id_input: string
-              call_t_input: string
-              class_input: number
-              department_input: string
-              grade_input: number
-              is_admin_input?: boolean
-              is_homeroom_input: boolean
-              name_input: string
-              original_email_input: string
-              subject_input: string
-              teacher_email_input: string
-            }
-            Returns: boolean
-          }
+      admin_update_teacher: {
+        Args: {
+          admin_id_input: string
+          call_t_input: string
+          class_input: number
+          department_input: string
+          grade_input: number
+          is_admin_input?: boolean
+          is_counselor_input?: boolean
+          is_homeroom_input: boolean
+          name_input: string
+          original_email_input: string
+          subject_input: string
+          teacher_email_input: string
+        }
+        Returns: boolean
+      }
       admin_upsert_storybook_page: {
         Args: {
           admin_id_input: string
