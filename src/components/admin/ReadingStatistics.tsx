@@ -17,7 +17,8 @@ import {
   Download,
   TrendingUp,
   Users,
-  Trophy
+  Trophy,
+  Feather
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
@@ -215,10 +216,14 @@ export default function ReadingStatistics({ adminId }: ReadingStatisticsProps) {
 
       {/* Tabs for Popular Books and Student Stats */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="popular" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
             인기 동화책
+          </TabsTrigger>
+          <TabsTrigger value="poetry" className="flex items-center gap-2">
+            <Feather className="w-4 h-4" />
+            시집읽기
           </TabsTrigger>
           <TabsTrigger value="students" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
@@ -353,6 +358,23 @@ export default function ReadingStatistics({ adminId }: ReadingStatisticsProps) {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Poetry Tab */}
+        <TabsContent value="poetry" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Feather className="w-5 h-5 text-purple-500" />
+                시집 읽기 통계
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                시집 읽기 통계 기능이 준비 중입니다.
               </div>
             </CardContent>
           </Card>
