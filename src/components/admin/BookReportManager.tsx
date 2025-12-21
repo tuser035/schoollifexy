@@ -408,16 +408,6 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
 
   return (
     <div className="space-y-4">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
-          <BookOpen className="w-6 h-6" />
-          독후감 관리
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          학기별 추천도서 관리 및 독후감 평가
-        </p>
-      </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="reports" className="flex items-center gap-2">
