@@ -7,6 +7,7 @@ import StudentLogin from "@/components/auth/StudentLogin";
 import SystemAdminLogin from "@/components/auth/SystemAdminLogin";
 import { School } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const backgroundImages = [
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4", // 산 풍경
@@ -23,13 +24,34 @@ const Index = () => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showSystemAdminDialog, setShowSystemAdminDialog] = useState(false);
+  const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % backgroundImages.length);
-    }, 5000); // 5초마다 이미지 변경
+    }, 5000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // 학교 심볼 URL 로드
+  useEffect(() => {
+    const loadSchoolSymbol = async () => {
+      try {
+        const { data } = await supabase
+          .from('system_settings')
+          .select('setting_value')
+          .eq('setting_key', 'school_symbol_url')
+          .maybeSingle();
+        
+        if (data?.setting_value) {
+          setSchoolSymbolUrl(data.setting_value);
+        }
+      } catch (error) {
+        console.error('Failed to load school symbol:', error);
+      }
+    };
+    loadSchoolSymbol();
   }, []);
 
   return (
@@ -55,9 +77,17 @@ const Index = () => {
           <div className="p-4 sm:p-8">
             <div className="text-center mb-4 sm:mb-8">
               <div className="flex justify-center mb-3 sm:mb-6">
-                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-600 via-orange-500 to-green-600 flex items-center justify-center">
-                  <School className="w-8 h-8 sm:w-12 sm:h-12 text-white" strokeWidth={2} />
-                </div>
+                {schoolSymbolUrl ? (
+                  <img 
+                    src={schoolSymbolUrl} 
+                    alt="학교 심볼" 
+                    className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg"
+                  />
+                ) : (
+                  <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-600 via-orange-500 to-green-600 flex items-center justify-center">
+                    <School className="w-8 h-8 sm:w-12 sm:h-12 text-white" strokeWidth={2} />
+                  </div>
+                )}
               </div>
               <h1 className="text-[1.75rem] sm:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
                 스쿨라이프.KR
