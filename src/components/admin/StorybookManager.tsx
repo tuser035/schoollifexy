@@ -1346,12 +1346,15 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             {/* + 시집 버튼 - 시집 탭에서만 표시 */}
             {activeSubTab === 'poetry' && (
               <div className="flex items-center gap-2">
-                <Label htmlFor="poetry-csv-upload-header" className="cursor-pointer">
-                  <div className="flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors text-sm font-medium">
-                    <Upload className="w-4 h-4" />
-                    CSV 업로드
-                  </div>
-                </Label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200"
+                  onClick={() => document.getElementById('poetry-csv-upload-header')?.click()}
+                >
+                  <Upload className="w-4 h-4 mr-1" />
+                  CSV 업로드
+                </Button>
                 <input
                   id="poetry-csv-upload-header"
                   type="file"
