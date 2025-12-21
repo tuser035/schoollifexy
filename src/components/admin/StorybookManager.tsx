@@ -1083,7 +1083,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <BookOpen className="w-5 h-5 text-amber-600" />
-                인문학 서점
+                도서 추가
                 {realtimeUpdated && (
                   <span className="flex items-center gap-1 text-xs text-emerald-600 font-normal animate-pulse">
                     <span className="w-2 h-2 bg-emerald-500 rounded-full" />
