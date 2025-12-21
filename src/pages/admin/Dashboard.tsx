@@ -220,10 +220,10 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
     ]
   });
   
-  // 도서 추천
+  // 인문학 서점
   groups.push({
     name: "reading",
-    label: "도서 추천",
+    label: "인문학 서점",
     items: [
       { 
         value: "storybook-categories", 
