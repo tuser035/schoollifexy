@@ -302,10 +302,7 @@ const PointsInquiry = () => {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>반별 상점/벌점 조회</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="flex gap-4">
             <Select value={grade} onValueChange={setGrade}>
               <SelectTrigger className="w-[100px]">
