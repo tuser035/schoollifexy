@@ -1,12 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen, PenLine, ChevronDown, ChevronUp } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen, PenLine, ChevronDown, ChevronUp, CalendarIcon } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,6 +20,7 @@ import { useRealtimeSync, type TableSubscription } from "@/hooks/use-realtime-sy
 import MindTalk from "@/components/student/MindTalk";
 import StorybookLibrary from "@/components/student/StorybookLibrary";
 import BookReportForm from "@/components/student/BookReportForm";
+import { cn } from "@/lib/utils";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -32,6 +38,13 @@ const StudentDashboard = () => {
   const [isMeritsExpanded, setIsMeritsExpanded] = useState(false);
   const [isDemeritsExpanded, setIsDemeritsExpanded] = useState(false);
   const [isMonthlyExpanded, setIsMonthlyExpanded] = useState(false);
+  
+  // CSV 다운로드 날짜 필터 상태
+  const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
+  const [dateFilterType, setDateFilterType] = useState<'merits' | 'demerits' | 'monthly'>('merits');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  
   const INITIAL_DISPLAY_COUNT = 3;
 
   const fetchStudentData = useCallback(async (studentId: string) => {
@@ -149,37 +162,85 @@ const StudentDashboard = () => {
     setIsImageDialogOpen(true);
   };
 
+  // 날짜 필터 다이얼로그 열기
+  const openDateFilterDialog = (type: 'merits' | 'demerits' | 'monthly') => {
+    setDateFilterType(type);
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setIsDateFilterOpen(true);
+  };
+
+  // 날짜 필터링된 데이터로 CSV 다운로드
+  const downloadFilteredCSV = () => {
+    let data: any[] = [];
+    
+    if (dateFilterType === 'merits') {
+      data = merits;
+    } else if (dateFilterType === 'demerits') {
+      data = demerits;
+    } else {
+      data = monthly;
+    }
+
+    // 날짜 필터링 적용
+    if (startDate || endDate) {
+      data = data.filter(item => {
+        const itemDate = new Date(item.created_at);
+        if (startDate && itemDate < startDate) return false;
+        if (endDate) {
+          const endOfDay = new Date(endDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (itemDate > endOfDay) return false;
+        }
+        return true;
+      });
+    }
+
+    if (data.length === 0) {
+      toast.error('선택한 기간에 해당하는 데이터가 없습니다');
+      return;
+    }
+
+    downloadCSV(data, dateFilterType);
+    setIsDateFilterOpen(false);
+  };
+
   const downloadCSV = (data: any[], type: 'merits' | 'demerits' | 'monthly') => {
     let csvData: any[] = [];
     let filename = '';
 
+    // 날짜 범위 텍스트 생성
+    const dateRangeText = startDate || endDate 
+      ? `_${startDate ? format(startDate, 'yyyyMMdd') : '시작'}~${endDate ? format(endDate, 'yyyyMMdd') : '현재'}`
+      : '';
+
     if (type === 'merits') {
       csvData = data.map(item => ({
         '날짜': new Date(item.created_at).toLocaleDateString(),
-        '교사': item.teachers?.name || '-',
+        '교사': item.teacher_name || '-',
         '카테고리': item.category,
         '사유': item.reason || '-',
         '점수': item.score,
       }));
-      filename = `${user?.name}(${user?.studentId})_상점.csv`;
+      filename = `${user?.name}(${user?.studentId})_상점${dateRangeText}.csv`;
     } else if (type === 'demerits') {
       csvData = data.map(item => ({
         '날짜': new Date(item.created_at).toLocaleDateString(),
-        '교사': item.teachers?.name || '-',
+        '교사': item.teacher_name || '-',
         '카테고리': item.category,
         '사유': item.reason || '-',
         '점수': item.score,
       }));
-      filename = `${user?.name}(${user?.studentId})_벌점.csv`;
+      filename = `${user?.name}(${user?.studentId})_벌점${dateRangeText}.csv`;
     } else if (type === 'monthly') {
       csvData = data.map(item => ({
         '년도': item.year,
         '월': item.month,
-        '교사': item.teachers?.name || '-',
+        '교사': item.teacher_name || '-',
         '카테고리': item.category || '-',
         '사유': item.reason || '-',
       }));
-      filename = `${user?.name}(${user?.studentId})_이달의학생.csv`;
+      filename = `${user?.name}(${user?.studentId})_이달의학생${dateRangeText}.csv`;
     }
 
     const csv = Papa.unparse(csvData, {
@@ -311,9 +372,9 @@ const StudentDashboard = () => {
               {!isLoading && (
                 <Button 
                   onClick={() => {
-                    if (activeDetailTab === 'merits') downloadCSV(merits, 'merits');
-                    else if (activeDetailTab === 'demerits') downloadCSV(demerits, 'demerits');
-                    else downloadCSV(monthly, 'monthly');
+                    if (activeDetailTab === 'merits') openDateFilterDialog('merits');
+                    else if (activeDetailTab === 'demerits') openDateFilterDialog('demerits');
+                    else openDateFilterDialog('monthly');
                   }}
                   variant="outline"
                   size="sm"
@@ -701,6 +762,103 @@ const StudentDashboard = () => {
               />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* CSV 날짜 필터 다이얼로그 */}
+      <Dialog open={isDateFilterOpen} onOpenChange={setIsDateFilterOpen}>
+        <DialogContent className="w-[95vw] max-w-md p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5" />
+              {dateFilterType === 'merits' ? '상점' : dateFilterType === 'demerits' ? '벌점' : '이달의 학생'} CSV 다운로드
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              다운로드할 날짜 범위를 선택하세요. 선택하지 않으면 전체 기간이 다운로드됩니다.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">시작일</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "yyyy.MM.dd", { locale: ko }) : "선택"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                      locale={ko}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">종료일</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "yyyy.MM.dd", { locale: ko }) : "선택"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                      locale={ko}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {(startDate || endDate) && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => { setStartDate(undefined); setEndDate(undefined); }}
+                className="text-xs text-muted-foreground"
+              >
+                날짜 초기화
+              </Button>
+            )}
+          </div>
+          
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsDateFilterOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={downloadFilteredCSV}>
+              <Download className="w-4 h-4 mr-2" />
+              다운로드
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
