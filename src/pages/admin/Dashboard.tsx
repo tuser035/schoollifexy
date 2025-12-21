@@ -491,48 +491,58 @@ const AdminDashboard = () => {
           </div>
         </Tabs>
 
-        {/* 하위 메뉴 탭바 */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {currentGroup && currentGroup.items.length > 1 && (
-            <div className="mb-4 sm:mb-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-              <TabsList className="flex w-full bg-muted/30">
-                {currentGroup.items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <TabsTrigger
-                      key={item.value}
-                      value={item.value}
-                      className={`flex-1 whitespace-nowrap text-xs sm:text-sm px-1 sm:px-2 ${item.activeClass}`}
-                    >
-                      <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                      <span>{item.label}</span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </div>
-          )}
+        {/* 그룹 타이틀 및 하위 메뉴 탭바 */}
+        {currentGroup && (
+          <div className="mb-4 sm:mb-6">
+            {/* 그룹 타이틀 */}
+            <h2 className={`text-lg sm:text-xl font-bold mb-3 ${currentGroup.items[0]?.textClass || 'text-foreground'}`}>
+              {currentGroup.label}
+            </h2>
+            
+            {/* 하위 메뉴 탭바 */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              {currentGroup.items.length > 1 && (
+                <div className="mb-4 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+                  <TabsList className="flex w-full bg-muted/30">
+                    {currentGroup.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <TabsTrigger
+                          key={item.value}
+                          value={item.value}
+                          className={`flex-1 whitespace-nowrap text-xs sm:text-sm px-1 sm:px-2 ${item.activeClass}`}
+                        >
+                          <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span>{item.label}</span>
+                        </TabsTrigger>
+                      );
+                    })}
+                  </TabsList>
+                </div>
+              )}
 
-          {allItems.map((item) => (
-            <TabsContent key={item.value} value={item.value}>
-              <Card className={item.borderClass}>
-                <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
-                  <CardTitle className={`text-base sm:text-lg ${item.textClass}`}>
-                    {item.cardTitle}
-                  </CardTitle>
-                  {item.description && (
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                      {item.description}
-                    </p>
-                  )}
-                </CardHeader>
-                <CardContent className="px-3 sm:px-6">
-                  {renderContent()}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          ))}
-        </Tabs>
+              {allItems.map((item) => (
+                <TabsContent key={item.value} value={item.value}>
+                  <Card className={item.borderClass}>
+                    <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
+                      <CardTitle className={`text-base sm:text-lg ${item.textClass}`}>
+                        {item.cardTitle}
+                      </CardTitle>
+                      {item.description && (
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                          {item.description}
+                        </p>
+                      )}
+                    </CardHeader>
+                    <CardContent className="px-3 sm:px-6">
+                      {renderContent()}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
+        )}
       </main>
     </div>
   );
