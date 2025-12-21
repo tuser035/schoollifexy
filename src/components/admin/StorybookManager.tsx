@@ -177,6 +177,22 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [poetryHashtags, setPoetryHashtags] = useState('');
   const [savingPoetry, setSavingPoetry] = useState(false);
   
+  // Poetry collections list state
+  interface PoetryCollection {
+    id: string;
+    title: string;
+    poet: string;
+    hashtags: string[] | null;
+    poem_count: number;
+    is_published: boolean;
+    cover_image_url: string | null;
+    created_at: string;
+  }
+  const [poetryCollections, setPoetryCollections] = useState<PoetryCollection[]>([]);
+  const [loadingPoetry, setLoadingPoetry] = useState(false);
+  const [poetryToDelete, setPoetryToDelete] = useState<PoetryCollection | null>(null);
+  const [isPoetryDeleteDialogOpen, setIsPoetryDeleteDialogOpen] = useState(false);
+  
   // Page count editing state
   const [editingPageCountId, setEditingPageCountId] = useState<string | null>(null);
   const [editingPageCountValue, setEditingPageCountValue] = useState<number>(0);
@@ -206,6 +222,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
 
   useEffect(() => {
     loadBooks();
+    loadPoetryCollections();
   }, [adminId]);
   
   // Real-time subscription for storybooks
@@ -251,6 +268,65 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       toast.error('동화책 목록을 불러오는데 실패했습니다');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Load poetry collections
+  const loadPoetryCollections = async () => {
+    try {
+      setLoadingPoetry(true);
+      const { data, error } = await supabase.rpc('admin_get_poetry_collections', {
+        admin_id_input: adminId
+      });
+
+      if (error) throw error;
+      setPoetryCollections(data || []);
+    } catch (error) {
+      console.error('Error loading poetry collections:', error);
+      toast.error('시집 목록을 불러오는데 실패했습니다');
+    } finally {
+      setLoadingPoetry(false);
+    }
+  };
+
+  // Toggle poetry collection publish status
+  const handleTogglePoetryPublish = async (collection: PoetryCollection) => {
+    try {
+      const { error } = await supabase.rpc('admin_publish_poetry_collection', {
+        admin_id_input: adminId,
+        collection_id_input: collection.id,
+        publish_input: !collection.is_published
+      });
+
+      if (error) throw error;
+
+      toast.success(collection.is_published ? '발행이 취소되었습니다' : '시집이 발행되었습니다');
+      loadPoetryCollections();
+    } catch (error) {
+      console.error('Error toggling poetry publish:', error);
+      toast.error('발행 상태 변경에 실패했습니다');
+    }
+  };
+
+  // Delete poetry collection
+  const handleDeletePoetryCollection = async () => {
+    if (!poetryToDelete) return;
+
+    try {
+      const { error } = await supabase.rpc('admin_delete_poetry_collection', {
+        admin_id_input: adminId,
+        collection_id_input: poetryToDelete.id
+      });
+
+      if (error) throw error;
+
+      toast.success('시집이 삭제되었습니다');
+      setIsPoetryDeleteDialogOpen(false);
+      setPoetryToDelete(null);
+      loadPoetryCollections();
+    } catch (error) {
+      console.error('Error deleting poetry collection:', error);
+      toast.error('시집 삭제에 실패했습니다');
     }
   };
 
@@ -442,6 +518,9 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       setPoetryPoemTitle('');
       setPoetryPoemContent('');
       setPoetryHashtags('');
+      
+      // 시집 목록 새로고침
+      loadPoetryCollections();
     } catch (error: any) {
       console.error('Error saving poetry collection:', error);
       toast.error('시집 저장에 실패했습니다');
@@ -2000,6 +2079,105 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   )}
                 </Button>
               </div>
+              
+              {/* 등록된 시집 목록 */}
+              <div className="mt-8 border-t pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    등록된 시집 목록 ({poetryCollections.length}권)
+                  </h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={loadPoetryCollections}
+                    disabled={loadingPoetry}
+                  >
+                    {loadingPoetry ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      '새로고침'
+                    )}
+                  </Button>
+                </div>
+                
+                {loadingPoetry ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+                    <span className="ml-2 text-muted-foreground">시집 목록 불러오는 중...</span>
+                  </div>
+                ) : poetryCollections.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    등록된 시집이 없습니다. 위 양식을 통해 새 시집을 등록해주세요.
+                  </div>
+                ) : (
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-purple-50 dark:bg-purple-950/30">
+                          <TableHead className="w-16">번호</TableHead>
+                          <TableHead>시집 제목</TableHead>
+                          <TableHead>시인</TableHead>
+                          <TableHead className="w-20 text-center">시 수</TableHead>
+                          <TableHead className="w-24 text-center">발행</TableHead>
+                          <TableHead className="w-32 text-center">관리</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {poetryCollections.map((collection, index) => (
+                          <TableRow key={collection.id} className="hover:bg-purple-50/50 dark:hover:bg-purple-950/10">
+                            <TableCell className="font-medium text-center">{index + 1}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {collection.cover_image_url ? (
+                                  <img 
+                                    src={collection.cover_image_url} 
+                                    alt={collection.title}
+                                    className="w-8 h-10 rounded object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-10 bg-purple-100 dark:bg-purple-900/30 rounded flex items-center justify-center">
+                                    <BookOpen className="w-4 h-4 text-purple-500" />
+                                  </div>
+                                )}
+                                <span className="font-medium">{collection.title}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{collection.poet}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30">
+                                {collection.poem_count}편
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch
+                                checked={collection.is_published}
+                                onCheckedChange={() => handleTogglePoetryPublish(collection)}
+                                className="data-[state=checked]:bg-purple-600"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    setPoetryToDelete(collection);
+                                    setIsPoetryDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </CardContent>
@@ -2420,6 +2598,28 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             <AlertDialogCancel onClick={() => setPageToDelete(null)}>취소</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeletePreviewPage} 
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Poetry Delete Confirmation */}
+      <AlertDialog open={isPoetryDeleteDialogOpen} onOpenChange={setIsPoetryDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>시집 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{poetryToDelete?.title}" 시집을 삭제하시겠습니까?
+              삭제된 시집은 복구할 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPoetryToDelete(null)}>취소</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeletePoetryCollection} 
               className="bg-destructive hover:bg-destructive/90"
             >
               삭제
