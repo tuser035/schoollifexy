@@ -498,7 +498,7 @@ const AdminDashboard = () => {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {currentGroup.items.length > 1 && (
                 <div className="mb-4 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-                  <TabsList className="flex w-full bg-muted/30 rounded-lg p-1">
+                  <TabsList className="flex w-full border border-border/60 bg-muted/20 rounded-lg p-1">
                     {currentGroup.items.map((item) => {
                       const Icon = item.icon;
                       return (
