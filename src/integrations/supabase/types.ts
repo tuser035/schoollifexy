@@ -642,6 +642,121 @@ export type Database = {
           },
         ]
       }
+      poems: {
+        Row: {
+          collection_id: string
+          content: string
+          created_at: string
+          id: string
+          poem_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          collection_id: string
+          content: string
+          created_at?: string
+          id?: string
+          poem_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          collection_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          poem_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poems_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "poetry_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poetry_collections: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          hashtags: string[] | null
+          id: string
+          is_published: boolean | null
+          poem_count: number | null
+          poet: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          is_published?: boolean | null
+          poem_count?: number | null
+          poet: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          is_published?: boolean | null
+          poem_count?: number | null
+          poet?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      poetry_reading_history: {
+        Row: {
+          collection_id: string
+          completed_at: string | null
+          id: string
+          is_completed: boolean | null
+          last_poem_order: number | null
+          started_at: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          collection_id: string
+          completed_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          last_poem_order?: number | null
+          started_at?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          collection_id?: string
+          completed_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          last_poem_order?: number | null
+          started_at?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poetry_reading_history_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "poetry_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommended_books: {
         Row: {
           author: string | null
@@ -1110,6 +1225,10 @@ export type Database = {
         Args: { admin_id_input: string; template_id_input: string }
         Returns: boolean
       }
+      admin_delete_poetry_collection: {
+        Args: { admin_id_input: string; collection_id_input: string }
+        Returns: boolean
+      }
       admin_delete_recommended_book: {
         Args: { admin_id_input: string; book_id_input: string }
         Returns: boolean
@@ -1387,6 +1506,29 @@ export type Database = {
           teacher_name: string
         }[]
       }
+      admin_get_poems: {
+        Args: { admin_id_input: string; collection_id_input: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          poem_order: number
+          title: string
+        }[]
+      }
+      admin_get_poetry_collections: {
+        Args: { admin_id_input: string }
+        Returns: {
+          cover_image_url: string
+          created_at: string
+          hashtags: string[]
+          id: string
+          is_published: boolean
+          poem_count: number
+          poet: string
+          title: string
+        }[]
+      }
       admin_get_popular_storybooks: {
         Args: { admin_id_input: string }
         Returns: {
@@ -1609,6 +1751,26 @@ export type Database = {
         }
         Returns: string
       }
+      admin_insert_poem: {
+        Args: {
+          admin_id_input: string
+          collection_id_input: string
+          content_input: string
+          poem_order_input?: number
+          title_input: string
+        }
+        Returns: string
+      }
+      admin_insert_poetry_collection: {
+        Args: {
+          admin_id_input: string
+          cover_image_url_input?: string
+          hashtags_input?: string[]
+          poet_input: string
+          title_input: string
+        }
+        Returns: string
+      }
       admin_insert_recommended_book: {
         Args: {
           admin_id_input: string
@@ -1698,6 +1860,14 @@ export type Database = {
       admin_login: {
         Args: { email_or_phone_input: string; password_input: string }
         Returns: Json
+      }
+      admin_publish_poetry_collection: {
+        Args: {
+          admin_id_input: string
+          collection_id_input: string
+          publish_input: boolean
+        }
+        Returns: boolean
       }
       admin_publish_storybook: {
         Args: {
@@ -2133,6 +2303,28 @@ export type Database = {
           updated_at: string
         }[]
       }
+      student_get_poems: {
+        Args: { collection_id_input: string; student_id_input: string }
+        Returns: {
+          content: string
+          id: string
+          poem_order: number
+          title: string
+        }[]
+      }
+      student_get_poetry_collections: {
+        Args: { student_id_input: string }
+        Returns: {
+          cover_image_url: string
+          hashtags: string[]
+          id: string
+          is_completed: boolean
+          last_poem_order: number
+          poem_count: number
+          poet: string
+          title: string
+        }[]
+      }
       student_get_reviews: {
         Args: { student_id_input: string }
         Returns: {
@@ -2224,6 +2416,15 @@ export type Database = {
           music_ids_input: string[]
           playlist_id_input: string
           playlist_name_input: string
+          student_id_input: string
+        }
+        Returns: boolean
+      }
+      student_update_poetry_reading_progress: {
+        Args: {
+          collection_id_input: string
+          is_completed_input?: boolean
+          last_poem_order_input: number
           student_id_input: string
         }
         Returns: boolean
