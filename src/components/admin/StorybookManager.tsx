@@ -1887,8 +1887,8 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-teal-50 dark:bg-teal-950/30">
-                          <TableHead className="w-16">순서</TableHead>
-                          <TableHead>제목</TableHead>
+                          <TableHead className="w-16">번호</TableHead>
+                          <TableHead>도서 제목</TableHead>
                           <TableHead>저자</TableHead>
                           <TableHead className="w-24 text-center">학기</TableHead>
                           <TableHead className="w-24 text-center">활성</TableHead>
@@ -1896,20 +1896,15 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {recommendedBooks.map((book) => (
+                        {recommendedBooks.map((book, index) => (
                           <TableRow key={book.id} className="hover:bg-teal-50/50 dark:hover:bg-teal-950/10">
-                            <TableCell className="font-medium text-center">{book.display_order || '-'}</TableCell>
+                            <TableCell className="font-medium text-center">{index + 1}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-10 bg-teal-100 dark:bg-teal-900/30 rounded flex items-center justify-center">
                                   <BookOpen className="w-4 h-4 text-teal-500" />
                                 </div>
-                                <div>
-                                  <span className="font-medium">{book.title}</span>
-                                  {book.description && (
-                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">{book.description}</p>
-                                  )}
-                                </div>
+                                <span className="font-medium">{book.title}</span>
                               </div>
                             </TableCell>
                             <TableCell className="text-muted-foreground">{book.author || '-'}</TableCell>
@@ -1934,7 +1929,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                                   onClick={() => openRecBookEditDialog(book)}
                                   title="수정"
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Eye className="w-4 h-4" />
                                 </Button>
                                 <Button
                                   size="sm"
