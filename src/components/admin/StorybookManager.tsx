@@ -193,6 +193,19 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [poetryToDelete, setPoetryToDelete] = useState<PoetryCollection | null>(null);
   const [isPoetryDeleteDialogOpen, setIsPoetryDeleteDialogOpen] = useState(false);
   
+  // Poetry preview state
+  interface Poem {
+    id: string;
+    title: string;
+    content: string;
+    poem_order: number;
+  }
+  const [selectedPoetryCollection, setSelectedPoetryCollection] = useState<PoetryCollection | null>(null);
+  const [poems, setPoems] = useState<Poem[]>([]);
+  const [loadingPoems, setLoadingPoems] = useState(false);
+  const [isPoetryPreviewOpen, setIsPoetryPreviewOpen] = useState(false);
+  const [currentPoemIndex, setCurrentPoemIndex] = useState(0);
+
   // Page count editing state
   const [editingPageCountId, setEditingPageCountId] = useState<string | null>(null);
   const [editingPageCountValue, setEditingPageCountValue] = useState<number>(0);
@@ -327,6 +340,29 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     } catch (error) {
       console.error('Error deleting poetry collection:', error);
       toast.error('시집 삭제에 실패했습니다');
+    }
+  };
+
+  // Load poems for preview
+  const loadPoems = async (collection: PoetryCollection) => {
+    try {
+      setLoadingPoems(true);
+      setSelectedPoetryCollection(collection);
+      setIsPoetryPreviewOpen(true);
+      setCurrentPoemIndex(0);
+      
+      const { data, error } = await supabase.rpc('admin_get_poems', {
+        admin_id_input: adminId,
+        collection_id_input: collection.id
+      });
+
+      if (error) throw error;
+      setPoems(data || []);
+    } catch (error) {
+      console.error('Error loading poems:', error);
+      toast.error('시 목록을 불러오는데 실패했습니다');
+    } finally {
+      setLoadingPoems(false);
     }
   };
 
@@ -2161,11 +2197,21 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                                 <Button
                                   size="sm"
                                   variant="ghost"
+                                  className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                  onClick={() => loadPoems(collection)}
+                                  title="미리보기"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
                                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                   onClick={() => {
                                     setPoetryToDelete(collection);
                                     setIsPoetryDeleteDialogOpen(true);
                                   }}
+                                  title="삭제"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -2627,6 +2673,85 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Poetry Preview Dialog */}
+      <Dialog open={isPoetryPreviewOpen} onOpenChange={setIsPoetryPreviewOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
+              <PenLine className="w-5 h-5" />
+              {selectedPoetryCollection?.title}
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                - {selectedPoetryCollection?.poet}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {loadingPoems ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+            </div>
+          ) : poems.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              이 시집에 등록된 시가 없습니다.
+            </div>
+          ) : (
+            <div className="flex-1 overflow-hidden flex flex-col">
+              {/* 시 내용 */}
+              <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-purple-50/50 to-white dark:from-purple-950/20 dark:to-background rounded-lg border">
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-semibold text-purple-800 dark:text-purple-300">
+                    {poems[currentPoemIndex]?.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {currentPoemIndex + 1} / {poems.length}
+                  </p>
+                </div>
+                <div className="whitespace-pre-wrap font-serif text-lg leading-relaxed text-center">
+                  {poems[currentPoemIndex]?.content}
+                </div>
+              </div>
+              
+              {/* 네비게이션 */}
+              {poems.length > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPoemIndex(prev => Math.max(0, prev - 1))}
+                    disabled={currentPoemIndex === 0}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    이전 시
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {poems.map((_, idx) => (
+                      <Button
+                        key={idx}
+                        variant={currentPoemIndex === idx ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setCurrentPoemIndex(idx)}
+                        className={`w-8 h-8 p-0 ${currentPoemIndex === idx ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                      >
+                        {idx + 1}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPoemIndex(prev => Math.min(poems.length - 1, prev + 1))}
+                    disabled={currentPoemIndex >= poems.length - 1}
+                  >
+                    다음 시
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
