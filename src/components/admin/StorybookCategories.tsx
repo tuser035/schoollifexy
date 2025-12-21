@@ -156,22 +156,6 @@ export default function StorybookCategories({ adminId }: StorybookCategoriesProp
 
   return (
     <div className="space-y-6">
-      {/* Info Card */}
-      <Card className="border-pink-200/50 bg-pink-50/50">
-        <CardContent className="pt-4">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-pink-600 mt-0.5" />
-            <div className="text-sm text-pink-800">
-              <p className="font-medium mb-1">카테고리 관리 안내</p>
-              <p className="text-pink-600">
-                인문학 서점에 표시되는 카테고리를 관리합니다. 각 카테고리는 책 번호 범위로 구분되며, 
-                해당 범위의 책들이 카테고리 아래에 표시됩니다.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Categories List */}
       <Card className="border-pink-200/50">
         <CardHeader className="pb-3">
