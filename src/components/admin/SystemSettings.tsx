@@ -91,6 +91,7 @@ const SystemSettings = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [restoringLogId, setRestoringLogId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const kakaoQrInputRef = useRef<HTMLInputElement>(null);
@@ -329,6 +330,67 @@ const SystemSettings = () => {
       toast.error("변경 내역을 불러오는데 실패했습니다");
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  // 히스토리에서 설정 복원
+  const handleRestoreFromHistory = async (log: AuditLog) => {
+    if (!log.old_data?.setting_key || !log.old_data?.setting_value) {
+      toast.error("복원할 이전 값이 없습니다");
+      return;
+    }
+
+    setRestoringLogId(log.id);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+      const settingKey = log.old_data.setting_key;
+      const settingValue = log.old_data.setting_value;
+
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: settingKey,
+        setting_value_input: settingValue,
+      });
+
+      if (error) throw error;
+
+      // 상태 업데이트
+      switch (settingKey) {
+        case "school_name":
+          setSchoolName(settingValue);
+          break;
+        case "school_name_en":
+          setSchoolNameEn(settingValue);
+          break;
+        case "school_symbol_url":
+          setSchoolSymbolUrl(settingValue);
+          break;
+        case "favicon_url":
+          setFaviconUrl(settingValue);
+          updateFavicon(settingValue);
+          break;
+        case "kakao_qr_url":
+          setKakaoQrUrl(settingValue);
+          break;
+        case "kakao_chat_url":
+          setKakaoChatUrl(settingValue);
+          break;
+        case "reply_to_email":
+          setReplyToEmail(settingValue);
+          break;
+      }
+
+      toast.success(`${getSettingKeyLabel(settingKey)} 설정이 복원되었습니다`);
+      fetchSettings();
+      fetchAuditLogs();
+    } catch (error: any) {
+      console.error("Failed to restore setting:", error);
+      toast.error("설정 복원에 실패했습니다");
+    } finally {
+      setRestoringLogId(null);
     }
   };
 
@@ -1488,11 +1550,50 @@ const SystemSettings = () => {
                         </div>
                       )}
                     </div>
-                    {log.user_name && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        변경자: {log.user_name}
-                      </p>
-                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      {log.user_name && (
+                        <p className="text-xs text-muted-foreground">
+                          변경자: {log.user_name}
+                        </p>
+                      )}
+                      {log.action_type === "UPDATE" && log.old_data?.setting_value && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              disabled={restoringLogId === log.id}
+                            >
+                              {restoringLogId === log.id ? (
+                                <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                              ) : (
+                                <RotateCcw className="w-3 h-3 mr-1" />
+                              )}
+                              이전 값으로 복원
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>설정 복원</AlertDialogTitle>
+                              <AlertDialogDescription className="space-y-2">
+                                <p>다음 설정을 이전 값으로 복원하시겠습니까?</p>
+                                <div className="bg-muted p-3 rounded-lg text-sm">
+                                  <p><strong>설정:</strong> {getSettingKeyLabel(log.old_data?.setting_key)}</p>
+                                  <p><strong>복원할 값:</strong> {truncateValue(log.old_data?.setting_value)}</p>
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>취소</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleRestoreFromHistory(log)}>
+                                복원
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
