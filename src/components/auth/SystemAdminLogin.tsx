@@ -37,7 +37,7 @@ const SystemAdminLogin = ({ onSuccess }: SystemAdminLoginProps) => {
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-3">
       <div className="space-y-2">
         <Label htmlFor="system-admin-email">이메일</Label>
         <Input
@@ -47,6 +47,7 @@ const SystemAdminLogin = ({ onSuccess }: SystemAdminLoginProps) => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className="h-9"
         />
       </div>
 
@@ -60,7 +61,7 @@ const SystemAdminLogin = ({ onSuccess }: SystemAdminLoginProps) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="pr-10"
+            className="h-9 pr-10"
           />
           <Button
             type="button"
@@ -80,7 +81,7 @@ const SystemAdminLogin = ({ onSuccess }: SystemAdminLoginProps) => {
 
       <Button 
         type="submit" 
-        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+        className="w-full h-9 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
         disabled={isLoading}
       >
         {isLoading ? "로그인 중..." : "시스템 관리자 로그인"}
