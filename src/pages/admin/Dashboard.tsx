@@ -42,6 +42,7 @@ type TabItem = {
   category: string;
   description?: string;
   hideCardTitle?: boolean;
+  hasSubTabs?: boolean;
 };
 
 type TabGroup = {
@@ -219,10 +220,10 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
     ]
   });
   
-  // 인문학 서점
+  // 도서 추천
   groups.push({
     name: "reading",
-    label: "인문학 서점",
+    label: "도서 추천",
     items: [
       { 
         value: "storybook-categories", 
@@ -237,13 +238,14 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
       },
       { 
         value: "storybooks", 
-        label: "인문학 서점", 
+        label: "도서 추천", 
         icon: BookOpen, 
         activeClass: "data-[state=active]:bg-teal-500 data-[state=active]:text-white",
         borderClass: "border-teal-500/30",
         textClass: "text-teal-600",
-        cardTitle: "인문학 서점",
-        category: "reading"
+        cardTitle: "도서 추가",
+        category: "reading",
+        hasSubTabs: true
       },
       { 
         value: "book-reports", 
