@@ -168,10 +168,7 @@ const GradeStatistics = () => {
   return (
     <div className="space-y-4">
       <Card className="border-groups-purple/30">
-        <CardHeader>
-          <CardTitle className="text-groups-purple">학년별 상점/벌점 통계</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="flex gap-4 flex-wrap items-end">
             <div className="space-y-2">
               <label className="text-sm font-medium">기간 선택 방식</label>
