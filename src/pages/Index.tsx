@@ -190,13 +190,15 @@ const Index = () => {
 
       {/* System Admin Login Dialog */}
       <Dialog open={showSystemAdminDialog} onOpenChange={setShowSystemAdminDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center text-2xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+        <DialogContent className="max-w-[90%] sm:max-w-[360px] p-4 sm:p-5 rounded-2xl">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-center text-lg sm:text-xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
               시스템 관리자 로그인
             </DialogTitle>
           </DialogHeader>
-          <SystemAdminLogin onSuccess={() => setShowSystemAdminDialog(false)} />
+          <div className="text-sm [&_label]:text-xs [&_input]:h-8 [&_input]:text-sm [&_button]:h-8 [&_button]:text-sm">
+            <SystemAdminLogin onSuccess={() => setShowSystemAdminDialog(false)} />
+          </div>
         </DialogContent>
       </Dialog>
 
