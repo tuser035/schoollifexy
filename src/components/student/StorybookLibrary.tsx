@@ -1295,7 +1295,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           >
             {/* Mobile Single Page View */}
             <div 
-              className={`md:hidden w-full h-full flex flex-col bg-white ${
+              className={`md:hidden w-full h-full flex flex-col ${
+                selectedBook?.category === 'poetry' 
+                  ? 'bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50' 
+                  : 'bg-white'
+              } ${
                 pageTransition === 'exit' ? 'animate-page-curl-exit-mobile' : 
                 pageTransition === 'enter' ? 'animate-page-curl-enter-mobile' : ''
               }`}
@@ -1305,11 +1309,19 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
-                  <div className="flex flex-col items-center justify-center py-4 px-3 bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50 min-h-[100px]">
-                    <Badge className="bg-storybook-emerald text-white text-[10px] px-2 py-0.5 mb-2">
+                  <div className={`flex flex-col items-center justify-center py-4 px-3 min-h-[100px] ${
+                    selectedBook?.category === 'poetry'
+                      ? 'bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100'
+                      : 'bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50'
+                  }`}>
+                    <Badge className={`text-white text-[10px] px-2 py-0.5 mb-2 ${
+                      selectedBook?.category === 'poetry' ? 'bg-purple-500' : 'bg-storybook-emerald'
+                    }`}>
                       #{selectedBook?.book_number}
                     </Badge>
-                    <h1 className="text-base font-bold text-storybook-emerald-dark text-center leading-tight px-2 break-words">
+                    <h1 className={`text-base font-bold text-center leading-tight px-2 break-words ${
+                      selectedBook?.category === 'poetry' ? 'text-purple-800' : 'text-storybook-emerald-dark'
+                    }`}>
                       {selectedBook?.title}
                     </h1>
                   </div>
@@ -1359,7 +1371,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 <div className="flex-1 flex flex-col overflow-hidden">
                   {/* Image Section Mobile - Fixed height */}
                   {currentPageData.image_url && (
-                    <div className="flex-shrink-0 bg-gradient-to-b from-storybook-emerald-light to-white py-3 px-3">
+                    <div className={`flex-shrink-0 py-3 px-3 ${
+                      selectedBook?.category === 'poetry'
+                        ? 'bg-gradient-to-b from-purple-100 to-purple-50/30'
+                        : 'bg-gradient-to-b from-storybook-emerald-light to-white'
+                    }`}>
                       <div className="flex justify-center">
                         <img 
                           src={currentPageData.image_url} 
@@ -1371,7 +1387,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   )}
                   
                   {/* Text Section Mobile - Scrollable */}
-                  <div className="flex-1 overflow-y-auto px-4 py-2 bg-white">
+                  <div className={`flex-1 overflow-y-auto px-4 py-2 ${
+                    selectedBook?.category === 'poetry' ? 'bg-purple-50/50' : 'bg-white'
+                  }`}>
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
@@ -1405,7 +1423,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   </div>
                   
                   {/* Page Number */}
-                  <div className="flex-shrink-0 text-center py-1 text-xs text-storybook-emerald bg-storybook-emerald-light/50 w-full">
+                  <div className={`flex-shrink-0 text-center py-1 text-xs w-full ${
+                    selectedBook?.category === 'poetry' 
+                      ? 'text-purple-600 bg-purple-100/70' 
+                      : 'text-storybook-emerald bg-storybook-emerald-light/50'
+                  }`}>
                     - {currentPage} -
                   </div>
                 </div>
@@ -1414,7 +1436,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
             {/* Desktop Two Page Spread */}
             <div 
-              className={`hidden md:flex bg-white rounded-lg shadow-2xl max-h-full overflow-hidden ${
+              className={`hidden md:flex rounded-lg shadow-2xl max-h-full overflow-hidden ${
+                selectedBook?.category === 'poetry' 
+                  ? 'bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50' 
+                  : 'bg-white'
+              } ${
                 pageTransition === 'exit' ? 'animate-page-curl-exit' : 
                 pageTransition === 'enter' ? 'animate-page-curl-enter' : ''
               }`}
@@ -1424,17 +1450,27 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
                   {/* Left - Title */}
-                  <div className="w-[350px] h-[800px] flex flex-col items-center justify-center p-8 bg-gradient-to-br from-storybook-emerald-light to-white border-r border-storybook-emerald/20">
-                    <Badge className="bg-storybook-emerald text-white text-sm px-3 py-1 mb-4">
+                  <div className={`w-[350px] h-[800px] flex flex-col items-center justify-center p-8 border-r ${
+                    selectedBook?.category === 'poetry'
+                      ? 'bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 border-purple-200'
+                      : 'bg-gradient-to-br from-storybook-emerald-light to-white border-storybook-emerald/20'
+                  }`}>
+                    <Badge className={`text-white text-sm px-3 py-1 mb-4 ${
+                      selectedBook?.category === 'poetry' ? 'bg-purple-500' : 'bg-storybook-emerald'
+                    }`}>
                       #{selectedBook?.book_number}
                     </Badge>
-                    <h1 className="text-2xl font-bold text-storybook-emerald-dark text-center">
+                    <h1 className={`text-2xl font-bold text-center ${
+                      selectedBook?.category === 'poetry' ? 'text-purple-800' : 'text-storybook-emerald-dark'
+                    }`}>
                       {selectedBook?.title}
                     </h1>
                   </div>
                   
                   {/* Right - First Page Content */}
-                  <div className="w-[350px] h-[800px] p-6 overflow-y-auto">
+                  <div className={`w-[350px] h-[800px] p-6 overflow-y-auto ${
+                    selectedBook?.category === 'poetry' ? 'bg-purple-50/50' : 'bg-white'
+                  }`}>
                     {currentPageData?.image_url && (
                       <img 
                         src={currentPageData.image_url} 
@@ -1476,7 +1512,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               {currentPage > 1 && currentPageData && (
                 <div className="flex">
                   {/* Left - Image */}
-                  <div className="w-[350px] h-[800px] flex items-center justify-center bg-storybook-emerald-light border-r border-storybook-emerald/20 p-4">
+                  <div className={`w-[350px] h-[800px] flex items-center justify-center p-4 border-r ${
+                    selectedBook?.category === 'poetry'
+                      ? 'bg-purple-100 border-purple-200'
+                      : 'bg-storybook-emerald-light border-storybook-emerald/20'
+                  }`}>
                     {currentPageData.image_url ? (
                       <img 
                         src={currentPageData.image_url} 
@@ -1484,7 +1524,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         className="max-w-full max-h-full object-contain rounded-lg shadow"
                       />
                     ) : (
-                      <div className="text-muted-foreground flex flex-col items-center">
+                      <div className={`flex flex-col items-center ${
+                        selectedBook?.category === 'poetry' ? 'text-purple-400' : 'text-muted-foreground'
+                      }`}>
                         <BookOpen className="w-16 h-16 mb-2" />
                         <span>삽화가 없습니다</span>
                       </div>
@@ -1492,7 +1534,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   </div>
                   
                   {/* Right - Text */}
-                  <div className="w-[350px] h-[800px] p-6 overflow-y-auto bg-white">
+                  <div className={`w-[350px] h-[800px] p-6 overflow-y-auto ${
+                    selectedBook?.category === 'poetry' ? 'bg-purple-50/50' : 'bg-white'
+                  }`}>
                     {currentPageData.text_content ? (() => {
                       const lines = currentPageData.text_content.split('\n');
                       const subtitle = lines[0];
@@ -1523,7 +1567,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         내용이 없습니다
                       </div>
                     )}
-                    <div className="text-right text-sm text-storybook-emerald mt-4">
+                    <div className={`text-right text-sm mt-4 ${
+                      selectedBook?.category === 'poetry' ? 'text-purple-600' : 'text-storybook-emerald'
+                    }`}>
                       - {currentPage} -
                     </div>
                   </div>
@@ -1533,7 +1579,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           </div>
 
           {/* Bottom Navigation */}
-          <div className="flex items-center justify-between px-2 py-2 md:py-1 bg-gradient-to-t from-storybook-emerald-light to-storybook-emerald-light/80">
+          <div className={`flex items-center justify-between px-2 py-2 md:py-1 ${
+            selectedBook?.category === 'poetry'
+              ? 'bg-gradient-to-t from-purple-100 to-purple-100/80'
+              : 'bg-gradient-to-t from-storybook-emerald-light to-storybook-emerald-light/80'
+          }`}>
             {/* Prev Button */}
             <Button
               variant="ghost"
