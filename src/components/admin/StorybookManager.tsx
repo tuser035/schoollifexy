@@ -1143,15 +1143,44 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
     }
   };
 
+  // Sub-tab state for the main content area
+  const [activeSubTab, setActiveSubTab] = useState<'humanities' | 'poetry' | 'recommended'>('humanities');
+
   return (
     <div className="space-y-4">
+      {/* Sub-tabs */}
+      <Tabs value={activeSubTab} onValueChange={(v) => setActiveSubTab(v as 'humanities' | 'poetry' | 'recommended')} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-muted/50">
+          <TabsTrigger 
+            value="humanities" 
+            className="data-[state=active]:bg-amber-500 data-[state=active]:text-white"
+          >
+            인문학
+          </TabsTrigger>
+          <TabsTrigger 
+            value="poetry" 
+            className="data-[state=active]:bg-purple-500 data-[state=active]:text-white"
+          >
+            시집
+          </TabsTrigger>
+          <TabsTrigger 
+            value="recommended" 
+            className="data-[state=active]:bg-teal-500 data-[state=active]:text-white"
+          >
+            이번학기 추천도서
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div className="flex items-center gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <BookOpen className="w-5 h-5 text-amber-600" />
-                도서 추가
+                {activeSubTab === 'humanities' && '인문학 도서'}
+                {activeSubTab === 'poetry' && '시집'}
+                {activeSubTab === 'recommended' && '이번학기 추천도서'}
                 {realtimeUpdated && (
                   <span className="flex items-center gap-1 text-xs text-emerald-600 font-normal animate-pulse">
                     <span className="w-2 h-2 bg-emerald-500 rounded-full" />
@@ -1162,201 +1191,194 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {/* + 인문학 버튼 (새 동화책) */}
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
-                  <Plus className="w-4 h-4 mr-1" />
-                  인문학
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>새 동화책 만들기</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+            {/* + 인문학 버튼 (새 동화책) - 인문학 탭에서만 표시 */}
+            {activeSubTab === 'humanities' && (
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
+                    <Plus className="w-4 h-4 mr-1" />
+                    추가
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>새 인문학 도서 만들기</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>일련번호</Label>
+                        <Input
+                          type="number"
+                          placeholder="예: 1"
+                          value={newBookNumber}
+                          onChange={(e) => setNewBookNumber(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>제목</Label>
+                        <Input
+                          placeholder="도서 제목"
+                          value={newTitle}
+                          onChange={(e) => setNewTitle(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>설명 (마크다운 지원)</Label>
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        {/* 입력 영역 */}
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">입력</p>
+                          <Textarea
+                            value={newDescription}
+                            onChange={(e) => setNewDescription(e.target.value)}
+                            placeholder="마크다운 형식으로 입력하세요...&#10;&#10;예시:&#10;# 제목&#10;## 소제목&#10;**굵게** *기울임*&#10;- 목록 항목"
+                            className="min-h-[150px] resize-none font-mono text-sm"
+                          />
+                        </div>
+                        {/* 미리보기 영역 */}
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">미리보기</p>
+                          <div className="min-h-[150px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
+                            {newDescription ? (
+                              <ReactMarkdown>{newDescription}</ReactMarkdown>
+                            ) : (
+                              <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <Button onClick={handleCreateBook} className="w-full bg-amber-600 hover:bg-amber-700">
+                      생성하기
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+            
+            {/* + 시집 버튼 - 시집 탭에서만 표시 */}
+            {activeSubTab === 'poetry' && (
+              <Dialog open={isPoetryDialogOpen} onOpenChange={setIsPoetryDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                    <Plus className="w-4 h-4 mr-1" />
+                    추가
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>새 시집 만들기</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>일련번호</Label>
+                        <Input
+                          type="number"
+                          placeholder="예: 1"
+                          value={poetryBookNumber}
+                          onChange={(e) => setPoetryBookNumber(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>제목</Label>
+                        <Input
+                          placeholder="시집 제목"
+                          value={poetryTitle}
+                          onChange={(e) => setPoetryTitle(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>설명 (마크다운 지원)</Label>
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">입력</p>
+                          <Textarea
+                            value={poetryDescription}
+                            onChange={(e) => setPoetryDescription(e.target.value)}
+                            placeholder="마크다운 형식으로 입력하세요..."
+                            className="min-h-[150px] resize-none font-mono text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">미리보기</p>
+                          <div className="min-h-[150px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
+                            {poetryDescription ? (
+                              <ReactMarkdown>{poetryDescription}</ReactMarkdown>
+                            ) : (
+                              <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <Button onClick={handleCreatePoetryBook} className="w-full bg-purple-600 hover:bg-purple-700">
+                      시집 생성하기
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+            
+            {/* + 추천도서 버튼 - 이번학기 추천도서 탭에서만 표시 */}
+            {activeSubTab === 'recommended' && (
+              <Dialog open={isExternalUrlDialogOpen} onOpenChange={setIsExternalUrlDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
+                    <Plus className="w-4 h-4 mr-1" />
+                    추가
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <ExternalLink className="w-5 h-5" />
+                      이번학기 추천도서 등록
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
                     <div>
                       <Label>일련번호</Label>
                       <Input
                         type="number"
                         placeholder="예: 1"
-                        value={newBookNumber}
-                        onChange={(e) => setNewBookNumber(e.target.value)}
+                        value={externalUrlBookNumber}
+                        onChange={(e) => setExternalUrlBookNumber(e.target.value)}
                       />
                     </div>
                     <div>
                       <Label>제목</Label>
                       <Input
-                        placeholder="동화책 제목"
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>설명 (마크다운 지원)</Label>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      {/* 입력 영역 */}
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">입력</p>
-                        <Textarea
-                          value={newDescription}
-                          onChange={(e) => setNewDescription(e.target.value)}
-                          placeholder="마크다운 형식으로 입력하세요...&#10;&#10;예시:&#10;# 제목&#10;## 소제목&#10;**굵게** *기울임*&#10;- 목록 항목"
-                          className="min-h-[150px] resize-none font-mono text-sm"
-                        />
-                      </div>
-                      {/* 미리보기 영역 */}
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">미리보기</p>
-                        <div className="min-h-[150px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
-                          {newDescription ? (
-                            <ReactMarkdown>{newDescription}</ReactMarkdown>
-                          ) : (
-                            <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button onClick={handleCreateBook} className="w-full bg-amber-600 hover:bg-amber-700">
-                    생성하기
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            
-            {/* + 시집 버튼 */}
-            <Dialog open={isPoetryDialogOpen} onOpenChange={setIsPoetryDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
-                  <Plus className="w-4 h-4 mr-1" />
-                  시집
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>새 시집 만들기</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>일련번호</Label>
-                      <Input
-                        type="number"
-                        placeholder="예: 1"
-                        value={poetryBookNumber}
-                        onChange={(e) => setPoetryBookNumber(e.target.value)}
+                        placeholder="도서 제목"
+                        value={externalUrlTitle}
+                        onChange={(e) => setExternalUrlTitle(e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label>제목</Label>
+                      <Label>외부 URL</Label>
                       <Input
-                        placeholder="시집 제목"
-                        value={poetryTitle}
-                        onChange={(e) => setPoetryTitle(e.target.value)}
+                        type="url"
+                        placeholder="https://example.com/book"
+                        value={externalUrlValue}
+                        onChange={(e) => setExternalUrlValue(e.target.value)}
                       />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        외부 사이트의 도서 URL을 입력하세요
+                      </p>
                     </div>
+                    <Button onClick={handleCreateExternalUrlBook} className="w-full bg-teal-600 hover:bg-teal-700">
+                      등록하기
+                    </Button>
                   </div>
-                  <div>
-                    <Label>설명 (마크다운 지원)</Label>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">입력</p>
-                        <Textarea
-                          value={poetryDescription}
-                          onChange={(e) => setPoetryDescription(e.target.value)}
-                          placeholder="마크다운 형식으로 입력하세요..."
-                          className="min-h-[150px] resize-none font-mono text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">미리보기</p>
-                        <div className="min-h-[150px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
-                          {poetryDescription ? (
-                            <ReactMarkdown>{poetryDescription}</ReactMarkdown>
-                          ) : (
-                            <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button onClick={handleCreatePoetryBook} className="w-full bg-purple-600 hover:bg-purple-700">
-                    시집 생성하기
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            
-            {/* + 추천도서 버튼 (외부 URL 동화책) */}
-            <Dialog open={isExternalUrlDialogOpen} onOpenChange={setIsExternalUrlDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="border-emerald-600 text-emerald-600 hover:bg-emerald-50">
-                  <Plus className="w-4 h-4 mr-1" />
-                  추천도서
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <ExternalLink className="w-5 h-5" />
-                    외부 URL 동화책 등록
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>일련번호</Label>
-                    <Input
-                      type="number"
-                      placeholder="예: 1"
-                      value={externalUrlBookNumber}
-                      onChange={(e) => setExternalUrlBookNumber(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>제목</Label>
-                    <Input
-                      placeholder="동화책 제목"
-                      value={externalUrlTitle}
-                      onChange={(e) => setExternalUrlTitle(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>외부 URL</Label>
-                    <Input
-                      type="url"
-                      placeholder="https://example.com/storybook"
-                      value={externalUrlValue}
-                      onChange={(e) => setExternalUrlValue(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      외부 사이트의 동화책 URL을 입력하세요
-                    </p>
-                  </div>
-                  <Button onClick={handleCreateExternalUrlBook} className="w-full bg-emerald-600 hover:bg-emerald-700">
-                    등록하기
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent>
-          {/* Main content type tabs */}
-          <Tabs value={mainContentTab} onValueChange={(v) => setMainContentTab(v as 'storybook' | 'poetry')} className="mb-4">
-            <TabsList className="grid w-full max-w-xs grid-cols-2">
-              <TabsTrigger value="storybook" className="flex items-center gap-1">
-                <BookOpen className="w-4 h-4" />
-                동화책
-              </TabsTrigger>
-              <TabsTrigger value="poetry" className="flex items-center gap-1 text-purple-600">
-                <FileText className="w-4 h-4" />
-                시집
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
           
           {/* Hidden input for inline cover upload */}
           <input
@@ -1367,13 +1389,13 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             className="hidden"
           />
           
-          {mainContentTab === 'storybook' && (
+          {activeSubTab === 'humanities' && (
             <>
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
-              ) : books.length === 0 ? (
+              ) : books.filter(b => b.category !== 'poetry' && !b.external_url).length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  등록된 동화책이 없습니다
+                  등록된 인문학 도서가 없습니다
                 </div>
               ) : (
             <Table>
@@ -1389,7 +1411,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {books.map((book) => (
+                {books.filter(b => b.category !== 'poetry' && !b.external_url).map((book) => (
                   <TableRow 
                     key={book.id}
                     className={`${recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''} ${book.external_url ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
@@ -1618,8 +1640,99 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
               )}
             </>
           )}
+
+          {activeSubTab === 'recommended' && (
+            <>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
+              ) : books.filter(b => b.external_url).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  등록된 추천도서가 없습니다
+                </div>
+              ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">번호</TableHead>
+                  <TableHead>제목</TableHead>
+                  <TableHead className="max-w-[200px]">URL</TableHead>
+                  <TableHead className="w-20">상태</TableHead>
+                  <TableHead className="w-32">작업</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {books.filter(b => b.external_url).map((book) => (
+                  <TableRow 
+                    key={book.id}
+                    className={`${recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''} bg-blue-50 dark:bg-blue-900/20`}
+                  >
+                    <TableCell className="font-medium">{book.book_number}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {book.cover_image_url ? (
+                          <img 
+                            src={book.cover_image_url} 
+                            alt={book.title}
+                            className="w-10 h-14 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-14 flex items-center justify-center bg-muted rounded">
+                            <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <span>{book.title}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-[200px]">
+                      <a 
+                        href={book.external_url || '#'} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline truncate block"
+                      >
+                        {book.external_url}
+                      </a>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={book.is_published ? "default" : "secondary"}
+                        className={book.is_published ? "bg-emerald-500" : ""}
+                      >
+                        {book.is_published ? "발행" : "미발행"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handlePreviewBook(book)}
+                          title="새 탭에서 열기"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            setBookToDelete(book);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+              )}
+            </>
+          )}
           
-          {mainContentTab === 'poetry' && (
+          {activeSubTab === 'poetry' && (
             <div className="border rounded-lg p-6 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-background">
               <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400 mb-6 flex items-center gap-2">
                 <FileText className="w-5 h-5" />
