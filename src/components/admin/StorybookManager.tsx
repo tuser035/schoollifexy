@@ -467,57 +467,102 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             return;
           }
 
-          let successCount = 0;
-          let errorCount = 0;
+          // 시집별로 시들을 그룹화
+          const collectionsMap = new Map<string, {
+            poet: string;
+            hashtags: string;
+            poems: Array<{ title: string; content: string; order: number }>;
+          }>();
+
+          let skipCount = 0;
+          let poemOrder = 1;
 
           for (const row of rows) {
-            const title = row['시집제목'] || row['title'] || '';
+            const collectionTitle = row['시집제목'] || row['title'] || '';
             const poet = row['시인'] || row['poet'] || '';
             const poemTitle = row['시제목'] || row['poem_title'] || '';
             const poemContent = row['시내용'] || row['content'] || '';
             const hashtags = row['해시태그'] || row['hashtags'] || '';
 
-            if (!title || !poet || !poemTitle || !poemContent) {
-              errorCount++;
+            if (!collectionTitle || !poet || !poemTitle || !poemContent) {
+              console.log('Skipping row due to missing fields:', { collectionTitle, poet, poemTitle, poemContent: poemContent?.substring(0, 50) });
+              skipCount++;
               continue;
             }
 
+            const key = `${collectionTitle}|||${poet}`;
+            if (!collectionsMap.has(key)) {
+              collectionsMap.set(key, {
+                poet,
+                hashtags,
+                poems: []
+              });
+            }
+
+            const collection = collectionsMap.get(key)!;
+            collection.poems.push({
+              title: poemTitle.trim(),
+              content: poemContent.trim(),
+              order: collection.poems.length + 1
+            });
+          }
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          // 각 시집 생성 및 시 추가
+          for (const [key, data] of collectionsMap) {
+            const [collectionTitle] = key.split('|||');
+            
             try {
-              const hashtagsArray = hashtags
+              const hashtagsArray = data.hashtags
                 .split(',')
                 .map((tag: string) => tag.trim())
                 .filter((tag: string) => tag.length > 0);
 
+              // 시집 생성
               const { data: collectionId, error: collectionError } = await supabase.rpc('admin_insert_poetry_collection', {
                 admin_id_input: adminId,
-                title_input: title.trim(),
-                poet_input: poet.trim(),
+                title_input: collectionTitle.trim(),
+                poet_input: data.poet.trim(),
                 hashtags_input: hashtagsArray.length > 0 ? hashtagsArray : null
               });
 
-              if (collectionError) throw collectionError;
+              if (collectionError) {
+                console.error('Error creating collection:', collectionTitle, collectionError);
+                throw collectionError;
+              }
 
-              const { error: poemError } = await supabase.rpc('admin_insert_poem', {
-                admin_id_input: adminId,
-                collection_id_input: collectionId,
-                title_input: poemTitle.trim(),
-                content_input: poemContent.trim(),
-                poem_order_input: 1
-              });
+              // 시집에 모든 시 추가
+              for (const poem of data.poems) {
+                const { error: poemError } = await supabase.rpc('admin_insert_poem', {
+                  admin_id_input: adminId,
+                  collection_id_input: collectionId,
+                  title_input: poem.title,
+                  content_input: poem.content,
+                  poem_order_input: poem.order
+                });
 
-              if (poemError) throw poemError;
+                if (poemError) {
+                  console.error('Error creating poem:', poem.title, poemError);
+                }
+              }
+
               successCount++;
             } catch (error) {
-              console.error('Error creating poetry:', error);
+              console.error('Error creating poetry collection:', collectionTitle, error);
               errorCount++;
             }
           }
 
           if (successCount > 0) {
-            toast.success(`${successCount}개의 시집이 등록되었습니다`);
+            toast.success(`${successCount}개의 시집이 등록되었습니다 (총 ${rows.length - skipCount}편의 시)`);
           }
           if (errorCount > 0) {
             toast.error(`${errorCount}개의 시집 등록에 실패했습니다`);
+          }
+          if (skipCount > 0) {
+            toast.warning(`${skipCount}개의 행이 필수 필드 누락으로 건너뛰었습니다`);
           }
         },
         error: (error) => {
