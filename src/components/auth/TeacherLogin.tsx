@@ -53,7 +53,7 @@ const TeacherLogin = () => {
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-3">
       <div className="space-y-2">
         <Label htmlFor="teacher-phone">휴대폰 번호</Label>
         <Input
@@ -64,6 +64,7 @@ const TeacherLogin = () => {
           onChange={handlePhoneChange}
           maxLength={13}
           required
+          className="h-9"
         />
       </div>
 
@@ -77,7 +78,7 @@ const TeacherLogin = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="pr-10"
+            className="h-9 pr-10"
           />
           <Button
             type="button"
@@ -97,7 +98,7 @@ const TeacherLogin = () => {
 
       <Button 
         type="submit" 
-        className="w-full bg-teacher hover:bg-teacher/90"
+        className="w-full h-9 bg-teacher hover:bg-teacher/90"
         disabled={isLoading}
       >
         {isLoading ? "로그인 중..." : "교사 로그인"}

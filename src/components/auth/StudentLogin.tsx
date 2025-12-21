@@ -32,7 +32,7 @@ const StudentLogin = () => {
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-3">
       <div className="space-y-2">
         <Label htmlFor="student-id">학번</Label>
         <Input
@@ -42,6 +42,7 @@ const StudentLogin = () => {
           value={studentId}
           onChange={(e) => setStudentId(e.target.value)}
           required
+          className="h-9"
         />
       </div>
 
@@ -55,7 +56,7 @@ const StudentLogin = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="pr-10"
+            className="h-9 pr-10"
           />
           <Button
             type="button"
@@ -75,7 +76,7 @@ const StudentLogin = () => {
 
       <Button 
         type="submit" 
-        className="w-full bg-student hover:bg-student/90 text-white"
+        className="w-full h-9 bg-student hover:bg-student/90 text-white"
         disabled={isLoading}
       >
         {isLoading ? "로그인 중..." : "학생 로그인"}
