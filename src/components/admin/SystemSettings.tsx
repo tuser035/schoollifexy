@@ -361,7 +361,44 @@ const SystemSettings = () => {
     }
   };
 
+  const validateKakaoChatUrl = (url: string): { isValid: boolean; message: string } => {
+    if (!url.trim()) {
+      return { isValid: true, message: "" }; // 빈 값은 허용 (URL 삭제 시)
+    }
+
+    // URL 형식 검증
+    try {
+      const parsedUrl = new URL(url);
+      
+      // HTTPS만 허용
+      if (parsedUrl.protocol !== "https:") {
+        return { isValid: false, message: "HTTPS URL만 허용됩니다" };
+      }
+
+      // 카카오톡 오픈채팅 URL 형식 확인
+      const validDomains = ["open.kakao.com", "pf.kakao.com"];
+      if (!validDomains.includes(parsedUrl.hostname)) {
+        return { isValid: false, message: "카카오톡 오픈채팅 URL만 허용됩니다 (open.kakao.com 또는 pf.kakao.com)" };
+      }
+
+      // URL 길이 제한
+      if (url.length > 500) {
+        return { isValid: false, message: "URL이 너무 깁니다 (최대 500자)" };
+      }
+
+      return { isValid: true, message: "" };
+    } catch {
+      return { isValid: false, message: "유효한 URL 형식이 아닙니다" };
+    }
+  };
+
   const handleSaveKakaoChatUrl = async () => {
+    const validation = validateKakaoChatUrl(kakaoChatUrl);
+    if (!validation.isValid) {
+      toast.error(validation.message);
+      return;
+    }
+
     setSaving(true);
     try {
       const authUser = localStorage.getItem("auth_user");
