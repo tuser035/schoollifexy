@@ -1609,234 +1609,69 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
               ) : (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-amber-50 dark:bg-amber-950/30">
                   <TableHead className="w-16">번호</TableHead>
                   <TableHead>제목</TableHead>
-                  <TableHead className="max-w-[200px]">설명</TableHead>
-                  <TableHead className="w-24">카테고리</TableHead>
-                  <TableHead className="w-20">페이지</TableHead>
-                  <TableHead className="w-20">상태</TableHead>
-                  <TableHead className="w-32">작업</TableHead>
+                  <TableHead className="w-20 text-center">페이지</TableHead>
+                  <TableHead className="w-24 text-center">발행</TableHead>
+                  <TableHead className="w-32 text-center">관리</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {books.filter(b => b.category !== 'poetry' && !b.external_url).map((book) => (
+                {books.filter(b => b.category !== 'poetry' && !b.external_url).map((book, index) => (
                   <TableRow 
                     key={book.id}
-                    className={`${recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''} ${book.external_url ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                    className={`hover:bg-amber-50/50 dark:hover:bg-amber-950/10 ${recentlyEditedBookId === book.id ? 'bg-emerald-100 dark:bg-emerald-900/30 animate-pulse' : ''}`}
                   >
-                    <TableCell className="font-medium">
-                      {editingBookNumberId === book.id ? (
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            value={editingBookNumberValue}
-                            onChange={(e) => setEditingBookNumberValue(Number(e.target.value))}
-                            className="h-8 w-16"
-                            min={1}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveBookNumber();
-                              if (e.key === 'Escape') handleCancelEditBookNumber();
-                            }}
-                            autoFocus
-                          />
-                          <Button size="sm" variant="ghost" onClick={handleSaveBookNumber} className="h-8 w-8 p-0 text-emerald-600">
-                            <Save className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <span 
-                          className="cursor-pointer hover:text-amber-600 hover:underline transition-colors"
-                          onClick={() => handleStartEditBookNumber(book)}
-                          title="클릭하여 일련번호 수정"
-                        >
-                          {book.book_number}
-                        </span>
-                      )}
-                    </TableCell>
+                    <TableCell className="font-medium text-center">{book.book_number}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div 
-                          className="relative cursor-pointer group"
-                          onClick={() => handleClickInlineCover(book.id)}
-                          title="클릭하여 표지 이미지 교체"
-                        >
-                          {uploadingCoverBookId === book.id ? (
-                            <div className="w-10 h-14 flex items-center justify-center bg-muted rounded">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            </div>
-                          ) : book.cover_image_url ? (
-                            <>
-                              <img 
-                                src={book.cover_image_url} 
-                                alt={book.title}
-                                className="w-10 h-14 object-cover rounded group-hover:opacity-70 transition-opacity"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <ImageIcon className="w-4 h-4 text-white drop-shadow-lg" />
-                              </div>
-                            </>
-                          ) : (
-                            <div className="w-10 h-14 flex items-center justify-center bg-muted rounded hover:bg-muted/80 transition-colors">
-                              <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        {editingTitleBookId === book.id ? (
-                          <div className="flex items-center gap-1">
-                            <Input
-                              value={editingTitleValue}
-                              onChange={(e) => setEditingTitleValue(e.target.value)}
-                              className="h-8 w-40"
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveTitle();
-                                if (e.key === 'Escape') handleCancelEditTitle();
-                              }}
-                              autoFocus
-                            />
-                            <Button size="sm" variant="ghost" onClick={handleSaveTitle} className="h-8 w-8 p-0 text-emerald-600">
-                              <Save className="w-4 h-4" />
-                            </Button>
-                          </div>
+                        {book.cover_image_url ? (
+                          <img 
+                            src={book.cover_image_url} 
+                            alt={book.title}
+                            className="w-8 h-10 rounded object-cover"
+                          />
                         ) : (
-                          <span 
-                            className="cursor-pointer hover:text-amber-600 hover:underline transition-colors"
-                            onClick={() => handleStartEditTitle(book)}
-                            title="클릭하여 제목 수정"
-                          >
-                            {book.title}
-                          </span>
+                          <div className="w-8 h-10 bg-amber-100 dark:bg-amber-900/30 rounded flex items-center justify-center">
+                            <BookOpen className="w-4 h-4 text-amber-500" />
+                          </div>
                         )}
+                        <span className="font-medium">{book.title}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-[200px] text-muted-foreground text-sm">
-                      {editingDescriptionId === book.id ? (
-                        <div className="flex items-center gap-1">
-                          <Input
-                            value={editingDescriptionValue}
-                            onChange={(e) => setEditingDescriptionValue(e.target.value)}
-                            className="h-8 w-full"
-                            placeholder="설명을 입력하세요"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveInlineDescription();
-                              if (e.key === 'Escape') handleCancelInlineDescription();
-                            }}
-                            autoFocus
-                          />
-                          <Button size="sm" variant="ghost" onClick={handleSaveInlineDescription} className="h-8 w-8 p-0 text-emerald-600 shrink-0">
-                            <Save className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <span 
-                          className="cursor-pointer hover:text-amber-600 hover:underline transition-colors truncate block"
-                          onClick={() => handleStartEditInlineDescription(book)}
-                          title="클릭하여 설명 수정"
-                        >
-                          {book.description || '-'}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        value={book.category || 'recommended'}
-                        onChange={(e) => handleUpdateCategory(book.id, e.target.value)}
-                        disabled={savingCategoryId === book.id}
-                        className="text-sm border rounded px-2 py-1 bg-background cursor-pointer hover:border-amber-500 transition-colors disabled:opacity-50"
-                      >
-                        {CATEGORY_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      {editingPageCountId === book.id ? (
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            min="0"
-                            value={editingPageCountValue}
-                            onChange={(e) => setEditingPageCountValue(parseInt(e.target.value) || 0)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSavePageCount();
-                              if (e.key === 'Escape') handleCancelEditPageCount();
-                            }}
-                            className="w-16 h-7 text-sm"
-                            autoFocus
-                          />
-                          <Button size="sm" variant="ghost" onClick={handleSavePageCount} className="h-7 w-7 p-0 text-emerald-600">
-                            <Save className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <span 
-                          className="cursor-pointer hover:text-amber-600 hover:underline transition-colors"
-                          onClick={() => handleStartEditPageCount(book)}
-                          title="클릭하여 페이지 수 수정"
-                        >
-                          {book.page_count}쪽
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={book.is_published ? 'default' : 'secondary'}
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => handleTogglePublish(book)}
-                      >
-                        {book.is_published ? '발행' : '비공개'}
+                    <TableCell className="text-center">
+                      <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/30">
+                        {book.page_count}쪽
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={book.is_published}
+                        onCheckedChange={() => handleTogglePublish(book)}
+                        className="data-[state=checked]:bg-amber-600"
+                      />
+                    </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button 
-                          variant="ghost" 
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
                           size="sm"
+                          variant="ghost"
+                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                           onClick={() => handlePreviewBook(book)}
                           title="미리보기"
-                          className="text-amber-600 hover:text-amber-700"
                         >
-                          <Play className="w-4 h-4" />
+                          <Eye className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
+                        <Button
                           size="sm"
-                          onClick={() => handleSelectBook(book)}
-                          title="편집"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDownloadBookContent(book)}
-                          title="내용 다운로드"
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleTogglePublish(book)}
-                          title={book.is_published ? '발행 취소' : '발행'}
-                        >
-                          {book.is_published ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           onClick={() => {
                             setBookToDelete(book);
                             setIsDeleteDialogOpen(true);
                           }}
-                          className="text-destructive hover:text-destructive"
+                          title="삭제"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
