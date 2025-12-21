@@ -962,15 +962,27 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               <AccordionContent className="px-4 pb-4">
                 <div className="flex items-center justify-between mb-4 pt-2">
                   <p className="text-muted-foreground text-sm">{series.subtitle}</p>
-                  <Button 
-                    variant={showMyReviews ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowMyReviews(!showMyReviews)}
-                    className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
-                  >
-                    <PenLine className="w-4 h-4 mr-1" />
-                    {series.id === 'poetry' ? '시를 따라 적어보는 필사' : '내 독후감'} ({seriesReviews.length})
-                  </Button>
+                  <div className="flex gap-2">
+                    {series.id === 'poetry' && (
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className={series.theme.buttonInactive}
+                      >
+                        <Volume2 className="w-4 h-4 mr-1" />
+                        시를 소리내어 낭독
+                      </Button>
+                    )}
+                    <Button 
+                      variant={showMyReviews ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowMyReviews(!showMyReviews)}
+                      className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
+                    >
+                      <PenLine className="w-4 h-4 mr-1" />
+                      {series.id === 'poetry' ? '시를 따라 적어보는 필사' : '내 독후감'} ({seriesReviews.length})
+                    </Button>
+                  </div>
                 </div>
 
                 {showMyReviews && renderReviewSection(seriesReviews, series.theme)}
