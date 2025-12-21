@@ -369,23 +369,79 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="mb-4 sm:mb-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-            <TabsList className="inline-flex w-auto min-w-full">
-              {tabItems.map((item) => {
-                const Icon = item.icon;
-                
-                return (
-                  <TabsTrigger
-                    key={item.value}
-                    value={item.value}
-                    className={`whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 ${item.activeClass}`}
-                  >
-                    <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    <span>{item.label}</span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+          {/* 모바일: 그리드 2줄 배치 / 데스크톱: 가로 스크롤 */}
+          <div className="mb-4 sm:mb-6">
+            {/* 모바일 뷰 - 그리드 2줄 */}
+            <div className="sm:hidden">
+              <TabsList className="grid grid-cols-4 gap-1 h-auto p-1">
+                {tabItems.slice(0, 8).map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <TabsTrigger
+                      key={item.value}
+                      value={item.value}
+                      className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="truncate w-full text-center">{item.label}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+              {tabItems.length > 8 && (
+                <TabsList className="grid grid-cols-4 gap-1 h-auto p-1 mt-1">
+                  {tabItems.slice(8, 16).map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <TabsTrigger
+                        key={item.value}
+                        value={item.value}
+                        className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="truncate w-full text-center">{item.label}</span>
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+              )}
+              {tabItems.length > 16 && (
+                <TabsList className="grid grid-cols-4 gap-1 h-auto p-1 mt-1">
+                  {tabItems.slice(16).map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <TabsTrigger
+                        key={item.value}
+                        value={item.value}
+                        className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="truncate w-full text-center">{item.label}</span>
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+              )}
+            </div>
+            
+            {/* 데스크톱 뷰 - 가로 스크롤 */}
+            <div className="hidden sm:block overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+              <TabsList className="inline-flex w-auto min-w-full">
+                {tabItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <TabsTrigger
+                      key={item.value}
+                      value={item.value}
+                      className={`whitespace-nowrap text-sm px-3 ${item.activeClass}`}
+                    >
+                      <Icon className="w-4 h-4 mr-2" />
+                      <span>{item.label}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </div>
           </div>
 
           {tabItems.map((item) => (
