@@ -27,7 +27,7 @@ export const AVAILABLE_ICONS: Record<string, LucideIcon> = {
   TreePine,
 };
 
-export type ThemeName = 'emerald' | 'amber' | 'blue' | 'purple' | 'rose' | 'teal';
+export type ThemeName = 'emerald' | 'amber' | 'blue' | 'purple' | 'rose' | 'teal' | 'pink';
 
 export interface SeriesTheme {
   name: ThemeName;
@@ -55,31 +55,51 @@ export interface BookSeries {
 // ===== 시리즈 설정 (새 시리즈 추가 시 여기에 추가) =====
 export const BOOK_SERIES: BookSeries[] = [
   {
-    id: 'wisdom-river',
-    title: '이지영의 지혜의 강',
+    id: 'philosophy',
+    title: '철학',
     subtitle: '철학적 사고를 키우는 이야기',
     icon: 'BookOpen',
     bookNumberRange: { min: 1, max: 5 },
     theme: {
-      name: 'emerald',
-      headerBg: 'bg-gradient-to-r from-storybook-emerald-light to-white',
-      headerText: 'text-storybook-emerald-dark',
-      badgeBg: 'bg-storybook-emerald-light',
-      badgeText: 'text-storybook-emerald',
-      border: 'border-storybook-emerald/30',
-      buttonActive: 'bg-storybook-emerald hover:bg-storybook-emerald-hover',
-      buttonInactive: 'border-storybook-emerald/50 text-storybook-emerald hover:bg-storybook-emerald-light',
-      reviewBg: 'bg-storybook-emerald-light',
-      reviewBorder: 'border-storybook-emerald/30',
-      linkColor: 'text-storybook-emerald',
+      name: 'pink',
+      headerBg: 'bg-gradient-to-r from-pink-50 to-white',
+      headerText: 'text-pink-800',
+      badgeBg: 'bg-pink-100',
+      badgeText: 'text-pink-700',
+      border: 'border-pink-300/50',
+      buttonActive: 'bg-pink-500 hover:bg-pink-600 text-white',
+      buttonInactive: 'border-pink-400/50 text-pink-700 hover:bg-pink-50',
+      reviewBg: 'bg-pink-50',
+      reviewBorder: 'border-pink-200/50',
+      linkColor: 'text-pink-600',
     }
   },
   {
-    id: 'myungsim',
-    title: '추천도서',
-    subtitle: '',
-    icon: 'BookMarked',
+    id: 'poetry',
+    title: '시집',
+    subtitle: '마음을 울리는 시의 세계',
+    icon: 'Feather',
     bookNumberRange: { min: 6, max: 10 },
+    theme: {
+      name: 'rose',
+      headerBg: 'bg-gradient-to-r from-rose-50 to-white',
+      headerText: 'text-rose-800',
+      badgeBg: 'bg-rose-100',
+      badgeText: 'text-rose-700',
+      border: 'border-rose-300/50',
+      buttonActive: 'bg-rose-500 hover:bg-rose-600 text-white',
+      buttonInactive: 'border-rose-400/50 text-rose-700 hover:bg-rose-50',
+      reviewBg: 'bg-rose-50',
+      reviewBorder: 'border-rose-200/50',
+      linkColor: 'text-rose-600',
+    }
+  },
+  {
+    id: 'recommended',
+    title: '추천도서',
+    subtitle: '선생님이 추천하는 도서',
+    icon: 'BookMarked',
+    bookNumberRange: { min: 11, max: 15 },
     theme: {
       name: 'amber',
       headerBg: 'bg-gradient-to-r from-amber-50 to-white',
@@ -92,26 +112,6 @@ export const BOOK_SERIES: BookSeries[] = [
       reviewBg: 'bg-amber-50',
       reviewBorder: 'border-amber-200/50',
       linkColor: 'text-amber-600',
-    }
-  },
-  {
-    id: 'analects',
-    title: '논어',
-    subtitle: '공자의 가르침',
-    icon: 'ScrollText',
-    bookNumberRange: { min: 11, max: 15 },
-    theme: {
-      name: 'blue',
-      headerBg: 'bg-gradient-to-r from-blue-50 to-white',
-      headerText: 'text-blue-800',
-      badgeBg: 'bg-blue-100',
-      badgeText: 'text-blue-700',
-      border: 'border-blue-300/50',
-      buttonActive: 'bg-blue-500 hover:bg-blue-600 text-white',
-      buttonInactive: 'border-blue-400/50 text-blue-700 hover:bg-blue-50',
-      reviewBg: 'bg-blue-50',
-      reviewBorder: 'border-blue-200/50',
-      linkColor: 'text-blue-600',
     }
   },
 ];
@@ -186,6 +186,16 @@ export const THEME_STYLES: Record<ThemeName, {
     arrow: 'text-teal-400',
     scrollbar: '[&::-webkit-scrollbar-thumb]:bg-teal-300/50',
     linkColor: 'text-teal-600'
+  },
+  pink: {
+    bg: 'bg-pink-50',
+    hoverBg: 'hover:bg-pink-100/50',
+    border: 'border-pink-200/50',
+    title: 'text-pink-800',
+    badge: 'border-pink-400/50 text-pink-600',
+    arrow: 'text-pink-400',
+    scrollbar: '[&::-webkit-scrollbar-thumb]:bg-pink-300/50',
+    linkColor: 'text-pink-600'
   },
 };
 
