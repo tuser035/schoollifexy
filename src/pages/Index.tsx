@@ -107,10 +107,10 @@ const Index = () => {
                   </div>
                 )}
               </div>
-              <h1 className="text-[1.75rem] sm:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
+              <h1 className="text-[1.5rem] sm:text-3xl font-bold mb-1 bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
                 {schoolName || "스쿨라이프.KR"}
               </h1>
-              <p className="text-lg sm:text-2xl font-semibold">
+              <p className="text-base sm:text-xl font-semibold">
                 {schoolNameEn ? (
                   <>
                     <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
