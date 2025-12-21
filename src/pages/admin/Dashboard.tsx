@@ -27,13 +27,14 @@ import StorybookManager from "@/components/admin/StorybookManager";
 import ReadingStatistics from "@/components/admin/ReadingStatistics";
 import BookReportManager from "@/components/admin/BookReportManager";
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type TabItem = {
   value: string;
   label: string;
   icon: LucideIcon;
-  color: string;
-  activeColor: string;
+  bgColor: string;
+  borderColor: string;
 };
 
 type TabGroup = {
@@ -51,7 +52,7 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
     groups.push({
       title: "데이터 관리",
       items: [
-        { value: "upload", label: "업로드", icon: Upload, color: "text-slate-500", activeColor: "bg-slate-500" },
+        { value: "upload", label: "업로드", icon: Upload, bgColor: "bg-slate-500", borderColor: "border-slate-500" },
       ]
     });
   }
@@ -60,8 +61,8 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
   groups.push({
     title: "계정 관리",
     items: [
-      { value: "data", label: "데이터", icon: Database, color: "text-amber-500", activeColor: "bg-amber-500" },
-      { value: "password", label: "비밀번호", icon: Key, color: "text-amber-500", activeColor: "bg-amber-500" },
+      { value: "data", label: "데이터", icon: Database, bgColor: "bg-amber-500", borderColor: "border-amber-500" },
+      { value: "password", label: "비밀번호", icon: Key, bgColor: "bg-amber-500", borderColor: "border-amber-500" },
     ]
   });
   
@@ -69,10 +70,10 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
   groups.push({
     title: "상벌점",
     items: [
-      { value: "points", label: "상점", icon: BarChart, color: "text-emerald-500", activeColor: "bg-emerald-500" },
-      { value: "statistics", label: "통계", icon: TrendingUp, color: "text-emerald-500", activeColor: "bg-emerald-500" },
-      { value: "leaderboard", label: "순위", icon: Trophy, color: "text-emerald-500", activeColor: "bg-emerald-500" },
-      { value: "counseling", label: "상담", icon: ClipboardCheck, color: "text-emerald-500", activeColor: "bg-emerald-500" },
+      { value: "points", label: "상점", icon: BarChart, bgColor: "bg-emerald-500", borderColor: "border-emerald-500" },
+      { value: "statistics", label: "통계", icon: TrendingUp, bgColor: "bg-emerald-500", borderColor: "border-emerald-500" },
+      { value: "leaderboard", label: "순위", icon: Trophy, bgColor: "bg-emerald-500", borderColor: "border-emerald-500" },
+      { value: "counseling", label: "상담", icon: ClipboardCheck, bgColor: "bg-emerald-500", borderColor: "border-emerald-500" },
     ]
   });
   
@@ -80,8 +81,8 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
   groups.push({
     title: "일괄메일",
     items: [
-      { value: "email-history", label: "이메일", icon: Mail, color: "text-blue-500", activeColor: "bg-blue-500" },
-      { value: "email-templates", label: "템플릿", icon: FileText, color: "text-blue-500", activeColor: "bg-blue-500" },
+      { value: "email-history", label: "이메일", icon: Mail, bgColor: "bg-blue-500", borderColor: "border-blue-500" },
+      { value: "email-templates", label: "템플릿", icon: FileText, bgColor: "bg-blue-500", borderColor: "border-blue-500" },
     ]
   });
   
@@ -89,19 +90,19 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
   groups.push({
     title: "마음톡",
     items: [
-      { value: "mindtalk", label: "마음톡", icon: MessageCircle, color: "text-pink-500", activeColor: "bg-pink-500" },
-      { value: "mindtalk-keywords", label: "키워드", icon: AlertTriangle, color: "text-pink-500", activeColor: "bg-pink-500" },
-      { value: "mindtalk-music", label: "뮤직", icon: Music, color: "text-pink-500", activeColor: "bg-pink-500" },
+      { value: "mindtalk", label: "마음톡", icon: MessageCircle, bgColor: "bg-pink-500", borderColor: "border-pink-500" },
+      { value: "mindtalk-keywords", label: "키워드", icon: AlertTriangle, bgColor: "bg-pink-500", borderColor: "border-pink-500" },
+      { value: "mindtalk-music", label: "뮤직", icon: Music, bgColor: "bg-pink-500", borderColor: "border-pink-500" },
     ]
   });
   
-  // 독서 - 추천도서(동화책→수정), 독후감, 읽기통계
+  // 독서 - 추천도서, 독후감, 읽기통계
   groups.push({
     title: "독서",
     items: [
-      { value: "storybooks", label: "추천도서", icon: BookOpen, color: "text-orange-500", activeColor: "bg-orange-500" },
-      { value: "book-reports", label: "독후감", icon: PenLine, color: "text-orange-500", activeColor: "bg-orange-500" },
-      { value: "reading-stats", label: "통계", icon: BarChart3, color: "text-orange-500", activeColor: "bg-orange-500" },
+      { value: "storybooks", label: "추천도서", icon: BookOpen, bgColor: "bg-orange-500", borderColor: "border-orange-500" },
+      { value: "book-reports", label: "독후감", icon: PenLine, bgColor: "bg-orange-500", borderColor: "border-orange-500" },
+      { value: "reading-stats", label: "통계", icon: BarChart3, bgColor: "bg-orange-500", borderColor: "border-orange-500" },
     ]
   });
   
@@ -110,12 +111,12 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
     groups.push({
       title: "시스템",
       items: [
-        { value: "system-settings", label: "설정", icon: Cog, color: "text-slate-500", activeColor: "bg-slate-600" },
-        { value: "export", label: "백업", icon: PackageOpen, color: "text-slate-500", activeColor: "bg-slate-600" },
-        { value: "auto-backup", label: "자동백업", icon: Settings, color: "text-slate-500", activeColor: "bg-slate-600" },
-        { value: "storage", label: "파일", icon: FolderOpen, color: "text-slate-500", activeColor: "bg-slate-600" },
-        { value: "security-logs", label: "보안", icon: Shield, color: "text-slate-500", activeColor: "bg-slate-600" },
-        { value: "db-logs", label: "DB", icon: FileCode, color: "text-slate-500", activeColor: "bg-slate-600" },
+        { value: "system-settings", label: "설정", icon: Cog, bgColor: "bg-slate-600", borderColor: "border-slate-600" },
+        { value: "export", label: "백업", icon: PackageOpen, bgColor: "bg-slate-600", borderColor: "border-slate-600" },
+        { value: "auto-backup", label: "자동백업", icon: Settings, bgColor: "bg-slate-600", borderColor: "border-slate-600" },
+        { value: "storage", label: "파일", icon: FolderOpen, bgColor: "bg-slate-600", borderColor: "border-slate-600" },
+        { value: "security-logs", label: "보안", icon: Shield, bgColor: "bg-slate-600", borderColor: "border-slate-600" },
+        { value: "db-logs", label: "DB", icon: FileCode, bgColor: "bg-slate-600", borderColor: "border-slate-600" },
       ]
     });
   }
@@ -137,14 +138,12 @@ const AdminDashboard = () => {
     }
     
     const parsedUser = JSON.parse(authUser);
-    // 시스템 관리자 또는 관리자 권한이 있는 교사만 접근 가능
     if (parsedUser.type !== "admin" && !(parsedUser.type === "teacher" && parsedUser.isAdmin)) {
       navigate("/");
       return;
     }
     
     setUser(parsedUser);
-    // 기본 탭 설정
     const isSystemAdmin = parsedUser.type === "admin";
     const defaultTab = isSystemAdmin ? "upload" : "data";
     const defaultGroup = isSystemAdmin ? "데이터 관리" : "계정 관리";
@@ -254,35 +253,63 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        {/* 카테고리 그룹 탭 */}
-        <div className="mb-4 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-          <div className="inline-flex gap-1 min-w-full pb-2">
-            {tabGroups.map((group) => (
-              <Button
-                key={group.title}
-                variant={activeGroup === group.title ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleGroupChange(group.title)}
-                className="whitespace-nowrap text-xs sm:text-sm"
-              >
-                {group.title}
-              </Button>
-            ))}
+        {/* 카테고리 그룹 탭 - 교사 대시보드 스타일 */}
+        <Tabs value={activeGroup} onValueChange={handleGroupChange} className="w-full mb-4">
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            <TabsList className="inline-flex w-auto min-w-full">
+              {tabGroups.map((group) => (
+                <TabsTrigger
+                  key={group.title}
+                  value={group.title}
+                  className={cn(
+                    "whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3",
+                    `data-[state=active]:${group.items[0]?.bgColor} data-[state=active]:text-white`
+                  )}
+                  style={{
+                    backgroundColor: activeGroup === group.title ? 
+                      group.items[0]?.bgColor.replace('bg-', '').includes('slate') ? '#64748b' :
+                      group.items[0]?.bgColor.replace('bg-', '').includes('amber') ? '#f59e0b' :
+                      group.items[0]?.bgColor.replace('bg-', '').includes('emerald') ? '#10b981' :
+                      group.items[0]?.bgColor.replace('bg-', '').includes('blue') ? '#3b82f6' :
+                      group.items[0]?.bgColor.replace('bg-', '').includes('pink') ? '#ec4899' :
+                      group.items[0]?.bgColor.replace('bg-', '').includes('orange') ? '#f97316' :
+                      undefined : undefined,
+                    color: activeGroup === group.title ? 'white' : undefined
+                  }}
+                >
+                  {group.title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
-        </div>
+        </Tabs>
 
-        {/* 선택된 그룹의 하위 탭 */}
+        {/* 선택된 그룹의 하위 탭 - 교사 대시보드 스타일 */}
         {currentGroup && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="mb-4 sm:mb-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
               <TabsList className="inline-flex w-auto min-w-full">
                 {currentGroup.items.map((item) => {
                   const Icon = item.icon;
+                  const isActive = activeTab === item.value;
+                  const bgColorValue = 
+                    item.bgColor.includes('slate-500') ? '#64748b' :
+                    item.bgColor.includes('slate-600') ? '#475569' :
+                    item.bgColor.includes('amber') ? '#f59e0b' :
+                    item.bgColor.includes('emerald') ? '#10b981' :
+                    item.bgColor.includes('blue') ? '#3b82f6' :
+                    item.bgColor.includes('pink') ? '#ec4899' :
+                    item.bgColor.includes('orange') ? '#f97316' : undefined;
+                  
                   return (
                     <TabsTrigger
                       key={item.value}
                       value={item.value}
-                      className={`whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 data-[state=active]:${item.activeColor} data-[state=active]:text-white`}
+                      className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
+                      style={{
+                        backgroundColor: isActive ? bgColorValue : undefined,
+                        color: isActive ? 'white' : undefined
+                      }}
                     >
                       <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       <span>{item.label}</span>
@@ -292,18 +319,40 @@ const AdminDashboard = () => {
               </TabsList>
             </div>
 
-            {currentGroup.items.map((item) => (
-              <TabsContent key={item.value} value={item.value}>
-                <Card className={`border-${item.color.replace('text-', '')}/30`}>
-                  <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
-                    <CardTitle className={`${item.color} text-base sm:text-lg`}>{item.label}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-3 sm:px-6">
-                    {renderContent()}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            ))}
+            {currentGroup.items.map((item) => {
+              const borderColorValue = 
+                item.borderColor.includes('slate-500') ? 'rgba(100, 116, 139, 0.3)' :
+                item.borderColor.includes('slate-600') ? 'rgba(71, 85, 105, 0.3)' :
+                item.borderColor.includes('amber') ? 'rgba(245, 158, 11, 0.3)' :
+                item.borderColor.includes('emerald') ? 'rgba(16, 185, 129, 0.3)' :
+                item.borderColor.includes('blue') ? 'rgba(59, 130, 246, 0.3)' :
+                item.borderColor.includes('pink') ? 'rgba(236, 72, 153, 0.3)' :
+                item.borderColor.includes('orange') ? 'rgba(249, 115, 22, 0.3)' : undefined;
+              
+              const textColorValue = 
+                item.bgColor.includes('slate-500') ? '#64748b' :
+                item.bgColor.includes('slate-600') ? '#475569' :
+                item.bgColor.includes('amber') ? '#f59e0b' :
+                item.bgColor.includes('emerald') ? '#10b981' :
+                item.bgColor.includes('blue') ? '#3b82f6' :
+                item.bgColor.includes('pink') ? '#ec4899' :
+                item.bgColor.includes('orange') ? '#f97316' : undefined;
+
+              return (
+                <TabsContent key={item.value} value={item.value}>
+                  <Card style={{ borderColor: borderColorValue }}>
+                    <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
+                      <CardTitle className="text-base sm:text-lg" style={{ color: textColorValue }}>
+                        {item.label}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-3 sm:px-6">
+                      {renderContent()}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              );
+            })}
           </Tabs>
         )}
       </main>
