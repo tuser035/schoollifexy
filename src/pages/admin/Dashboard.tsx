@@ -443,39 +443,31 @@ const AdminDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* 모바일: 카테고리별 그리드 / 데스크톱: 가로 스크롤 */}
           <div className="mb-4 sm:mb-6">
-            {/* 모바일 뷰 - 카테고리별 구분 */}
-            <div className="sm:hidden space-y-3">
-              {tabGroups.map((group, groupIndex) => (
-                <div key={group.name}>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                      {group.label}
-                    </span>
-                    <Separator className="flex-1" />
-                  </div>
-                  <TabsList className={`grid gap-1 h-auto p-1 ${
-                    group.items.length === 1 ? 'grid-cols-2' :
-                    group.items.length === 2 ? 'grid-cols-2' :
-                    group.items.length === 3 ? 'grid-cols-3' :
-                    group.items.length === 4 ? 'grid-cols-4' :
-                    group.items.length === 5 ? 'grid-cols-3' :
-                    'grid-cols-3'
-                  }`}>
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <TabsTrigger
-                          key={item.value}
-                          value={item.value}
-                          className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span className="truncate w-full text-center">{item.label}</span>
-                        </TabsTrigger>
-                      );
-                    })}
-                  </TabsList>
-                </div>
+            {/* 모바일 뷰 - 카테고리별 그리드 */}
+            <div className="sm:hidden space-y-1">
+              {tabGroups.map((group) => (
+                <TabsList key={group.name} className={`grid gap-1 h-auto p-1 ${
+                  group.items.length === 1 ? 'grid-cols-2' :
+                  group.items.length === 2 ? 'grid-cols-2' :
+                  group.items.length === 3 ? 'grid-cols-3' :
+                  group.items.length === 4 ? 'grid-cols-4' :
+                  group.items.length === 5 ? 'grid-cols-3' :
+                  'grid-cols-3'
+                }`}>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <TabsTrigger
+                        key={item.value}
+                        value={item.value}
+                        className={`flex-col gap-0.5 py-2 px-1 h-auto text-[10px] ${item.activeClass}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="truncate w-full text-center">{item.label}</span>
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
               ))}
             </div>
             
