@@ -153,10 +153,6 @@ const EmailTemplateManager = () => {
     <Card>
       <CardHeader className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="min-w-0">
-            <CardTitle className="text-base sm:text-lg">템플릿 관리</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">이메일 및 메신저 템플릿을 관리합니다</CardDescription>
-          </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
             <Tabs value={filterType} onValueChange={(v) => setFilterType(v as any)}>
               <TabsList className="h-8">
