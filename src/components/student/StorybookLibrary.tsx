@@ -563,18 +563,39 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       setSelectedBook(book);
       setCurrentPage(1);
 
-      const { data, error } = await supabase.rpc('student_get_storybook_pages', {
-        student_id_input: studentId,
-        book_id_input: book.id
-      });
+      // 시집인 경우 poems 테이블에서 가져오기
+      if (book.category === 'poetry') {
+        const { data, error } = await supabase.rpc('student_get_poems', {
+          student_id_input: studentId,
+          collection_id_input: book.id
+        });
 
-      if (error) throw error;
-      setPages(data || []);
+        if (error) throw error;
+        
+        // poems 데이터를 StorybookPage 형식으로 변환
+        const pagesData: StorybookPage[] = (data || []).map((poem: any) => ({
+          id: poem.id,
+          page_number: poem.poem_order,
+          image_url: null,
+          text_content: `${poem.title}\n\n${poem.content}`
+        }));
+        
+        setPages(pagesData);
+      } else {
+        const { data, error } = await supabase.rpc('student_get_storybook_pages', {
+          student_id_input: studentId,
+          book_id_input: book.id
+        });
+
+        if (error) throw error;
+        setPages(data || []);
+      }
+      
       setIsReaderOpen(true);
       loadBookmarks(book.id);
     } catch (error) {
       console.error('Error loading pages:', error);
-      toast.error('동화책을 여는데 실패했습니다');
+      toast.error('도서를 여는데 실패했습니다');
     }
   };
 
