@@ -478,11 +478,11 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           let poemOrder = 1;
 
           for (const row of rows) {
-            const collectionTitle = row['시집제목'] || row['title'] || '';
+            const collectionTitle = row['시집제목'] || row['시집 제목'] || row['title'] || '';
             const poet = row['시인'] || row['poet'] || '';
-            const poemTitle = row['시제목'] || row['poem_title'] || '';
-            const poemContent = row['시내용'] || row['content'] || '';
-            const hashtags = row['해시태그'] || row['hashtags'] || '';
+            const poemTitle = row['시제목'] || row['시 제목'] || row['poem_title'] || '';
+            const poemContent = row['시내용'] || row['시 내용'] || row['content'] || '';
+            const hashtags = row['해시태그'] || row['해시 태그'] || row['hashtags'] || '';
 
             if (!collectionTitle || !poet || !poemTitle || !poemContent) {
               console.log('Skipping row due to missing fields:', { collectionTitle, poet, poemTitle, poemContent: poemContent?.substring(0, 50) });
