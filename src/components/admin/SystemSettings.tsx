@@ -5,7 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe } from "lucide-react";
+import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe, RotateCcw } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface SystemSetting {
   id: string;
@@ -37,8 +48,138 @@ const SystemSettings = () => {
   const [uploadingSymbol, setUploadingSymbol] = useState(false);
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
+
+  // 초기화 함수들
+  const handleResetSchoolName = async () => {
+    setResetting(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "school_name",
+        setting_value_input: "",
+      });
+
+      if (error) throw error;
+
+      setSchoolName("");
+      toast.success("학교명이 초기화되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to reset school name:", error);
+      toast.error("초기화에 실패했습니다");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleResetSchoolNameEn = async () => {
+    setResetting(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "school_name_en",
+        setting_value_input: "",
+      });
+
+      if (error) throw error;
+
+      setSchoolNameEn("");
+      toast.success("학교 영문명이 초기화되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to reset school name en:", error);
+      toast.error("초기화에 실패했습니다");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleResetSymbol = async () => {
+    setResetting(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      // 스토리지에서 파일 삭제
+      if (schoolSymbolUrl) {
+        const oldPath = schoolSymbolUrl.split("/school-symbols/").pop();
+        if (oldPath) {
+          await supabase.storage.from("school-symbols").remove([oldPath]);
+        }
+      }
+
+      // 설정에서 URL 제거
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "school_symbol_url",
+        setting_value_input: "",
+      });
+
+      if (error) throw error;
+
+      setSchoolSymbolUrl(null);
+      toast.success("학교 심볼이 초기화되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to reset symbol:", error);
+      toast.error("초기화에 실패했습니다");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleResetFavicon = async () => {
+    setResetting(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      // 스토리지에서 파일 삭제
+      if (faviconUrl) {
+        const oldPath = faviconUrl.split("/school-symbols/").pop();
+        if (oldPath) {
+          await supabase.storage.from("school-symbols").remove([oldPath]);
+        }
+      }
+
+      // 설정에서 URL 제거
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "favicon_url",
+        setting_value_input: "",
+      });
+
+      if (error) throw error;
+
+      setFaviconUrl(null);
+      // 기본 파비콘으로 복원
+      updateFavicon("/favicon.png");
+      toast.success("파비콘이 초기화되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to reset favicon:", error);
+      toast.error("초기화에 실패했습니다");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -487,6 +628,28 @@ const SystemSettings = () => {
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? "저장 중..." : "저장"}
               </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" disabled={resetting || !schoolName}>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    초기화
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>학교명 초기화</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      학교명을 기본값으로 초기화하시겠습니까? 초기화 후에는 "스쿨라이프.KR"로 표시됩니다.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResetSchoolName}>
+                      초기화
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
           {settings.find((s) => s.setting_key === "school_name")?.updated_at && (
@@ -530,6 +693,28 @@ const SystemSettings = () => {
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? "저장 중..." : "저장"}
               </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" disabled={resetting || !schoolNameEn}>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    초기화
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>학교 영문명 초기화</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      학교 영문명을 기본값으로 초기화하시겠습니까? 초기화 후에는 "SchoolLife.KR"로 표시됩니다.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>취소</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResetSchoolNameEn}>
+                      초기화
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
           {settings.find((s) => s.setting_key === "school_name_en")?.updated_at && (
@@ -591,15 +776,39 @@ const SystemSettings = () => {
                 </Button>
                 
                 {schoolSymbolUrl && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteSymbol}
-                    disabled={uploadingSymbol}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    삭제
-                  </Button>
+                  <>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteSymbol}
+                      disabled={uploadingSymbol}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      삭제
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" disabled={resetting}>
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          초기화
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>학교 심볼 초기화</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            학교 심볼을 기본값으로 초기화하시겠습니까? 현재 이미지가 삭제되고 기본 이미지가 표시됩니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleResetSymbol}>
+                            초기화
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
                 )}
               </div>
             </div>
@@ -664,15 +873,39 @@ const SystemSettings = () => {
                 </Button>
                 
                 {faviconUrl && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteFavicon}
-                    disabled={uploadingFavicon}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    삭제
-                  </Button>
+                  <>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteFavicon}
+                      disabled={uploadingFavicon}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      삭제
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" disabled={resetting}>
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          초기화
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>파비콘 초기화</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            파비콘을 기본값으로 초기화하시겠습니까? 현재 이미지가 삭제되고 기본 파비콘이 사용됩니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleResetFavicon}>
+                            초기화
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
                 )}
               </div>
             </div>
