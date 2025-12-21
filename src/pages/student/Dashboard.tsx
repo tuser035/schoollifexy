@@ -300,7 +300,26 @@ const StudentDashboard = () => {
 
         <Card className="mt-4 sm:mt-6">
           <CardHeader className="pb-2 sm:pb-6 p-3 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">상세 내역</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base sm:text-lg">상세 내역</CardTitle>
+              {!isLoading && (
+                <Button 
+                  onClick={() => {
+                    const activeTab = document.querySelector('[data-state="active"][role="tab"]')?.getAttribute('value') || 'merits';
+                    if (activeTab === 'merits') downloadCSV(merits, 'merits');
+                    else if (activeTab === 'demerits') downloadCSV(demerits, 'demerits');
+                    else downloadCSV(monthly, 'monthly');
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs sm:text-sm"
+                >
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">CSV 다운로드</span>
+                  <span className="sm:hidden">CSV</span>
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
             {isLoading ? (
@@ -323,19 +342,6 @@ const StudentDashboard = () => {
                 </TabsList>
 
                 <TabsContent value="merits">
-                  <div className="flex justify-end mb-2 sm:mb-4">
-                    <Button 
-                      onClick={() => downloadCSV(merits, 'merits')}
-                      variant="outline"
-                      size="sm"
-                      disabled={merits.length === 0}
-                      className="h-8 text-xs sm:text-sm border-merit-blue/50 text-merit-blue hover:bg-merit-blue/10"
-                    >
-                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">CSV 다운로드</span>
-                      <span className="sm:hidden">CSV</span>
-                    </Button>
-                  </div>
                   <div className="border rounded-lg overflow-auto max-h-[400px] border-merit-blue/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
@@ -387,19 +393,6 @@ const StudentDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="demerits">
-                  <div className="flex justify-end mb-2 sm:mb-4">
-                    <Button 
-                      onClick={() => downloadCSV(demerits, 'demerits')}
-                      variant="outline"
-                      size="sm"
-                      disabled={demerits.length === 0}
-                      className="h-8 text-xs sm:text-sm border-demerit-orange/50 text-demerit-orange hover:bg-demerit-orange/10"
-                    >
-                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">CSV 다운로드</span>
-                      <span className="sm:hidden">CSV</span>
-                    </Button>
-                  </div>
                   <div className="border rounded-lg overflow-auto max-h-[400px] border-demerit-orange/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
@@ -449,19 +442,6 @@ const StudentDashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="monthly">
-                  <div className="flex justify-end mb-2 sm:mb-4">
-                    <Button 
-                      onClick={() => downloadCSV(monthly, 'monthly')}
-                      variant="outline"
-                      size="sm"
-                      disabled={monthly.length === 0}
-                      className="h-8 text-xs sm:text-sm border-monthly-green/50 text-monthly-green hover:bg-monthly-green/10"
-                    >
-                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">CSV 다운로드</span>
-                      <span className="sm:hidden">CSV</span>
-                    </Button>
-                  </div>
                   <div className="border rounded-lg overflow-auto max-h-[400px] border-monthly-green/30 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
                     <Table>
                       <TableHeader>
