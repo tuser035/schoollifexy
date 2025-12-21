@@ -56,9 +56,14 @@ serve(async (req) => {
     const timestamp = Date.now();
     
     // 이미지 타입에 따른 파일명 설정
-    const storagePath = image_type === "favicon" 
-      ? `favicon-${timestamp}.${ext}`
-      : `school-symbol-${timestamp}.${ext}`;
+    let storagePath: string;
+    if (image_type === "favicon") {
+      storagePath = `favicon-${timestamp}.${ext}`;
+    } else if (image_type === "kakao_qr") {
+      storagePath = `kakao-qr-${timestamp}.${ext}`;
+    } else {
+      storagePath = `school-symbol-${timestamp}.${ext}`;
+    }
 
     // 스토리지에 업로드
     const { error: uploadError } = await supabase.storage
@@ -82,7 +87,14 @@ serve(async (req) => {
       .getPublicUrl(storagePath);
 
     // 설정에 URL 저장 - 먼저 기존 설정이 있는지 확인
-    const settingKey = image_type === "favicon" ? "favicon_url" : "school_symbol_url";
+    let settingKey: string;
+    if (image_type === "favicon") {
+      settingKey = "favicon_url";
+    } else if (image_type === "kakao_qr") {
+      settingKey = "kakao_qr_url";
+    } else {
+      settingKey = "school_symbol_url";
+    }
     
     const { data: existingSetting } = await supabase
       .from("system_settings")

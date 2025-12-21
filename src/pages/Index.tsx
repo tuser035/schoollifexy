@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import TeacherLogin from "@/components/auth/TeacherLogin";
 import StudentLogin from "@/components/auth/StudentLogin";
 import SystemAdminLogin from "@/components/auth/SystemAdminLogin";
-import { School } from "lucide-react";
+import { School, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,6 +27,7 @@ const Index = () => {
   const [schoolSymbolUrl, setSchoolSymbolUrl] = useState<string | null>(null);
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [schoolNameEn, setSchoolNameEn] = useState<string | null>(null);
+  const [kakaoQrUrl, setKakaoQrUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,13 +44,13 @@ const Index = () => {
         const { data } = await supabase
           .from('system_settings')
           .select('setting_key, setting_value')
-          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en']);
+          .in('setting_key', ['school_symbol_url', 'school_name', 'school_name_en', 'kakao_qr_url']);
         
         if (data) {
           const symbolSetting = data.find(s => s.setting_key === 'school_symbol_url');
           const nameSetting = data.find(s => s.setting_key === 'school_name');
           const nameEnSetting = data.find(s => s.setting_key === 'school_name_en');
-          
+          const kakaoQrSetting = data.find(s => s.setting_key === 'kakao_qr_url');
           if (symbolSetting?.setting_value) {
             setSchoolSymbolUrl(symbolSetting.setting_value);
           }
@@ -58,6 +59,9 @@ const Index = () => {
           }
           if (nameEnSetting?.setting_value) {
             setSchoolNameEn(nameEnSetting.setting_value);
+          }
+          if (kakaoQrSetting?.setting_value) {
+            setKakaoQrUrl(kakaoQrSetting.setting_value);
           }
         }
       } catch (error) {
@@ -160,6 +164,25 @@ const Index = () => {
                 <TeacherLogin />
               </TabsContent>
             </Tabs>
+
+            {/* 카카오톡 채팅방 안내 */}
+            {kakaoQrUrl && (
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
+                      <MessageCircle className="w-4 h-4 text-yellow-500" />
+                      <span>카톡 채팅방</span>
+                    </div>
+                    <img 
+                      src={kakaoQrUrl} 
+                      alt="카카오톡 채팅방 QR" 
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg shadow-md mx-auto object-contain bg-white p-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
