@@ -237,7 +237,7 @@ export default function ReadingStatistics({ adminId }: ReadingStatisticsProps) {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-amber-500" />
-                인기 동화책 TOP 10
+                인문학 TOP 10
               </CardTitle>
               <Button variant="outline" size="sm" onClick={refreshAll}>
                 <RefreshCw className="w-4 h-4 mr-1" />
