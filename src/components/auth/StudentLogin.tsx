@@ -34,7 +34,7 @@ const StudentLogin = () => {
   return (
     <form onSubmit={handleLogin} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="student-id">학번 (학년+반+번호)</Label>
+        <Label htmlFor="student-id">학번</Label>
         <Input
           id="student-id"
           type="text"
