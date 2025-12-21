@@ -1613,7 +1613,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       </Tabs>
 
       <Card className={activeSubTab === 'poetry' ? 'border-0 shadow-none bg-transparent' : ''}>
-        <CardHeader className={`flex flex-row items-center justify-between pb-2 ${activeSubTab === 'poetry' ? 'hidden' : ''}`}>
+        <CardHeader className={`flex flex-row items-center justify-between pb-2 ${activeSubTab === 'poetry' || activeSubTab === 'recommended' ? 'hidden' : ''}`}>
           <div className="flex items-center gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
