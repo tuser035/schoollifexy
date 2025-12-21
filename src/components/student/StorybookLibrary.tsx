@@ -755,15 +755,20 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       <div className={`space-y-2 max-h-[400px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent ${themeClasses.scrollbar} [&::-webkit-scrollbar-thumb]:rounded-full`}>
         {bookList.map((book) => {
           const hasReview = myReviews.some(r => r.book_id === book.id);
+          // 시집인 경우 보라색 테마 적용
+          const isPoetryBook = book.category === 'poetry';
+          const bookTheme = isPoetryBook ? THEME_STYLES.purple : themeClasses;
+          
           return (
             <div
               key={book.id}
-              className={`flex items-start gap-3 p-3 ${themeClasses.bg} ${themeClasses.hoverBg} rounded-lg cursor-pointer transition-colors border ${themeClasses.border}`}
+              className={`flex items-start gap-3 p-3 ${bookTheme.bg} ${bookTheme.hoverBg} rounded-lg cursor-pointer transition-colors border ${bookTheme.border} ${isPoetryBook ? 'ring-1 ring-purple-200' : ''}`}
               onClick={() => openBook(book)}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`font-medium ${themeClasses.title} text-sm truncate`}>{book.title}</span>
+                  {isPoetryBook && <span className="text-sm">🌸</span>}
+                  <span className={`font-medium ${bookTheme.title} text-sm truncate`}>{book.title}</span>
                 </div>
                 {book.description && (
                   <div className="flex items-end gap-1">
@@ -780,7 +785,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                           setDescriptionBook(book);
                         }
                       }}
-                      className={`text-xs ${themeClasses.linkColor} hover:underline flex-shrink-0`}
+                      className={`text-xs ${bookTheme.linkColor} hover:underline flex-shrink-0`}
                     >
                       더보기
                     </button>
@@ -798,11 +803,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
                   </span>
                 ) : book.last_page > 0 ? (
-                  <Badge variant="outline" className={`text-xs ${themeClasses.badge}`}>
+                  <Badge variant="outline" className={`text-xs ${bookTheme.badge}`}>
                     {book.last_page}p
                   </Badge>
                 ) : null}
-                <ChevronRight className={`w-5 h-5 ${themeClasses.arrow}`} />
+                <ChevronRight className={`w-5 h-5 ${bookTheme.arrow}`} />
               </div>
             </div>
           );
