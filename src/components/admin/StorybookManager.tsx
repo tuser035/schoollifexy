@@ -165,6 +165,17 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
   const [poetryTitle, setPoetryTitle] = useState('');
   const [poetryDescription, setPoetryDescription] = useState('');
   
+  // Main content type tab state
+  const [mainContentTab, setMainContentTab] = useState<'storybook' | 'poetry'>('storybook');
+  
+  // Poetry collection form state
+  const [poetryCollectionTitle, setPoetryCollectionTitle] = useState('');
+  const [poetryCollectionPoet, setPoetryCollectionPoet] = useState('');
+  const [poetryPoemTitle, setPoetryPoemTitle] = useState('');
+  const [poetryPoemContent, setPoetryPoemContent] = useState('');
+  const [poetryHashtags, setPoetryHashtags] = useState('');
+  const [savingPoetry, setSavingPoetry] = useState(false);
+  
   // Page count editing state
   const [editingPageCountId, setEditingPageCountId] = useState<string | null>(null);
   const [editingPageCountValue, setEditingPageCountValue] = useState<number>(0);
@@ -378,6 +389,63 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
       } else {
         toast.error('시집 생성에 실패했습니다');
       }
+    }
+  };
+
+  // 시집 컬렉션 저장 핸들러
+  const handleSavePoetryCollection = async () => {
+    if (!poetryCollectionTitle.trim() || !poetryCollectionPoet.trim()) {
+      toast.error('시집 제목과 시인을 입력해주세요');
+      return;
+    }
+
+    if (!poetryPoemTitle.trim() || !poetryPoemContent.trim()) {
+      toast.error('시 제목과 내용을 입력해주세요');
+      return;
+    }
+
+    setSavingPoetry(true);
+    try {
+      // 해시태그 파싱
+      const hashtagsArray = poetryHashtags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+
+      // 시집 생성
+      const { data: collectionId, error: collectionError } = await supabase.rpc('admin_insert_poetry_collection', {
+        admin_id_input: adminId,
+        title_input: poetryCollectionTitle.trim(),
+        poet_input: poetryCollectionPoet.trim(),
+        hashtags_input: hashtagsArray.length > 0 ? hashtagsArray : null
+      });
+
+      if (collectionError) throw collectionError;
+
+      // 시 추가
+      const { error: poemError } = await supabase.rpc('admin_insert_poem', {
+        admin_id_input: adminId,
+        collection_id_input: collectionId,
+        title_input: poetryPoemTitle.trim(),
+        content_input: poetryPoemContent.trim(),
+        poem_order_input: 1
+      });
+
+      if (poemError) throw poemError;
+
+      toast.success('시집이 성공적으로 저장되었습니다');
+      
+      // 폼 초기화
+      setPoetryCollectionTitle('');
+      setPoetryCollectionPoet('');
+      setPoetryPoemTitle('');
+      setPoetryPoemContent('');
+      setPoetryHashtags('');
+    } catch (error: any) {
+      console.error('Error saving poetry collection:', error);
+      toast.error('시집 저장에 실패했습니다');
+    } finally {
+      setSavingPoetry(false);
     }
   };
 
@@ -1276,6 +1344,20 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Main content type tabs */}
+          <Tabs value={mainContentTab} onValueChange={(v) => setMainContentTab(v as 'storybook' | 'poetry')} className="mb-4">
+            <TabsList className="grid w-full max-w-xs grid-cols-2">
+              <TabsTrigger value="storybook" className="flex items-center gap-1">
+                <BookOpen className="w-4 h-4" />
+                동화책
+              </TabsTrigger>
+              <TabsTrigger value="poetry" className="flex items-center gap-1 text-purple-600">
+                <FileText className="w-4 h-4" />
+                시집
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
           {/* Hidden input for inline cover upload */}
           <input
             ref={inlineCoverInputRef}
@@ -1284,13 +1366,16 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             onChange={handleInlineCoverInputChange}
             className="hidden"
           />
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
-          ) : books.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              등록된 동화책이 없습니다
-            </div>
-          ) : (
+          
+          {mainContentTab === 'storybook' && (
+            <>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
+              ) : books.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  등록된 동화책이 없습니다
+                </div>
+              ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -1530,6 +1615,107 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                 ))}
               </TableBody>
             </Table>
+              )}
+            </>
+          )}
+          
+          {mainContentTab === 'poetry' && (
+            <div className="border rounded-lg p-6 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-background">
+              <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400 mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                새 시집 등록
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 왼쪽: 시집 정보 */}
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">시집 제목 *</Label>
+                    <Input
+                      placeholder="시집 제목을 입력하세요"
+                      value={poetryCollectionTitle}
+                      onChange={(e) => setPoetryCollectionTitle(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">시인 *</Label>
+                    <Input
+                      placeholder="시인 이름을 입력하세요"
+                      value={poetryCollectionPoet}
+                      onChange={(e) => setPoetryCollectionPoet(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">시 제목 *</Label>
+                    <Input
+                      placeholder="시 제목을 입력하세요"
+                      value={poetryPoemTitle}
+                      onChange={(e) => setPoetryPoemTitle(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">해시태그</Label>
+                    <Input
+                      placeholder="사랑, 자연, 희망 (쉼표로 구분)"
+                      value={poetryHashtags}
+                      onChange={(e) => setPoetryHashtags(e.target.value)}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      쉼표(,)로 구분하여 여러 태그를 입력하세요
+                    </p>
+                  </div>
+                </div>
+                
+                {/* 오른쪽: 시 내용 */}
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">시 내용 *</Label>
+                    <Textarea
+                      placeholder="시 내용을 입력하세요...&#10;&#10;예시:&#10;바람이 불면&#10;나뭇잎이 춤을 추고&#10;하늘은 파랗게 물들어간다"
+                      value={poetryPoemContent}
+                      onChange={(e) => setPoetryPoemContent(e.target.value)}
+                      className="mt-1 min-h-[250px] resize-none font-serif"
+                    />
+                  </div>
+                  
+                  {poetryPoemContent && (
+                    <div className="p-4 border rounded-lg bg-white dark:bg-muted/30">
+                      <p className="text-xs text-muted-foreground mb-2">미리보기</p>
+                      <div className="whitespace-pre-wrap font-serif text-sm leading-relaxed">
+                        {poetryPoemContent}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <Button 
+                  onClick={handleSavePoetryCollection}
+                  disabled={savingPoetry || !poetryCollectionTitle.trim() || !poetryCollectionPoet.trim() || !poetryPoemTitle.trim() || !poetryPoemContent.trim()}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  {savingPoetry ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      저장 중...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-1" />
+                      시집 저장
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
