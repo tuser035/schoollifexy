@@ -441,55 +441,22 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* 모바일: 가로 스크롤 + 카테고리 구분선 / 데스크톱: 가로 스크롤 */}
-          <div className="mb-4 sm:mb-6">
-            {/* 모바일 뷰 - 가로 스크롤 + 세로 구분선 */}
-            <div className="sm:hidden overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-              <TabsList className="inline-flex w-auto min-w-full h-auto p-1">
-                {tabGroups.map((group, groupIndex) => (
-                  <div key={group.name} className="contents">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <TabsTrigger
-                          key={item.value}
-                          value={item.value}
-                          className={`flex-col gap-0.5 py-2 px-2 h-auto text-[10px] min-w-[52px] ${item.activeClass}`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          <span className="truncate w-full text-center">{item.label}</span>
-                        </TabsTrigger>
-                      );
-                    })}
-                    {/* 카테고리 간 세로 구분선 */}
-                    {groupIndex < tabGroups.length - 1 && (
-                      <div className="flex items-center px-1">
-                        <div className="w-px h-8 bg-border" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </TabsList>
-            </div>
-            
-            {/* 데스크톱 뷰 - 가로 스크롤 */}
-            <div className="hidden sm:block overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-              <TabsList className="inline-flex w-auto min-w-full">
-                {allItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <TabsTrigger
-                      key={item.value}
-                      value={item.value}
-                      className={`whitespace-nowrap text-sm px-3 ${item.activeClass}`}
-                    >
-                      <Icon className="w-4 h-4 mr-2" />
-                      <span>{item.label}</span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </div>
+          <div className="mb-4 sm:mb-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full" style={{ gridTemplateColumns: `repeat(${allItems.length}, minmax(0, 1fr))` }}>
+              {allItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <TabsTrigger
+                    key={item.value}
+                    value={item.value}
+                    className={`whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3 ${item.activeClass}`}
+                  >
+                    <Icon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span>{item.label}</span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
           </div>
 
           {allItems.map((item) => (
