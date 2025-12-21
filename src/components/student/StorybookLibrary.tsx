@@ -47,6 +47,7 @@ interface Storybook {
   page_count: number;
   last_page: number;
   is_completed: boolean;
+  category: string | null;
 }
 
 interface StorybookPage {
@@ -432,7 +433,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       });
 
       if (error) throw error;
-      setBooks(data || []);
+      setBooks((data || []).map((book: any) => ({ ...book, category: book.category || 'recommended' })));
     } catch (error) {
       console.error('Error loading books:', error);
       toast.error('동화책을 불러오는데 실패했습니다');
@@ -732,12 +733,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
   const currentPageData = pages.find(p => p.page_number === currentPage);
 
-  // 시리즈별 책 필터링
+  // 시리즈별 책 필터링 (카테고리 기반)
   const getSeriesBooks = (series: BookSeries) => 
-    books.filter(book => 
-      book.book_number >= series.bookNumberRange.min && 
-      book.book_number <= series.bookNumberRange.max
-    );
+    books.filter(book => book.category === series.id);
 
   // 시리즈별 리뷰 필터링
   const getSeriesReviews = (seriesBooks: Storybook[]) => 
