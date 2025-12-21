@@ -215,10 +215,10 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
     ]
   });
   
-  // 독서
+  // 인문학 서점
   groups.push({
     name: "reading",
-    label: "독서",
+    label: "인문학 서점",
     items: [
       { 
         value: "storybook-categories", 
@@ -232,12 +232,12 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
       },
       { 
         value: "storybooks", 
-        label: "추천도서", 
+        label: "동화책 관리", 
         icon: BookOpen, 
         activeClass: "data-[state=active]:bg-bulk-email-pink data-[state=active]:text-white",
         borderClass: "border-bulk-email-pink/30",
         textClass: "text-bulk-email-pink",
-        cardTitle: "추천도서 관리",
+        cardTitle: "동화책 관리",
         category: "reading"
       },
       { 
