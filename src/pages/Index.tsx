@@ -81,10 +81,10 @@ const Index = () => {
                   <img 
                     src={schoolSymbolUrl} 
                     alt="학교 심볼" 
-                    className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg"
+                    className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover shadow-lg animate-fade-in hover:scale-110 transition-transform duration-300 hover:shadow-xl"
                   />
                 ) : (
-                  <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-600 via-orange-500 to-green-600 flex items-center justify-center">
+                  <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-600 via-orange-500 to-green-600 flex items-center justify-center animate-fade-in hover:scale-110 transition-transform duration-300 hover:shadow-xl animate-[pulse_3s_ease-in-out_infinite]">
                     <School className="w-8 h-8 sm:w-12 sm:h-12 text-white" strokeWidth={2} />
                   </div>
                 )}
