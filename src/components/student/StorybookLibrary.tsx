@@ -885,9 +885,6 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           const seriesBooks = getSeriesBooks(series);
           const seriesReviews = getSeriesReviews(seriesBooks);
           const completedBooksCount = seriesBooks.filter(book => book.is_completed).length;
-          
-          // 해당 시리즈에 책이 없으면 표시하지 않음
-          if (seriesBooks.length === 0) return null;
 
           return (
             <AccordionItem 
@@ -929,6 +926,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 {loading ? (
                   <div className="text-center py-8 text-muted-foreground">
                     책꽂이를 정리하는 중...
+                  </div>
+                ) : seriesBooks.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    아직 등록된 {series.title}이(가) 없습니다
                   </div>
                 ) : (
                   renderBookList(seriesBooks, series.theme.name)
