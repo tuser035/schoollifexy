@@ -162,13 +162,14 @@ export default function StorybookCategories({ adminId }: StorybookCategoriesProp
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-pink-800">
               <FolderOpen className="w-5 h-5" />
-              카테고리 목록
+              카테고리 관리
             </CardTitle>
             <Button 
               onClick={openAddDialog}
               className="bg-pink-500 hover:bg-pink-600 text-white"
+              size="sm"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 mr-1" />
               카테고리 추가
             </Button>
           </div>
