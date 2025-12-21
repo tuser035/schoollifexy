@@ -1345,13 +1345,27 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
             
             {/* + 시집 버튼 - 시집 탭에서만 표시 */}
             {activeSubTab === 'poetry' && (
-              <Dialog open={isPoetryDialogOpen} onOpenChange={setIsPoetryDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                    <Plus className="w-4 h-4 mr-1" />
-                    추가
-                  </Button>
-                </DialogTrigger>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="poetry-csv-upload-header" className="cursor-pointer">
+                  <div className="flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors text-sm font-medium">
+                    <Upload className="w-4 h-4" />
+                    CSV 업로드
+                  </div>
+                </Label>
+                <input
+                  id="poetry-csv-upload-header"
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handlePoetryCsvUpload}
+                />
+                <Dialog open={isPoetryDialogOpen} onOpenChange={setIsPoetryDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                      <Plus className="w-4 h-4 mr-1" />
+                      추가
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-3xl">
                   <DialogHeader>
                     <DialogTitle>새 시집 만들기</DialogTitle>
@@ -1406,6 +1420,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   </div>
                 </DialogContent>
               </Dialog>
+              </div>
             )}
             
             {/* + 추천도서 버튼 - 이번학기 추천도서 탭에서만 표시 */}
