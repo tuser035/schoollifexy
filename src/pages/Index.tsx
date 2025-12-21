@@ -145,13 +145,13 @@ const Index = () => {
               <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
                 <TabsTrigger 
                   value="student"
-                  className="data-[state=active]:bg-student data-[state=active]:text-white"
+                  className="transition-all duration-300 ease-in-out data-[state=active]:bg-student data-[state=active]:text-white"
                 >
                   학생
                 </TabsTrigger>
                 <TabsTrigger 
                   value="teacher"
-                  className="data-[state=active]:bg-teacher data-[state=active]:text-white"
+                  className="transition-all duration-300 ease-in-out data-[state=active]:bg-teacher data-[state=active]:text-white"
                 >
                   교사
                 </TabsTrigger>
