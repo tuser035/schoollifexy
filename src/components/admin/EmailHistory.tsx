@@ -222,11 +222,7 @@ export const EmailHistory = () => {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle>이메일 발송 이력</CardTitle>
-          <CardDescription>이메일 발송 이력을 조회할 수 있습니다</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-4">
             <div className="col-span-2 md:col-span-1">
               <Label className="text-xs md:text-sm">검색</Label>
