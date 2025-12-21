@@ -161,12 +161,6 @@ const PasswordReset = ({ currentUser }: PasswordResetProps) => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>비밀번호 관리</CardTitle>
-        <CardDescription>
-          {isSystemAdmin ? "다른 사용자의 비밀번호 재설정 또는 본인 비밀번호 변경" : "학생, 교사, 관리자의 비밀번호를 재설정합니다"}
-        </CardDescription>
-      </CardHeader>
       <CardContent>
         {isSystemAdmin ? (
           <Tabs defaultValue="others" className="w-full">
