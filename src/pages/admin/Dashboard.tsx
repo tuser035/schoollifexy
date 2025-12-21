@@ -41,6 +41,7 @@ type TabItem = {
   cardIcon?: LucideIcon;
   category: string;
   description?: string;
+  hideCardTitle?: boolean;
 };
 
 type TabGroup = {
@@ -173,6 +174,7 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         borderClass: "border-monthly-green/30",
         textClass: "text-monthly-green",
         cardTitle: "이메일 템플릿",
+        hideCardTitle: true,
         category: "email"
       }
     ]
@@ -520,18 +522,20 @@ const AdminDashboard = () => {
               {allItems.map((item) => (
                 <TabsContent key={item.value} value={item.value}>
                   <Card className={item.borderClass}>
-                    <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
-                      <CardTitle className={`text-base sm:text-lg ${item.textClass} flex items-center gap-2`}>
-                        {item.cardIcon && <item.cardIcon className="w-5 h-5" />}
-                        {item.cardTitle}
-                      </CardTitle>
-                      {item.description && (
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                          {item.description}
-                        </p>
-                      )}
-                    </CardHeader>
-                    <CardContent className="px-3 sm:px-6">
+                    {!item.hideCardTitle && (
+                      <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
+                        <CardTitle className={`text-base sm:text-lg ${item.textClass} flex items-center gap-2`}>
+                          {item.cardIcon && <item.cardIcon className="w-5 h-5" />}
+                          {item.cardTitle}
+                        </CardTitle>
+                        {item.description && (
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                            {item.description}
+                          </p>
+                        )}
+                      </CardHeader>
+                    )}
+                    <CardContent className={`px-3 sm:px-6 ${item.hideCardTitle ? 'pt-6' : ''}`}>
                       {renderContent()}
                     </CardContent>
                   </Card>
