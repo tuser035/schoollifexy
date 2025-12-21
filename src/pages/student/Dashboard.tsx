@@ -312,7 +312,13 @@ const StudentDashboard = () => {
                   }}
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs sm:text-sm"
+                  className={`h-8 text-xs sm:text-sm transition-colors duration-200 ${
+                    activeDetailTab === 'merits' 
+                      ? 'border-merit-blue/50 text-merit-blue hover:bg-merit-blue/10' 
+                      : activeDetailTab === 'demerits' 
+                        ? 'border-demerit-orange/50 text-demerit-orange hover:bg-demerit-orange/10'
+                        : 'border-monthly-green/50 text-monthly-green hover:bg-monthly-green/10'
+                  }`}
                 >
                   <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">CSV 다운로드</span>
