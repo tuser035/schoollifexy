@@ -90,7 +90,8 @@ const DataInquiry = () => {
     department: "",
     subject: "",
     isHomeroom: false,
-    isAdmin: false
+    isAdmin: false,
+    isCounselor: false
   });
   const [isStudentEditDialogOpen, setIsStudentEditDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
@@ -1344,7 +1345,8 @@ const DataInquiry = () => {
       department: teacher.부서 === "-" ? "" : teacher.부서,
       subject: teacher.담당교과 === "-" ? "" : teacher.담당교과,
       isHomeroom: teacher.담임여부 === "담임",
-      isAdmin: teacher.관리자여부 === "관리자"
+      isAdmin: teacher.관리자여부 === "관리자",
+      isCounselor: teacher.상담교사여부 === "상담교사"
     });
     setIsTeacherEditDialogOpen(true);
   };
@@ -1374,7 +1376,8 @@ const DataInquiry = () => {
         department_input: editingTeacher.department || '',
         subject_input: editingTeacher.subject || '',
         is_homeroom_input: editingTeacher.isHomeroom === true,
-        is_admin_input: editingTeacher.isAdmin === true
+        is_admin_input: editingTeacher.isAdmin === true,
+        is_counselor_input: editingTeacher.isCounselor === true
       });
 
       if (error) throw error;
@@ -1434,6 +1437,7 @@ const DataInquiry = () => {
         class_input: newTeacher.class || null,
         is_homeroom_input: newTeacher.isHomeroom,
         is_admin_input: newTeacher.isAdmin || false,
+        is_counselor_input: newTeacher.isCounselor || false,
         dept_code_input: null,
         department_input: newTeacher.department || null,
         subject_input: newTeacher.subject || null
@@ -1452,7 +1456,8 @@ const DataInquiry = () => {
         department: "",
         subject: "",
         isHomeroom: false,
-        isAdmin: false
+        isAdmin: false,
+        isCounselor: false
       });
       
       // 목록 새로고침
@@ -1787,6 +1792,7 @@ const DataInquiry = () => {
         "반": row.class || "-",
         "담임여부": row.is_homeroom ? "담임" : "-",
         "관리자여부": row.is_admin ? "관리자" : "-",
+        "상담교사여부": row.is_counselor ? "상담교사" : "-",
         "학과": row.dept_name,
         "부서": row.department,
         "담당교과": row.subject
@@ -2021,6 +2027,7 @@ const DataInquiry = () => {
           "반": row.class || "-",
           "담임여부": row.is_homeroom ? "담임" : "-",
           "관리자여부": row.is_admin ? "관리자" : "-",
+          "상담교사여부": row.is_counselor ? "상담교사" : "-",
           "학과": row.dept_name,
           "부서": row.department,
           "담당교과": row.subject
@@ -3397,6 +3404,14 @@ const DataInquiry = () => {
                   />
                   <Label htmlFor="isAdmin" className="cursor-pointer">관리자 여부</Label>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="isCounselor"
+                    checked={editingTeacher.isCounselor || false}
+                    onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isCounselor: checked as boolean})}
+                  />
+                  <Label htmlFor="isCounselor" className="cursor-pointer">상담교사 여부</Label>
+                </div>
               </>
             )}
           </div>
@@ -3524,6 +3539,14 @@ const DataInquiry = () => {
                   onCheckedChange={(checked) => setNewTeacher({...newTeacher, isAdmin: checked === true})}
                 />
                 <Label htmlFor="isAdminNew" className="cursor-pointer">관리자 여부</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isCounselorNew"
+                  checked={newTeacher.isCounselor}
+                  onCheckedChange={(checked) => setNewTeacher({...newTeacher, isCounselor: checked === true})}
+                />
+                <Label htmlFor="isCounselorNew" className="cursor-pointer">상담교사 여부</Label>
               </div>
             </div>
           </div>
