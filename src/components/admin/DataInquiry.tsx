@@ -3302,12 +3302,12 @@ const DataInquiry = () => {
 
       {/* 교사 정보 편집 다이얼로그 */}
       <Dialog open={isTeacherEditDialogOpen} onOpenChange={setIsTeacherEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0">
+        <DialogContent className="max-w-2xl max-h-[95vh] flex flex-col gap-0">
           <DialogHeader className="shrink-0 pb-4">
             <DialogTitle>교사 정보 편집</DialogTitle>
             <DialogDescription>교사의 정보를 수정할 수 있습니다.</DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 px-1">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 px-1 pb-4">
             {editingTeacher && (
               <>
                 <div className="grid grid-cols-2 gap-4">
