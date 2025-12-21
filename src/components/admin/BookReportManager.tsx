@@ -210,7 +210,7 @@ const BookReportManager: React.FC<BookReportManagerProps> = ({ adminId }) => {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            독후감 목록
+            이번학기 추천도서 독후감
           </TabsTrigger>
           <TabsTrigger value="leaderboard" className="flex items-center gap-2">
             <Trophy className="w-4 h-4" />
