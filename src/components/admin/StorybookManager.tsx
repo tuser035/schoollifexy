@@ -1785,181 +1785,8 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
           
           {activeSubTab === 'poetry' && (
             <div className="border rounded-lg p-6 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/20 dark:to-background">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-2">
-                  <PenLine className="w-5 h-5" />
-                  새 시집 등록
-                </h3>
-                <div className="flex items-center gap-2">
-                  <Dialog open={isPoetryDialogOpen} onOpenChange={setIsPoetryDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                        <Plus className="w-4 h-4 mr-1" />
-                        추가
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-3xl">
-                      <DialogHeader>
-                        <DialogTitle>새 시집 만들기</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>일련번호</Label>
-                            <Input
-                              type="number"
-                              placeholder="예: 1"
-                              value={poetryBookNumber}
-                              onChange={(e) => setPoetryBookNumber(e.target.value)}
-                            />
-                          </div>
-                          <div>
-                            <Label>제목</Label>
-                            <Input
-                              placeholder="시집 제목"
-                              value={poetryTitle}
-                              onChange={(e) => setPoetryTitle(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label>설명 (마크다운 지원)</Label>
-                          <div className="grid grid-cols-2 gap-4 mt-2">
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">입력</p>
-                              <Textarea
-                                value={poetryDescription}
-                                onChange={(e) => setPoetryDescription(e.target.value)}
-                                placeholder="마크다운 형식으로 입력하세요..."
-                                className="min-h-[150px] resize-none font-mono text-sm"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-xs text-muted-foreground">미리보기</p>
-                              <div className="min-h-[150px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
-                                {poetryDescription ? (
-                                  <ReactMarkdown>{poetryDescription}</ReactMarkdown>
-                                ) : (
-                                  <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <Button onClick={handleCreatePoetryBook} className="w-full bg-purple-600 hover:bg-purple-700">
-                          시집 생성하기
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  <Label htmlFor="poetry-csv-upload" className="cursor-pointer">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors text-sm font-medium">
-                      <Upload className="w-4 h-4" />
-                      CSV 업로드
-                    </div>
-                  </Label>
-                  <input
-                    id="poetry-csv-upload"
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={handlePoetryCsvUpload}
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 왼쪽: 시집 정보 */}
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium">시집 제목 *</Label>
-                    <Input
-                      placeholder="시집 제목을 입력하세요"
-                      value={poetryCollectionTitle}
-                      onChange={(e) => setPoetryCollectionTitle(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-sm font-medium">시인 *</Label>
-                    <Input
-                      placeholder="시인 이름을 입력하세요"
-                      value={poetryCollectionPoet}
-                      onChange={(e) => setPoetryCollectionPoet(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-sm font-medium">시 제목 *</Label>
-                    <Input
-                      placeholder="시 제목을 입력하세요"
-                      value={poetryPoemTitle}
-                      onChange={(e) => setPoetryPoemTitle(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-sm font-medium">해시태그</Label>
-                    <Input
-                      placeholder="사랑, 자연, 희망 (쉼표로 구분)"
-                      value={poetryHashtags}
-                      onChange={(e) => setPoetryHashtags(e.target.value)}
-                      className="mt-1"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      쉼표(,)로 구분하여 여러 태그를 입력하세요
-                    </p>
-                  </div>
-                </div>
-                
-                {/* 오른쪽: 시 내용 */}
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium">시 내용 *</Label>
-                    <Textarea
-                      placeholder="시 내용을 입력하세요...&#10;&#10;예시:&#10;바람이 불면&#10;나뭇잎이 춤을 추고&#10;하늘은 파랗게 물들어간다"
-                      value={poetryPoemContent}
-                      onChange={(e) => setPoetryPoemContent(e.target.value)}
-                      className="mt-1 min-h-[250px] resize-none font-serif"
-                    />
-                  </div>
-                  
-                  {poetryPoemContent && (
-                    <div className="p-4 border rounded-lg bg-white dark:bg-muted/30">
-                      <p className="text-xs text-muted-foreground mb-2">미리보기</p>
-                      <div className="whitespace-pre-wrap font-serif text-sm leading-relaxed">
-                        {poetryPoemContent}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="mt-6 flex justify-end">
-                <Button 
-                  onClick={handleSavePoetryCollection}
-                  disabled={savingPoetry || !poetryCollectionTitle.trim() || !poetryCollectionPoet.trim() || !poetryPoemTitle.trim() || !poetryPoemContent.trim()}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  {savingPoetry ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                      저장 중...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-1" />
-                      시집 저장
-                    </>
-                  )}
-                </Button>
-              </div>
-              
-              {/* 등록된 시집 목록 */}
-              <div className="mt-8 border-t pt-6">
+              {/* 등록된 시집 목록 - 상단에 배치 */}
+              <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-2">
                     <BookOpen className="w-5 h-5" />
@@ -1986,7 +1813,7 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                   </div>
                 ) : poetryCollections.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    등록된 시집이 없습니다. 위 양식을 통해 새 시집을 등록해주세요.
+                    등록된 시집이 없습니다. 아래 양식을 통해 새 시집을 등록해주세요.
                   </div>
                 ) : (
                   <div className="rounded-lg border overflow-hidden">
@@ -2065,6 +1892,182 @@ export default function StorybookManager({ adminId }: StorybookManagerProps) {
                     </Table>
                   </div>
                 )}
+              </div>
+
+              {/* 새 시집 등록 - 하단에 배치 */}
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                    <PenLine className="w-5 h-5" />
+                    새 시집 등록
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Dialog open={isPoetryDialogOpen} onOpenChange={setIsPoetryDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                          <Plus className="w-4 h-4 mr-1" />
+                          추가
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl">
+                        <DialogHeader>
+                          <DialogTitle>새 시집 만들기</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label>일련번호</Label>
+                              <Input
+                                type="number"
+                                placeholder="예: 1"
+                                value={poetryBookNumber}
+                                onChange={(e) => setPoetryBookNumber(e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <Label>제목</Label>
+                              <Input
+                                placeholder="시집 제목"
+                                value={poetryTitle}
+                                onChange={(e) => setPoetryTitle(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label>설명 (마크다운 지원)</Label>
+                            <div className="grid grid-cols-2 gap-4 mt-2">
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground">입력</p>
+                                <Textarea
+                                  value={poetryDescription}
+                                  onChange={(e) => setPoetryDescription(e.target.value)}
+                                  placeholder="마크다운 형식으로 입력하세요..."
+                                  className="min-h-[150px] resize-none font-mono text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground">미리보기</p>
+                                <div className="min-h-[150px] p-3 border rounded-md bg-muted/30 overflow-auto prose prose-sm max-w-none">
+                                  {poetryDescription ? (
+                                    <ReactMarkdown>{poetryDescription}</ReactMarkdown>
+                                  ) : (
+                                    <p className="text-muted-foreground italic">미리보기가 여기에 표시됩니다...</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <Button onClick={handleCreatePoetryBook} className="w-full bg-purple-600 hover:bg-purple-700">
+                            시집 생성하기
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Label htmlFor="poetry-csv-upload" className="cursor-pointer">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors text-sm font-medium">
+                        <Upload className="w-4 h-4" />
+                        CSV 업로드
+                      </div>
+                    </Label>
+                    <input
+                      id="poetry-csv-upload"
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={handlePoetryCsvUpload}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 왼쪽: 시집 정보 */}
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">시집 제목 *</Label>
+                      <Input
+                        placeholder="시집 제목을 입력하세요"
+                        value={poetryCollectionTitle}
+                        onChange={(e) => setPoetryCollectionTitle(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm font-medium">시인 *</Label>
+                      <Input
+                        placeholder="시인 이름을 입력하세요"
+                        value={poetryCollectionPoet}
+                        onChange={(e) => setPoetryCollectionPoet(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm font-medium">시 제목 *</Label>
+                      <Input
+                        placeholder="시 제목을 입력하세요"
+                        value={poetryPoemTitle}
+                        onChange={(e) => setPoetryPoemTitle(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm font-medium">해시태그</Label>
+                      <Input
+                        placeholder="사랑, 자연, 희망 (쉼표로 구분)"
+                        value={poetryHashtags}
+                        onChange={(e) => setPoetryHashtags(e.target.value)}
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        쉼표(,)로 구분하여 여러 태그를 입력하세요
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* 오른쪽: 시 내용 */}
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">시 내용 *</Label>
+                      <Textarea
+                        placeholder="시 내용을 입력하세요...&#10;&#10;예시:&#10;바람이 불면&#10;나뭇잎이 춤을 추고&#10;하늘은 파랗게 물들어간다"
+                        value={poetryPoemContent}
+                        onChange={(e) => setPoetryPoemContent(e.target.value)}
+                        className="mt-1 min-h-[250px] resize-none font-serif"
+                      />
+                    </div>
+                    
+                    {poetryPoemContent && (
+                      <div className="p-4 border rounded-lg bg-white dark:bg-muted/30">
+                        <p className="text-xs text-muted-foreground mb-2">미리보기</p>
+                        <div className="whitespace-pre-wrap font-serif text-sm leading-relaxed">
+                          {poetryPoemContent}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex justify-end">
+                  <Button 
+                    onClick={handleSavePoetryCollection}
+                    disabled={savingPoetry || !poetryCollectionTitle.trim() || !poetryCollectionPoet.trim() || !poetryPoemTitle.trim() || !poetryPoemContent.trim()}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {savingPoetry ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        저장 중...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-1" />
+                        시집 저장
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
