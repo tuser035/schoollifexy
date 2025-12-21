@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe, RotateCcw } from "lucide-react";
+import { Save, Mail, RefreshCw, Upload, Image, Trash2, Globe, RotateCcw, MessageCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,9 +48,12 @@ const SystemSettings = () => {
   const [uploadingSymbol, setUploadingSymbol] = useState(false);
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [kakaoQrUrl, setKakaoQrUrl] = useState<string | null>(null);
+  const [uploadingKakaoQr, setUploadingKakaoQr] = useState(false);
   const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
+  const kakaoQrInputRef = useRef<HTMLInputElement>(null);
 
   // 초기화 함수들
   const handleResetSchoolName = async () => {
@@ -235,6 +238,14 @@ const SystemSettings = () => {
       if (faviconSetting && faviconSetting.setting_value) {
         setFaviconUrl(faviconSetting.setting_value);
         updateFavicon(faviconSetting.setting_value);
+      }
+
+      // 카카오톡 QR URL 찾기
+      const kakaoQrSetting = (data || []).find(
+        (s: SystemSetting) => s.setting_key === "kakao_qr_url"
+      );
+      if (kakaoQrSetting && kakaoQrSetting.setting_value) {
+        setKakaoQrUrl(kakaoQrSetting.setting_value);
       }
     } catch (error: any) {
       console.error("Failed to fetch settings:", error);
@@ -584,6 +595,138 @@ const SystemSettings = () => {
     }
   };
 
+  // 카카오톡 QR 코드 업로드
+  const handleKakaoQrUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 파일 타입 검증
+    if (!file.type.startsWith("image/")) {
+      toast.error("이미지 파일만 업로드 가능합니다");
+      return;
+    }
+
+    // 파일 크기 검증 (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("파일 크기는 2MB 이하여야 합니다");
+      return;
+    }
+
+    setUploadingKakaoQr(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) {
+        toast.error("로그인이 필요합니다");
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+
+      // 파일을 Base64로 변환
+      const base64Data = await fileToBase64(file);
+
+      // Edge Function을 통해 업로드
+      const { data, error } = await supabase.functions.invoke("upload-school-symbol", {
+        body: {
+          admin_id: user.id,
+          image_base64: base64Data,
+          filename: file.name,
+          image_type: "kakao_qr",
+          old_url: kakaoQrUrl,
+        },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setKakaoQrUrl(data.publicUrl);
+      toast.success("카카오톡 QR 코드가 업로드되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to upload kakao QR:", error);
+      toast.error("업로드에 실패했습니다: " + error.message);
+    } finally {
+      setUploadingKakaoQr(false);
+      if (kakaoQrInputRef.current) {
+        kakaoQrInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleDeleteKakaoQr = async () => {
+    if (!kakaoQrUrl) return;
+
+    if (!confirm("카카오톡 QR 코드를 삭제하시겠습니까?")) return;
+
+    setUploadingKakaoQr(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      // 스토리지에서 파일 삭제
+      const oldPath = kakaoQrUrl.split("/school-symbols/").pop();
+      if (oldPath) {
+        await supabase.storage.from("school-symbols").remove([oldPath]);
+      }
+
+      // 설정에서 URL 제거
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "kakao_qr_url",
+        setting_value_input: "",
+      });
+
+      if (error) throw error;
+
+      setKakaoQrUrl(null);
+      toast.success("카카오톡 QR 코드가 삭제되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to delete kakao QR:", error);
+      toast.error("삭제에 실패했습니다");
+    } finally {
+      setUploadingKakaoQr(false);
+    }
+  };
+
+  const handleResetKakaoQr = async () => {
+    setResetting(true);
+    try {
+      const authUser = localStorage.getItem("auth_user");
+      if (!authUser) return;
+
+      const user = JSON.parse(authUser);
+
+      // 스토리지에서 파일 삭제
+      if (kakaoQrUrl) {
+        const oldPath = kakaoQrUrl.split("/school-symbols/").pop();
+        if (oldPath) {
+          await supabase.storage.from("school-symbols").remove([oldPath]);
+        }
+      }
+
+      // 설정 초기화
+      const { error } = await supabase.rpc("admin_update_system_setting", {
+        admin_id_input: user.id,
+        setting_key_input: "kakao_qr_url",
+        setting_value_input: "",
+      });
+
+      if (error) throw error;
+
+      setKakaoQrUrl(null);
+      toast.success("카카오톡 QR 코드가 초기화되었습니다");
+      fetchSettings();
+    } catch (error: any) {
+      console.error("Failed to reset kakao QR:", error);
+      toast.error("초기화에 실패했습니다");
+    } finally {
+      setResetting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -916,6 +1059,103 @@ const SystemSettings = () => {
               마지막 수정:{" "}
               {new Date(
                 settings.find((s) => s.setting_key === "favicon_url")!.updated_at
+              ).toLocaleString("ko-KR")}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 카카오톡 QR 코드 설정 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="w-5 h-5" />
+            카카오톡 상담 QR 코드
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>QR 코드 이미지</Label>
+            <p className="text-sm text-muted-foreground">
+              온보딩 화면에 표시될 카카오톡 채팅방 QR 코드 이미지를 업로드합니다.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              {/* 미리보기 */}
+              <div className="w-32 h-32 border rounded-lg flex items-center justify-center bg-muted overflow-hidden">
+                {kakaoQrUrl ? (
+                  <img
+                    src={kakaoQrUrl}
+                    alt="카카오톡 QR"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <MessageCircle className="w-12 h-12 text-muted-foreground" />
+                )}
+              </div>
+
+              {/* 업로드 버튼 */}
+              <div className="flex flex-col gap-2">
+                <input
+                  ref={kakaoQrInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleKakaoQrUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => kakaoQrInputRef.current?.click()}
+                  disabled={uploadingKakaoQr}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploadingKakaoQr ? "업로드 중..." : "이미지 업로드"}
+                </Button>
+                
+                {kakaoQrUrl && (
+                  <>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteKakaoQr}
+                      disabled={uploadingKakaoQr}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      삭제
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" disabled={resetting}>
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          초기화
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>카카오톡 QR 코드 초기화</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            카카오톡 QR 코드를 초기화하시겠습니까? 온보딩 화면에서 QR 코드가 표시되지 않습니다.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>취소</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleResetKakaoQr}>
+                            초기화
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {settings.find((s) => s.setting_key === "kakao_qr_url")?.updated_at && (
+            <p className="text-xs text-muted-foreground">
+              마지막 수정:{" "}
+              {new Date(
+                settings.find((s) => s.setting_key === "kakao_qr_url")!.updated_at
               ).toLocaleString("ko-KR")}
             </p>
           )}
