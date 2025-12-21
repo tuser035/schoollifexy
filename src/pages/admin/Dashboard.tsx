@@ -66,43 +66,43 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
       bgColor: "bg-slate-100 dark:bg-slate-800",
       items: [
         { value: "upload", label: "업로드", icon: Upload, color: "text-slate-500" },
-        { value: "data", label: "데이터", icon: Database, color: "text-slate-500" },
       ]
     });
   }
   
-  // 계정 관리
+  // 계정 관리 - 데이터, 비밀번호변경
   groups.push({
     title: "계정 관리",
     bgColor: "bg-amber-50 dark:bg-amber-900/20",
     items: [
+      { value: "data", label: "데이터", icon: Database, color: "text-amber-500" },
       { value: "password", label: "비밀번호 재설정", icon: Key, color: "text-amber-500" },
-      { value: "leaderboard", label: "순위", icon: Trophy, color: "text-yellow-500" },
     ]
   });
   
-  // 상벌점/통계
+  // 상벌점 - 상점, 통계, 순위, 상담
   groups.push({
     title: "상벌점",
     bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
     items: [
       { value: "points", label: "상점", icon: BarChart, color: "text-emerald-500" },
       { value: "statistics", label: "통계", icon: TrendingUp, color: "text-emerald-500" },
+      { value: "leaderboard", label: "순위", icon: Trophy, color: "text-emerald-500" },
+      { value: "counseling", label: "상담", icon: ClipboardCheck, color: "text-emerald-500" },
     ]
   });
   
-  // 커뮤니케이션
+  // 일괄메일 - 이메일, 템플릿
   groups.push({
-    title: "커뮤니케이션",
+    title: "일괄메일",
     bgColor: "bg-blue-50 dark:bg-blue-900/20",
     items: [
       { value: "email-history", label: "이메일", icon: Mail, color: "text-blue-500" },
       { value: "email-templates", label: "템플릿", icon: FileText, color: "text-blue-500" },
-      { value: "counseling", label: "상담", icon: ClipboardCheck, color: "text-violet-500" },
     ]
   });
   
-  // 마음톡
+  // 마음톡 - 마음톡, 키워드관리, 힐링뮤직
   groups.push({
     title: "마음톡",
     bgColor: "bg-pink-50 dark:bg-pink-900/20",
@@ -113,12 +113,12 @@ const getMenuGroups = (user: AuthUser): MenuGroup[] => {
     ]
   });
   
-  // 독서
+  // 독서 - 추천도서(동화책→수정), 독후감, 읽기통계
   groups.push({
     title: "독서",
     bgColor: "bg-orange-50 dark:bg-orange-900/20",
     items: [
-      { value: "storybooks", label: "동화책", icon: BookOpen, color: "text-orange-500" },
+      { value: "storybooks", label: "추천도서", icon: BookOpen, color: "text-orange-500" },
       { value: "book-reports", label: "독후감", icon: PenLine, color: "text-orange-500" },
       { value: "reading-stats", label: "읽기통계", icon: BarChart3, color: "text-orange-500" },
     ]
