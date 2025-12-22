@@ -34,7 +34,13 @@ import {
   Users,
   Globe,
   Info,
-  Feather
+  Feather,
+  Mic,
+  Square,
+  Save,
+  Play,
+  Pause,
+  Loader2
 } from 'lucide-react';
 import { BOOK_SERIES, THEME_STYLES, getSeriesIcon, type BookSeries, type ThemeName } from '@/config/bookSeriesConfig';
 
@@ -100,6 +106,18 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   // Poetry-specific states
   const [isPoetryReaderOpen, setIsPoetryReaderOpen] = useState(false);
   const [allPoems, setAllPoems] = useState<{ id: string; title: string; content: string; order: number }[]>([]);
+  
+  // Poetry recording states
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingPoemId, setRecordingPoemId] = useState<string | null>(null);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const [isPlayingRecording, setIsPlayingRecording] = useState(false);
+  const [isSavingRecording, setIsSavingRecording] = useState(false);
+  const [savedRecordings, setSavedRecordings] = useState<Set<string>>(new Set());
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const playbackAudioRef = useRef<HTMLAudioElement | null>(null);
   
   // Review states
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -229,6 +247,186 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     const sentences = text.split(/(?<=[.!?。])\s*/g).filter(s => s.trim());
     return sentences.length > 0 ? sentences : [text];
   }, []);
+
+  // Poetry Recording Functions
+  const startRecording = useCallback(async (poemId: string) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      
+      audioChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setRecordedBlob(audioBlob);
+        const url = URL.createObjectURL(audioBlob);
+        setRecordingUrl(url);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingPoemId(poemId);
+      setRecordedBlob(null);
+      setRecordingUrl(null);
+      
+    } catch (error) {
+      console.error('Recording error:', error);
+      toast.error('마이크 접근 권한이 필요합니다');
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, [isRecording]);
+
+  const playRecording = useCallback(() => {
+    if (recordingUrl) {
+      if (playbackAudioRef.current) {
+        playbackAudioRef.current.pause();
+      }
+      const audio = new Audio(recordingUrl);
+      playbackAudioRef.current = audio;
+      audio.onplay = () => setIsPlayingRecording(true);
+      audio.onended = () => setIsPlayingRecording(false);
+      audio.onpause = () => setIsPlayingRecording(false);
+      audio.play();
+    }
+  }, [recordingUrl]);
+
+  const pauseRecording = useCallback(() => {
+    if (playbackAudioRef.current) {
+      playbackAudioRef.current.pause();
+      setIsPlayingRecording(false);
+    }
+  }, []);
+
+  const saveRecording = useCallback(async (poem: { id: string; title: string }) => {
+    if (!recordedBlob || !selectedBook || !recordingPoemId) return;
+    
+    setIsSavingRecording(true);
+    
+    try {
+      // Find the collection ID from the poetry collections
+      const { data: collectionData } = await supabase
+        .from('poetry_collections')
+        .select('id')
+        .eq('title', selectedBook.title)
+        .single();
+      
+      if (!collectionData) {
+        throw new Error('시집을 찾을 수 없습니다');
+      }
+      
+      const formData = new FormData();
+      formData.append('file', recordedBlob, `${poem.id}.webm`);
+      formData.append('studentId', studentId);
+      formData.append('collectionId', collectionData.id);
+      formData.append('poemId', poem.id);
+      formData.append('poemTitle', poem.title);
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-poetry-recording`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: formData
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || '저장 실패');
+      }
+      
+      // Update saved recordings set
+      setSavedRecordings(prev => new Set([...prev, poem.id]));
+      
+      // Reset recording state
+      setRecordedBlob(null);
+      setRecordingUrl(null);
+      setRecordingPoemId(null);
+      
+      // Show success message with points
+      const { points, bonus_awarded, bonus_points, total_recordings, total_poems } = result.result;
+      
+      if (bonus_awarded) {
+        toast.success(
+          `🎉 시 낭독 저장 완료! +${points}점\n🏆 시집 완독 보너스 +${bonus_points}점!`,
+          { duration: 5000 }
+        );
+      } else {
+        toast.success(
+          `시 낭독 저장 완료! +${points}점 (${total_recordings}/${total_poems}편)`,
+          { duration: 3000 }
+        );
+      }
+      
+    } catch (error) {
+      console.error('Save recording error:', error);
+      toast.error(error instanceof Error ? error.message : '녹음 저장 중 오류가 발생했습니다');
+    } finally {
+      setIsSavingRecording(false);
+    }
+  }, [recordedBlob, selectedBook, recordingPoemId, studentId]);
+
+  const cancelRecording = useCallback(() => {
+    if (recordingUrl) {
+      URL.revokeObjectURL(recordingUrl);
+    }
+    setRecordedBlob(null);
+    setRecordingUrl(null);
+    setRecordingPoemId(null);
+    if (playbackAudioRef.current) {
+      playbackAudioRef.current.pause();
+      playbackAudioRef.current = null;
+    }
+    setIsPlayingRecording(false);
+  }, [recordingUrl]);
+
+  // Load saved recordings when poetry reader opens
+  useEffect(() => {
+    const loadSavedRecordings = async () => {
+      if (!isPoetryReaderOpen || !selectedBook) return;
+      
+      try {
+        const { data: collectionData } = await supabase
+          .from('poetry_collections')
+          .select('id')
+          .eq('title', selectedBook.title)
+          .single();
+        
+        if (!collectionData) return;
+        
+        const { data: recordings } = await supabase.rpc('student_get_poetry_recordings', {
+          student_id_input: studentId,
+          collection_id_input: collectionData.id
+        });
+        
+        if (recordings) {
+          const savedPoemIds = new Set(recordings.map((r: { poem_id: string }) => r.poem_id));
+          setSavedRecordings(savedPoemIds);
+        }
+      } catch (error) {
+        console.error('Error loading saved recordings:', error);
+      }
+    };
+    
+    loadSavedRecordings();
+  }, [isPoetryReaderOpen, selectedBook, studentId]);
 
   // TTS Functions
   const stopSpeaking = useCallback(() => {
@@ -1980,11 +2178,82 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   key={poem.id}
                   className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-lg border border-purple-100 overflow-hidden"
                 >
-                  {/* 시 번호 */}
-                  <div className="flex justify-center mb-3 md:mb-4">
+                  {/* 시 번호 및 녹음 버튼 */}
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <div className="w-16"></div>
                     <Badge className="bg-purple-500 text-white px-3 py-1 text-xs md:text-sm">
                       {index + 1} / {allPoems.length}
                     </Badge>
+                    <div className="flex items-center gap-1">
+                      {savedRecordings.has(poem.id) ? (
+                        <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 text-xs">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          저장됨
+                        </Badge>
+                      ) : recordingPoemId === poem.id ? (
+                        isRecording ? (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={stopRecording}
+                            className="h-8 px-2 animate-pulse"
+                          >
+                            <Square className="w-3 h-3 mr-1" />
+                            중지
+                          </Button>
+                        ) : recordedBlob ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={isPlayingRecording ? pauseRecording : playRecording}
+                              className="h-8 px-2"
+                            >
+                              {isPlayingRecording ? (
+                                <Pause className="w-3 h-3" />
+                              ) : (
+                                <Play className="w-3 h-3" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => saveRecording(poem)}
+                              disabled={isSavingRecording}
+                              className="h-8 px-2 bg-green-600 hover:bg-green-700"
+                            >
+                              {isSavingRecording ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <Save className="w-3 h-3 mr-1" />
+                                  저장
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={cancelRecording}
+                              className="h-8 px-2 text-gray-500"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : null
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => startRecording(poem.id)}
+                          disabled={isRecording || !!recordingPoemId}
+                          className="h-8 px-2 text-purple-600 border-purple-300 hover:bg-purple-50"
+                        >
+                          <Mic className="w-3 h-3 mr-1" />
+                          낭독
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   
                   {/* 시 제목 */}
