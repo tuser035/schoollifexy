@@ -74,7 +74,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, poemContent, poemId, collectionId, studentId } = await req.json();
+    const { imageBase64, poemContent, poemId, collectionId, studentId, studentName } = await req.json();
 
     if (!imageBase64 || !poemContent || !poemId || !collectionId || !studentId) {
       return new Response(
@@ -92,8 +92,9 @@ serve(async (req) => {
       );
     }
 
-    // Call Lovable AI Gateway for OCR
+    // Call Lovable AI Gateway for OCR - extract text AND verify student info
     console.log('Calling Lovable AI Gateway for OCR...');
+    console.log('Student ID:', studentId, 'Student Name:', studentName);
     
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     const imageDataUrl = `data:image/jpeg;base64,${base64Data}`;
@@ -111,16 +112,24 @@ serve(async (req) => {
           content: [
             {
               type: 'text',
-              text: `이 이미지는 학생이 손으로 필사한 시입니다. 이미지에서 한글 텍스트를 정확하게 추출해주세요.
-                
-다음 규칙을 따라주세요:
-1. 손글씨로 쓴 한글 텍스트만 추출
-2. 줄바꿈은 그대로 유지
-3. 특수문자나 이모티콘은 무시
-4. 읽을 수 없는 부분은 건너뛰기
-5. 추출된 텍스트만 반환하고, 다른 설명은 하지 않기
+              text: `이 이미지는 학생이 손으로 필사한 시입니다. 다음 정보를 JSON 형식으로 추출해주세요:
 
-텍스트:`
+1. 이미지에서 학생 이름 찾기 (있다면)
+2. 이미지에서 학번 찾기 (있다면)
+3. 필사된 시 내용 전체 추출
+
+다음 JSON 형식으로만 응답해주세요 (다른 설명 없이):
+{
+  "foundName": "이미지에서 찾은 이름 또는 null",
+  "foundStudentId": "이미지에서 찾은 학번 또는 null",
+  "transcribedText": "필사된 시 내용"
+}
+
+규칙:
+- 손글씨로 쓴 한글 텍스트만 추출
+- 줄바꿈은 그대로 유지
+- 특수문자나 이모티콘은 무시
+- 읽을 수 없는 부분은 건너뛰기`
             },
             {
               type: 'image_url',
@@ -157,15 +166,55 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    const extractedText = aiData.choices?.[0]?.message?.content || '';
+    const rawContent = aiData.choices?.[0]?.message?.content || '';
     
+    console.log('AI Response:', rawContent);
+
+    // Parse the JSON response
+    let ocrResult: { foundName: string | null; foundStudentId: string | null; transcribedText: string };
+    try {
+      // Extract JSON from the response (handle markdown code blocks)
+      const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        ocrResult = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse AI response as JSON:', parseError);
+      // Fallback: treat entire response as transcribed text
+      ocrResult = {
+        foundName: null,
+        foundStudentId: null,
+        transcribedText: rawContent
+      };
+    }
+
+    const { foundName, foundStudentId, transcribedText } = ocrResult;
+    const extractedText = transcribedText || '';
+    
+    console.log('Found name:', foundName);
+    console.log('Found student ID:', foundStudentId);
     console.log('Extracted text:', extractedText.substring(0, 100) + '...');
     console.log('Original poem:', poemContent.substring(0, 100) + '...');
 
-    const matchPercentage = calculateSimilarity(poemContent, extractedText);
-    const isVerified = matchPercentage >= 50;
+    // Check if student name and ID match
+    const nameMatches = foundName && studentName && 
+      (foundName.includes(studentName) || studentName.includes(foundName));
+    const idMatches = foundStudentId && studentId && 
+      (foundStudentId.includes(studentId) || studentId.includes(foundStudentId));
+    
+    const studentInfoVerified = nameMatches || idMatches;
+    
+    console.log(`Name matches: ${nameMatches}, ID matches: ${idMatches}, Student info verified: ${studentInfoVerified}`);
 
-    console.log(`Match percentage: ${matchPercentage}%, Verified: ${isVerified}`);
+    // Calculate text similarity
+    const matchPercentage = calculateSimilarity(poemContent, extractedText);
+    
+    // Verification requires: 60% text match AND student info (name or ID)
+    const isVerified = matchPercentage >= 60 && studentInfoVerified;
+
+    console.log(`Match percentage: ${matchPercentage}%, Student verified: ${studentInfoVerified}, Final verified: ${isVerified}`);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -173,6 +222,7 @@ serve(async (req) => {
 
     let savedId = null;
     let imageUrl = null;
+    let pointsAwarded = 0;
     
     if (isVerified) {
       const fileName = `${studentId}/${poemId}_${Date.now()}.jpg`;
@@ -199,6 +249,9 @@ serve(async (req) => {
       
       imageUrl = urlData.publicUrl;
 
+      // Award 10 points for verified transcription
+      pointsAwarded = 10;
+
       const { data: savedData, error: saveError } = await supabase.rpc('student_save_poetry_transcription', {
         student_id_input: studentId,
         poem_id_input: poemId,
@@ -217,6 +270,26 @@ serve(async (req) => {
       }
 
       savedId = savedData;
+
+      // Update points_awarded in the saved record
+      const { error: updateError } = await supabase
+        .from('poetry_transcriptions')
+        .update({ points_awarded: pointsAwarded })
+        .eq('id', savedId);
+
+      if (updateError) {
+        console.error('Points update error:', updateError);
+      }
+    }
+
+    // Build response message
+    let message = '';
+    if (isVerified) {
+      message = `필사 인증 성공! (${matchPercentage.toFixed(0)}% 일치) 10점이 부여되었습니다.`;
+    } else if (!studentInfoVerified) {
+      message = `필사 이미지에서 학생 이름(${studentName})이나 학번(${studentId})을 확인할 수 없습니다. 이름과 학번을 함께 적어주세요.`;
+    } else {
+      message = `필사 내용이 원본과 ${matchPercentage.toFixed(0)}%만 일치합니다. 60% 이상 일치해야 인증됩니다.`;
     }
 
     return new Response(
@@ -224,12 +297,14 @@ serve(async (req) => {
         success: true,
         matchPercentage,
         isVerified,
+        studentInfoVerified,
+        foundName,
+        foundStudentId,
         extractedText: extractedText.substring(0, 200),
         savedId,
         imageUrl,
-        message: isVerified 
-          ? `필사 인증 성공! (${matchPercentage.toFixed(0)}% 일치)` 
-          : `필사 내용이 원본과 ${matchPercentage.toFixed(0)}%만 일치합니다. 50% 이상 일치해야 인증됩니다.`
+        pointsAwarded,
+        message
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
