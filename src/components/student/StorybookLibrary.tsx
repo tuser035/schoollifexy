@@ -33,7 +33,8 @@ import {
   Heart,
   Users,
   Globe,
-  Info
+  Info,
+  Feather
 } from 'lucide-react';
 import { BOOK_SERIES, THEME_STYLES, getSeriesIcon, type BookSeries, type ThemeName } from '@/config/bookSeriesConfig';
 
@@ -95,6 +96,10 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const [pages, setPages] = useState<StorybookPage[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isReaderOpen, setIsReaderOpen] = useState(false);
+  
+  // Poetry-specific states
+  const [isPoetryReaderOpen, setIsPoetryReaderOpen] = useState(false);
+  const [allPoems, setAllPoems] = useState<{ id: string; title: string; content: string; order: number }[]>([]);
   
   // Review states
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -572,7 +577,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
       setSelectedBook(book);
       setCurrentPage(1);
 
-      // 시집인 경우 poems 테이블에서 가져오기
+      // 시집인 경우 별도의 시집 리더 사용
       if (book.category === 'poetry') {
         const { data, error } = await supabase.rpc('student_get_poems', {
           student_id_input: studentId,
@@ -581,15 +586,16 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
         if (error) throw error;
         
-        // poems 데이터를 StorybookPage 형식으로 변환
-        const pagesData: StorybookPage[] = (data || []).map((poem: any) => ({
+        // 모든 시를 한번에 표시하기 위해 별도 상태에 저장
+        const poemsData = (data || []).map((poem: any) => ({
           id: poem.id,
-          page_number: poem.poem_order,
-          image_url: null,
-          text_content: `${poem.title}\n\n${poem.content}`
+          title: poem.title,
+          content: poem.content,
+          order: poem.poem_order
         }));
         
-        setPages(pagesData);
+        setAllPoems(poemsData);
+        setIsPoetryReaderOpen(true);
       } else {
         const { data, error } = await supabase.rpc('student_get_storybook_pages', {
           student_id_input: studentId,
@@ -598,10 +604,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
 
         if (error) throw error;
         setPages(data || []);
+        setIsReaderOpen(true);
+        loadBookmarks(book.id);
       }
-      
-      setIsReaderOpen(true);
-      loadBookmarks(book.id);
     } catch (error) {
       console.error('Error loading pages:', error);
       toast.error('도서를 여는데 실패했습니다');
@@ -1929,6 +1934,87 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 ))}
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 시집 전용 리더 - 모든 시를 한 페이지에 표시 */}
+      <Dialog open={isPoetryReaderOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsPoetryReaderOpen(false);
+          setSelectedBook(null);
+          setAllPoems([]);
+        }
+      }}>
+        <DialogContent className="w-screen max-w-screen md:max-w-4xl md:w-full p-0 overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 h-[100dvh] md:h-[90vh]">
+          {/* 헤더 */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 flex-shrink-0">
+                <Feather className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-bold text-lg truncate">{selectedBook?.title}</h2>
+                <p className="text-purple-100 text-sm">{selectedBook?.description}</p>
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => {
+                setIsPoetryReaderOpen(false);
+                setSelectedBook(null);
+                setAllPoems([]);
+              }}
+              className="text-white hover:bg-white/20 p-2 h-auto rounded-full"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          
+          {/* 시 목록 - 스크롤 가능 */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-8" style={{ maxHeight: 'calc(100vh - 80px)' }}>
+            <div className="max-w-2xl mx-auto space-y-8">
+              {allPoems.map((poem, index) => (
+                <div 
+                  key={poem.id}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg border border-purple-100"
+                >
+                  {/* 시 번호 */}
+                  <div className="flex justify-center mb-4">
+                    <Badge className="bg-purple-500 text-white px-3 py-1">
+                      {index + 1} / {allPoems.length}
+                    </Badge>
+                  </div>
+                  
+                  {/* 시 제목 */}
+                  <h3 className="text-xl md:text-2xl font-bold text-purple-800 text-center mb-6">
+                    🌸 {poem.title}
+                  </h3>
+                  
+                  {/* 시 내용 */}
+                  <div 
+                    className="text-gray-700 whitespace-pre-wrap text-center leading-loose tracking-wide font-light italic"
+                    style={{ 
+                      fontSize: `${fontSize * 1.1}rem`,
+                      lineHeight: '2.2'
+                    }}
+                  >
+                    {poem.content}
+                  </div>
+                </div>
+              ))}
+              
+              {/* 마지막 안내 */}
+              {allPoems.length > 0 && (
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    총 {allPoems.length}편의 시를 모두 읽었습니다
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
