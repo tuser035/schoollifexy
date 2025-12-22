@@ -1973,31 +1973,32 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           </div>
           
           {/* 시 목록 - 스크롤 가능 */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-8" style={{ maxHeight: 'calc(100vh - 80px)' }}>
-            <div className="max-w-2xl mx-auto space-y-8">
+          <div className="flex-1 overflow-y-auto px-3 py-4 md:p-8" style={{ maxHeight: 'calc(100vh - 80px)' }}>
+            <div className="max-w-2xl mx-auto space-y-6 md:space-y-8">
               {allPoems.map((poem, index) => (
                 <div 
                   key={poem.id}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg border border-purple-100"
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-lg border border-purple-100 overflow-hidden"
                 >
                   {/* 시 번호 */}
-                  <div className="flex justify-center mb-4">
-                    <Badge className="bg-purple-500 text-white px-3 py-1">
+                  <div className="flex justify-center mb-3 md:mb-4">
+                    <Badge className="bg-purple-500 text-white px-3 py-1 text-xs md:text-sm">
                       {index + 1} / {allPoems.length}
                     </Badge>
                   </div>
                   
                   {/* 시 제목 */}
-                  <h3 className="text-xl md:text-2xl font-bold text-purple-800 text-center mb-6">
+                  <h3 className="text-lg md:text-2xl font-bold text-purple-800 text-center mb-4 md:mb-6 break-words">
                     🌸 {poem.title}
                   </h3>
                   
                   {/* 시 내용 */}
                   <div 
-                    className="text-gray-700 whitespace-pre-wrap text-center leading-loose tracking-wide font-light italic"
+                    className="text-gray-700 whitespace-pre-wrap text-center leading-loose tracking-wide font-light italic break-words overflow-wrap-anywhere"
                     style={{ 
-                      fontSize: `${fontSize * 1.1}rem`,
-                      lineHeight: '2.2'
+                      fontSize: `${Math.max(fontSize * 0.9, 0.875)}rem`,
+                      lineHeight: '2',
+                      wordBreak: 'keep-all'
                     }}
                   >
                     {poem.content}
@@ -2007,8 +2008,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
               
               {/* 마지막 안내 */}
               {allPoems.length > 0 && (
-                <div className="text-center py-8">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm">
+                <div className="text-center py-6 md:py-8">
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-full text-xs md:text-sm">
                     <CheckCircle2 className="w-4 h-4" />
                     총 {allPoems.length}편의 시를 모두 읽었습니다
                   </div>
