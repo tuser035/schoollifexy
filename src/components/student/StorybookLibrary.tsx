@@ -974,9 +974,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
-                <div className="flex items-center justify-between mb-4 pt-2">
+                <div className="flex flex-col gap-3 mb-4 pt-2">
                   <p className="text-muted-foreground text-sm">{series.subtitle}</p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {series.id === 'poetry' && (
                       <Button 
                         variant="outline"
