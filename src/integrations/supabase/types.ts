@@ -1612,6 +1612,38 @@ export type Database = {
           title: string
         }[]
       }
+      admin_get_poetry_recordings: {
+        Args: {
+          admin_id_input: string
+          collection_id_input?: string
+          student_id_input?: string
+        }
+        Returns: {
+          collection_id: string
+          collection_title: string
+          created_at: string
+          duration_seconds: number
+          id: string
+          poem_id: string
+          poem_title: string
+          points_awarded: number
+          recording_url: string
+          student_class: number
+          student_grade: number
+          student_id: string
+          student_name: string
+          student_number: number
+        }[]
+      }
+      admin_get_poetry_statistics: {
+        Args: { admin_id_input: string }
+        Returns: {
+          completed_collections: number
+          total_points_awarded: number
+          total_recordings: number
+          total_students: number
+        }[]
+      }
       admin_get_popular_storybooks: {
         Args: { admin_id_input: string }
         Returns: {
