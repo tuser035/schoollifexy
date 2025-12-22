@@ -716,6 +716,38 @@ export type Database = {
         }
         Relationships: []
       }
+      poetry_completion_bonus: {
+        Row: {
+          bonus_points: number
+          collection_id: string
+          completed_at: string
+          id: string
+          student_id: string
+        }
+        Insert: {
+          bonus_points?: number
+          collection_id: string
+          completed_at?: string
+          id?: string
+          student_id: string
+        }
+        Update: {
+          bonus_points?: number
+          collection_id?: string
+          completed_at?: string
+          id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poetry_completion_bonus_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "poetry_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       poetry_reading_history: {
         Row: {
           collection_id: string
@@ -753,6 +785,54 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "poetry_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poetry_recordings: {
+        Row: {
+          collection_id: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          poem_id: string
+          points_awarded: number | null
+          recording_url: string
+          student_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          poem_id: string
+          points_awarded?: number | null
+          recording_url: string
+          student_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          poem_id?: string
+          points_awarded?: number | null
+          recording_url?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poetry_recordings_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "poetry_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poetry_recordings_poem_id_fkey"
+            columns: ["poem_id"]
+            isOneToOne: false
+            referencedRelation: "poems"
             referencedColumns: ["id"]
           },
         ]
@@ -2299,6 +2379,20 @@ export type Database = {
           title: string
         }[]
       }
+      student_get_poetry_recordings: {
+        Args: { collection_id_input?: string; student_id_input: string }
+        Returns: {
+          collection_id: string
+          collection_title: string
+          created_at: string
+          duration_seconds: number
+          id: string
+          poem_id: string
+          poem_title: string
+          points_awarded: number
+          recording_url: string
+        }[]
+      }
       student_get_reviews: {
         Args: { student_id_input: string }
         Returns: {
@@ -2359,6 +2453,16 @@ export type Database = {
           student_id_input: string
         }
         Returns: string
+      }
+      student_save_poetry_recording: {
+        Args: {
+          collection_id_input: string
+          duration_seconds_input?: number
+          poem_id_input: string
+          recording_url_input: string
+          student_id_input: string
+        }
+        Returns: Json
       }
       student_save_review: {
         Args: {
