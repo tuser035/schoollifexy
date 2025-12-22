@@ -3388,29 +3388,34 @@ const DataInquiry = () => {
                     placeholder="예: 국어, 수학"
                   />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="isHomeroom"
-                    checked={editingTeacher.isHomeroom}
-                    onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isHomeroom: checked as boolean})}
-                  />
-                  <Label htmlFor="isHomeroom" className="cursor-pointer">담임 여부</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="isAdmin"
-                    checked={editingTeacher.isAdmin || false}
-                    onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isAdmin: checked as boolean})}
-                  />
-                  <Label htmlFor="isAdmin" className="cursor-pointer">관리자 여부</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="isCounselor"
-                    checked={editingTeacher.isCounselor || false}
-                    onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isCounselor: checked as boolean})}
-                  />
-                  <Label htmlFor="isCounselor" className="cursor-pointer">상담교사 여부</Label>
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-1.5">
+                    <Checkbox 
+                      id="isHomeroom"
+                      checked={editingTeacher.isHomeroom}
+                      onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isHomeroom: checked as boolean})}
+                      className="h-3.5 w-3.5"
+                    />
+                    <Label htmlFor="isHomeroom" className="cursor-pointer text-sm">담임</Label>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <Checkbox 
+                      id="isAdmin"
+                      checked={editingTeacher.isAdmin || false}
+                      onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isAdmin: checked as boolean})}
+                      className="h-3.5 w-3.5"
+                    />
+                    <Label htmlFor="isAdmin" className="cursor-pointer text-sm">관리자</Label>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <Checkbox 
+                      id="isCounselor"
+                      checked={editingTeacher.isCounselor || false}
+                      onCheckedChange={(checked) => setEditingTeacher({...editingTeacher, isCounselor: checked as boolean})}
+                      className="h-3.5 w-3.5"
+                    />
+                    <Label htmlFor="isCounselor" className="cursor-pointer text-sm">상담교사</Label>
+                  </div>
                 </div>
               </>
             )}
