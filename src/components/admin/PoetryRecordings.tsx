@@ -73,14 +73,16 @@ export default function PoetryRecordings({ adminId }: PoetryRecordingsProps) {
     setLoading(true);
     console.log('PoetryRecordings: Loading data with adminId:', adminId);
     try {
-      // 통계 로드
-      const { data: statsData, error: statsError } = await supabase.rpc('admin_get_poetry_statistics', {
+      // 통계 로드 - any 타입으로 함수 오버로딩 문제 우회
+      const { data: statsData, error: statsError } = await (supabase.rpc as any)('admin_get_poetry_statistics', {
         admin_id_input: adminId
       });
       
       console.log('Statistics result:', { statsData, statsError });
-      if (statsError) throw statsError;
-      if (statsData && statsData.length > 0) {
+      if (statsError) {
+        console.error('Statistics error:', statsError);
+        // 에러가 있어도 계속 진행
+      } else if (statsData && statsData.length > 0) {
         setStatistics(statsData[0]);
       }
 
@@ -114,10 +116,13 @@ export default function PoetryRecordings({ adminId }: PoetryRecordingsProps) {
       }
 
       console.log('Loading recordings with params:', params);
-      const { data, error } = await supabase.rpc('admin_get_poetry_recordings', params);
+      const { data, error } = await (supabase.rpc as any)('admin_get_poetry_recordings', params);
       
       console.log('Recordings result:', { data, error, count: data?.length });
-      if (error) throw error;
+      if (error) {
+        console.error('Recordings error:', error);
+        throw error;
+      }
       setRecordings(data || []);
     } catch (error) {
       console.error('Error loading recordings:', error);
