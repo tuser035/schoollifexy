@@ -731,7 +731,7 @@ const StudentDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-            <StorybookLibrary studentId={user.studentId} />
+            <StorybookLibrary studentId={user.studentId} studentName={user.name} />
           </CardContent>
         </Card>
 

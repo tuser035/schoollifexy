@@ -96,9 +96,10 @@ interface RecommendedBook {
 
 interface StorybookLibraryProps {
   studentId: string;
+  studentName: string;
 }
 
-export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
+export default function StorybookLibrary({ studentId, studentName }: StorybookLibraryProps) {
   const [books, setBooks] = useState<Storybook[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBook, setSelectedBook] = useState<Storybook | null>(null);
@@ -804,7 +805,8 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           poemContent: transcriptionPoem.content,
           poemId: transcriptionPoem.id,
           collectionId: selectedBook.id,
-          studentId: studentId
+          studentId: studentId,
+          studentName: studentName
         }
       });
 
