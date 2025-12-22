@@ -429,21 +429,26 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     try {
       setLoading(true);
       
-      // Load storybooks
-      const { data: storybooksData, error: storybooksError } = await supabase.rpc('student_get_storybooks', {
-        student_id_input: studentId
-      });
+      // Load storybooks and poetry collections in parallel
+      const [storybooksResult, poetryResult] = await Promise.all([
+        supabase.rpc('student_get_storybooks', { student_id_input: studentId }),
+        supabase.rpc('student_get_poetry_collections', { student_id_input: studentId })
+      ]);
 
-      if (storybooksError) throw storybooksError;
-      
-      // Load poetry collections
-      const { data: poetryData, error: poetryError } = await supabase.rpc('student_get_poetry_collections', {
-        student_id_input: studentId
-      });
+      const { data: storybooksData, error: storybooksError } = storybooksResult;
+      const { data: poetryData, error: poetryError } = poetryResult;
+
+      if (storybooksError) {
+        console.error('Error loading storybooks:', storybooksError);
+      }
       
       if (poetryError) {
         console.error('Error loading poetry collections:', poetryError);
       }
+
+      // Debug logging
+      console.log('[StorybookLibrary] Storybooks loaded:', storybooksData?.length || 0);
+      console.log('[StorybookLibrary] Poetry collections loaded:', poetryData?.length || 0);
       
       // Convert poetry collections to Storybook format
       const poetryBooks: Storybook[] = (poetryData || []).map((poetry: any, index: number) => ({
@@ -459,12 +464,16 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         category: 'poetry'
       }));
       
-      const storybooks = (storybooksData || []).map((book: any) => ({ 
+      const storybooks: Storybook[] = (storybooksData || []).map((book: any) => ({ 
         ...book, 
-        category: book.category || 'recommended' 
+        category: book.category || 'philosophy' 
       }));
+
+      const allBooks = [...storybooks, ...poetryBooks];
+      console.log('[StorybookLibrary] Total books:', allBooks.length);
+      console.log('[StorybookLibrary] Poetry books in array:', allBooks.filter(b => b.category === 'poetry').length);
       
-      setBooks([...storybooks, ...poetryBooks]);
+      setBooks(allBooks);
     } catch (error) {
       console.error('Error loading books:', error);
       toast.error('도서를 불러오는데 실패했습니다');
