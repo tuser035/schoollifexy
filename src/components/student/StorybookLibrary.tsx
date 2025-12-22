@@ -1182,7 +1182,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                         className={series.theme.buttonInactive}
                       >
                         <Volume2 className="w-4 h-4 mr-1" />
-                        시를 소리내어 낭독
+                        낭독({savedRecordings.size})
                       </Button>
                     )}
                     <Button 
@@ -1192,7 +1192,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                       className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
                     >
                       <PenLine className="w-4 h-4 mr-1" />
-                      {series.id === 'poetry' ? '시를 따라 적어보는 필사' : '내 독후감'} ({seriesReviews.length})
+                      {series.id === 'poetry' ? `필사(${seriesReviews.length})` : `내 독후감 (${seriesReviews.length})`}
                     </Button>
                   </div>
                 </div>
