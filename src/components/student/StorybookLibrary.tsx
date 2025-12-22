@@ -1946,7 +1946,7 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           setAllPoems([]);
         }
       }}>
-        <DialogContent className="w-screen max-w-screen md:max-w-4xl md:w-full p-0 overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 h-[100dvh] md:h-[90vh]">
+        <DialogContent hideCloseButton className="w-screen max-w-screen md:max-w-4xl md:w-full p-0 overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 h-[100dvh] md:h-[90vh]">
           {/* 헤더 */}
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md">
             <div className="flex items-center gap-3 min-w-0 flex-1">
