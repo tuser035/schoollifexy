@@ -2184,11 +2184,12 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                     <Badge className="bg-purple-500 text-white px-3 py-1 text-xs md:text-sm">
                       {index + 1} / {allPoems.length}
                     </Badge>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5 md:gap-2">
                       {savedRecordings.has(poem.id) ? (
-                        <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 text-xs">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          저장됨
+                        <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 text-xs px-2 py-1">
+                          <CheckCircle2 className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                          <span className="hidden xs:inline">저장됨</span>
+                          <span className="xs:hidden">✓</span>
                         </Badge>
                       ) : recordingPoemId === poem.id ? (
                         isRecording ? (
@@ -2196,23 +2197,23 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                             size="sm"
                             variant="destructive"
                             onClick={stopRecording}
-                            className="h-8 px-2 animate-pulse"
+                            className="h-9 md:h-8 px-3 md:px-2 animate-pulse text-sm"
                           >
-                            <Square className="w-3 h-3 mr-1" />
+                            <Square className="w-4 h-4 md:w-3 md:h-3 mr-1" />
                             중지
                           </Button>
                         ) : recordedBlob ? (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={isPlayingRecording ? pauseRecording : playRecording}
-                              className="h-8 px-2"
+                              className="h-9 md:h-8 w-9 md:w-8 p-0"
                             >
                               {isPlayingRecording ? (
-                                <Pause className="w-3 h-3" />
+                                <Pause className="w-4 h-4 md:w-3 md:h-3" />
                               ) : (
-                                <Play className="w-3 h-3" />
+                                <Play className="w-4 h-4 md:w-3 md:h-3" />
                               )}
                             </Button>
                             <Button
@@ -2220,13 +2221,13 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                               variant="default"
                               onClick={() => saveRecording(poem)}
                               disabled={isSavingRecording}
-                              className="h-8 px-2 bg-green-600 hover:bg-green-700"
+                              className="h-9 md:h-8 px-3 md:px-2 bg-green-600 hover:bg-green-700 text-sm"
                             >
                               {isSavingRecording ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <Loader2 className="w-4 h-4 md:w-3 md:h-3 animate-spin" />
                               ) : (
                                 <>
-                                  <Save className="w-3 h-3 mr-1" />
+                                  <Save className="w-4 h-4 md:w-3 md:h-3 mr-1" />
                                   저장
                                 </>
                               )}
@@ -2235,9 +2236,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                               size="sm"
                               variant="ghost"
                               onClick={cancelRecording}
-                              className="h-8 px-2 text-gray-500"
+                              className="h-9 md:h-8 w-9 md:w-8 p-0 text-gray-500"
                             >
-                              <X className="w-3 h-3" />
+                              <X className="w-4 h-4 md:w-3 md:h-3" />
                             </Button>
                           </div>
                         ) : null
@@ -2247,9 +2248,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                           variant="outline"
                           onClick={() => startRecording(poem.id)}
                           disabled={isRecording || !!recordingPoemId}
-                          className="h-8 px-2 text-purple-600 border-purple-300 hover:bg-purple-50"
+                          className="h-9 md:h-8 px-3 md:px-2 text-purple-600 border-purple-300 hover:bg-purple-50 text-sm"
                         >
-                          <Mic className="w-3 h-3 mr-1" />
+                          <Mic className="w-4 h-4 md:w-3 md:h-3 mr-1" />
                           낭독
                         </Button>
                       )}
