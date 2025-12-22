@@ -2416,17 +2416,17 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
           setTranscriptionPoem(null);
         }
       }}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden">
+        <DialogContent className="max-w-lg p-0 overflow-hidden max-h-[85vh]">
           {/* 헤더 */}
-          <div className="bg-gradient-to-r from-amber-500 to-orange-400 px-6 py-4">
+          <div className="bg-gradient-to-r from-amber-500 to-orange-400 px-6 py-3 flex-shrink-0">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3 text-white">
-                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                  <PenLine className="w-5 h-5" />
+                <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <PenLine className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold">시 필사 인증</h2>
-                  <p className="text-amber-100 text-sm font-normal mt-0.5">
+                  <h2 className="text-base font-bold">시 필사 인증</h2>
+                  <p className="text-amber-100 text-xs font-normal">
                     {transcriptionPoem?.title}
                   </p>
                 </div>
@@ -2434,16 +2434,11 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
             </DialogHeader>
           </div>
           
-          <div className="p-5 space-y-4">
-            {/* 안내 문구 */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
-              <p className="font-medium mb-1">📝 필사 인증 방법</p>
-              <ol className="list-decimal list-inside space-y-1 text-xs">
-                <li>노트에 시를 손으로 따라 적으세요</li>
-                <li>적은 내용을 폰 카메라로 촬영하세요</li>
-                <li>아래에서 사진을 업로드하세요</li>
-                <li>AI가 원본과 비교하여 50% 이상 일치하면 인증됩니다</li>
-              </ol>
+          <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(85vh-80px)]">
+            {/* 안내 문구 - 2줄로 간략화 */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-700">
+              <p>📝 노트에 시를 손으로 적고 사진 촬영하여 업로드하세요.</p>
+              <p className="mt-0.5">✅ AI가 원본과 50% 이상 일치하면 인증 완료!</p>
             </div>
 
             {/* 원본 시 미리보기 */}
