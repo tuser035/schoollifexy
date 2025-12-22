@@ -1659,15 +1659,19 @@ export type Database = {
               student_number: number
             }[]
           }
-      admin_get_poetry_statistics: {
-        Args: { admin_id_input: string }
-        Returns: {
-          completed_collections: number
-          total_points_awarded: number
-          total_recordings: number
-          total_students: number
-        }[]
-      }
+      admin_get_poetry_statistics:
+        | {
+            Args: { admin_id_input: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.admin_get_poetry_statistics(admin_id_input => text), public.admin_get_poetry_statistics(admin_id_input => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
+        | {
+            Args: { admin_id_input: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.admin_get_poetry_statistics(admin_id_input => text), public.admin_get_poetry_statistics(admin_id_input => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
       admin_get_popular_storybooks: {
         Args: { admin_id_input: string }
         Returns: {
