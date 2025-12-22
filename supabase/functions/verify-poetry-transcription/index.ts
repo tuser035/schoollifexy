@@ -98,7 +98,7 @@ serve(async (req) => {
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GOOGLE_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`,
       {
         method: 'POST',
         headers: {
