@@ -83,32 +83,35 @@ serve(async (req) => {
       );
     }
 
-    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY');
-    if (!GOOGLE_API_KEY) {
-      console.error('GOOGLE_AI_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY is not configured');
       return new Response(
-        JSON.stringify({ error: 'Google AI API 키가 설정되지 않았습니다' }),
+        JSON.stringify({ error: 'API 키가 설정되지 않았습니다' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Call Google Gemini 2.5 Flash for OCR
-    console.log('Calling Google Gemini 2.5 Flash for OCR...');
+    // Call Lovable AI Gateway for OCR
+    console.log('Calling Lovable AI Gateway for OCR...');
     
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    const imageDataUrl = `data:image/jpeg;base64,${base64Data}`;
     
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              {
-                text: `이 이미지는 학생이 손으로 필사한 시입니다. 이미지에서 한글 텍스트를 정확하게 추출해주세요.
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `이 이미지는 학생이 손으로 필사한 시입니다. 이미지에서 한글 텍스트를 정확하게 추출해주세요.
                 
 다음 규칙을 따라주세요:
 1. 손글씨로 쓴 한글 텍스트만 추출
@@ -118,42 +121,43 @@ serve(async (req) => {
 5. 추출된 텍스트만 반환하고, 다른 설명은 하지 않기
 
 텍스트:`
-              },
-              {
-                inline_data: {
-                  mime_type: 'image/jpeg',
-                  data: base64Data
-                }
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: imageDataUrl
               }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 1024,
-          }
-        })
-      }
-    );
+            }
+          ]
+        }]
+      })
+    });
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('Gemini API error:', geminiResponse.status, errorText);
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('Lovable AI Gateway error:', aiResponse.status, errorText);
       
-      if (geminiResponse.status === 429) {
+      if (aiResponse.status === 429) {
         return new Response(
-          JSON.stringify({ error: 'Gemini API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' }),
+          JSON.stringify({ error: 'AI 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'AI 크레딧이 부족합니다.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
       return new Response(
-        JSON.stringify({ error: 'OCR 처리 중 오류가 발생했습니다', details: errorText }),
+        JSON.stringify({ error: 'OCR 처리 중 오류가 발생했습니다' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const geminiData = await geminiResponse.json();
-    const extractedText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const aiData = await aiResponse.json();
+    const extractedText = aiData.choices?.[0]?.message?.content || '';
     
     console.log('Extracted text:', extractedText.substring(0, 100) + '...');
     console.log('Original poem:', poemContent.substring(0, 100) + '...');
