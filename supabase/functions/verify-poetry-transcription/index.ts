@@ -23,11 +23,9 @@ function calculateSimilarity(original: string, transcribed: string): number {
   if (normalizedOriginal.length === 0) return 0;
   if (normalizedTranscribed.length === 0) return 0;
   
-  // Calculate Levenshtein distance
   const len1 = normalizedOriginal.length;
   const len2 = normalizedTranscribed.length;
   
-  // Use a simpler approach: count matching characters in sequence
   let matches = 0;
   let i = 0;
   let j = 0;
@@ -38,11 +36,9 @@ function calculateSimilarity(original: string, transcribed: string): number {
       i++;
       j++;
     } else {
-      // Try to find the character nearby
       let foundInOriginal = false;
       let foundInTranscribed = false;
       
-      // Look ahead in transcribed
       for (let k = j + 1; k < Math.min(j + 3, len2); k++) {
         if (normalizedOriginal[i] === normalizedTranscribed[k]) {
           j = k;
@@ -51,7 +47,6 @@ function calculateSimilarity(original: string, transcribed: string): number {
         }
       }
       
-      // Look ahead in original
       if (!foundInTranscribed) {
         for (let k = i + 1; k < Math.min(i + 3, len1); k++) {
           if (normalizedOriginal[k] === normalizedTranscribed[j]) {
@@ -69,13 +64,11 @@ function calculateSimilarity(original: string, transcribed: string): number {
     }
   }
   
-  // Calculate percentage based on matches vs original length
   const similarity = (matches / len1) * 100;
   return Math.min(Math.round(similarity * 100) / 100, 100);
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -90,34 +83,32 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY is not configured');
+    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY');
+    if (!GOOGLE_API_KEY) {
+      console.error('GOOGLE_AI_API_KEY is not configured');
       return new Response(
-        JSON.stringify({ error: 'API 키가 설정되지 않았습니다' }),
+        JSON.stringify({ error: 'Google AI API 키가 설정되지 않았습니다' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Call Lovable AI Gateway for OCR using Gemini
-    console.log('Calling Lovable AI Gateway for OCR...');
+    // Call Google Gemini 2.5 Flash for OCR
+    console.log('Calling Google Gemini 2.5 Flash for OCR...');
     
-    const imageDataUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `이 이미지는 학생이 손으로 필사한 시입니다. 이미지에서 한글 텍스트를 정확하게 추출해주세요.
+    const geminiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GOOGLE_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              {
+                text: `이 이미지는 학생이 손으로 필사한 시입니다. 이미지에서 한글 텍스트를 정확하게 추출해주세요.
                 
 다음 규칙을 따라주세요:
 1. 손글씨로 쓴 한글 텍스트만 추출
@@ -127,66 +118,60 @@ serve(async (req) => {
 5. 추출된 텍스트만 반환하고, 다른 설명은 하지 않기
 
 텍스트:`
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: imageDataUrl
+              },
+              {
+                inline_data: {
+                  mime_type: 'image/jpeg',
+                  data: base64Data
+                }
               }
-            }
-          ]
-        }]
-      })
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('Lovable AI Gateway error:', aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'AI 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+            ]
+          }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 1024,
+          }
+        })
       }
-      if (aiResponse.status === 402) {
+    );
+
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      console.error('Gemini API error:', geminiResponse.status, errorText);
+      
+      if (geminiResponse.status === 429) {
         return new Response(
-          JSON.stringify({ error: 'AI 크레딧이 부족합니다.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'Gemini API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
       return new Response(
-        JSON.stringify({ error: 'OCR 처리 중 오류가 발생했습니다' }),
+        JSON.stringify({ error: 'OCR 처리 중 오류가 발생했습니다', details: errorText }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const aiData = await aiResponse.json();
-    const extractedText = aiData.choices?.[0]?.message?.content || '';
+    const geminiData = await geminiResponse.json();
+    const extractedText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
     console.log('Extracted text:', extractedText.substring(0, 100) + '...');
     console.log('Original poem:', poemContent.substring(0, 100) + '...');
 
-    // Calculate similarity
     const matchPercentage = calculateSimilarity(poemContent, extractedText);
     const isVerified = matchPercentage >= 50;
 
     console.log(`Match percentage: ${matchPercentage}%, Verified: ${isVerified}`);
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Only save if verified (50% or more match)
     let savedId = null;
     let imageUrl = null;
     
     if (isVerified) {
-      // Upload image to storage
       const fileName = `${studentId}/${poemId}_${Date.now()}.jpg`;
-      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
       const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
       
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -204,14 +189,12 @@ serve(async (req) => {
         );
       }
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('poetry-transcriptions')
         .getPublicUrl(fileName);
       
       imageUrl = urlData.publicUrl;
 
-      // Save transcription record
       const { data: savedData, error: saveError } = await supabase.rpc('student_save_poetry_transcription', {
         student_id_input: studentId,
         poem_id_input: poemId,
