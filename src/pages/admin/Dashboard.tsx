@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle, AlertTriangle, Music, BookOpen, BarChart3, PenLine, Layers } from "lucide-react";
+import { Key, Upload, Database, BarChart, LogOut, ClipboardCheck, TrendingUp, FolderOpen, Trophy, FileText, Mail, PackageOpen, Settings, Shield, FileCode, GraduationCap, Cog, MessageCircle, AlertTriangle, Music, BookOpen, BarChart3, PenLine, Layers, Mic } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import PasswordReset from "@/components/admin/PasswordReset";
 import BulkUpload from "@/components/admin/BulkUpload";
@@ -28,6 +28,7 @@ import StorybookManager from "@/components/admin/StorybookManager";
 import ReadingStatistics from "@/components/admin/ReadingStatistics";
 import BookReportManager from "@/components/admin/BookReportManager";
 import StorybookCategories from "@/components/admin/StorybookCategories";
+import PoetryRecordings from "@/components/admin/PoetryRecordings";
 import { LucideIcon } from "lucide-react";
 
 type TabItem = {
@@ -266,6 +267,16 @@ const getTabGroups = (user: AuthUser): TabGroup[] => {
         textClass: "text-teal-600",
         cardTitle: "읽기 통계",
         category: "reading"
+      },
+      { 
+        value: "poetry-recordings", 
+        label: "시낭독", 
+        icon: Mic, 
+        activeClass: "data-[state=active]:bg-purple-500 data-[state=active]:text-white",
+        borderClass: "border-purple-500/30",
+        textClass: "text-purple-600",
+        cardTitle: "시 낭독 녹음",
+        category: "reading"
       }
     ]
   });
@@ -419,6 +430,8 @@ const AdminDashboard = () => {
         return <StorybookManager adminId={user.id} />;
       case "reading-stats":
         return <ReadingStatistics adminId={user.id} />;
+      case "poetry-recordings":
+        return <PoetryRecordings adminId={user.id} />;
       case "book-reports":
         return <BookReportManager adminId={user.id} />;
       case "statistics":
