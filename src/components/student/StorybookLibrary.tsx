@@ -40,7 +40,10 @@ import {
   Save,
   Play,
   Pause,
-  Loader2
+  Loader2,
+  Camera,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { BOOK_SERIES, THEME_STYLES, getSeriesIcon, type BookSeries, type ThemeName } from '@/config/bookSeriesConfig';
 
@@ -118,6 +121,15 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const playbackAudioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Transcription states (필사)
+  const [isTranscriptionDialogOpen, setIsTranscriptionDialogOpen] = useState(false);
+  const [transcriptionPoemId, setTranscriptionPoemId] = useState<string | null>(null);
+  const [transcriptionPoem, setTranscriptionPoem] = useState<{ id: string; title: string; content: string } | null>(null);
+  const [transcriptionImage, setTranscriptionImage] = useState<string | null>(null);
+  const [isVerifyingTranscription, setIsVerifyingTranscription] = useState(false);
+  const [savedTranscriptions, setSavedTranscriptions] = useState<Set<string>>(new Set());
+  const transcriptionInputRef = useRef<HTMLInputElement | null>(null);
   
   // Review states
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -764,6 +776,90 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
     }
   };
 
+  // 필사 기록 불러오기
+  const loadTranscriptions = async (collectionId?: string) => {
+    try {
+      const { data, error } = await supabase.rpc('student_get_poetry_transcriptions', {
+        student_id_input: studentId,
+        collection_id_input: collectionId || null
+      });
+      
+      if (error) throw error;
+      const transcribedPoemIds = new Set((data || []).map((t: any) => t.poem_id));
+      setSavedTranscriptions(transcribedPoemIds);
+    } catch (error) {
+      console.error('Error loading transcriptions:', error);
+    }
+  };
+
+  // 필사 검증 함수
+  const verifyTranscription = async () => {
+    if (!transcriptionImage || !transcriptionPoem || !selectedBook) return;
+    
+    setIsVerifyingTranscription(true);
+    try {
+      const response = await supabase.functions.invoke('verify-poetry-transcription', {
+        body: {
+          imageBase64: transcriptionImage,
+          poemContent: transcriptionPoem.content,
+          poemId: transcriptionPoem.id,
+          collectionId: selectedBook.id,
+          studentId: studentId
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || '검증 중 오류가 발생했습니다');
+      }
+
+      const result = response.data;
+      
+      if (result.isVerified) {
+        toast.success(result.message, { duration: 5000 });
+        setSavedTranscriptions(prev => new Set([...prev, transcriptionPoem.id]));
+        setIsTranscriptionDialogOpen(false);
+        setTranscriptionImage(null);
+        setTranscriptionPoem(null);
+      } else {
+        toast.error(result.message, { duration: 5000 });
+      }
+    } catch (error) {
+      console.error('Error verifying transcription:', error);
+      toast.error(error instanceof Error ? error.message : '필사 검증에 실패했습니다');
+    } finally {
+      setIsVerifyingTranscription(false);
+    }
+  };
+
+  // 필사 다이얼로그 열기
+  const openTranscriptionDialog = (poem: { id: string; title: string; content: string }) => {
+    setTranscriptionPoem(poem);
+    setTranscriptionImage(null);
+    setIsTranscriptionDialogOpen(true);
+  };
+
+  // 이미지 파일 선택 처리
+  const handleTranscriptionImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('이미지 파일만 업로드할 수 있습니다');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('10MB 이하의 이미지만 업로드할 수 있습니다');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setTranscriptionImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const openBook = async (book: Storybook) => {
     // 외부 URL이 있는 경우 새 탭에서 열기
     if (book.external_url) {
@@ -794,6 +890,9 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
         
         setAllPoems(poemsData);
         setIsPoetryReaderOpen(true);
+        
+        // 필사 기록 로드
+        loadTranscriptions(book.id);
       } else {
         const { data, error } = await supabase.rpc('student_get_storybook_pages', {
           student_id_input: studentId,
@@ -2178,9 +2277,28 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                   key={poem.id}
                   className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 md:p-8 shadow-lg border border-purple-100 overflow-hidden"
                 >
-                  {/* 시 번호 및 녹음 버튼 */}
+                  {/* 시 번호 및 버튼들 */}
                   <div className="flex items-center justify-between mb-3 md:mb-4">
-                    <div className="w-16"></div>
+                    {/* 왼쪽: 필사 버튼 */}
+                    <div className="flex items-center gap-1.5">
+                      {savedTranscriptions.has(poem.id) ? (
+                        <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50 text-xs px-2 py-1">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          <span className="hidden xs:inline">필사완료</span>
+                          <span className="xs:hidden">✓</span>
+                        </Badge>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openTranscriptionDialog(poem)}
+                          className="h-9 md:h-8 px-3 md:px-2 text-amber-600 border-amber-300 hover:bg-amber-50 text-sm"
+                        >
+                          <PenLine className="w-4 h-4 md:w-3 md:h-3 mr-1" />
+                          필사
+                        </Button>
+                      )}
+                    </div>
                     <Badge className="bg-purple-500 text-white px-3 py-1 text-xs md:text-sm">
                       {index + 1} / {allPoems.length}
                     </Badge>
@@ -2286,6 +2404,114 @@ export default function StorybookLibrary({ studentId }: StorybookLibraryProps) {
                 </div>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 필사 인증 다이얼로그 */}
+      <Dialog open={isTranscriptionDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsTranscriptionDialogOpen(false);
+          setTranscriptionImage(null);
+          setTranscriptionPoem(null);
+        }
+      }}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {/* 헤더 */}
+          <div className="bg-gradient-to-r from-amber-500 to-orange-400 px-6 py-4">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3 text-white">
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <PenLine className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">시 필사 인증</h2>
+                  <p className="text-amber-100 text-sm font-normal mt-0.5">
+                    {transcriptionPoem?.title}
+                  </p>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+          
+          <div className="p-5 space-y-4">
+            {/* 안내 문구 */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
+              <p className="font-medium mb-1">📝 필사 인증 방법</p>
+              <ol className="list-decimal list-inside space-y-1 text-xs">
+                <li>노트에 시를 손으로 따라 적으세요</li>
+                <li>적은 내용을 폰 카메라로 촬영하세요</li>
+                <li>아래에서 사진을 업로드하세요</li>
+                <li>AI가 원본과 비교하여 50% 이상 일치하면 인증됩니다</li>
+              </ol>
+            </div>
+
+            {/* 원본 시 미리보기 */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <p className="text-xs text-purple-600 font-medium mb-2">원본 시</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">
+                {transcriptionPoem?.content}
+              </p>
+            </div>
+
+            {/* 이미지 업로드 영역 */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">필사 이미지 업로드</Label>
+              <input
+                ref={transcriptionInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleTranscriptionImageSelect}
+                className="hidden"
+              />
+              
+              {transcriptionImage ? (
+                <div className="relative">
+                  <img 
+                    src={transcriptionImage} 
+                    alt="필사 이미지" 
+                    className="w-full max-h-48 object-contain rounded-lg border"
+                  />
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setTranscriptionImage(null)}
+                    className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div 
+                  onClick={() => transcriptionInputRef.current?.click()}
+                  className="border-2 border-dashed border-amber-300 rounded-lg p-8 text-center cursor-pointer hover:bg-amber-50 transition-colors"
+                >
+                  <Camera className="w-10 h-10 mx-auto mb-2 text-amber-400" />
+                  <p className="text-sm text-amber-600 font-medium">사진 촬영 또는 업로드</p>
+                  <p className="text-xs text-gray-500 mt-1">탭하여 사진을 선택하세요</p>
+                </div>
+              )}
+            </div>
+
+            {/* 인증 버튼 */}
+            <Button
+              onClick={verifyTranscription}
+              disabled={!transcriptionImage || isVerifyingTranscription}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              {isVerifyingTranscription ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  AI가 검증 중...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  필사 인증하기
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

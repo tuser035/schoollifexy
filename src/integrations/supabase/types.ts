@@ -837,6 +837,57 @@ export type Database = {
           },
         ]
       }
+      poetry_transcriptions: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          image_url: string
+          is_verified: boolean
+          match_percentage: number
+          poem_id: string
+          points_awarded: number | null
+          student_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          is_verified?: boolean
+          match_percentage?: number
+          poem_id: string
+          points_awarded?: number | null
+          student_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_verified?: boolean
+          match_percentage?: number
+          poem_id?: string
+          points_awarded?: number | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poetry_transcriptions_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "poetry_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poetry_transcriptions_poem_id_fkey"
+            columns: ["poem_id"]
+            isOneToOne: false
+            referencedRelation: "poems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommended_books: {
         Row: {
           author: string | null
@@ -2425,6 +2476,21 @@ export type Database = {
           recording_url: string
         }[]
       }
+      student_get_poetry_transcriptions: {
+        Args: { collection_id_input?: string; student_id_input: string }
+        Returns: {
+          collection_id: string
+          collection_title: string
+          created_at: string
+          id: string
+          image_url: string
+          is_verified: boolean
+          match_percentage: number
+          poem_id: string
+          poem_title: string
+          points_awarded: number
+        }[]
+      }
       student_get_reviews: {
         Args: { student_id_input: string }
         Returns: {
@@ -2495,6 +2561,17 @@ export type Database = {
           student_id_input: string
         }
         Returns: Json
+      }
+      student_save_poetry_transcription: {
+        Args: {
+          collection_id_input: string
+          image_url_input: string
+          is_verified_input: boolean
+          match_percentage_input: number
+          poem_id_input: string
+          student_id_input: string
+        }
+        Returns: string
       }
       student_save_review: {
         Args: {

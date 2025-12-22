@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.upload-mindtalk-music]
 verify_jwt = false
+
+[functions.verify-poetry-transcription]
+verify_jwt = false
