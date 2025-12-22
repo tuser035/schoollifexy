@@ -32,9 +32,9 @@ serve(async (req) => {
     );
 
     // 파일명 생성 (학생ID_시집ID_시ID_타임스탬프.webm)
+    // Supabase Storage는 한글 파일명을 지원하지 않으므로 ASCII 문자만 사용
     const timestamp = Date.now();
-    const safeTitle = (poemTitle || 'poem').replace(/[^a-zA-Z0-9가-힣]/g, '_').slice(0, 30);
-    const fileName = `${studentId}/${collectionId}/${poemId}_${safeTitle}_${timestamp}.webm`;
+    const fileName = `${studentId}/${collectionId}/${poemId}_${timestamp}.webm`;
 
     console.log('Uploading to path:', fileName);
 
