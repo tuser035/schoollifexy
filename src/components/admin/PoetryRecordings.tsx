@@ -72,31 +72,43 @@ export default function PoetryRecordings({ adminId }: PoetryRecordingsProps) {
   const loadData = async () => {
     setLoading(true);
     console.log('PoetryRecordings: Loading data with adminId:', adminId);
+    
     try {
-      // 통계 로드 - any 타입으로 함수 오버로딩 문제 우회
-      const { data: statsData, error: statsError } = await (supabase.rpc as any)('admin_get_poetry_statistics', {
-        admin_id_input: adminId
-      });
+      console.log('Step 1: Starting statistics fetch...');
       
-      console.log('Statistics result:', { statsData, statsError });
-      if (statsError) {
-        console.error('Statistics error:', statsError);
-        // 에러가 있어도 계속 진행
-      } else if (statsData && statsData.length > 0) {
-        setStatistics(statsData[0]);
+      // 통계 로드
+      const statsPromise = supabase.rpc('admin_get_poetry_statistics', {
+        admin_id_input: adminId
+      } as any);
+      
+      console.log('Step 2: Stats promise created');
+      const statsResult = await statsPromise;
+      console.log('Step 3: Statistics result:', statsResult);
+      
+      if (statsResult.error) {
+        console.error('Statistics error:', statsResult.error);
+      } else if (statsResult.data && statsResult.data.length > 0) {
+        setStatistics(statsResult.data[0]);
       }
 
+      console.log('Step 4: Starting collections fetch...');
       // 시집 목록 로드
-      const { data: collectionsData, error: collectionsError } = await supabase.rpc('admin_get_poetry_collections', {
+      const collectionsResult = await supabase.rpc('admin_get_poetry_collections', {
         admin_id_input: adminId
-      });
+      } as any);
       
-      console.log('Collections result:', { collectionsData, collectionsError });
-      if (collectionsError) throw collectionsError;
-      setCollections(collectionsData || []);
+      console.log('Step 5: Collections result:', collectionsResult);
+      if (collectionsResult.error) {
+        console.error('Collections error:', collectionsResult.error);
+      } else {
+        setCollections(collectionsResult.data || []);
+      }
 
+      console.log('Step 6: Starting recordings fetch...');
       // 녹음 목록 로드
       await loadRecordings();
+      console.log('Step 7: All data loaded');
+      
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('데이터 로딩 실패');
