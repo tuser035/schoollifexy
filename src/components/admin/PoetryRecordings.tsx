@@ -71,12 +71,14 @@ export default function PoetryRecordings({ adminId }: PoetryRecordingsProps) {
 
   const loadData = async () => {
     setLoading(true);
+    console.log('PoetryRecordings: Loading data with adminId:', adminId);
     try {
       // 통계 로드
       const { data: statsData, error: statsError } = await supabase.rpc('admin_get_poetry_statistics', {
         admin_id_input: adminId
       });
       
+      console.log('Statistics result:', { statsData, statsError });
       if (statsError) throw statsError;
       if (statsData && statsData.length > 0) {
         setStatistics(statsData[0]);
@@ -87,6 +89,7 @@ export default function PoetryRecordings({ adminId }: PoetryRecordingsProps) {
         admin_id_input: adminId
       });
       
+      console.log('Collections result:', { collectionsData, collectionsError });
       if (collectionsError) throw collectionsError;
       setCollections(collectionsData || []);
 
@@ -110,8 +113,10 @@ export default function PoetryRecordings({ adminId }: PoetryRecordingsProps) {
         params.collection_id_input = collectionId;
       }
 
+      console.log('Loading recordings with params:', params);
       const { data, error } = await supabase.rpc('admin_get_poetry_recordings', params);
       
+      console.log('Recordings result:', { data, error, count: data?.length });
       if (error) throw error;
       setRecordings(data || []);
     } catch (error) {
