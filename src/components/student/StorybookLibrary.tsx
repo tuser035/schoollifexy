@@ -1617,24 +1617,41 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   ) : null}
                   
                   {series.id === 'poetry' && (
-                    <div className="flex flex-wrap gap-2">
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        className={series.theme.buttonInactive}
-                      >
-                        <Volume2 className="w-4 h-4 mr-1" />
-                        낭독({poetryRecordingPoints})
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        className={series.theme.buttonInactive}
-                      >
-                        <Camera className="w-4 h-4 mr-1" />
-                        필사({poetryTranscriptionPoints})
-                      </Button>
-                    </div>
+                    <>
+                      {loading ? (
+                        <div className="text-center py-4 text-muted-foreground">
+                          <Loader2 className="w-5 h-5 mx-auto animate-spin" />
+                        </div>
+                      ) : seriesBooks.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">{series.subtitle}</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {seriesBooks.map((book, index) => {
+                            return (
+                              <Button
+                                key={book.id}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openBook(book)}
+                                className={`h-auto py-1.5 px-3 rounded-md ${
+                                  book.is_completed 
+                                    ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100' 
+                                    : 'bg-purple-50 border-purple-300 text-purple-800 hover:bg-purple-100'
+                                }`}
+                              >
+                                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold mr-1.5">
+                                  {index + 1}
+                                </span>
+                                <span className="text-sm font-medium">{book.title}</span>
+                                {book.is_completed && (
+                                  <Check className="w-4 h-4 ml-1.5 text-green-600" />
+                                )}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
