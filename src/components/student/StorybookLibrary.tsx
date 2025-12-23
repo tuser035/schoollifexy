@@ -47,8 +47,11 @@ import {
   FileText,
   Clock,
   Check,
-  Award
+  Award,
+  Trash2,
+  Edit3
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BOOK_SERIES, THEME_STYLES, getSeriesIcon, type BookSeries, type ThemeName } from '@/config/bookSeriesConfig';
 
 interface Storybook {
@@ -149,6 +152,8 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   const [selectedBookForReport, setSelectedBookForReport] = useState<string | null>(null);
   const [bookReportContent, setBookReportContent] = useState('');
   const [submittingBookReport, setSubmittingBookReport] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+  const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
   
   // Review states
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -881,6 +886,80 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
     } catch (error: any) {
       console.error('Error submitting book report:', error);
       toast.error(error.message || '독후감 제출에 실패했습니다');
+    } finally {
+      setSubmittingBookReport(false);
+    }
+  };
+
+  // 독후감 삭제 함수
+  const handleDeleteBookReport = async (reportId: string, bookTitle: string) => {
+    if (!confirm(`"${bookTitle}" 독후감을 삭제하시겠습니까?\n삭제 시 획득한 포인트도 함께 차감됩니다.`)) {
+      return;
+    }
+
+    try {
+      setDeletingReportId(reportId);
+      const { error } = await supabase.rpc('student_delete_book_report', {
+        student_id_input: studentId,
+        report_id_input: reportId
+      });
+
+      if (error) throw error;
+
+      toast.success('독후감이 삭제되었습니다. (포인트 차감됨)');
+      // 목록에서 제거
+      setBookReports(prev => prev.filter(r => r.id !== reportId));
+      loadBookReportPoints();
+    } catch (error: any) {
+      console.error('Error deleting book report:', error);
+      toast.error(error.message || '독후감 삭제에 실패했습니다');
+    } finally {
+      setDeletingReportId(null);
+    }
+  };
+
+  // 독후감 수정 시작 함수
+  const handleEditBookReport = (report: { id: string; book_title: string; content: string }) => {
+    setEditingReportId(report.id);
+    setSelectedBookForReport(report.book_title);
+    setBookReportContent(report.content);
+  };
+
+  // 독후감 수정 제출 함수
+  const handleUpdateBookReport = async () => {
+    if (!editingReportId || !selectedBookForReport) return;
+
+    if (bookReportContent.length < 200) {
+      toast.error(`독후감은 최소 200자 이상이어야 합니다. (현재 ${bookReportContent.length}자)`);
+      return;
+    }
+
+    if (bookReportContent.length > 1000) {
+      toast.error(`독후감은 최대 1000자까지 작성 가능합니다. (현재 ${bookReportContent.length}자)`);
+      return;
+    }
+
+    try {
+      setSubmittingBookReport(true);
+      const { error } = await supabase.rpc('student_update_book_report', {
+        student_id_input: studentId,
+        report_id_input: editingReportId,
+        content_input: bookReportContent
+      });
+
+      if (error) throw error;
+
+      toast.success('독후감이 수정되었습니다!');
+      // 목록 업데이트
+      setBookReports(prev => prev.map(r => 
+        r.id === editingReportId ? { ...r, content: bookReportContent } : r
+      ));
+      setBookReportContent('');
+      setSelectedBookForReport(null);
+      setEditingReportId(null);
+    } catch (error: any) {
+      console.error('Error updating book report:', error);
+      toast.error(error.message || '독후감 수정에 실패했습니다');
     } finally {
       setSubmittingBookReport(false);
     }
