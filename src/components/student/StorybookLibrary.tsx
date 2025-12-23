@@ -132,6 +132,10 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   const [savedTranscriptions, setSavedTranscriptions] = useState<Set<string>>(new Set());
   const transcriptionInputRef = useRef<HTMLInputElement | null>(null);
   
+  // Poetry points states (낭독/필사 포인트)
+  const [poetryRecordingPoints, setPoetryRecordingPoints] = useState(0);
+  const [poetryTranscriptionPoints, setPoetryTranscriptionPoints] = useState(0);
+  
   // Review states
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [reviewContent, setReviewContent] = useState('');
@@ -388,6 +392,9 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
         );
       }
       
+      // 포인트 새로고침
+      loadPoetryPoints();
+      
     } catch (error) {
       console.error('Save recording error:', error);
       toast.error(error instanceof Error ? error.message : '녹음 저장 중 오류가 발생했습니다');
@@ -639,7 +646,31 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   useEffect(() => {
     loadBooks();
     loadMyReviews();
+    loadPoetryPoints();
   }, [studentId]);
+
+  // 낭독/필사 포인트 불러오기
+  const loadPoetryPoints = async () => {
+    try {
+      const [recordingsResult, transcriptionsResult] = await Promise.all([
+        supabase.rpc('student_get_poetry_recordings', { student_id_input: studentId }),
+        supabase.rpc('student_get_poetry_transcriptions', { student_id_input: studentId })
+      ]);
+
+      const { data: recordingsData } = recordingsResult;
+      const { data: transcriptionsData } = transcriptionsResult;
+
+      // 낭독 포인트 합계
+      const recordingPoints = (recordingsData || []).reduce((sum: number, r: any) => sum + (r.points_awarded || 0), 0);
+      setPoetryRecordingPoints(recordingPoints);
+
+      // 필사 포인트 합계
+      const transcriptionPoints = (transcriptionsData || []).reduce((sum: number, t: any) => sum + (t.points_awarded || 0), 0);
+      setPoetryTranscriptionPoints(transcriptionPoints);
+    } catch (error) {
+      console.error('Error loading poetry points:', error);
+    }
+  };
 
   const loadBooks = async () => {
     try {
@@ -840,6 +871,8 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
         setIsTranscriptionDialogOpen(false);
         setTranscriptionImage(null);
         setTranscriptionPoem(null);
+        // 포인트 새로고침
+        loadPoetryPoints();
       } else {
         toast.error(result.message, { duration: 5000 });
       }
@@ -1293,27 +1326,37 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               <AccordionContent className="px-4 pb-4">
                 <div className="flex flex-col gap-3 mb-4 pt-2">
                   <p className="text-muted-foreground text-sm">{series.subtitle}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {series.id === 'poetry' && (
+                    <div className="flex flex-wrap gap-2">
+                      {series.id === 'poetry' && (
+                        <>
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            className={series.theme.buttonInactive}
+                          >
+                            <Volume2 className="w-4 h-4 mr-1" />
+                            낭독({poetryRecordingPoints})
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            className={series.theme.buttonInactive}
+                          >
+                            <Camera className="w-4 h-4 mr-1" />
+                            필사({poetryTranscriptionPoints})
+                          </Button>
+                        </>
+                      )}
                       <Button 
-                        variant="outline"
+                        variant={showMyReviews ? "default" : "outline"}
                         size="sm"
-                        className={series.theme.buttonInactive}
+                        onClick={() => setShowMyReviews(!showMyReviews)}
+                        className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
                       >
-                        <Volume2 className="w-4 h-4 mr-1" />
-                        낭독({savedRecordings.size})
+                        <PenLine className="w-4 h-4 mr-1" />
+                        내 독후감 ({seriesReviews.length})
                       </Button>
-                    )}
-                    <Button 
-                      variant={showMyReviews ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setShowMyReviews(!showMyReviews)}
-                      className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
-                    >
-                      <PenLine className="w-4 h-4 mr-1" />
-                      {series.id === 'poetry' ? `필사(${seriesReviews.length})` : `내 독후감 (${seriesReviews.length})`}
-                    </Button>
-                  </div>
+                    </div>
                 </div>
 
                 {showMyReviews && renderReviewSection(seriesReviews, series.theme)}
