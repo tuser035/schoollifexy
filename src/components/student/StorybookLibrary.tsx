@@ -666,6 +666,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
     loadBooks();
     loadMyReviews();
     loadPoetryPoints();
+    loadRecommendedBooks(false); // 권수만 로드 (다이얼로그 열지 않음)
   }, [studentId]);
 
   // 낭독/필사 포인트 불러오기
@@ -809,8 +810,8 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
     }
   };
 
-  // 추천도서 목록 불러오기
-  const loadRecommendedBooks = async () => {
+  // 추천도서 목록 불러오기 (showDialog: 다이얼로그를 열지 여부)
+  const loadRecommendedBooks = async (showDialog: boolean = true) => {
     try {
       setLoadingRecommendedBooks(true);
       const { data, error } = await supabase.rpc('student_get_current_recommended_books', {
@@ -818,12 +819,16 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       });
       if (error) throw error;
       setRecommendedBooks(data || []);
-      setShowRecommendedBooks(true);
+      if (showDialog) {
+        setShowRecommendedBooks(true);
+      }
       // 독후감 포인트도 함께 로드
       loadBookReportPoints();
     } catch (error) {
       console.error('Error loading recommended books:', error);
-      toast.error('추천도서 목록을 불러오는데 실패했습니다');
+      if (showDialog) {
+        toast.error('추천도서 목록을 불러오는데 실패했습니다');
+      }
     } finally {
       setLoadingRecommendedBooks(false);
     }
@@ -1518,6 +1523,8 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
           const seriesBooks = getSeriesBooks(series);
           const seriesReviews = getSeriesReviews(seriesBooks);
           const completedBooksCount = seriesBooks.filter(book => book.is_completed).length;
+          // 추천도서 시리즈는 recommendedBooks에서 권수를 가져옴
+          const displayBookCount = series.id === 'recommended' ? recommendedBooks.length : seriesBooks.length;
 
           return (
             <AccordionItem 
@@ -1530,7 +1537,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   {renderIcon(series.icon)}
                   <span className="text-xl font-bold">{series.title}</span>
                   <Badge variant="secondary" className={`ml-2 ${series.theme.badgeBg} ${series.theme.badgeText}`}>
-                    {seriesBooks.length}권
+                    {displayBookCount}권
                   </Badge>
                   {completedBooksCount > 0 && (
                     <Badge className="ml-1 bg-green-500 text-white hover:bg-green-600">
