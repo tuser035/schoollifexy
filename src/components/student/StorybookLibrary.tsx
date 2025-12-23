@@ -1423,7 +1423,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                       ) : recommendedBooks.length === 0 ? (
                         <p className="text-muted-foreground text-sm">{series.subtitle}</p>
                       ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="flex flex-wrap gap-2">
                           {recommendedBooks.map((book, index) => {
                             const hasReport = bookReports.some(r => r.book_title === book.title);
                             return (
@@ -1441,23 +1441,21 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                                     setShowRecommendedBooks(true);
                                   }
                                 }}
-                                className={`justify-start h-auto py-2 px-3 text-left ${
+                                className={`h-auto py-1.5 px-3 ${
                                   hasReport 
                                     ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100' 
                                     : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
                                 }`}
                               >
-                                <div className="flex items-center gap-2 w-full min-w-0">
-                                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center text-white text-xs font-bold">
-                                    {index + 1}
-                                  </span>
-                                  <span className="truncate flex-1 text-sm font-medium">{book.title}</span>
-                                  {hasReport ? (
-                                    <Check className="w-4 h-4 flex-shrink-0 text-green-600" />
-                                  ) : (
-                                    <PenLine className="w-4 h-4 flex-shrink-0 text-amber-600" />
-                                  )}
-                                </div>
+                                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center text-white text-xs font-bold mr-1.5">
+                                  {index + 1}
+                                </span>
+                                <span className="text-sm font-medium">{book.title}</span>
+                                {hasReport ? (
+                                  <Check className="w-4 h-4 ml-1.5 text-green-600" />
+                                ) : (
+                                  <PenLine className="w-4 h-4 ml-1.5 text-amber-600" />
+                                )}
                               </Button>
                             );
                           })}
