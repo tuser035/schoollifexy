@@ -1602,37 +1602,26 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                     <p className="text-muted-foreground text-sm">{series.subtitle}</p>
                   )}
                   
-                  <div className="flex flex-wrap gap-2">
-                    {series.id === 'poetry' && (
-                      <>
-                        <Button 
-                          variant="outline"
-                          size="sm"
-                          className={series.theme.buttonInactive}
-                        >
-                          <Volume2 className="w-4 h-4 mr-1" />
-                          낭독({poetryRecordingPoints})
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          size="sm"
-                          className={series.theme.buttonInactive}
-                        >
-                          <Camera className="w-4 h-4 mr-1" />
-                          필사({poetryTranscriptionPoints})
-                        </Button>
-                      </>
-                    )}
-                    <Button 
-                      variant={showMyReviews ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setShowMyReviews(!showMyReviews)}
-                      className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
-                    >
-                      <PenLine className="w-4 h-4 mr-1" />
-                      내 독후감 ({seriesReviews.length})
-                    </Button>
-                  </div>
+                  {series.id === 'poetry' && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className={series.theme.buttonInactive}
+                      >
+                        <Volume2 className="w-4 h-4 mr-1" />
+                        낭독({poetryRecordingPoints})
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className={series.theme.buttonInactive}
+                      >
+                        <Camera className="w-4 h-4 mr-1" />
+                        필사({poetryTranscriptionPoints})
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {showMyReviews && renderReviewSection(seriesReviews, series.theme)}
