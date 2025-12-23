@@ -1565,6 +1565,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                       </Badge>
                     </>
                   )}
+                  {series.id === 'philosophy' && bookReportPoints > 0 && (
+                    <Badge variant="outline" className="ml-1 border-teal-400 text-teal-600 bg-teal-50">
+                      <BookOpen className="w-3 h-3 mr-1" />
+                      내 독후감 {bookReportPoints}점
+                    </Badge>
+                  )}
                   {series.id === 'recommended' && (
                     <Badge variant="outline" className="ml-1 border-amber-400 text-amber-600 bg-amber-50">
                       <BookOpen className="w-3 h-3 mr-1" />
