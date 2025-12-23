@@ -2355,8 +2355,14 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       </Dialog>
 
       {/* 추천도서 목록 다이얼로그 */}
-      <Dialog open={showRecommendedBooks} onOpenChange={setShowRecommendedBooks}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden">
+      <Dialog open={showRecommendedBooks} onOpenChange={(open) => {
+        setShowRecommendedBooks(open);
+        if (!open) {
+          setSelectedBookForReport(null);
+          setBookReportContent('');
+        }
+      }}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden max-h-[90vh]">
           {/* 헤더 */}
           <div className="bg-gradient-to-r from-amber-500 to-orange-400 px-6 py-5">
             <DialogHeader>
@@ -2366,9 +2372,13 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                     <BookMarked className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold">이번 학기 추천도서</h2>
+                    <h2 className="text-xl font-bold">
+                      {selectedBookForReport ? '독후감 작성' : '이번 학기 추천도서'}
+                    </h2>
                     <p className="text-amber-100 text-sm font-normal mt-0.5">
-                      {recommendedBooks.length}권의 도서가 추천되었습니다
+                      {selectedBookForReport 
+                        ? `"${selectedBookForReport}"` 
+                        : `${recommendedBooks.length}권의 도서가 추천되었습니다`}
                     </p>
                   </div>
                 </div>
@@ -2380,103 +2390,152 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
             </DialogHeader>
           </div>
           
-          <div className="p-5">
-            {loadingRecommendedBooks ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="relative">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-200 border-t-amber-500"></div>
-                  <BookMarked className="absolute inset-0 m-auto w-5 h-5 text-amber-500" />
+          <div className="p-5 overflow-y-auto max-h-[calc(90vh-120px)]">
+            {/* 독후감 작성 화면 */}
+            {selectedBookForReport ? (
+              <div className="space-y-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedBookForReport(null);
+                    setBookReportContent('');
+                  }}
+                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 -ml-2"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  도서 목록으로
+                </Button>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium text-amber-800">
+                      독후감 내용
+                    </Label>
+                    <span className={`text-xs ${
+                      bookReportContent.length < 200 ? 'text-red-500' : 
+                      bookReportContent.length > 1000 ? 'text-red-500' : 
+                      'text-green-500'
+                    }`}>
+                      {bookReportContent.length}/1000자 (최소 200자)
+                    </span>
+                  </div>
+                  <Textarea
+                    value={bookReportContent}
+                    onChange={(e) => setBookReportContent(e.target.value)}
+                    placeholder="독후감을 작성해주세요. (200자 이상 1000자 이하) 200자 이상 작성 시 10포인트가 자동 지급됩니다."
+                    className="min-h-[200px] resize-none border-amber-200 focus:border-amber-400"
+                    maxLength={1000}
+                  />
+                  <Button 
+                    onClick={handleSubmitBookReport}
+                    disabled={submittingBookReport || bookReportContent.length < 200 || bookReportContent.length > 1000}
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {submittingBookReport ? '제출 중...' : '독후감 제출 (200자 이상 시 10포인트)'}
+                  </Button>
                 </div>
-                <p className="text-muted-foreground mt-4 text-sm">추천도서를 불러오는 중...</p>
-              </div>
-            ) : recommendedBooks.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-amber-50 flex items-center justify-center">
-                  <BookMarked className="w-10 h-10 text-amber-300" />
-                </div>
-                <p className="text-gray-700 font-medium">등록된 추천도서가 없습니다</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  관리자가 추천도서를 등록하면 여기에 표시됩니다
-                </p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-amber-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-                {recommendedBooks.map((book, index) => {
-                  const hasReport = bookReports.some(r => r.book_title === book.title);
-                  return (
-                    <div 
-                      key={book.id} 
-                      onClick={() => {
-                        if (!hasReport) {
-                          setSelectedBookForReport(book.title);
-                          setBookReportActiveTab('write');
-                          setShowRecommendedBooks(false);
-                        }
-                      }}
-                      className={`group relative p-4 rounded-xl border transition-all duration-200 ${
-                        hasReport 
-                          ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200/60' 
-                          : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200/60 hover:border-amber-300 hover:shadow-md cursor-pointer'
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* 순번 배지 */}
-                        <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-105 transition-transform ${
-                          hasReport 
-                            ? 'bg-gradient-to-br from-green-400 to-emerald-400' 
-                            : 'bg-gradient-to-br from-amber-400 to-orange-400'
-                        }`}>
-                          {hasReport ? <Check className="w-5 h-5" /> : index + 1}
-                        </div>
-                        
-                        {/* 도서 정보 */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className={`font-semibold transition-colors ${
-                              hasReport 
-                                ? 'text-green-700' 
-                                : 'text-gray-800 group-hover:text-amber-700'
-                            }`}>
-                              {book.title}
-                            </h4>
-                            {hasReport && (
-                              <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">
-                                독후감 완료
-                              </Badge>
-                            )}
-                            {!hasReport && (
-                              <Badge variant="outline" className="border-amber-400 text-amber-600 text-xs px-2 py-0.5">
-                                <PenLine className="w-3 h-3 mr-1" />
-                                작성하기
-                              </Badge>
-                            )}
-                          </div>
-                          {book.author && (
-                            <p className={`text-sm mt-0.5 flex items-center gap-1 ${
-                              hasReport ? 'text-green-600' : 'text-amber-600'
-                            }`}>
-                              <span className={`w-1 h-1 rounded-full ${hasReport ? 'bg-green-400' : 'bg-amber-400'}`}></span>
-                              {book.author}
-                            </p>
-                          )}
-                          {book.description && (
-                            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                              {book.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* 장식용 라인 */}
-                      <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity ${
-                        hasReport 
-                          ? 'bg-gradient-to-b from-green-400 to-emerald-400' 
-                          : 'bg-gradient-to-b from-amber-400 to-orange-400'
-                      }`}></div>
+              <>
+                {loadingRecommendedBooks ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="relative">
+                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-200 border-t-amber-500"></div>
+                      <BookMarked className="absolute inset-0 m-auto w-5 h-5 text-amber-500" />
                     </div>
-                  );
-                })}
-              </div>
+                    <p className="text-muted-foreground mt-4 text-sm">추천도서를 불러오는 중...</p>
+                  </div>
+                ) : recommendedBooks.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-amber-50 flex items-center justify-center">
+                      <BookMarked className="w-10 h-10 text-amber-300" />
+                    </div>
+                    <p className="text-gray-700 font-medium">등록된 추천도서가 없습니다</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      관리자가 추천도서를 등록하면 여기에 표시됩니다
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-amber-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+                    {recommendedBooks.map((book, index) => {
+                      const hasReport = bookReports.some(r => r.book_title === book.title);
+                      return (
+                        <div 
+                          key={book.id} 
+                          onClick={() => {
+                            if (!hasReport) {
+                              setSelectedBookForReport(book.title);
+                              setBookReportActiveTab('write');
+                            }
+                          }}
+                          className={`group relative p-4 rounded-xl border transition-all duration-200 ${
+                            hasReport 
+                              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200/60' 
+                              : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200/60 hover:border-amber-300 hover:shadow-md cursor-pointer'
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            {/* 순번 배지 */}
+                            <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-105 transition-transform ${
+                              hasReport 
+                                ? 'bg-gradient-to-br from-green-400 to-emerald-400' 
+                                : 'bg-gradient-to-br from-amber-400 to-orange-400'
+                            }`}>
+                              {hasReport ? <Check className="w-5 h-5" /> : index + 1}
+                            </div>
+                            
+                            {/* 도서 정보 */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className={`font-semibold transition-colors ${
+                                  hasReport 
+                                    ? 'text-green-700' 
+                                    : 'text-gray-800 group-hover:text-amber-700'
+                                }`}>
+                                  {book.title}
+                                </h4>
+                                {hasReport && (
+                                  <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">
+                                    독후감 완료
+                                  </Badge>
+                                )}
+                                {!hasReport && (
+                                  <Badge variant="outline" className="border-amber-400 text-amber-600 text-xs px-2 py-0.5">
+                                    <PenLine className="w-3 h-3 mr-1" />
+                                    작성하기
+                                  </Badge>
+                                )}
+                              </div>
+                              {book.author && (
+                                <p className={`text-sm mt-0.5 flex items-center gap-1 ${
+                                  hasReport ? 'text-green-600' : 'text-amber-600'
+                                }`}>
+                                  <span className={`w-1 h-1 rounded-full ${hasReport ? 'bg-green-400' : 'bg-amber-400'}`}></span>
+                                  {book.author}
+                                </p>
+                              )}
+                              {book.description && (
+                                <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+                                  {book.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* 장식용 라인 */}
+                          <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full opacity-0 group-hover:opacity-100 transition-opacity ${
+                            hasReport 
+                              ? 'bg-gradient-to-b from-green-400 to-emerald-400' 
+                              : 'bg-gradient-to-b from-amber-400 to-orange-400'
+                          }`}></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </DialogContent>
