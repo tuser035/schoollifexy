@@ -2125,14 +2125,14 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex-1 flex flex-col overflow-y-auto">
                   {/* Title Page Mobile */}
-                  <div className={`flex flex-col items-center justify-center py-4 px-3 min-h-[100px] ${
+                  <div className={`flex flex-col items-center justify-center py-3 px-3 ${
                     selectedBook?.category === 'poetry'
                       ? 'bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100'
                       : selectedBook?.category === 'philosophy'
                       ? 'bg-gradient-to-br from-teal-100 via-cyan-50 to-teal-100'
                       : 'bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50'
                   }`}>
-                    <Badge className={`text-white text-[10px] px-2 py-0.5 mb-2 ${
+                    <Badge className={`text-white text-[10px] px-2 py-0.5 mb-1 ${
                       selectedBook?.category === 'poetry' ? 'bg-purple-500' 
                       : selectedBook?.category === 'philosophy' ? 'bg-teal-500'
                       : 'bg-storybook-emerald'
@@ -2148,25 +2148,27 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                     </h1>
                   </div>
                   
-                  {/* Philosophy Book Description Box Mobile */}
+                  {/* Philosophy Book Description Box Mobile - Compact */}
                   {selectedBook?.category === 'philosophy' && selectedBook?.description && (
-                    <div className="px-4 py-3">
-                      <div className="bg-white/80 border border-teal-200 rounded-lg p-3 shadow-sm">
-                        <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                    <div className="px-3 py-2">
+                      <div className="bg-white/80 border border-teal-200 rounded-lg p-2 shadow-sm">
+                        <div className="prose prose-xs max-w-none text-gray-700 leading-relaxed text-sm max-h-24 overflow-y-auto">
                           <ReactMarkdown>{selectedBook.description}</ReactMarkdown>
                         </div>
                       </div>
                     </div>
                   )}
                   
-                  {/* First Page Content Mobile */}
+                  {/* First Page Content Mobile - Always show for all categories */}
                   <div className="flex-1 px-4 py-2 overflow-y-auto">
                     {currentPageData?.image_url && (
                       <div className="flex justify-center mb-3">
                         <img 
                           src={currentPageData.image_url} 
                           alt={`${currentPage}페이지`}
-                          className="max-h-40 w-auto object-contain rounded-lg shadow-md"
+                          className={`w-auto object-contain rounded-lg shadow-md ${
+                            selectedBook?.category === 'philosophy' ? 'max-h-28' : 'max-h-40'
+                          }`}
                         />
                       </div>
                     )}
@@ -2178,8 +2180,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                       return (
                         <div className={`space-y-2 ${isPoetry ? 'text-center' : ''}`} style={{ fontSize: `${fontSize}rem` }}>
                           {subtitle && (
-                            <p className={`font-semibold leading-relaxed text-storybook-emerald break-words ${isPoetry ? 'text-center' : ''}`} style={{ fontSize: `${fontSize * 0.875}rem` }}>
-                              {isPoetry ? '🌸' : '📖'} {renderHighlightedText(subtitle)}
+                            <p className={`font-semibold leading-relaxed break-words ${
+                              isPoetry ? 'text-center text-storybook-emerald' 
+                              : selectedBook?.category === 'philosophy' ? 'text-teal-700'
+                              : 'text-storybook-emerald'
+                            }`} style={{ fontSize: `${fontSize * 0.875}rem` }}>
+                              {isPoetry ? '🌸' : selectedBook?.category === 'philosophy' ? '📚' : '📖'} {renderHighlightedText(subtitle)}
                             </p>
                           )}
                           {bodyText && (
@@ -2442,9 +2448,9 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               size="sm"
               onClick={() => changePage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="md:hidden h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm disabled:opacity-30"
+              className="md:hidden h-10 w-10 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm disabled:opacity-30"
             >
-              <ChevronLeft className="w-5 h-5 text-storybook-emerald-dark" />
+              <ChevronLeft className="w-6 h-6 text-storybook-emerald-dark" />
             </Button>
             
             {/* Page Dots */}
@@ -2475,19 +2481,19 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   }
                   closeReader();
                 }}
-                className="md:hidden h-8 w-8 p-0 rounded-full bg-storybook-emerald text-white hover:bg-storybook-emerald-hover shadow-sm"
+                className="md:hidden h-10 w-10 p-0 rounded-full bg-storybook-emerald text-white hover:bg-storybook-emerald-hover shadow-sm"
                 title="나가기"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </Button>
             ) : (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => changePage(currentPage + 1)}
-                className="md:hidden h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm"
+                className="md:hidden h-10 w-10 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm"
               >
-                <ChevronRight className="w-5 h-5 text-storybook-emerald-dark" />
+                <ChevronRight className="w-6 h-6 text-storybook-emerald-dark" />
               </Button>
             )}
             
