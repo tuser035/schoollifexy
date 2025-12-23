@@ -6,66 +6,70 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Normalize text for comparison (remove whitespace, punctuation, convert to lowercase)
+// Normalize text for comparison - handles special math symbols and Korean text
 function normalizeText(text: string): string {
   return text
-    .replace(/[\s\n\r\t]+/g, '') // Remove all whitespace
-    .replace(/[.,!?;:'"()[\]{}~·…""''—–\-_]/g, '') // Remove punctuation
+    // Normalize math symbols to standard forms
+    .replace(/[×✕✖⨉]/g, 'x')      // Multiplication signs to 'x'
+    .replace(/[÷➗]/g, '/')          // Division signs to '/'
+    .replace(/[−–—]/g, '-')          // Various dashes to hyphen
+    // Remove all whitespace and newlines
+    .replace(/[\s\n\r\t]+/g, '')
+    // Remove punctuation (but keep math operators)
+    .replace(/[.,!?;:'"()[\]{}~·…""''_]/g, '')
     .toLowerCase()
     .trim();
 }
 
-// Calculate similarity percentage between two strings
+// Calculate Levenshtein distance between two strings
+function levenshteinDistance(s1: string, s2: string): number {
+  const len1 = s1.length;
+  const len2 = s2.length;
+  
+  // Create a 2D array to store distances
+  const dp: number[][] = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(0));
+  
+  // Initialize base cases
+  for (let i = 0; i <= len1; i++) dp[i][0] = i;
+  for (let j = 0; j <= len2; j++) dp[0][j] = j;
+  
+  // Fill in the rest of the matrix
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,      // deletion
+        dp[i][j - 1] + 1,      // insertion
+        dp[i - 1][j - 1] + cost // substitution
+      );
+    }
+  }
+  
+  return dp[len1][len2];
+}
+
+// Calculate similarity percentage between two strings using Levenshtein distance
 function calculateSimilarity(original: string, transcribed: string): number {
   const normalizedOriginal = normalizeText(original);
   const normalizedTranscribed = normalizeText(transcribed);
   
+  console.log('Normalized original length:', normalizedOriginal.length);
+  console.log('Normalized transcribed length:', normalizedTranscribed.length);
+  console.log('Normalized original (first 100):', normalizedOriginal.substring(0, 100));
+  console.log('Normalized transcribed (first 100):', normalizedTranscribed.substring(0, 100));
+  
   if (normalizedOriginal.length === 0) return 0;
   if (normalizedTranscribed.length === 0) return 0;
   
-  const len1 = normalizedOriginal.length;
-  const len2 = normalizedTranscribed.length;
+  const distance = levenshteinDistance(normalizedOriginal, normalizedTranscribed);
+  const maxLen = Math.max(normalizedOriginal.length, normalizedTranscribed.length);
   
-  let matches = 0;
-  let i = 0;
-  let j = 0;
+  // Calculate similarity as percentage
+  const similarity = ((maxLen - distance) / maxLen) * 100;
   
-  while (i < len1 && j < len2) {
-    if (normalizedOriginal[i] === normalizedTranscribed[j]) {
-      matches++;
-      i++;
-      j++;
-    } else {
-      let foundInOriginal = false;
-      let foundInTranscribed = false;
-      
-      for (let k = j + 1; k < Math.min(j + 3, len2); k++) {
-        if (normalizedOriginal[i] === normalizedTranscribed[k]) {
-          j = k;
-          foundInTranscribed = true;
-          break;
-        }
-      }
-      
-      if (!foundInTranscribed) {
-        for (let k = i + 1; k < Math.min(i + 3, len1); k++) {
-          if (normalizedOriginal[k] === normalizedTranscribed[j]) {
-            i = k;
-            foundInOriginal = true;
-            break;
-          }
-        }
-      }
-      
-      if (!foundInOriginal && !foundInTranscribed) {
-        i++;
-        j++;
-      }
-    }
-  }
+  console.log('Levenshtein distance:', distance, 'Max length:', maxLen, 'Similarity:', similarity);
   
-  const similarity = (matches / len1) * 100;
-  return Math.min(Math.round(similarity * 100) / 100, 100);
+  return Math.max(0, Math.min(Math.round(similarity * 100) / 100, 100));
 }
 
 serve(async (req) => {
