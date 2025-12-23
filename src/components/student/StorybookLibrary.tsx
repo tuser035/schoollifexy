@@ -1413,38 +1413,92 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="flex flex-col gap-3 mb-4 pt-2">
-                  <p className="text-muted-foreground text-sm">{series.subtitle}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {series.id === 'poetry' && (
-                        <>
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            className={series.theme.buttonInactive}
-                          >
-                            <Volume2 className="w-4 h-4 mr-1" />
-                            낭독({poetryRecordingPoints})
-                          </Button>
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            className={series.theme.buttonInactive}
-                          >
-                            <Camera className="w-4 h-4 mr-1" />
-                            필사({poetryTranscriptionPoints})
-                          </Button>
-                        </>
+                  {/* 추천도서 섹션: 책 버튼들 표시 */}
+                  {series.id === 'recommended' ? (
+                    <>
+                      {loadingRecommendedBooks ? (
+                        <div className="text-center py-4 text-muted-foreground">
+                          <Loader2 className="w-5 h-5 mx-auto animate-spin" />
+                        </div>
+                      ) : recommendedBooks.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">{series.subtitle}</p>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {recommendedBooks.map((book, index) => {
+                            const hasReport = bookReports.some(r => r.book_title === book.title);
+                            return (
+                              <Button
+                                key={book.id}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (!hasReport) {
+                                    setSelectedBookForReport(book.title);
+                                    setBookReportActiveTab('write');
+                                    setShowRecommendedBooks(true);
+                                  } else {
+                                    setBookReportActiveTab('history');
+                                    setShowRecommendedBooks(true);
+                                  }
+                                }}
+                                className={`justify-start h-auto py-2 px-3 text-left ${
+                                  hasReport 
+                                    ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100' 
+                                    : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 w-full min-w-0">
+                                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center text-white text-xs font-bold">
+                                    {index + 1}
+                                  </span>
+                                  <span className="truncate flex-1 text-sm font-medium">{book.title}</span>
+                                  {hasReport ? (
+                                    <Check className="w-4 h-4 flex-shrink-0 text-green-600" />
+                                  ) : (
+                                    <PenLine className="w-4 h-4 flex-shrink-0 text-amber-600" />
+                                  )}
+                                </div>
+                              </Button>
+                            );
+                          })}
+                        </div>
                       )}
-                      <Button 
-                        variant={showMyReviews ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setShowMyReviews(!showMyReviews)}
-                        className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
-                      >
-                        <PenLine className="w-4 h-4 mr-1" />
-                        내 독후감 ({seriesReviews.length})
-                      </Button>
-                    </div>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">{series.subtitle}</p>
+                  )}
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {series.id === 'poetry' && (
+                      <>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className={series.theme.buttonInactive}
+                        >
+                          <Volume2 className="w-4 h-4 mr-1" />
+                          낭독({poetryRecordingPoints})
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className={series.theme.buttonInactive}
+                        >
+                          <Camera className="w-4 h-4 mr-1" />
+                          필사({poetryTranscriptionPoints})
+                        </Button>
+                      </>
+                    )}
+                    <Button 
+                      variant={showMyReviews ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowMyReviews(!showMyReviews)}
+                      className={showMyReviews ? series.theme.buttonActive : series.theme.buttonInactive}
+                    >
+                      <PenLine className="w-4 h-4 mr-1" />
+                      내 독후감 ({seriesReviews.length})
+                    </Button>
+                  </div>
                 </div>
 
                 {showMyReviews && renderReviewSection(seriesReviews, series.theme)}
