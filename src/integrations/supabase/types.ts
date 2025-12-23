@@ -1169,6 +1169,7 @@ export type Database = {
           grade: number
           id: string
           name: string
+          nationality_code: string | null
           number: number
           parents_call1: string | null
           parents_call2: string | null
@@ -1186,6 +1187,7 @@ export type Database = {
           grade: number
           id?: string
           name: string
+          nationality_code?: string | null
           number: number
           parents_call1?: string | null
           parents_call2?: string | null
@@ -1203,6 +1205,7 @@ export type Database = {
           grade?: number
           id?: string
           name?: string
+          nationality_code?: string | null
           number?: number
           parents_call1?: string | null
           parents_call2?: string | null
