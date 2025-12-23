@@ -2289,7 +2289,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
                   {/* Left - Title and Description */}
-                  <div className={`w-[455px] h-[1040px] flex flex-col items-center justify-center p-8 border-r ${
+                  <div className={`w-[455px] h-[1040px] flex flex-col items-center justify-start pt-12 p-8 border-r ${
                     selectedBook?.category === 'poetry'
                       ? 'bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 border-purple-200'
                       : selectedBook?.category === 'philosophy'
