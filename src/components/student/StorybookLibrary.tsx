@@ -642,6 +642,10 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       setCurrentPage(newPage);
       setPageTransition('enter');
       setTimeout(() => setPageTransition(null), 400);
+      
+      // Save progress and check if completed
+      const isCompleted = newPage === pages.length;
+      saveProgress(newPage, isCompleted);
     }, 350); // Wait for curl exit animation
   }, [currentPage, pages.length]);
 
