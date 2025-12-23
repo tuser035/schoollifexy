@@ -2370,7 +2370,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               {currentPage > 1 && currentPageData && (
                 <div className="flex">
                   {/* Left - Image */}
-                  <div className={`w-[455px] h-[1040px] flex items-center justify-center p-4 border-r ${
+                  <div className={`w-[455px] h-[1040px] flex items-start justify-center pt-8 p-4 border-r ${
                     selectedBook?.category === 'poetry'
                       ? 'bg-purple-100 border-purple-200'
                       : 'bg-storybook-emerald-light border-storybook-emerald/20'
@@ -2379,7 +2379,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                       <img 
                         src={currentPageData.image_url} 
                         alt={`${currentPage}페이지 삽화`}
-                        className="max-w-full max-h-full object-contain rounded-lg shadow"
+                        className="max-w-full max-h-[95%] object-contain rounded-lg shadow"
                       />
                     ) : (
                       <div className={`flex flex-col items-center ${
