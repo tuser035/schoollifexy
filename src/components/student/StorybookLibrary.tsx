@@ -910,7 +910,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       }
       
       // 독후감 제출 (포인트 지급 여부 전달)
-      const { error } = await supabase.rpc('student_submit_book_report', {
+      const { error } = await (supabase.rpc as any)('student_submit_book_report', {
         student_id_input: studentId,
         book_title_input: selectedBookForReport,
         content_input: bookReportContent,

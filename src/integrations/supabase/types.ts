@@ -2586,14 +2586,24 @@ export type Database = {
         }
         Returns: string
       }
-      student_submit_book_report: {
-        Args: {
-          book_title_input: string
-          content_input: string
-          student_id_input: string
-        }
-        Returns: string
-      }
+      student_submit_book_report:
+        | {
+            Args: {
+              book_title_input: string
+              content_input: string
+              student_id_input: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              award_points_input?: boolean
+              book_title_input: string
+              content_input: string
+              student_id_input: string
+            }
+            Returns: boolean
+          }
       student_toggle_page_bookmark: {
         Args: {
           book_id_input: string
