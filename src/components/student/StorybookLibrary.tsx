@@ -1453,11 +1453,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   <div className="text-center py-8 text-muted-foreground">
                     책꽂이를 정리하는 중...
                   </div>
-                ) : seriesBooks.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    아직 등록된 {series.title}이(가) 없습니다
-                  </div>
-                ) : (
+                ) : seriesBooks.length > 0 && (
                   renderBookList(seriesBooks, series.theme.name)
                 )}
 
