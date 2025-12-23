@@ -1531,6 +1531,16 @@ const DataInquiry = () => {
     return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
   };
 
+  // 국적 코드 옵션
+  const nationalityOptions = [
+    { code: 'ko', label: '한국어 (Korean)' },
+    { code: 'vi', label: '베트남어 (Vietnamese)' },
+    { code: 'ru', label: '러시아어 (Russian)' },
+    { code: 'uz', label: '우즈베크어 (Uzbek)' },
+    { code: 'ky', label: '키르기스어 (Kyrgyz)' },
+    { code: 'en', label: '영어 (English)' },
+  ];
+
   // 학생 편집 열기
   const handleOpenStudentEdit = (student: any) => {
     setEditingStudent({
@@ -1544,6 +1554,7 @@ const DataInquiry = () => {
       email: student.이메일 === "-" ? "" : student.이메일,
       parentPhone1: student.학부모전화1 === "-" ? "" : student.학부모전화1,
       parentPhone2: student.학부모전화2 === "-" ? "" : student.학부모전화2,
+      nationalityCode: student.국적코드 || null,
     });
     setIsStudentEditDialogOpen(true);
   };
@@ -1566,7 +1577,8 @@ const DataInquiry = () => {
         student_call_input: editingStudent.phone || '',
         gmail_input: editingStudent.email || '',
         parents_call1_input: editingStudent.parentPhone1 || '',
-        parents_call2_input: editingStudent.parentPhone2 || ''
+        parents_call2_input: editingStudent.parentPhone2 || '',
+        nationality_code_input: editingStudent.nationalityCode || null
       });
 
       if (error) throw error;
@@ -3583,7 +3595,7 @@ const DataInquiry = () => {
           <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 px-1">
             {editingStudent && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label>학번</Label>
                     <Input value={editingStudent.studentId} disabled />
@@ -3594,6 +3606,23 @@ const DataInquiry = () => {
                       value={editingStudent.name}
                       onChange={(e) => setEditingStudent({...editingStudent, name: e.target.value})}
                     />
+                  </div>
+                  <div>
+                    <Label>국적 코드</Label>
+                    <Select
+                      value={editingStudent.nationalityCode || "none"}
+                      onValueChange={(value) => setEditingStudent({...editingStudent, nationalityCode: value === "none" ? null : value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">-</SelectItem>
+                        {nationalityOptions.map(opt => (
+                          <SelectItem key={opt.code} value={opt.code}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
