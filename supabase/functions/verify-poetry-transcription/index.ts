@@ -225,7 +225,7 @@ serve(async (req) => {
     const matchPercentage = calculateSimilarity(poemContent, extractedText);
     
     // Verification requires: 60% text match AND student info (name or ID)
-    const isVerified = matchPercentage >= 70 && studentInfoVerified;
+    const isVerified = matchPercentage >= 90 && studentInfoVerified;
 
     console.log(`Match percentage: ${matchPercentage}%, Student verified: ${studentInfoVerified}, Final verified: ${isVerified}`);
 
@@ -302,7 +302,7 @@ serve(async (req) => {
     } else if (!studentInfoVerified) {
       message = `필사 이미지에서 학생 이름(${studentName})이나 학번(${studentId})을 확인할 수 없습니다. 이름과 학번을 함께 적어주세요.`;
     } else {
-      message = `필사 내용이 원본과 ${matchPercentage.toFixed(0)}%만 일치합니다. 70% 이상 일치해야 인증됩니다.`;
+      message = `필사 내용이 원본과 ${matchPercentage.toFixed(0)}%만 일치합니다. 90% 이상 일치해야 인증됩니다.`;
     }
 
     return new Response(
