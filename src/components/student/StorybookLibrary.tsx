@@ -1441,7 +1441,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                                     setShowRecommendedBooks(true);
                                   }
                                 }}
-                                className={`h-auto py-1.5 px-3 ${
+                                className={`h-auto py-1.5 px-4 rounded-full ${
                                   hasReport 
                                     ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100' 
                                     : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
