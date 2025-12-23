@@ -1658,12 +1658,15 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                 {showMyReviews && renderReviewSection(seriesReviews, series.theme)}
 
 
-                {loading ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    책꽂이를 정리하는 중...
-                  </div>
-                ) : seriesBooks.length > 0 && (
-                  renderBookList(seriesBooks, series.theme.name)
+                {/* 시집 시리즈는 renderBookList를 렌더링하지 않음 (버튼 목록으로 대체됨) */}
+                {series.id !== 'poetry' && (
+                  loading ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      책꽂이를 정리하는 중...
+                    </div>
+                  ) : seriesBooks.length > 0 && (
+                    renderBookList(seriesBooks, series.theme.name)
+                  )
                 )}
 
               </AccordionContent>
