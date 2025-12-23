@@ -2125,18 +2125,32 @@ export type Database = {
         }
         Returns: boolean
       }
-      admin_update_student: {
-        Args: {
-          admin_id_input: string
-          gmail_input: string
-          name_input: string
-          parents_call1_input: string
-          parents_call2_input: string
-          student_call_input: string
-          student_id_input: string
-        }
-        Returns: boolean
-      }
+      admin_update_student:
+        | {
+            Args: {
+              admin_id_input: string
+              gmail_input: string
+              name_input: string
+              nationality_code_input?: string
+              parents_call1_input: string
+              parents_call2_input: string
+              student_call_input: string
+              student_id_input: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              admin_id_input: string
+              gmail_input: string
+              name_input: string
+              parents_call1_input: string
+              parents_call2_input: string
+              student_call_input: string
+              student_id_input: string
+            }
+            Returns: boolean
+          }
       admin_update_system_setting: {
         Args: {
           admin_id_input: string
