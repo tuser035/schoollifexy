@@ -157,7 +157,7 @@ ${schemaSQL}`;
 
       // Define column order for specific tables
       const tableColumns: Record<string, string[]> = {
-        students: ["student_id", "name", "grade", "class", "number", "dept_code", "student_call", "gmail", "parents_call1", "parents_call2"],
+        students: ["student_id", "name", "grade", "class", "number", "dept_code", "nationality_code", "student_call", "gmail", "parents_call1", "parents_call2"],
         teachers: ["teacher_email", "name", "grade", "class", "dept_code", "call_t", "is_homeroom", "department", "subject"],
         merits: ["student_id", "teacher_id", "category", "reason", "score", "image_url", "created_at"],
         demerits: ["student_id", "teacher_id", "category", "reason", "score", "image_url", "created_at"],
