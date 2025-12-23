@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS public.students (
     class integer NOT NULL,
     number integer NOT NULL,
     dept_code text,
+    nationality_code text,
     gmail text,
     student_call text,
     parents_call1 text,
