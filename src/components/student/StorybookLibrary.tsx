@@ -899,7 +899,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
 
     try {
       setDeletingReportId(reportId);
-      const { error } = await supabase.rpc('student_delete_book_report', {
+      const { error } = await (supabase.rpc as any)('student_delete_book_report', {
         student_id_input: studentId,
         report_id_input: reportId
       });
@@ -941,7 +941,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
 
     try {
       setSubmittingBookReport(true);
-      const { error } = await supabase.rpc('student_update_book_report', {
+      const { error } = await (supabase.rpc as any)('student_update_book_report', {
         student_id_input: studentId,
         report_id_input: editingReportId,
         content_input: bookReportContent
@@ -2480,6 +2480,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   onClick={() => {
                     setSelectedBookForReport(null);
                     setBookReportContent('');
+                    setEditingReportId(null);
                   }}
                   className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 -ml-2"
                 >
@@ -2490,7 +2491,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium text-amber-800">
-                      독후감 내용
+                      {editingReportId ? '독후감 수정' : '독후감 내용'}
                     </Label>
                     <span className={`text-xs ${
                       bookReportContent.length < 200 ? 'text-red-500' : 
@@ -2508,12 +2509,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                     maxLength={1000}
                   />
                   <Button 
-                    onClick={handleSubmitBookReport}
+                    onClick={editingReportId ? handleUpdateBookReport : handleSubmitBookReport}
                     disabled={submittingBookReport || bookReportContent.length < 200 || bookReportContent.length > 1000}
                     className="w-full bg-amber-500 hover:bg-amber-600 text-white"
                   >
-                    <Send className="w-4 h-4 mr-2" />
-                    {submittingBookReport ? '제출 중...' : '독후감 제출 (200자 이상 시 10포인트)'}
+                    {editingReportId ? <Edit3 className="w-4 h-4 mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                    {submittingBookReport ? (editingReportId ? '수정 중...' : '제출 중...') : (editingReportId ? '독후감 수정 완료' : '독후감 제출 (200자 이상 시 10포인트)')}
                   </Button>
                 </div>
               </div>
@@ -2568,7 +2569,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                             
                             {/* 도서 정보 */}
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <h4 className={`font-semibold transition-colors ${
                                   hasReport 
                                     ? 'text-green-700' 
@@ -2576,26 +2577,63 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                                 }`}>
                                   {book.title}{book.author && `_${book.author}`}
                                 </h4>
-                                {hasReport && (
-                                  <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">
-                                    독후감 완료
-                                  </Badge>
-                                )}
-                                {!hasReport && (
+                                {hasReport ? (
+                                  <TooltipProvider>
+                                    <div className="flex items-center gap-1">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="p-1 rounded bg-green-100">
+                                            <Check className="w-4 h-4 text-green-600" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>제출완료</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const report = bookReports.find(r => r.book_title === book.title);
+                                              if (report) handleEditBookReport(report);
+                                            }}
+                                            className="p-1 rounded bg-blue-100 hover:bg-blue-200 transition-colors"
+                                          >
+                                            <Edit3 className="w-4 h-4 text-blue-600" />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>독후감 수정</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const report = bookReports.find(r => r.book_title === book.title);
+                                              if (report) handleDeleteBookReport(report.id, book.title);
+                                            }}
+                                            disabled={deletingReportId !== null}
+                                            className="p-1 rounded bg-red-100 hover:bg-red-200 transition-colors disabled:opacity-50"
+                                          >
+                                            <Trash2 className="w-4 h-4 text-red-600" />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>독후감 삭제</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </div>
+                                  </TooltipProvider>
+                                ) : (
                                   <Badge variant="outline" className="border-amber-400 text-amber-600 text-xs px-2 py-0.5">
                                     <PenLine className="w-3 h-3 mr-1" />
                                     작성하기
                                   </Badge>
                                 )}
                               </div>
-                              {book.author && (
-                                <p className={`text-sm mt-0.5 flex items-center gap-1 ${
-                                  hasReport ? 'text-green-600' : 'text-amber-600'
-                                }`}>
-                                  <span className={`w-1 h-1 rounded-full ${hasReport ? 'bg-green-400' : 'bg-amber-400'}`}></span>
-                                  {book.author}
-                                </p>
-                              )}
                               {book.description && (
                                 <p className="text-sm text-gray-500 mt-2 leading-relaxed">
                                   {book.description}
