@@ -136,6 +136,9 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   const [poetryRecordingPoints, setPoetryRecordingPoints] = useState(0);
   const [poetryTranscriptionPoints, setPoetryTranscriptionPoints] = useState(0);
   
+  // Book report points state (독후감 포인트)
+  const [bookReportPoints, setBookReportPoints] = useState(0);
+  
   // Review states
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [reviewContent, setReviewContent] = useState('');
@@ -800,11 +803,27 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       if (error) throw error;
       setRecommendedBooks(data || []);
       setShowRecommendedBooks(true);
+      // 독후감 포인트도 함께 로드
+      loadBookReportPoints();
     } catch (error) {
       console.error('Error loading recommended books:', error);
       toast.error('추천도서 목록을 불러오는데 실패했습니다');
     } finally {
       setLoadingRecommendedBooks(false);
+    }
+  };
+
+  // 독후감 포인트 불러오기
+  const loadBookReportPoints = async () => {
+    try {
+      const { data, error } = await supabase.rpc('student_get_book_reports', {
+        student_id_input: studentId
+      });
+      if (error) throw error;
+      const totalPoints = (data || []).reduce((sum: number, r: any) => sum + (r.points_awarded || 0), 0);
+      setBookReportPoints(totalPoints);
+    } catch (error) {
+      console.error('Error loading book report points:', error);
     }
   };
 
@@ -2223,16 +2242,22 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
           {/* 헤더 */}
           <div className="bg-gradient-to-r from-amber-500 to-orange-400 px-6 py-5">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-3 text-white">
-                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                  <BookMarked className="w-6 h-6" />
+              <DialogTitle className="flex items-center justify-between text-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                    <BookMarked className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">이번 학기 추천도서</h2>
+                    <p className="text-amber-100 text-sm font-normal mt-0.5">
+                      {recommendedBooks.length}권의 도서가 추천되었습니다
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">이번 학기 추천도서</h2>
-                  <p className="text-amber-100 text-sm font-normal mt-0.5">
-                    {recommendedBooks.length}권의 도서가 추천되었습니다
-                  </p>
-                </div>
+                <Badge className="bg-white/20 text-white border-0 px-3 py-1.5 text-sm font-medium">
+                  <PenLine className="w-4 h-4 mr-1" />
+                  내 독후감 ({bookReportPoints})
+                </Badge>
               </DialogTitle>
             </DialogHeader>
           </div>
