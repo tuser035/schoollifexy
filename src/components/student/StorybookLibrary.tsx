@@ -1687,11 +1687,54 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   )}
                 </div>
 
+                {/* 철학 시리즈: 버튼 형식으로 표시 */}
+                {series.id === 'philosophy' && (
+                  <>
+                    {loading ? (
+                      <div className="text-center py-4 text-muted-foreground">
+                        <Loader2 className="w-5 h-5 mx-auto animate-spin" />
+                      </div>
+                    ) : seriesBooks.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">{series.subtitle}</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {seriesBooks.map((book, index) => {
+                          const hasReport = bookReports.some(r => r.book_title === book.title);
+                          return (
+                            <Button
+                              key={book.id}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openBook(book)}
+                              className={`h-auto py-1.5 px-3 rounded-md ${
+                                book.is_completed 
+                                  ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100' 
+                                  : 'bg-teal-50 border-teal-300 text-teal-800 hover:bg-teal-100'
+                              }`}
+                            >
+                              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-teal-400 to-cyan-400 flex items-center justify-center text-white text-xs font-bold mr-1.5">
+                                {index + 1}
+                              </span>
+                              <span className="text-sm font-medium">{book.title}</span>
+                              {hasReport && (
+                                <Check className="w-4 h-4 ml-1.5 text-green-600" />
+                              )}
+                              {book.is_completed && !hasReport && (
+                                <CheckCircle2 className="w-4 h-4 ml-1.5 text-green-500" />
+                              )}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+
                 {showMyReviews && renderReviewSection(seriesReviews, series.theme)}
 
 
-                {/* 시집 시리즈는 renderBookList를 렌더링하지 않음 (버튼 목록으로 대체됨) */}
-                {series.id !== 'poetry' && (
+                {/* 시집, 철학, 추천도서 시리즈는 버튼 목록으로 대체됨 */}
+                {series.id !== 'poetry' && series.id !== 'philosophy' && series.id !== 'recommended' && (
                   loading ? (
                     <div className="text-center py-8 text-muted-foreground">
                       책꽂이를 정리하는 중...
@@ -2085,19 +2128,36 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   <div className={`flex flex-col items-center justify-center py-4 px-3 min-h-[100px] ${
                     selectedBook?.category === 'poetry'
                       ? 'bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100'
+                      : selectedBook?.category === 'philosophy'
+                      ? 'bg-gradient-to-br from-teal-100 via-cyan-50 to-teal-100'
                       : 'bg-gradient-to-br from-storybook-emerald-light via-white to-storybook-emerald-light/50'
                   }`}>
                     <Badge className={`text-white text-[10px] px-2 py-0.5 mb-2 ${
-                      selectedBook?.category === 'poetry' ? 'bg-purple-500' : 'bg-storybook-emerald'
+                      selectedBook?.category === 'poetry' ? 'bg-purple-500' 
+                      : selectedBook?.category === 'philosophy' ? 'bg-teal-500'
+                      : 'bg-storybook-emerald'
                     }`}>
                       #{selectedBook?.book_number}
                     </Badge>
                     <h1 className={`text-base font-bold text-center leading-tight px-2 break-words ${
-                      selectedBook?.category === 'poetry' ? 'text-purple-800' : 'text-storybook-emerald-dark'
+                      selectedBook?.category === 'poetry' ? 'text-purple-800' 
+                      : selectedBook?.category === 'philosophy' ? 'text-teal-800'
+                      : 'text-storybook-emerald-dark'
                     }`}>
                       {selectedBook?.title}
                     </h1>
                   </div>
+                  
+                  {/* Philosophy Book Description Box Mobile */}
+                  {selectedBook?.category === 'philosophy' && selectedBook?.description && (
+                    <div className="px-4 py-3">
+                      <div className="bg-white/80 border border-teal-200 rounded-lg p-3 shadow-sm">
+                        <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                          <ReactMarkdown>{selectedBook.description}</ReactMarkdown>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   {/* First Page Content Mobile */}
                   <div className="flex-1 px-4 py-2 overflow-y-auto">
@@ -2222,27 +2282,46 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               {/* Title Page (Page 1) */}
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
-                  {/* Left - Title */}
+                  {/* Left - Title and Description */}
                   <div className={`w-[350px] h-[800px] flex flex-col items-center justify-center p-8 border-r ${
                     selectedBook?.category === 'poetry'
                       ? 'bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 border-purple-200'
+                      : selectedBook?.category === 'philosophy'
+                      ? 'bg-gradient-to-br from-teal-100 via-cyan-50 to-teal-100 border-teal-200'
                       : 'bg-gradient-to-br from-storybook-emerald-light to-white border-storybook-emerald/20'
                   }`}>
                     <Badge className={`text-white text-sm px-3 py-1 mb-4 ${
-                      selectedBook?.category === 'poetry' ? 'bg-purple-500' : 'bg-storybook-emerald'
+                      selectedBook?.category === 'poetry' ? 'bg-purple-500' 
+                      : selectedBook?.category === 'philosophy' ? 'bg-teal-500'
+                      : 'bg-storybook-emerald'
                     }`}>
                       #{selectedBook?.book_number}
                     </Badge>
-                    <h1 className={`text-2xl font-bold text-center ${
-                      selectedBook?.category === 'poetry' ? 'text-purple-800' : 'text-storybook-emerald-dark'
+                    <h1 className={`text-2xl font-bold text-center mb-6 ${
+                      selectedBook?.category === 'poetry' ? 'text-purple-800' 
+                      : selectedBook?.category === 'philosophy' ? 'text-teal-800'
+                      : 'text-storybook-emerald-dark'
                     }`}>
                       {selectedBook?.title}
                     </h1>
+                    
+                    {/* Philosophy Book Description Box Desktop */}
+                    {selectedBook?.category === 'philosophy' && selectedBook?.description && (
+                      <div className="w-full mt-4 max-h-[400px] overflow-y-auto">
+                        <div className="bg-white/80 border border-teal-200 rounded-lg p-4 shadow-sm">
+                          <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                            <ReactMarkdown>{selectedBook.description}</ReactMarkdown>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Right - First Page Content */}
                   <div className={`w-[350px] h-[800px] p-6 overflow-y-auto ${
-                    selectedBook?.category === 'poetry' ? 'bg-purple-50/50' : 'bg-white'
+                    selectedBook?.category === 'poetry' ? 'bg-purple-50/50' 
+                    : selectedBook?.category === 'philosophy' ? 'bg-teal-50/30'
+                    : 'bg-white'
                   }`}>
                     {currentPageData?.image_url && (
                       <img 
