@@ -870,15 +870,61 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
 
     try {
       setSubmittingBookReport(true);
+      
+      // 선택된 책의 저자 정보 가져오기
+      const selectedBook = recommendedBooks.find(b => b.title === selectedBookForReport);
+      const bookAuthor = selectedBook?.author || '';
+      
+      // AI 검증 호출
+      let shouldAwardPoints = true;
+      let verificationMessage = '';
+      
+      try {
+        const verifyResponse = await supabase.functions.invoke('verify-book-report', {
+          body: {
+            bookTitle: selectedBookForReport,
+            bookAuthor,
+            content: bookReportContent,
+            studentName
+          }
+        });
+        
+        if (verifyResponse.error) {
+          console.error('Verification error:', verifyResponse.error);
+          // 검증 오류 시에도 제출은 허용
+        } else {
+          const verifyData = verifyResponse.data;
+          shouldAwardPoints = verifyData.shouldAwardPoints ?? true;
+          verificationMessage = verifyData.reason || '';
+          
+          console.log('Book report verification:', {
+            score: verifyData.score,
+            isValid: verifyData.isValid,
+            shouldAwardPoints,
+            reason: verificationMessage
+          });
+        }
+      } catch (verifyError) {
+        console.error('Verification fetch error:', verifyError);
+        // 검증 실패해도 제출은 허용
+      }
+      
+      // 독후감 제출 (포인트 지급 여부 전달)
       const { error } = await supabase.rpc('student_submit_book_report', {
         student_id_input: studentId,
         book_title_input: selectedBookForReport,
-        content_input: bookReportContent
+        content_input: bookReportContent,
+        award_points_input: shouldAwardPoints
       });
 
       if (error) throw error;
 
-      toast.success('독후감이 제출되었습니다! (10포인트 획득)');
+      if (shouldAwardPoints) {
+        toast.success('독후감이 제출되었습니다! (AI 검증 통과, 10포인트 획득)', { duration: 5000 });
+      } else {
+        toast.warning(`독후감이 저장되었습니다. (포인트 미지급: ${verificationMessage})`, { duration: 7000 });
+      }
+      
       setBookReportContent('');
       setSelectedBookForReport(null);
       setBookReportActiveTab('history');
