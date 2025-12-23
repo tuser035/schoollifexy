@@ -1602,7 +1602,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center text-white text-xs font-bold mr-1.5">
                                   {index + 1}
                                 </span>
-                                <span className="text-sm font-medium">{book.title}</span>
+                                <span className="text-sm font-medium">{book.title}{book.author ? `_${book.author}` : ''}</span>
                                 {hasReport ? (
                                   <Check className="w-4 h-4 ml-1.5 text-green-600" />
                                 ) : (
@@ -1642,7 +1642,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold mr-1.5">
                                   {index + 1}
                                 </span>
-                                <span className="text-sm font-medium">{book.title}</span>
+                                <span className="text-sm font-medium">{book.title}{book.description ? `_${book.description.replace(' 시인', '')}` : ''}</span>
                                 {book.is_completed && (
                                   <Check className="w-4 h-4 ml-1.5 text-green-600" />
                                 )}
