@@ -1539,6 +1539,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   <Badge variant="secondary" className={`ml-2 ${series.theme.badgeBg} ${series.theme.badgeText}`}>
                     {displayBookCount}권
                   </Badge>
+                  {series.id === 'recommended' && (
+                    <Badge variant="outline" className="ml-1 border-amber-400 text-amber-600 bg-amber-50">
+                      <BookOpen className="w-3 h-3 mr-1" />
+                      내 독후감 {bookReportPoints}점
+                    </Badge>
+                  )}
                   {completedBooksCount > 0 && (
                     <Badge className="ml-1 bg-green-500 text-white hover:bg-green-600">
                       <CheckCircle2 className="w-3 h-3 mr-1" />
