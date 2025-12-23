@@ -2335,6 +2335,10 @@ export type Database = {
         Args: { teacher_id_input: string }
         Returns: undefined
       }
+      student_delete_book_report: {
+        Args: { report_id_input: string; student_id_input: string }
+        Returns: boolean
+      }
       student_delete_playlist: {
         Args: { playlist_id_input: string; student_id_input: string }
         Returns: boolean
@@ -2594,6 +2598,14 @@ export type Database = {
         Args: {
           book_id_input: string
           page_number_input: number
+          student_id_input: string
+        }
+        Returns: boolean
+      }
+      student_update_book_report: {
+        Args: {
+          content_input: string
+          report_id_input: string
           student_id_input: string
         }
         Returns: boolean
