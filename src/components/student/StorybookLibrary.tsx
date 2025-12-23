@@ -795,16 +795,34 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
 
   // 필사 검증 함수
   const verifyTranscription = async () => {
-    if (!transcriptionImage || !transcriptionPoem || !selectedBook) return;
+    if (!transcriptionImage || !transcriptionPoem || !selectedBook) {
+      console.log('Missing data:', { 
+        hasImage: !!transcriptionImage, 
+        hasPoem: !!transcriptionPoem, 
+        hasBook: !!selectedBook 
+      });
+      return;
+    }
+    
+    // 현재 상태값을 로컬 변수에 캡처 (클로저 문제 방지)
+    const currentPoem = transcriptionPoem;
+    const currentBook = selectedBook;
+    
+    console.log('Verifying transcription for:', {
+      poemTitle: currentPoem.title,
+      poemId: currentPoem.id,
+      bookId: currentBook.id,
+      contentPreview: currentPoem.content.substring(0, 50) + '...'
+    });
     
     setIsVerifyingTranscription(true);
     try {
       const response = await supabase.functions.invoke('verify-poetry-transcription', {
         body: {
           imageBase64: transcriptionImage,
-          poemContent: transcriptionPoem.content,
-          poemId: transcriptionPoem.id,
-          collectionId: selectedBook.id,
+          poemContent: currentPoem.content,
+          poemId: currentPoem.id,
+          collectionId: currentBook.id,
           studentId: studentId,
           studentName: studentName
         }
@@ -818,7 +836,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       
       if (result.isVerified) {
         toast.success(result.message, { duration: 5000 });
-        setSavedTranscriptions(prev => new Set([...prev, transcriptionPoem.id]));
+        setSavedTranscriptions(prev => new Set([...prev, currentPoem.id]));
         setIsTranscriptionDialogOpen(false);
         setTranscriptionImage(null);
         setTranscriptionPoem(null);
