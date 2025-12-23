@@ -878,6 +878,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       // AI 검증 호출
       let shouldAwardPoints = true;
       let verificationMessage = '';
+      let verificationScore: number | null = null;
       
       try {
         const verifyResponse = await supabase.functions.invoke('verify-book-report', {
@@ -896,6 +897,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
           const verifyData = verifyResponse.data;
           shouldAwardPoints = verifyData.shouldAwardPoints ?? true;
           verificationMessage = verifyData.reason || '';
+          verificationScore = verifyData.score ?? null;
           
           console.log('Book report verification:', {
             score: verifyData.score,
@@ -909,12 +911,14 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
         // 검증 실패해도 제출은 허용
       }
       
-      // 독후감 제출 (포인트 지급 여부 전달)
+      // 독후감 제출 (포인트 지급 여부 및 검증 사유 전달)
       const { error } = await (supabase.rpc as any)('student_submit_book_report', {
         student_id_input: studentId,
         book_title_input: selectedBookForReport,
         content_input: bookReportContent,
-        award_points_input: shouldAwardPoints
+        award_points_input: shouldAwardPoints,
+        verification_reason_input: verificationMessage || null,
+        verification_score_input: verificationScore
       });
 
       if (error) throw error;

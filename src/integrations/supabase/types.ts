@@ -104,6 +104,8 @@ export type Database = {
           status: string
           student_id: string
           updated_at: string
+          verification_reason: string | null
+          verification_score: number | null
         }
         Insert: {
           book_title: string
@@ -116,6 +118,8 @@ export type Database = {
           status?: string
           student_id: string
           updated_at?: string
+          verification_reason?: string | null
+          verification_score?: number | null
         }
         Update: {
           book_title?: string
@@ -128,6 +132,8 @@ export type Database = {
           status?: string
           student_id?: string
           updated_at?: string
+          verification_reason?: string | null
+          verification_score?: number | null
         }
         Relationships: []
       }
@@ -2601,6 +2607,17 @@ export type Database = {
               book_title_input: string
               content_input: string
               student_id_input: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              award_points_input?: boolean
+              book_title_input: string
+              content_input: string
+              student_id_input: string
+              verification_reason_input?: string
+              verification_score_input?: number
             }
             Returns: boolean
           }
