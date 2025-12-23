@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.verify-poetry-transcription]
 verify_jwt = false
+
+[functions.verify-book-report]
+verify_jwt = false
