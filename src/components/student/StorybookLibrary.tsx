@@ -1598,9 +1598,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                         </div>
                       )}
                     </>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">{series.subtitle}</p>
-                  )}
+                  ) : null}
                   
                   {series.id === 'poetry' && (
                     <div className="flex flex-wrap gap-2">
