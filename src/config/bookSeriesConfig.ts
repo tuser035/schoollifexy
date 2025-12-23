@@ -97,7 +97,7 @@ export const BOOK_SERIES: BookSeries[] = [
   {
     id: 'recommended',
     title: '추천도서',
-    subtitle: '선생님이 추천하는 도서',
+    subtitle: '입문자를 위한 고전문학 7권을 소개합니다',
     icon: 'BookMarked',
     bookNumberRange: { min: 1, max: 99 },
     theme: {
