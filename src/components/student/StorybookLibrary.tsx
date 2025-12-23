@@ -2289,7 +2289,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               {currentPage === 1 && pages.length > 0 && (
                 <div className="flex">
                   {/* Left - Title and Description */}
-                  <div className={`w-[350px] h-[800px] flex flex-col items-center justify-center p-8 border-r ${
+                  <div className={`w-[455px] h-[1040px] flex flex-col items-center justify-center p-8 border-r ${
                     selectedBook?.category === 'poetry'
                       ? 'bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 border-purple-200'
                       : selectedBook?.category === 'philosophy'
@@ -2324,7 +2324,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   </div>
                   
                   {/* Right - First Page Content */}
-                  <div className={`w-[350px] h-[800px] p-6 overflow-y-auto ${
+                  <div className={`w-[455px] h-[1040px] p-6 overflow-y-auto ${
                     selectedBook?.category === 'poetry' ? 'bg-purple-50/50' 
                     : selectedBook?.category === 'philosophy' ? 'bg-teal-50/30'
                     : 'bg-white'
@@ -2370,7 +2370,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               {currentPage > 1 && currentPageData && (
                 <div className="flex">
                   {/* Left - Image */}
-                  <div className={`w-[350px] h-[800px] flex items-center justify-center p-4 border-r ${
+                  <div className={`w-[455px] h-[1040px] flex items-center justify-center p-4 border-r ${
                     selectedBook?.category === 'poetry'
                       ? 'bg-purple-100 border-purple-200'
                       : 'bg-storybook-emerald-light border-storybook-emerald/20'
@@ -2392,7 +2392,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                   </div>
                   
                   {/* Right - Text */}
-                  <div className={`w-[350px] h-[800px] p-6 overflow-y-auto ${
+                  <div className={`w-[455px] h-[1040px] p-6 overflow-y-auto ${
                     selectedBook?.category === 'poetry' ? 'bg-purple-50/50' : 'bg-white'
                   }`}>
                     {currentPageData.text_content ? (() => {
@@ -2437,65 +2437,126 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
           </div>
 
           {/* Bottom Navigation */}
-          <div className={`flex items-center justify-between px-2 py-2 md:py-1 ${
+          <div className={`flex flex-col items-center px-2 py-2 md:py-3 ${
             selectedBook?.category === 'poetry'
               ? 'bg-gradient-to-t from-purple-100 to-purple-100/80'
               : 'bg-gradient-to-t from-storybook-emerald-light to-storybook-emerald-light/80'
           }`}>
-            {/* Prev Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => changePage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="md:hidden h-10 w-10 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm disabled:opacity-30"
-            >
-              <ChevronLeft className="w-6 h-6 text-storybook-emerald-dark" />
-            </Button>
-            
-            {/* Page Dots */}
-            <div className="flex items-center gap-1.5 md:gap-1 overflow-x-auto px-2 scrollbar-hide">
-              {pages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => changePage(index + 1)}
-                  className={`flex-shrink-0 rounded-full transition-all duration-200 ${
-                    currentPage === index + 1
-                      ? 'bg-storybook-emerald w-4 h-2 md:w-3 md:h-2'
-                      : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50 w-2 h-2'
-                  }`}
-                  aria-label={`${index + 1}페이지로 이동`}
-                />
-              ))}
+            {/* Mobile Navigation Row */}
+            <div className="flex md:hidden items-center justify-between w-full">
+              {/* Prev Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => changePage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="h-10 w-10 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm disabled:opacity-30"
+              >
+                <ChevronLeft className="w-6 h-6 text-storybook-emerald-dark" />
+              </Button>
+              
+              {/* Page Dots */}
+              <div className="flex items-center gap-1.5 overflow-x-auto px-2 scrollbar-hide">
+                {pages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => changePage(index + 1)}
+                    className={`flex-shrink-0 rounded-full transition-all duration-200 ${
+                      currentPage === index + 1
+                        ? 'bg-storybook-emerald w-4 h-2'
+                        : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50 w-2 h-2'
+                    }`}
+                    aria-label={`${index + 1}페이지로 이동`}
+                  />
+                ))}
+              </div>
+              
+              {/* Next Button or Exit Button on last page */}
+              {currentPage === pages.length ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    stopSpeaking();
+                    if (isFullscreen) {
+                      document.exitFullscreen().catch(() => {});
+                    }
+                    closeReader();
+                  }}
+                  className="h-10 w-10 p-0 rounded-full bg-storybook-emerald text-white hover:bg-storybook-emerald-hover shadow-sm"
+                  title="나가기"
+                >
+                  <X className="w-6 h-6" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => changePage(currentPage + 1)}
+                  className="h-10 w-10 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm"
+                >
+                  <ChevronRight className="w-6 h-6 text-storybook-emerald-dark" />
+                </Button>
+              )}
             </div>
             
-            {/* Next Button or Exit Button on last page */}
-            {currentPage === pages.length ? (
+            {/* Desktop Navigation Row - Centered */}
+            <div className="hidden md:flex items-center justify-center gap-6 w-full">
+              {/* Prev Button */}
               <Button
                 variant="ghost"
-                size="sm"
-                onClick={() => {
-                  stopSpeaking();
-                  if (isFullscreen) {
-                    document.exitFullscreen().catch(() => {});
-                  }
-                  closeReader();
-                }}
-                className="md:hidden h-10 w-10 p-0 rounded-full bg-storybook-emerald text-white hover:bg-storybook-emerald-hover shadow-sm"
-                title="나가기"
+                size="lg"
+                onClick={() => changePage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="h-16 w-16 p-0 rounded-full bg-white/90 hover:bg-white shadow-lg disabled:opacity-30"
               >
-                <X className="w-6 h-6" />
+                <ChevronLeft className="w-10 h-10 text-storybook-emerald-dark" />
               </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => changePage(currentPage + 1)}
-                className="md:hidden h-10 w-10 p-0 rounded-full bg-white/80 hover:bg-white shadow-sm"
-              >
-                <ChevronRight className="w-6 h-6 text-storybook-emerald-dark" />
-              </Button>
-            )}
+              
+              {/* Page Dots */}
+              <div className="flex items-center gap-1 overflow-x-auto px-2 scrollbar-hide">
+                {pages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => changePage(index + 1)}
+                    className={`flex-shrink-0 rounded-full transition-all duration-200 ${
+                      currentPage === index + 1
+                        ? 'bg-storybook-emerald w-3 h-2'
+                        : 'bg-storybook-emerald/30 hover:bg-storybook-emerald/50 w-2 h-2'
+                    }`}
+                    aria-label={`${index + 1}페이지로 이동`}
+                  />
+                ))}
+              </div>
+              
+              {/* Next Button or Exit Button on last page */}
+              {currentPage === pages.length ? (
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => {
+                    stopSpeaking();
+                    if (isFullscreen) {
+                      document.exitFullscreen().catch(() => {});
+                    }
+                    closeReader();
+                  }}
+                  className="h-16 w-16 p-0 rounded-full bg-storybook-emerald text-white hover:bg-storybook-emerald-hover shadow-lg"
+                  title="나가기"
+                >
+                  <X className="w-10 h-10" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => changePage(currentPage + 1)}
+                  className="h-16 w-16 p-0 rounded-full bg-white/90 hover:bg-white shadow-lg"
+                >
+                  <ChevronRight className="w-10 h-10 text-storybook-emerald-dark" />
+                </Button>
+              )}
+            </div>
             
             {/* Mobile Review Button */}
             {selectedBook?.is_completed && (
