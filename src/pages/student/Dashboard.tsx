@@ -19,7 +19,7 @@ import Papa from "papaparse";
 import { useRealtimeSync, type TableSubscription } from "@/hooks/use-realtime-sync";
 import MindTalk from "@/components/student/MindTalk";
 import StorybookLibrary from "@/components/student/StorybookLibrary";
-import BookReportForm from "@/components/student/BookReportForm";
+
 import { cn } from "@/lib/utils";
 
 const StudentDashboard = () => {
@@ -735,16 +735,6 @@ const StudentDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* 독후감 */}
-        <div className="mt-4 sm:mt-6">
-          <BookReportForm
-            studentId={user.studentId}
-            studentName={user.name}
-            studentGrade={user.grade || 1}
-            studentClass={user.class || 1}
-            studentNumber={1}
-          />
-        </div>
       </main>
 
       {/* Image Preview Dialog */}
