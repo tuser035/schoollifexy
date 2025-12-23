@@ -143,6 +143,10 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   const [poetryRecordingPoints, setPoetryRecordingPoints] = useState(0);
   const [poetryTranscriptionPoints, setPoetryTranscriptionPoints] = useState(0);
   
+  // 시집별 낭독/필사 기록이 있는 collection_id Set
+  const [collectionsWithRecordings, setCollectionsWithRecordings] = useState<Set<string>>(new Set());
+  const [collectionsWithTranscriptions, setCollectionsWithTranscriptions] = useState<Set<string>>(new Set());
+  
   // Book report points state (독후감 포인트)
   const [bookReportPoints, setBookReportPoints] = useState(0);
   
@@ -680,13 +684,25 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       const { data: recordingsData } = recordingsResult;
       const { data: transcriptionsData } = transcriptionsResult;
 
-      // 낭독 포인트 합계
+      // 낭독 포인트 합계 및 시집별 기록
       const recordingPoints = (recordingsData || []).reduce((sum: number, r: any) => sum + (r.points_awarded || 0), 0);
       setPoetryRecordingPoints(recordingPoints);
+      
+      // 낭독 기록이 있는 시집 ID 수집
+      const recordingCollectionIds = new Set<string>(
+        (recordingsData || []).map((r: any) => r.collection_id)
+      );
+      setCollectionsWithRecordings(recordingCollectionIds);
 
-      // 필사 포인트 합계
+      // 필사 포인트 합계 및 시집별 기록
       const transcriptionPoints = (transcriptionsData || []).reduce((sum: number, t: any) => sum + (t.points_awarded || 0), 0);
       setPoetryTranscriptionPoints(transcriptionPoints);
+      
+      // 필사 기록이 있는 시집 ID 수집
+      const transcriptionCollectionIds = new Set<string>(
+        (transcriptionsData || []).map((t: any) => t.collection_id)
+      );
+      setCollectionsWithTranscriptions(transcriptionCollectionIds);
     } catch (error) {
       console.error('Error loading poetry points:', error);
     }
@@ -1627,6 +1643,8 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           {seriesBooks.map((book, index) => {
+                            const hasRecording = collectionsWithRecordings.has(book.id);
+                            const hasTranscription = collectionsWithTranscriptions.has(book.id);
                             return (
                               <Button
                                 key={book.id}
@@ -1643,6 +1661,14 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                                   {index + 1}
                                 </span>
                                 <span className="text-sm font-medium">{book.title}{book.description ? `_${book.description.replace(' 시인', '')}` : ''}</span>
+                                {/* 낭독 체크 아이콘 */}
+                                {hasRecording && (
+                                  <span className="ml-1 text-purple-600" title="낭독 완료">🎤✓</span>
+                                )}
+                                {/* 필사 체크 아이콘 */}
+                                {hasTranscription && (
+                                  <span className="ml-1 text-pink-600" title="필사 완료">✍️✓</span>
+                                )}
                                 {book.is_completed && (
                                   <Check className="w-4 h-4 ml-1.5 text-green-600" />
                                 )}
