@@ -14,6 +14,7 @@ interface Student {
   studentId: string;
   name: string;
   email: string;
+  nationalityCode?: string; // 국적 코드 추가
 }
 
 interface SendBulkEmailRequest {
@@ -28,6 +29,83 @@ interface SendBulkEmailRequest {
     isZip?: boolean;
     files?: Array<{ url: string; name: string }>;
   };
+}
+
+// 국적 코드에 따른 언어 매핑
+const nationalityToLanguage: Record<string, { name: string; nativeName: string }> = {
+  'ru': { name: 'Russian', nativeName: '러시아어' },
+  'vi': { name: 'Vietnamese', nativeName: '베트남어' },
+  'zh': { name: 'Chinese', nativeName: '중국어' },
+  'ja': { name: 'Japanese', nativeName: '일본어' },
+  'en': { name: 'English', nativeName: '영어' },
+  'th': { name: 'Thai', nativeName: '태국어' },
+  'mn': { name: 'Mongolian', nativeName: '몽골어' },
+  'uz': { name: 'Uzbek', nativeName: '우즈베크어' },
+  'ph': { name: 'Filipino', nativeName: '필리핀어' },
+  'id': { name: 'Indonesian', nativeName: '인도네시아어' },
+  'np': { name: 'Nepali', nativeName: '네팔어' },
+  'bd': { name: 'Bengali', nativeName: '벵골어' },
+  'pk': { name: 'Urdu', nativeName: '우르두어' },
+};
+
+// Gemini를 사용한 번역 함수
+async function translateContent(content: string, targetLanguages: string[]): Promise<Map<string, string>> {
+  const translations = new Map<string, string>();
+  
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    console.error("LOVABLE_API_KEY is not configured");
+    return translations;
+  }
+
+  for (const langCode of targetLanguages) {
+    const langInfo = nationalityToLanguage[langCode];
+    if (!langInfo) continue;
+
+    try {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional translator. Translate the following Korean text to ${langInfo.name}. 
+Keep the formatting (line breaks, paragraphs) intact. 
+Only provide the translation, no explanations or notes.
+Make it natural and easy to understand for native speakers.`
+            },
+            {
+              role: "user",
+              content: content
+            }
+          ],
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(`Translation to ${langInfo.name} failed:`, response.status);
+        continue;
+      }
+
+      const data = await response.json();
+      const translatedText = data.choices?.[0]?.message?.content?.trim();
+      
+      if (translatedText) {
+        translations.set(langCode, translatedText);
+        console.log(`Successfully translated to ${langInfo.name}`);
+      }
+    } catch (error) {
+      console.error(`Error translating to ${langInfo.name}:`, error);
+    }
+  }
+
+  return translations;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -87,6 +165,37 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending emails to ${students.length} students`);
 
+    // 학생들의 국적 코드 조회 (교사가 아닌 경우에만)
+    let studentNationalityCodes: Map<string, string> = new Map();
+    if (recipientType !== "teacher") {
+      const studentIds = students.map(s => s.studentId).filter(Boolean);
+      if (studentIds.length > 0) {
+        const { data: studentsData } = await supabase
+          .from("students")
+          .select("student_id, nationality_code")
+          .in("student_id", studentIds);
+        
+        if (studentsData) {
+          for (const s of studentsData) {
+            if (s.nationality_code && s.nationality_code !== 'kr') {
+              studentNationalityCodes.set(s.student_id, s.nationality_code);
+            }
+          }
+        }
+      }
+    }
+
+    // 외국인 학생이 있는 경우 필요한 언어들 수집
+    const uniqueLanguages = [...new Set(studentNationalityCodes.values())];
+    console.log("Foreign languages needed:", uniqueLanguages);
+
+    // 번역 수행 (외국인 학생이 있는 경우만)
+    let translations: Map<string, string> = new Map();
+    if (uniqueLanguages.length > 0) {
+      console.log("Translating content to:", uniqueLanguages);
+      translations = await translateContent(body, uniqueLanguages);
+    }
+
     // 이메일 발송
     const sendResults = [];
     const emailHistoryRecords = [];
@@ -101,6 +210,26 @@ const handler = async (req: Request): Promise<Response> => {
         // Rate limit 방지를 위한 delay (500ms)
         if (sendResults.length > 0) {
           await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        // 해당 학생의 국적 코드 확인
+        const studentNationalityCode = studentNationalityCodes.get(student.studentId);
+        
+        // 번역된 내용 추가
+        let translatedSection = '';
+        if (studentNationalityCode && translations.has(studentNationalityCode)) {
+          const langInfo = nationalityToLanguage[studentNationalityCode];
+          const translatedText = translations.get(studentNationalityCode);
+          translatedSection = `
+            <div style="margin-top: 30px; padding: 20px; background-color: #f0f7ff; border-radius: 8px; border-left: 4px solid #007bff;">
+              <h3 style="margin: 0 0 15px 0; font-size: 14px; color: #007bff;">
+                🌍 ${langInfo?.nativeName} 번역 (${langInfo?.name} Translation)
+              </h3>
+              <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6; color: #333;">
+                ${translatedText}
+              </div>
+            </div>
+          `;
         }
 
         // 첨부파일 링크 HTML 생성
@@ -147,6 +276,8 @@ const handler = async (req: Request): Promise<Response> => {
               <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${body}</div>
             </div>
             
+            ${translatedSection}
+            
             ${attachmentHtml}
             
             <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
@@ -177,13 +308,14 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        console.log(`Email sent to ${student.name} via Resend, ID: ${emailData?.id}`);
+        console.log(`Email sent to ${student.name} via Resend, ID: ${emailData?.id}${studentNationalityCode ? ` (with ${studentNationalityCode} translation)` : ''}`);
 
         sendResults.push({
           student: student.name,
           email: student.email,
           success: true,
           messageId: emailData?.id || "resend-api",
+          translated: !!studentNationalityCode,
         });
 
         // 첨부파일 URL 배열 생성
@@ -233,11 +365,14 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    const translatedCount = sendResults.filter(r => r.success && r.translated).length;
+
     return new Response(
       JSON.stringify({
         success: true,
         totalSent: sendResults.filter((r) => r.success).length,
         totalFailed: sendResults.filter((r) => !r.success).length,
+        translatedCount: translatedCount,
         results: sendResults,
       }),
       {
