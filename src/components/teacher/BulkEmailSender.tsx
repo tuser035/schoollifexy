@@ -255,20 +255,29 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
           setRecipientsWithoutEmail(withoutEmail.map((s: any) => s.name));
           setValidEmailCount(withEmail.length);
           
-          // 외국인 학생 언어 수집 - 별도 조회
-          const { data: nationalityData } = await supabase
-            .from("students")
-            .select("student_id, nationality_code")
-            .in("student_id", group.student_ids);
+          // 외국인 학생 언어 수집 - RPC 함수 사용
+          const { data: nationalityData, error: nationalityError } = await supabase.rpc(
+            "get_student_nationality_codes",
+            {
+              user_id_input: user.id,
+              student_ids_input: group.student_ids
+            }
+          );
           
-          if (nationalityData) {
+          if (nationalityError) {
+            console.error("nationality 조회 오류:", nationalityError);
+          }
+          
+          if (nationalityData && nationalityData.length > 0) {
             const foreignLangs = new Set<string>();
             for (const s of nationalityData) {
               if (s.nationality_code && s.nationality_code !== 'kr' && nationalityToLanguage[s.nationality_code]) {
                 foreignLangs.add(s.nationality_code);
               }
             }
-            setForeignStudentLanguages([...foreignLangs]);
+            const langsArray = [...foreignLangs];
+            console.log("외국인 언어 배열:", langsArray);
+            setForeignStudentLanguages(langsArray);
           }
         }
       } else {
