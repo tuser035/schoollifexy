@@ -540,7 +540,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
         
         // PDF 페이지를 이미지로 변환하여 OCR 수행
         let ocrText = "";
-        const scale = 1.5; // 이미지 크기를 줄여서 전송
+        const scale = 2.0; // 작은 글씨도 인식할 수 있도록 해상도 증가
         
         for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) { // 최대 10페이지까지만 처리
           toast.info(`OCR 진행 중... (${i}/${Math.min(pdf.numPages, 10)}페이지)`);
@@ -592,8 +592,8 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
             continue;
           }
           
-          // Canvas를 JPEG로 변환하여 크기 줄이기
-          const imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+          // Canvas를 JPEG로 변환 (품질 높임)
+          const imageBase64 = canvas.toDataURL('image/jpeg', 0.92);
           
           console.log(`페이지 ${i} 이미지 생성 완료 - base64 길이: ${imageBase64.length}`);
           
