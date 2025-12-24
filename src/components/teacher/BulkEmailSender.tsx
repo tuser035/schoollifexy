@@ -483,15 +483,15 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     setPdfFileName(file.name);
     
     try {
-      // PDF.js worker 비활성화 (legacy 빌드 사용시 필요없음)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+      // PDF.js worker 설정 - legacy worker 사용
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+        import.meta.url
+      ).toString();
       
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ 
-        data: arrayBuffer,
-        useWorkerFetch: false,
-        isEvalSupported: false,
-        useSystemFonts: true
+        data: arrayBuffer
       }).promise;
       
       let fullText = "";
