@@ -496,16 +496,37 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
       
       let fullText = "";
       
+      console.log(`PDF 로드 완료: ${pdf.numPages}페이지`);
+      
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(" ");
+        
+        console.log(`페이지 ${i} 텍스트 아이템 수:`, textContent.items.length);
+        
+        // 텍스트 아이템들을 줄바꿈 고려하여 조합
+        let pageText = "";
+        let lastY: number | null = null;
+        
+        for (const item of textContent.items) {
+          const textItem = item as any;
+          if (textItem.str) {
+            // Y 좌표가 변경되면 줄바꿈 추가
+            if (lastY !== null && Math.abs(textItem.transform[5] - lastY) > 5) {
+              pageText += "\n";
+            }
+            pageText += textItem.str;
+            lastY = textItem.transform[5];
+          }
+        }
+        
         fullText += pageText + "\n\n";
       }
       
       const extractedText = fullText.trim();
+      
+      console.log("추출된 텍스트 길이:", extractedText.length);
+      console.log("추출된 텍스트 미리보기:", extractedText.substring(0, 200));
       
       if (!extractedText) {
         toast.error("PDF에서 텍스트를 추출할 수 없습니다. 이미지 기반 PDF일 수 있습니다.");
