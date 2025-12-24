@@ -540,7 +540,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
         
         // PDF 페이지를 이미지로 변환하여 OCR 수행
         let ocrText = "";
-        const scale = 4.0; // 고해상도를 위해 스케일 대폭 증가
+        const scale = 3.0; // 적절한 해상도
         
         for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) { // 최대 10페이지까지만 처리
           toast.info(`OCR 진행 중... (${i}/${Math.min(pdf.numPages, 10)}페이지)`);
@@ -548,47 +548,59 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
           const page = await pdf.getPage(i);
           const viewport = page.getViewport({ scale });
           
+          console.log(`페이지 ${i} viewport:`, viewport.width, 'x', viewport.height);
+          
           // Canvas에 페이지 렌더링
           const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d', { 
-            alpha: false,
-            willReadFrequently: true 
-          });
+          canvas.width = Math.floor(viewport.width);
+          canvas.height = Math.floor(viewport.height);
+          
+          const context = canvas.getContext('2d');
           if (!context) {
             throw new Error('Canvas context를 생성할 수 없습니다');
           }
           
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          
-          // 배경을 흰색으로 설정 (투명 배경 방지)
+          // 배경을 흰색으로 설정
           context.fillStyle = 'white';
           context.fillRect(0, 0, canvas.width, canvas.height);
           
-          await page.render({
+          // PDF 페이지 렌더링
+          const renderContext = {
             canvasContext: context,
             viewport: viewport,
-            canvas: canvas,
-            background: 'white'
-          } as any).promise;
+            canvas: canvas
+          } as any;
           
-          // 이미지 대비 향상을 위한 전처리
-          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
+          await page.render(renderContext).promise;
           
-          // 대비 향상 (contrast enhancement)
-          const factor = 1.5; // 대비 강도
-          for (let j = 0; j < data.length; j += 4) {
-            data[j] = Math.min(255, Math.max(0, factor * (data[j] - 128) + 128));     // R
-            data[j + 1] = Math.min(255, Math.max(0, factor * (data[j + 1] - 128) + 128)); // G
-            data[j + 2] = Math.min(255, Math.max(0, factor * (data[j + 2] - 128) + 128)); // B
+          console.log(`페이지 ${i} 렌더링 완료 - 캔버스: ${canvas.width}x${canvas.height}`);
+          
+          // 캔버스가 비어있는지 확인 (모든 픽셀이 흰색인지)
+          const testData = context.getImageData(0, 0, Math.min(100, canvas.width), Math.min(100, canvas.height));
+          let hasContent = false;
+          for (let j = 0; j < testData.data.length; j += 4) {
+            // 완전히 흰색(255,255,255)이 아닌 픽셀이 있는지 확인
+            if (testData.data[j] < 250 || testData.data[j+1] < 250 || testData.data[j+2] < 250) {
+              hasContent = true;
+              break;
+            }
           }
-          context.putImageData(imageData, 0, 0);
+          console.log(`페이지 ${i} 콘텐츠 존재:`, hasContent);
           
-          // Canvas를 고품질 JPEG로 변환
-          const imageBase64 = canvas.toDataURL('image/jpeg', 0.92);
+          if (!hasContent) {
+            console.log(`페이지 ${i}가 비어있습니다. 스킵합니다.`);
+            continue;
+          }
           
-          console.log(`페이지 ${i} 이미지 생성 완료 - 크기: ${imageBase64.length}, 캔버스: ${canvas.width}x${canvas.height}`);
+          // Canvas를 PNG로 변환 (JPEG보다 품질 좋음)
+          const imageBase64 = canvas.toDataURL('image/png');
+          
+          console.log(`페이지 ${i} 이미지 생성 완료 - base64 길이: ${imageBase64.length}`);
+          
+          // 디버깅: 첫 페이지 이미지를 콘솔에 출력
+          if (i === 1) {
+            console.log('첫 페이지 이미지 미리보기 (개발자 도구에서 확인):', imageBase64.substring(0, 100) + '...');
+          }
           
           // OCR Edge Function 호출
           const { data: ocrData, error: ocrError } = await supabase.functions.invoke('ocr-pdf', {
