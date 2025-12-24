@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
@@ -2919,51 +2919,58 @@ const DataInquiry = () => {
               </Button>
               {selectedTable === "students" && (
                 <>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[200px] justify-start">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="justify-start">
                         <Users className="h-4 w-4 mr-2" />
                         저장된 그룹 불러오기
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-2 bg-background z-50" align="start" sideOffset={5}>
-                      {studentGroups.length === 0 ? (
-                        <div className="p-2 text-sm text-muted-foreground text-center">
-                          저장된 그룹이 없습니다
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          {studentGroups.map((group) => (
-                            <div
-                              key={group.id}
-                              className="flex items-center justify-between p-2 hover:bg-muted rounded-md group"
-                            >
-                              <button
-                                onClick={() => {
-                                  handleLoadGroup(group.id);
-                                }}
-                                className="flex-1 text-left text-sm"
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>저장된 그룹 불러오기</DialogTitle>
+                      </DialogHeader>
+                      <div className="max-h-[400px] overflow-y-auto">
+                        {studentGroups.length === 0 ? (
+                          <div className="p-4 text-sm text-muted-foreground text-center">
+                            저장된 그룹이 없습니다
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            {studentGroups.map((group) => (
+                              <div
+                                key={group.id}
+                                className="flex items-center justify-between p-3 hover:bg-muted rounded-md group border"
                               >
-                                {group.group_name} ({group.student_ids.length}명)
-                              </button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenDeleteGroup(group.id, group.group_name);
-                                }}
-                                className="h-7 w-7 p-0 hover:bg-destructive/10 transition-colors"
-                                title="그룹 삭제"
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
+                                <DialogClose asChild>
+                                  <button
+                                    onClick={() => {
+                                      handleLoadGroup(group.id);
+                                    }}
+                                    className="flex-1 text-left text-sm"
+                                  >
+                                    {group.group_name} ({group.student_ids.length}명)
+                                  </button>
+                                </DialogClose>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenDeleteGroup(group.id, group.group_name);
+                                  }}
+                                  className="h-7 w-7 p-0 hover:bg-destructive/10 transition-colors"
+                                  title="그룹 삭제"
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </>
               )}
               {selectedTable === "students" && selectedStudents.size > 0 && (
