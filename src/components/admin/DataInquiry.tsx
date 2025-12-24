@@ -11,7 +11,25 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, ClipboardEdit, FileUp, Camera, X, Send, Trash2, Users, FileDown, Loader2 } from "lucide-react";
+import { Download, ClipboardEdit, FileUp, Camera, X, Send, Trash2, Users, FileDown, Loader2, Languages, Printer } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+// 국적 코드에 따른 언어 매핑
+const nationalityToLanguage: Record<string, { name: string; nativeName: string }> = {
+  'ru': { name: 'Russian', nativeName: '러시아어' },
+  'vi': { name: 'Vietnamese', nativeName: '베트남어' },
+  'zh': { name: 'Chinese', nativeName: '중국어' },
+  'ja': { name: 'Japanese', nativeName: '일본어' },
+  'en': { name: 'English', nativeName: '영어' },
+  'th': { name: 'Thai', nativeName: '태국어' },
+  'mn': { name: 'Mongolian', nativeName: '몽골어' },
+  'uz': { name: 'Uzbek', nativeName: '우즈베크어' },
+  'ph': { name: 'Filipino', nativeName: '필리핀어' },
+  'id': { name: 'Indonesian', nativeName: '인도네시아어' },
+  'np': { name: 'Nepali', nativeName: '네팔어' },
+  'bd': { name: 'Bengali', nativeName: '벵골어' },
+  'pk': { name: 'Urdu', nativeName: '우르두어' },
+};
 import { Checkbox } from "@/components/ui/checkbox";
 import JSZip from "jszip";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
@@ -73,6 +91,12 @@ const DataInquiry = () => {
   const [emailSendResults, setEmailSendResults] = useState<any[]>([]);
   const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
   const [isSavingGroup, setIsSavingGroup] = useState(false);
+  
+  // 번역 관련 상태
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showTranslationPreview, setShowTranslationPreview] = useState(false);
+  const [bulkEmailTranslations, setBulkEmailTranslations] = useState<Map<string, string>>(new Map());
+  const [foreignStudentLanguages, setForeignStudentLanguages] = useState<string[]>([]);
   const [isDeleteGroupDialogOpen, setIsDeleteGroupDialogOpen] = useState(false);
   const [deletingGroup, setDeletingGroup] = useState<{ id: string; name: string } | null>(null);
   const [isTeacherEditDialogOpen, setIsTeacherEditDialogOpen] = useState(false);
@@ -419,10 +443,153 @@ const DataInquiry = () => {
     // 템플릿 로드
     await loadTemplates();
     
+    // 선택된 학생들의 외국인 언어 확인
+    const studentIds = Array.from(selectedStudents);
+    const { data: nationalityData } = await supabase
+      .from("students")
+      .select("student_id, nationality_code")
+      .in("student_id", studentIds);
+    
+    if (nationalityData) {
+      const foreignLangs = new Set<string>();
+      for (const s of nationalityData) {
+        if (s.nationality_code && s.nationality_code !== 'kr' && nationalityToLanguage[s.nationality_code]) {
+          foreignLangs.add(s.nationality_code);
+        }
+      }
+      setForeignStudentLanguages([...foreignLangs]);
+    } else {
+      setForeignStudentLanguages([]);
+    }
+    
+    setBulkEmailTranslations(new Map());
     setSelectedTemplateId("");
     setBulkEmailSubject("학부모님께 안내 드립니다");
     setBulkEmailBody("안녕하세요 학부모님,\n\n내용을 입력해주세요.\n\n감사합니다.");
     setIsBulkEmailDialogOpen(true);
+  };
+
+  // 번역 미리보기 함수
+  const handleBulkTranslatePreview = async () => {
+    if (!bulkEmailBody.trim()) {
+      toast.error("번역할 내용을 입력하세요");
+      return;
+    }
+
+    if (foreignStudentLanguages.length === 0) {
+      toast.error("선택된 학생 중 외국인 학생이 없습니다");
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const newTranslations = new Map<string, string>();
+      
+      for (const langCode of foreignStudentLanguages) {
+        const langInfo = nationalityToLanguage[langCode];
+        if (!langInfo) continue;
+
+        const { data, error } = await supabase.functions.invoke("translate-content", {
+          body: {
+            content: bulkEmailBody,
+            targetLanguage: langCode,
+          },
+        });
+
+        if (error) {
+          console.error(`Translation to ${langInfo.name} failed:`, error);
+          continue;
+        }
+
+        if (data?.translatedText) {
+          newTranslations.set(langCode, data.translatedText);
+        }
+      }
+
+      setBulkEmailTranslations(newTranslations);
+      setShowTranslationPreview(true);
+      toast.success(`${newTranslations.size}개 언어로 번역 완료`);
+    } catch (error: any) {
+      console.error("Translation error:", error);
+      toast.error("번역 중 오류가 발생했습니다");
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  // 출력 함수
+  const handleBulkPrint = () => {
+    if (!bulkEmailSubject.trim() || !bulkEmailBody.trim()) {
+      toast.error("제목과 내용을 입력하세요");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error("팝업이 차단되었습니다. 팝업 차단을 해제해주세요.");
+      return;
+    }
+
+    let translationHtml = '';
+    bulkEmailTranslations.forEach((translatedText, langCode) => {
+      const langInfo = nationalityToLanguage[langCode];
+      if (langInfo) {
+        translationHtml += `
+          <div style="margin-top: 30px; padding: 20px; background-color: #f0f7ff; border-radius: 8px; border-left: 4px solid #007bff;">
+            <h3 style="margin: 0 0 15px 0; font-size: 14px; color: #007bff;">
+              🌍 ${langInfo.nativeName} 번역 (${langInfo.name} Translation)
+            </h3>
+            <div style="white-space: pre-wrap; font-family: inherit; line-height: 1.8; color: #333;">
+              ${translatedText}
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${bulkEmailSubject}</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Malgun Gothic', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.8;
+          }
+          h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+          }
+          .content {
+            white-space: pre-wrap;
+            font-size: 14px;
+            color: #333;
+          }
+          @media print {
+            body { padding: 20px; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>${bulkEmailSubject}</h1>
+        <div class="content">${bulkEmailBody}</div>
+        ${translationHtml}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   };
 
   // 일괄 발송용 템플릿 선택
@@ -3901,19 +4068,96 @@ const DataInquiry = () => {
               )}
             </div>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsBulkEmailDialogOpen(false)}
-              disabled={isSendingBulkEmail}
-            >
-              취소
+          
+          {/* 외국인 학생 정보 */}
+          {foreignStudentLanguages.length > 0 && (
+            <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 p-2 rounded-md">
+              🌍 외국인 학생 포함: {foreignStudentLanguages.map(code => nationalityToLanguage[code]?.nativeName).filter(Boolean).join(", ")}
+            </div>
+          )}
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={handleBulkTranslatePreview}
+                disabled={isTranslating || !bulkEmailBody.trim() || foreignStudentLanguages.length === 0}
+                className="flex-1 sm:flex-none border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400"
+              >
+                {isTranslating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Languages className="w-4 h-4 mr-2" />
+                )}
+                번역
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleBulkPrint}
+                disabled={!bulkEmailSubject.trim() || !bulkEmailBody.trim()}
+                className="flex-1 sm:flex-none border-green-300 text-green-600 hover:bg-green-50 dark:border-green-700 dark:text-green-400"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                출력
+              </Button>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => setIsBulkEmailDialogOpen(false)}
+                disabled={isSendingBulkEmail}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleSendBulkEmail}
+                disabled={isSendingBulkEmail || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}
+              >
+                {isSendingBulkEmail ? "발송 중..." : "일괄 발송"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 번역 미리보기 다이얼로그 */}
+      <Dialog open={showTranslationPreview} onOpenChange={setShowTranslationPreview}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Languages className="w-5 h-5 text-blue-600" />
+              번역 미리보기
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <div className="space-y-4 pr-4">
+              {/* 원본 */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h4 className="text-sm font-medium mb-2 text-muted-foreground">📝 원본 (한국어)</h4>
+                <div className="whitespace-pre-wrap text-sm">{bulkEmailBody}</div>
+              </div>
+              
+              {/* 번역 결과 */}
+              {Array.from(bulkEmailTranslations.entries()).map(([langCode, translatedText]) => {
+                const langInfo = nationalityToLanguage[langCode];
+                return (
+                  <div key={langCode} className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border-l-4 border-blue-500">
+                    <h4 className="text-sm font-medium mb-2 text-blue-700 dark:text-blue-300">
+                      🌍 {langInfo?.nativeName} ({langInfo?.name})
+                    </h4>
+                    <div className="whitespace-pre-wrap text-sm">{translatedText}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+          <DialogFooter className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setShowTranslationPreview(false)}>
+              닫기
             </Button>
-            <Button
-              onClick={handleSendBulkEmail}
-              disabled={isSendingBulkEmail || !bulkEmailSubject.trim() || !bulkEmailBody.trim()}
-            >
-              {isSendingBulkEmail ? "발송 중..." : "일괄 발송"}
+            <Button onClick={handleBulkPrint} className="bg-green-600 hover:bg-green-700">
+              <Printer className="w-4 h-4 mr-2" />
+              출력하기
             </Button>
           </DialogFooter>
         </DialogContent>
