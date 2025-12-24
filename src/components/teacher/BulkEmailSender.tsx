@@ -6,14 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Mail, Paperclip, X, AlertTriangle, GraduationCap, Users, Loader2, Languages, Printer } from "lucide-react";
+import { Send, Mail, Paperclip, X, AlertTriangle, GraduationCap, Users, Loader2, Languages, Printer, FileText, Save } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
+import * as pdfjsLib from "pdfjs-dist";
 
 // 국적 코드에 따른 언어 매핑
 const nationalityToLanguage: Record<string, { name: string; nativeName: string }> = {
@@ -84,12 +85,19 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [uploadingFileName, setUploadingFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   
   // 번역 관련 상태
   const [isTranslating, setIsTranslating] = useState(false);
   const [showTranslationPreview, setShowTranslationPreview] = useState(false);
   const [translations, setTranslations] = useState<Map<string, string>>(new Map());
   const [foreignStudentLanguages, setForeignStudentLanguages] = useState<string[]>([]);
+  
+  // PDF 관련 상태
+  const [isExtractingPdf, setIsExtractingPdf] = useState(false);
+  const [pdfFileName, setPdfFileName] = useState<string>("");
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState("");
 
   const authUser = localStorage.getItem("auth_user");
   const user = authUser ? JSON.parse(authUser) : null;
@@ -457,6 +465,103 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+
+  // PDF 파일 선택 및 텍스트 추출 핸들러
+  const handlePdfSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.type !== "application/pdf") {
+      toast.error("PDF 파일만 선택할 수 있습니다");
+      return;
+    }
+    
+    setIsExtractingPdf(true);
+    setPdfFileName(file.name);
+    
+    try {
+      // PDF.js worker 설정
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      let fullText = "";
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        fullText += pageText + "\n\n";
+      }
+      
+      const extractedText = fullText.trim();
+      
+      if (!extractedText) {
+        toast.error("PDF에서 텍스트를 추출할 수 없습니다. 이미지 기반 PDF일 수 있습니다.");
+        return;
+      }
+      
+      // 추출된 텍스트를 본문에 설정
+      setBody(extractedText);
+      
+      // 제목이 비어있으면 파일명을 제목으로 설정
+      if (!subject.trim()) {
+        const titleFromFileName = file.name.replace(/\.pdf$/i, "");
+        setSubject(titleFromFileName);
+      }
+      
+      toast.success(`PDF 텍스트 추출 완료 (${pdf.numPages}페이지)`);
+    } catch (error: any) {
+      console.error("PDF 추출 오류:", error);
+      toast.error("PDF 텍스트 추출 중 오류가 발생했습니다");
+    } finally {
+      setIsExtractingPdf(false);
+      if (pdfInputRef.current) {
+        pdfInputRef.current.value = "";
+      }
+    }
+  };
+
+  // 템플릿으로 저장 함수
+  const handleSaveAsTemplate = async () => {
+    if (!newTemplateName.trim()) {
+      toast.error("템플릿 이름을 입력하세요");
+      return;
+    }
+    
+    if (!subject.trim() || !body.trim()) {
+      toast.error("제목과 내용을 입력하세요");
+      return;
+    }
+    
+    try {
+      if (!user) return;
+      
+      const { error } = await supabase.rpc("admin_insert_email_template_bulk", {
+        admin_id_input: user.id,
+        title_input: newTemplateName.trim(),
+        subject_input: subject,
+        body_input: body,
+        template_type_input: "bulk",
+      });
+      
+      if (error) throw error;
+      
+      toast.success(`템플릿 "${newTemplateName}" 저장 완료`);
+      setShowSaveTemplateDialog(false);
+      setNewTemplateName("");
+      
+      // 템플릿 목록 새로고침
+      await loadTemplates();
+    } catch (error: any) {
+      console.error("템플릿 저장 오류:", error);
+      toast.error("템플릿 저장 실패: " + error.message);
     }
   };
 
@@ -871,8 +976,24 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
             </div>
           )}
           
-          {/* 첫 번째 행: 파일첨부, 번역, 출력 */}
+          {/* PDF 추출 중 표시 */}
+          {isExtractingPdf && (
+            <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950/30 rounded-md text-sm text-amber-700 dark:text-amber-300">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              PDF 텍스트 추출 중... ({pdfFileName})
+            </div>
+          )}
+          
+          {/* 첫 번째 행: PDF 불러오기, 파일첨부, 템플릿 저장 */}
           <div className="flex gap-2">
+            <Input
+              ref={pdfInputRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={handlePdfSelect}
+              disabled={isExtractingPdf}
+            />
             <Input
               ref={fileInputRef}
               type="file"
@@ -884,13 +1005,41 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
             <Button
               type="button"
               variant="outline"
+              onClick={() => pdfInputRef.current?.click()}
+              disabled={isSending || isExtractingPdf}
+              className="flex-1 h-10 text-sm font-medium border-amber-300 text-amber-600 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+            >
+              {isExtractingPdf ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4 mr-1" />
+              )}
+              PDF
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={isSending || isUploading}
               className="flex-1 h-10 text-sm font-medium"
             >
               <Paperclip className="w-4 h-4 mr-1" />
-              파일첨부
+              첨부
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowSaveTemplateDialog(true)}
+              disabled={!subject.trim() || !body.trim()}
+              className="flex-1 h-10 text-sm font-medium border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-950/30"
+            >
+              <Save className="w-4 h-4 mr-1" />
+              저장
+            </Button>
+          </div>
+          
+          {/* 두 번째 행: 번역, 출력 */}
+          <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
@@ -917,7 +1066,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
             </Button>
           </div>
           
-          {/* 두 번째 행: 일괄 발송 */}
+          {/* 세 번째 행: 일괄 발송 */}
           <Button
             type="button"
             onClick={handleSend}
@@ -970,6 +1119,46 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
                 출력하기
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* 템플릿 저장 다이얼로그 */}
+        <Dialog open={showSaveTemplateDialog} onOpenChange={setShowSaveTemplateDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Save className="w-5 h-5 text-purple-600" />
+                템플릿으로 저장
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-sm">템플릿 이름</Label>
+                <Input
+                  placeholder="템플릿 이름을 입력하세요"
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p><strong>제목:</strong> {subject}</p>
+                <p><strong>내용 미리보기:</strong> {body.substring(0, 100)}{body.length > 100 ? "..." : ""}</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowSaveTemplateDialog(false)}>
+                취소
+              </Button>
+              <Button 
+                onClick={handleSaveAsTemplate}
+                disabled={!newTemplateName.trim()}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                저장
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </CardContent>
