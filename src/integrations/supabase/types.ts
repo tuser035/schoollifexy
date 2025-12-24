@@ -2262,6 +2262,13 @@ export type Database = {
           student_name: string
         }[]
       }
+      get_student_nationality_codes: {
+        Args: { student_ids_input: string[]; user_id_input: string }
+        Returns: {
+          nationality_code: string
+          student_id: string
+        }[]
+      }
       get_system_setting: {
         Args: { setting_key_input: string }
         Returns: string
