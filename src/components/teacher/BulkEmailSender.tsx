@@ -495,14 +495,20 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
       }).promise;
       
       let fullText = "";
+      let hasTextContent = false;
       
       console.log(`PDF 로드 완료: ${pdf.numPages}페이지`);
       
+      // 먼저 텍스트 기반 PDF인지 확인
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         
         console.log(`페이지 ${i} 텍스트 아이템 수:`, textContent.items.length);
+        
+        if (textContent.items.length > 0) {
+          hasTextContent = true;
+        }
         
         // 텍스트 아이템들을 줄바꿈 고려하여 조합
         let pageText = "";
@@ -528,8 +534,69 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
       console.log("추출된 텍스트 길이:", extractedText.length);
       console.log("추출된 텍스트 미리보기:", extractedText.substring(0, 200));
       
-      if (!extractedText) {
-        toast.error("PDF에서 텍스트를 추출할 수 없습니다. 이미지 기반 PDF일 수 있습니다.");
+      // 텍스트가 없으면 OCR 시도
+      if (!extractedText || !hasTextContent) {
+        toast.info("이미지 기반 PDF입니다. OCR을 시작합니다...");
+        
+        // PDF 페이지를 이미지로 변환하여 OCR 수행
+        let ocrText = "";
+        const scale = 2.0; // 해상도 향상을 위해 스케일 증가
+        
+        for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) { // 최대 10페이지까지만 처리
+          toast.info(`OCR 진행 중... (${i}/${Math.min(pdf.numPages, 10)}페이지)`);
+          
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale });
+          
+          // Canvas에 페이지 렌더링
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          if (!context) {
+            throw new Error('Canvas context를 생성할 수 없습니다');
+          }
+          
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          
+          await page.render({
+            canvasContext: context,
+            viewport: viewport,
+            canvas: canvas
+          } as any).promise;
+          
+          // Canvas를 base64 이미지로 변환
+          const imageBase64 = canvas.toDataURL('image/png');
+          
+          // OCR Edge Function 호출
+          const { data: ocrData, error: ocrError } = await supabase.functions.invoke('ocr-pdf', {
+            body: { imageBase64 }
+          });
+          
+          if (ocrError) {
+            console.error(`페이지 ${i} OCR 오류:`, ocrError);
+            continue;
+          }
+          
+          if (ocrData?.text && ocrData.text !== '텍스트 없음') {
+            ocrText += ocrData.text + "\n\n";
+          }
+        }
+        
+        if (!ocrText.trim()) {
+          toast.error("PDF에서 텍스트를 추출할 수 없습니다.");
+          return;
+        }
+        
+        // OCR로 추출된 텍스트를 본문에 설정
+        setBody(ocrText.trim());
+        
+        // 제목이 비어있으면 파일명을 제목으로 설정
+        if (!subject.trim()) {
+          const titleFromFileName = file.name.replace(/\.pdf$/i, "");
+          setSubject(titleFromFileName);
+        }
+        
+        toast.success(`OCR 텍스트 추출 완료 (${Math.min(pdf.numPages, 10)}페이지)`);
         return;
       }
       

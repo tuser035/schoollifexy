@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.send-bulk-email]
 verify_jwt = false
+
+[functions.ocr-pdf]
+verify_jwt = false
