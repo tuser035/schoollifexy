@@ -447,11 +447,15 @@ const DataInquiry = () => {
     const studentIds = Array.from(selectedStudents);
     const userId = sessionStorage.getItem("admin_id") || sessionStorage.getItem("teacher_id") || "";
     
+    console.log("RPC 호출 - userId:", userId, "studentIds:", studentIds);
+    
     const { data: nationalityData, error: nationalityError } = await supabase
       .rpc("get_student_nationality_codes", {
         user_id_input: userId,
         student_ids_input: studentIds
       });
+    
+    console.log("RPC 결과:", nationalityData, nationalityError);
     
     if (nationalityError) {
       console.error("nationality 조회 오류:", nationalityError);
@@ -460,11 +464,14 @@ const DataInquiry = () => {
     if (nationalityData && nationalityData.length > 0) {
       const foreignLangs = new Set<string>();
       for (const s of nationalityData) {
+        console.log("학생 nationality:", s.student_id, s.nationality_code);
         if (s.nationality_code && s.nationality_code !== 'kr' && nationalityToLanguage[s.nationality_code]) {
           foreignLangs.add(s.nationality_code);
         }
       }
-      setForeignStudentLanguages([...foreignLangs]);
+      const langsArray = [...foreignLangs];
+      console.log("외국인 언어 배열:", langsArray);
+      setForeignStudentLanguages(langsArray);
     } else {
       setForeignStudentLanguages([]);
     }
