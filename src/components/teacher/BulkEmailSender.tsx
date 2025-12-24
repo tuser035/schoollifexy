@@ -483,8 +483,11 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     setPdfFileName(file.name);
     
     try {
-      // PDF.js worker 설정 - unpkg CDN 사용
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+      // PDF.js worker 설정 - import.meta.url 사용
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/build/pdf.worker.min.mjs",
+        import.meta.url
+      ).toString();
       
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
