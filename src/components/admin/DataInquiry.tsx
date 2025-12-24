@@ -2926,7 +2926,7 @@ const DataInquiry = () => {
                         저장된 그룹 불러오기
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-2 bg-background" align="start">
+                    <PopoverContent className="w-[300px] p-2 bg-background z-50" align="start" sideOffset={5}>
                       {studentGroups.length === 0 ? (
                         <div className="p-2 text-sm text-muted-foreground text-center">
                           저장된 그룹이 없습니다
