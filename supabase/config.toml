@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.verify-book-report]
 verify_jwt = false
+
+[functions.translate-content]
+verify_jwt = false
+
+[functions.send-bulk-email]
+verify_jwt = false
