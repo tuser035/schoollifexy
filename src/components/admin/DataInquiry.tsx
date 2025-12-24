@@ -443,30 +443,29 @@ const DataInquiry = () => {
     // 템플릿 로드
     await loadTemplates();
     
-    // 선택된 학생들의 외국인 언어 확인
+    // 선택된 학생들의 외국인 언어 확인 (RPC 함수 사용)
     const studentIds = Array.from(selectedStudents);
-    console.log("선택된 학생 ID 목록:", studentIds);
+    const userId = sessionStorage.getItem("admin_id") || sessionStorage.getItem("teacher_id") || "";
     
     const { data: nationalityData, error: nationalityError } = await supabase
-      .from("students")
-      .select("student_id, nationality_code")
-      .in("student_id", studentIds);
+      .rpc("get_student_nationality_codes", {
+        user_id_input: userId,
+        student_ids_input: studentIds
+      });
     
-    console.log("nationality 조회 결과:", nationalityData, nationalityError);
+    if (nationalityError) {
+      console.error("nationality 조회 오류:", nationalityError);
+    }
     
     if (nationalityData && nationalityData.length > 0) {
       const foreignLangs = new Set<string>();
       for (const s of nationalityData) {
-        console.log(`학생 ${s.student_id}: nationality_code = ${s.nationality_code}`);
         if (s.nationality_code && s.nationality_code !== 'kr' && nationalityToLanguage[s.nationality_code]) {
           foreignLangs.add(s.nationality_code);
         }
       }
-      const langsArray = [...foreignLangs];
-      console.log("외국인 언어 목록:", langsArray);
-      setForeignStudentLanguages(langsArray);
+      setForeignStudentLanguages([...foreignLangs]);
     } else {
-      console.log("nationalityData 없음 또는 빈 배열");
       setForeignStudentLanguages([]);
     }
     
