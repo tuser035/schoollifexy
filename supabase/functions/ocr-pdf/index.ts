@@ -25,7 +25,7 @@ serve(async (req) => {
 
     console.log("OCR 요청 시작 - 이미지 크기:", imageBase64.length);
 
-    // Gemini Vision API를 사용하여 OCR 수행
+    // Gemini Pro Vision API를 사용하여 OCR 수행 (더 정확한 모델 사용)
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -33,14 +33,23 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "이 이미지에서 모든 텍스트를 추출해주세요. 원본 형식과 줄바꿈을 최대한 유지하면서 텍스트만 출력해주세요. 이미지에 텍스트가 없으면 '텍스트 없음'이라고 답해주세요. 추가 설명 없이 추출된 텍스트만 출력하세요."
+                text: `이 이미지는 PDF 문서의 스캔본입니다. 이미지에서 보이는 모든 텍스트를 정확하게 추출해주세요.
+
+지침:
+1. 원본 문서의 형식, 줄바꿈, 단락 구조를 최대한 유지하세요
+2. 한글, 영어, 숫자 등 모든 텍스트를 추출하세요
+3. 표가 있다면 텍스트로 표현하세요
+4. 이미지에 텍스트가 전혀 없는 경우에만 "텍스트 없음"이라고 응답하세요
+5. 설명이나 해석 없이 추출된 텍스트만 출력하세요
+
+추출된 텍스트:`
               },
               {
                 type: "image_url",
