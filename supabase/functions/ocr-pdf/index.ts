@@ -33,23 +33,15 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `이 이미지는 PDF 문서의 스캔본입니다. 이미지에서 보이는 모든 텍스트를 정확하게 추출해주세요.
-
-지침:
-1. 원본 문서의 형식, 줄바꿈, 단락 구조를 최대한 유지하세요
-2. 한글, 영어, 숫자 등 모든 텍스트를 추출하세요
-3. 표가 있다면 텍스트로 표현하세요
-4. 이미지에 텍스트가 전혀 없는 경우에만 "텍스트 없음"이라고 응답하세요
-5. 설명이나 해석 없이 추출된 텍스트만 출력하세요
-
-추출된 텍스트:`
+                text: `이 이미지에서 모든 텍스트를 추출해주세요. 한글, 영어, 숫자 모두 포함합니다.
+텍스트만 출력하고 설명은 하지 마세요.`
               },
               {
                 type: "image_url",
