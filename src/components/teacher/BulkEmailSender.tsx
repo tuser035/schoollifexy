@@ -540,7 +540,7 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
         
         // PDF 페이지를 이미지로 변환하여 OCR 수행
         let ocrText = "";
-        const scale = 2.0; // 해상도 향상을 위해 스케일 증가
+        const scale = 4.0; // 고해상도를 위해 스케일 대폭 증가
         
         for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) { // 최대 10페이지까지만 처리
           toast.info(`OCR 진행 중... (${i}/${Math.min(pdf.numPages, 10)}페이지)`);
@@ -550,7 +550,10 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
           
           // Canvas에 페이지 렌더링
           const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
+          const context = canvas.getContext('2d', { 
+            alpha: false,
+            willReadFrequently: true 
+          });
           if (!context) {
             throw new Error('Canvas context를 생성할 수 없습니다');
           }
@@ -558,14 +561,19 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           
+          // 배경을 흰색으로 설정 (투명 배경 방지)
+          context.fillStyle = 'white';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          
           await page.render({
             canvasContext: context,
             viewport: viewport,
-            canvas: canvas
+            canvas: canvas,
+            background: 'white'
           } as any).promise;
           
-          // Canvas를 base64 이미지로 변환
-          const imageBase64 = canvas.toDataURL('image/png');
+          // Canvas를 고품질 JPEG로 변환 (PNG보다 크기 작고 OCR에 충분)
+          const imageBase64 = canvas.toDataURL('image/jpeg', 0.95);
           
           // OCR Edge Function 호출
           const { data: ocrData, error: ocrError } = await supabase.functions.invoke('ocr-pdf', {
