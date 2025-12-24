@@ -14,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync, TableSubscription } from "@/hooks/use-realtime-sync";
-import * as pdfjsLib from "pdfjs-dist";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
 // 국적 코드에 따른 언어 매핑
 const nationalityToLanguage: Record<string, { name: string; nativeName: string }> = {
@@ -483,14 +483,16 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
     setPdfFileName(file.name);
     
     try {
-      // PDF.js worker 설정 - import.meta.url 사용
-      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-        "pdfjs-dist/build/pdf.worker.min.mjs",
-        import.meta.url
-      ).toString();
+      // PDF.js worker 비활성화 (legacy 빌드 사용시 필요없음)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "";
       
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true
+      }).promise;
       
       let fullText = "";
       
