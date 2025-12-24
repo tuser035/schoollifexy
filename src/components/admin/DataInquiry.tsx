@@ -445,7 +445,8 @@ const DataInquiry = () => {
     
     // 선택된 학생들의 외국인 언어 확인 (RPC 함수 사용)
     const studentIds = Array.from(selectedStudents);
-    const userId = sessionStorage.getItem("admin_id") || sessionStorage.getItem("teacher_id") || "";
+    const authUser = localStorage.getItem("auth_user");
+    const userId = authUser ? JSON.parse(authUser).id : "";
     
     console.log("RPC 호출 - userId:", userId, "studentIds:", studentIds);
     
