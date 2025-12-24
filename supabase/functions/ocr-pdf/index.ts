@@ -87,6 +87,7 @@ serve(async (req) => {
     const extractedText = data.choices?.[0]?.message?.content || "";
 
     console.log("OCR 완료 - 추출된 텍스트 길이:", extractedText.length);
+    console.log("OCR 결과 미리보기:", extractedText.substring(0, 200));
 
     return new Response(JSON.stringify({ text: extractedText }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

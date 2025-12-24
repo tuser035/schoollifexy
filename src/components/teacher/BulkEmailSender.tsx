@@ -572,26 +572,49 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
             background: 'white'
           } as any).promise;
           
-          // Canvas를 고품질 JPEG로 변환 (PNG보다 크기 작고 OCR에 충분)
-          const imageBase64 = canvas.toDataURL('image/jpeg', 0.95);
+          // 이미지 대비 향상을 위한 전처리
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          
+          // 대비 향상 (contrast enhancement)
+          const factor = 1.5; // 대비 강도
+          for (let j = 0; j < data.length; j += 4) {
+            data[j] = Math.min(255, Math.max(0, factor * (data[j] - 128) + 128));     // R
+            data[j + 1] = Math.min(255, Math.max(0, factor * (data[j + 1] - 128) + 128)); // G
+            data[j + 2] = Math.min(255, Math.max(0, factor * (data[j + 2] - 128) + 128)); // B
+          }
+          context.putImageData(imageData, 0, 0);
+          
+          // Canvas를 고품질 JPEG로 변환
+          const imageBase64 = canvas.toDataURL('image/jpeg', 0.92);
+          
+          console.log(`페이지 ${i} 이미지 생성 완료 - 크기: ${imageBase64.length}, 캔버스: ${canvas.width}x${canvas.height}`);
           
           // OCR Edge Function 호출
           const { data: ocrData, error: ocrError } = await supabase.functions.invoke('ocr-pdf', {
             body: { imageBase64 }
           });
           
+          console.log(`페이지 ${i} OCR 응답:`, ocrData);
+          
           if (ocrError) {
             console.error(`페이지 ${i} OCR 오류:`, ocrError);
             continue;
           }
           
-          if (ocrData?.text && ocrData.text !== '텍스트 없음') {
+          // 다양한 "텍스트 없음" 응답 패턴 체크
+          const noTextPatterns = ['텍스트 없음', '텍스트가 없', '추출할 수 없', '인식할 수 없', '희미', '품질이 낮'];
+          const isNoText = noTextPatterns.some(pattern => ocrData?.text?.includes(pattern));
+          
+          if (ocrData?.text && !isNoText) {
             ocrText += ocrData.text + "\n\n";
+          } else {
+            console.log(`페이지 ${i}: 텍스트 추출 실패 - ${ocrData?.text?.substring(0, 100)}`);
           }
         }
         
         if (!ocrText.trim()) {
-          toast.error("PDF에서 텍스트를 추출할 수 없습니다.");
+          toast.error("PDF에서 텍스트를 추출할 수 없습니다. 원본 PDF 품질을 확인해주세요.");
           return;
         }
         
