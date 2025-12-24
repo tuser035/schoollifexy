@@ -139,6 +139,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   const [savedTranscriptions, setSavedTranscriptions] = useState<Set<string>>(new Set());
   const transcriptionInputRef = useRef<HTMLInputElement | null>(null);
   
+  // Voice transcription states (음성 필사)
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [isVerifyingVoiceTranscription, setIsVerifyingVoiceTranscription] = useState(false);
+  const speechRecognitionRef = useRef<any>(null);
+  
   // Poetry points states (낭독/필사 포인트)
   const [poetryRecordingPoints, setPoetryRecordingPoints] = useState(0);
   const [poetryTranscriptionPoints, setPoetryTranscriptionPoints] = useState(0);
@@ -1120,7 +1126,163 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   const openTranscriptionDialog = (poem: { id: string; title: string; content: string }) => {
     setTranscriptionPoem(poem);
     setTranscriptionImage(null);
+    setVoiceTranscript('');
     setIsTranscriptionDialogOpen(true);
+  };
+
+  // Web Speech API 음성 인식 시작
+  const startVoiceRecognition = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      toast.error('이 브라우저는 음성 인식을 지원하지 않습니다. Chrome 브라우저를 사용해주세요.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ko-KR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = voiceTranscript;
+
+    recognition.onstart = () => {
+      setIsVoiceListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+          setVoiceTranscript(finalTranscript.trim());
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      if (event.error === 'not-allowed') {
+        toast.error('마이크 접근 권한이 필요합니다');
+      } else if (event.error !== 'aborted') {
+        toast.error('음성 인식 중 오류가 발생했습니다');
+      }
+      setIsVoiceListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsVoiceListening(false);
+    };
+
+    speechRecognitionRef.current = recognition;
+    recognition.start();
+  }, [voiceTranscript]);
+
+  // 음성 인식 중지
+  const stopVoiceRecognition = useCallback(() => {
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.stop();
+      setIsVoiceListening(false);
+    }
+  }, []);
+
+  // 음성 필사 검증 함수
+  const verifyVoiceTranscription = async () => {
+    if (!voiceTranscript.trim() || !transcriptionPoem || !selectedBook) {
+      toast.error('음성 인식 결과가 없습니다');
+      return;
+    }
+    
+    const currentPoem = transcriptionPoem;
+    const currentBook = selectedBook;
+    
+    setIsVerifyingVoiceTranscription(true);
+    try {
+      // 간단한 텍스트 유사도 검사 (공백, 줄바꿈 제거 후 비교)
+      const normalizeText = (text: string) => text.replace(/[\s\n\r]/g, '').toLowerCase();
+      const originalNormalized = normalizeText(currentPoem.content);
+      const transcriptNormalized = normalizeText(voiceTranscript);
+      
+      // Levenshtein distance 기반 유사도 계산
+      const calculateSimilarity = (str1: string, str2: string): number => {
+        const len1 = str1.length;
+        const len2 = str2.length;
+        
+        if (len1 === 0) return len2 === 0 ? 100 : 0;
+        if (len2 === 0) return 0;
+        
+        const matrix: number[][] = [];
+        
+        for (let i = 0; i <= len1; i++) {
+          matrix[i] = [i];
+        }
+        for (let j = 0; j <= len2; j++) {
+          matrix[0][j] = j;
+        }
+        
+        for (let i = 1; i <= len1; i++) {
+          for (let j = 1; j <= len2; j++) {
+            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j - 1] + cost
+            );
+          }
+        }
+        
+        const maxLen = Math.max(len1, len2);
+        return Math.round((1 - matrix[len1][len2] / maxLen) * 100);
+      };
+      
+      const similarity = calculateSimilarity(originalNormalized, transcriptNormalized);
+      
+      if (similarity >= 50) {
+        // 검증 성공 - DB에 저장
+        const { data: collectionData } = await supabase
+          .from('poetry_collections')
+          .select('id')
+          .eq('title', currentBook.title)
+          .single();
+        
+        if (!collectionData) {
+          throw new Error('시집을 찾을 수 없습니다');
+        }
+
+        // 음성 필사는 이미지 없이 텍스트로 저장
+        const { error } = await supabase.from('poetry_transcriptions').insert({
+          student_id: studentId,
+          collection_id: collectionData.id,
+          poem_id: currentPoem.id,
+          image_url: 'voice-transcription', // 음성 필사 표시
+          match_percentage: similarity,
+          is_verified: true,
+          points_awarded: 2
+        });
+
+        if (error) throw error;
+
+        toast.success(`🎉 음성 필사 인증 성공! (일치율: ${similarity}%) +2점`, { duration: 5000 });
+        setSavedTranscriptions(prev => new Set([...prev, currentPoem.id]));
+        setIsTranscriptionDialogOpen(false);
+        setTranscriptionImage(null);
+        setTranscriptionPoem(null);
+        setVoiceTranscript('');
+        loadPoetryPoints();
+      } else {
+        toast.error(`일치율이 ${similarity}%입니다. 50% 이상이 필요합니다. 다시 시도해주세요.`, { duration: 5000 });
+      }
+    } catch (error) {
+      console.error('Error verifying voice transcription:', error);
+      toast.error(error instanceof Error ? error.message : '음성 필사 검증에 실패했습니다');
+    } finally {
+      setIsVerifyingVoiceTranscription(false);
+    }
   };
 
   // 이미지 파일 선택 처리
@@ -3097,9 +3259,11 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       {/* 필사 인증 다이얼로그 */}
       <Dialog open={isTranscriptionDialogOpen} onOpenChange={(open) => {
         if (!open) {
+          stopVoiceRecognition();
           setIsTranscriptionDialogOpen(false);
           setTranscriptionImage(null);
           setTranscriptionPoem(null);
+          setVoiceTranscript('');
         }
       }}>
         <DialogContent className="max-w-lg p-0 overflow-hidden max-h-[85vh]">
@@ -3121,10 +3285,10 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
           </div>
           
           <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(85vh-80px)]">
-            {/* 안내 문구 - 2줄로 간략화 */}
+            {/* 안내 문구 */}
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-700">
-              <p>📝 노트에 시를 손으로 적고 사진 촬영하여 업로드하세요.</p>
-              <p className="mt-0.5">✅ AI가 원본과 50% 이상 일치하면 인증 완료!</p>
+              <p>📝 사진 필사 또는 🎤 음성 필사 중 선택하세요.</p>
+              <p className="mt-0.5">✅ 원본과 50% 이상 일치하면 인증 완료!</p>
             </div>
 
             {/* 원본 시 미리보기 */}
@@ -3135,64 +3299,152 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               </p>
             </div>
 
-            {/* 이미지 업로드 영역 */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">필사 이미지 업로드</Label>
-              <input
-                ref={transcriptionInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleTranscriptionImageSelect}
-                className="hidden"
-              />
+            {/* 탭 형식으로 사진/음성 선택 */}
+            <Tabs defaultValue="photo" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="photo" className="text-sm">
+                  <Camera className="w-4 h-4 mr-1.5" />
+                  사진 필사
+                </TabsTrigger>
+                <TabsTrigger value="voice" className="text-sm">
+                  <Mic className="w-4 h-4 mr-1.5" />
+                  음성 필사
+                </TabsTrigger>
+              </TabsList>
               
-              {transcriptionImage ? (
-                <div className="relative">
-                  <img 
-                    src={transcriptionImage} 
-                    alt="필사 이미지" 
-                    className="w-full max-h-48 object-contain rounded-lg border"
+              {/* 사진 필사 탭 */}
+              <TabsContent value="photo" className="space-y-3 mt-3">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">필사 이미지 업로드</Label>
+                  <input
+                    ref={transcriptionInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleTranscriptionImageSelect}
+                    className="hidden"
                   />
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => setTranscriptionImage(null)}
-                    className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  
+                  {transcriptionImage ? (
+                    <div className="relative">
+                      <img 
+                        src={transcriptionImage} 
+                        alt="필사 이미지" 
+                        className="w-full max-h-48 object-contain rounded-lg border"
+                      />
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setTranscriptionImage(null)}
+                        className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => transcriptionInputRef.current?.click()}
+                      className="border-2 border-dashed border-amber-300 rounded-lg p-8 text-center cursor-pointer hover:bg-amber-50 transition-colors"
+                    >
+                      <Camera className="w-10 h-10 mx-auto mb-2 text-amber-400" />
+                      <p className="text-sm text-amber-600 font-medium">사진 촬영 또는 업로드</p>
+                      <p className="text-xs text-gray-500 mt-1">탭하여 사진을 선택하세요</p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div 
-                  onClick={() => transcriptionInputRef.current?.click()}
-                  className="border-2 border-dashed border-amber-300 rounded-lg p-8 text-center cursor-pointer hover:bg-amber-50 transition-colors"
-                >
-                  <Camera className="w-10 h-10 mx-auto mb-2 text-amber-400" />
-                  <p className="text-sm text-amber-600 font-medium">사진 촬영 또는 업로드</p>
-                  <p className="text-xs text-gray-500 mt-1">탭하여 사진을 선택하세요</p>
-                </div>
-              )}
-            </div>
 
-            {/* 인증 버튼 */}
-            <Button
-              onClick={verifyTranscription}
-              disabled={!transcriptionImage || isVerifyingTranscription}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-            >
-              {isVerifyingTranscription ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  AI가 검증 중...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  필사 인증하기
-                </>
-              )}
-            </Button>
+                <Button
+                  onClick={verifyTranscription}
+                  disabled={!transcriptionImage || isVerifyingTranscription}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  {isVerifyingTranscription ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      AI가 검증 중...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      사진 필사 인증하기
+                    </>
+                  )}
+                </Button>
+              </TabsContent>
+              
+              {/* 음성 필사 탭 */}
+              <TabsContent value="voice" className="space-y-3 mt-3">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">시를 소리내어 읽어주세요</Label>
+                  
+                  {/* 음성 인식 버튼 */}
+                  <div className="flex justify-center py-4">
+                    <Button
+                      size="lg"
+                      variant={isVoiceListening ? "destructive" : "outline"}
+                      onClick={isVoiceListening ? stopVoiceRecognition : startVoiceRecognition}
+                      className={`h-20 w-20 rounded-full ${
+                        isVoiceListening 
+                          ? 'animate-pulse bg-red-500 hover:bg-red-600' 
+                          : 'border-2 border-purple-400 hover:bg-purple-50'
+                      }`}
+                    >
+                      {isVoiceListening ? (
+                        <Square className="w-8 h-8 text-white" />
+                      ) : (
+                        <Mic className="w-8 h-8 text-purple-600" />
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <p className="text-center text-sm text-gray-500">
+                    {isVoiceListening ? '🎤 듣고 있습니다... 시를 읽어주세요' : '버튼을 눌러 음성 인식을 시작하세요'}
+                  </p>
+                  
+                  {/* 인식된 텍스트 표시 */}
+                  {voiceTranscript && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-green-600 font-medium">인식된 내용</p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setVoiceTranscript('')}
+                          className="h-6 px-2 text-xs text-gray-500 hover:text-red-500"
+                        >
+                          지우기
+                        </Button>
+                      </div>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed max-h-24 overflow-y-auto">
+                        {voiceTranscript}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={verifyVoiceTranscription}
+                  disabled={!voiceTranscript.trim() || isVerifyingVoiceTranscription || isVoiceListening}
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white"
+                >
+                  {isVerifyingVoiceTranscription ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      검증 중...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      음성 필사 인증하기
+                    </>
+                  )}
+                </Button>
+                
+                <p className="text-xs text-center text-gray-400">
+                  Chrome 브라우저에서 가장 잘 작동합니다
+                </p>
+              </TabsContent>
+            </Tabs>
           </div>
         </DialogContent>
       </Dialog>
