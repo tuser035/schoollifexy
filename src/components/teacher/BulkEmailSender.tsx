@@ -597,9 +597,14 @@ const BulkEmailSender = ({ isActive = false }: BulkEmailSenderProps) => {
           
           console.log(`페이지 ${i} 이미지 생성 완료 - base64 길이: ${imageBase64.length}`);
           
-          // 디버깅: 첫 페이지 이미지를 콘솔에 출력
+          // 디버깅: 첫 페이지 이미지를 다운로드 가능하게
           if (i === 1) {
-            console.log('첫 페이지 이미지 미리보기 (개발자 도구에서 확인):', imageBase64.substring(0, 100) + '...');
+            // 이미지를 새 탭에서 열어서 확인 가능하도록
+            const debugLink = document.createElement('a');
+            debugLink.href = imageBase64;
+            debugLink.download = `pdf-page-${i}-debug.png`;
+            debugLink.click();
+            console.log('디버깅용 이미지가 다운로드되었습니다. 파일을 확인해주세요.');
           }
           
           // OCR Edge Function 호출
