@@ -166,8 +166,33 @@ const Index = () => {
               </TabsContent>
             </Tabs>
 
+            {/* 핵심 기능 브리핑 */}
+            <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200/50">
+              <div className="space-y-1.5 text-xs sm:text-sm text-gray-600">
+                <p className="flex items-start gap-2">
+                  <span className="text-blue-500">•</span>
+                  <span><strong>상점·벌점</strong> — 성장 기반 생활교육 시스템</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <span className="text-orange-500">•</span>
+                  <span><strong>이달의 학생</strong> — 매월 빛나는 학생들의 이야기</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <span className="text-green-500">•</span>
+                  <span><strong>Mind Talk</strong> — AI와 함께하는 마음 돌봄</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <span className="text-purple-500">•</span>
+                  <span><strong>문득書점</strong> — 문득 생각나고, 문득 들어가고 싶은 곳</span>
+                </p>
+                <p className="flex items-start gap-2 pl-4 text-gray-500">
+                  <span>철학동화, 시집 31권, 청소년추천도서 7권</span>
+                </p>
+              </div>
+            </div>
+
             {/* 카카오톡 오픈채팅방 안내 */}
-            <p className="mt-2 text-xs sm:text-sm text-center text-muted-foreground whitespace-nowrap flex items-center justify-center gap-1">
+            <p className="mt-3 text-xs sm:text-sm text-center text-muted-foreground whitespace-nowrap flex items-center justify-center gap-1">
               스쿨라이프.KR 시스템 문의가 있을까요?{" "}
               {kakaoChatUrl ? (
                 <a 
