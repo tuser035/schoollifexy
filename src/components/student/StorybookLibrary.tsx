@@ -49,7 +49,8 @@ import {
   Check,
   Award,
   Trash2,
-  Edit3
+  Edit3,
+  Languages
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { BOOK_SERIES, THEME_STYLES, getSeriesIcon, type BookSeries, type ThemeName } from '@/config/bookSeriesConfig';
@@ -242,6 +243,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   const [showRecommendedBooks, setShowRecommendedBooks] = useState(false);
   const [loadingRecommendedBooks, setLoadingRecommendedBooks] = useState(false);
 
+  // Translation states
+  const [studentNationalityCode, setStudentNationalityCode] = useState<string | null>(null);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [translatedLanguageName, setTranslatedLanguageName] = useState<string>('');
   // Load available voices for TTS
   useEffect(() => {
     const loadVoices = () => {
@@ -256,6 +263,28 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
       window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices);
     };
   }, []);
+
+  // Load student nationality code
+  useEffect(() => {
+    const loadStudentNationality = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('students')
+          .select('nationality_code')
+          .eq('student_id', studentId)
+          .single();
+        
+        if (!error && data?.nationality_code) {
+          setStudentNationalityCode(data.nationality_code);
+        }
+      } catch (error) {
+        console.error('Error loading student nationality:', error);
+      }
+    };
+    
+    loadStudentNationality();
+  }, [studentId]);
+
 
   // Get voice based on book number (odd = male, even = female)
   const getVoiceForBook = useCallback((bookNumber: number): SpeechSynthesisVoice | null => {
@@ -1543,6 +1572,60 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
 
   const currentPageData = pages.find(p => p.page_number === currentPage);
 
+  // Reset translation when page changes
+  useEffect(() => {
+    setTranslatedText(null);
+    setShowTranslation(false);
+  }, [currentPage, selectedBook]);
+
+  // Translation function
+  const translateCurrentPage = useCallback(async () => {
+    if (!currentPageData?.text_content || !studentNationalityCode) return;
+    
+    setIsTranslating(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-content`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            content: currentPageData.text_content,
+            targetLanguage: studentNationalityCode,
+          }),
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (response.status === 429) {
+        toast.error('번역 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      
+      if (response.status === 402) {
+        toast.error('번역 서비스 크레딧이 부족합니다.');
+        return;
+      }
+      
+      if (result.success && result.translatedText) {
+        setTranslatedText(result.translatedText);
+        setTranslatedLanguageName(result.nativeName || result.languageName);
+        setShowTranslation(true);
+      } else {
+        throw new Error(result.error || '번역에 실패했습니다');
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+      toast.error(error instanceof Error ? error.message : '번역에 실패했습니다');
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [currentPageData?.text_content, studentNationalityCode]);
+
   // 시리즈별 책 필터링 (카테고리 기반)
   const getSeriesBooks = (series: BookSeries) => 
     books.filter(book => book.category === series.id);
@@ -2234,6 +2317,28 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                 </Button>
               )}
 
+              {/* Translation Button - Only for philosophy category and students with nationality */}
+              {selectedBook?.category === 'philosophy' && studentNationalityCode && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={translateCurrentPage}
+                  disabled={isTranslating || !currentPageData?.text_content}
+                  className={`p-1 md:p-1.5 h-auto rounded-full transition-colors ${
+                    showTranslation 
+                      ? 'text-cyan-300 bg-cyan-500/20 hover:bg-cyan-500/30' 
+                      : 'text-white hover:bg-white/20'
+                  }`}
+                  title={showTranslation ? '번역 숨기기' : '번역하기'}
+                >
+                  {isTranslating ? (
+                    <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                  ) : (
+                    <Languages className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  )}
+                </Button>
+              )}
+
               <div className="w-px h-4 md:h-5 bg-white/30 mx-0" />
 
               {/* Close Button */}
@@ -2365,6 +2470,22 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
+                          
+                          {/* Translation Section - Mobile First Page */}
+                          {showTranslation && translatedText && selectedBook?.category === 'philosophy' && (
+                            <div className="mt-4 pt-4 border-t border-cyan-200">
+                              <div className="flex items-center gap-1 mb-2 justify-center">
+                                <Languages className="w-3 h-3 text-cyan-600" />
+                                <span className="text-xs font-medium text-cyan-600">{translatedLanguageName} 번역</span>
+                              </div>
+                              <p 
+                                className="text-cyan-800 whitespace-pre-wrap break-words leading-relaxed bg-cyan-50/50 p-3 rounded-lg"
+                                style={{ fontSize: `${fontSize * 0.9}rem` }}
+                              >
+                                {translatedText}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
@@ -2417,6 +2538,22 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                             >
                               {renderHighlightedText(bodyText)}
                             </p>
+                          )}
+                          
+                          {/* Translation Section - Mobile */}
+                          {showTranslation && translatedText && selectedBook?.category === 'philosophy' && (
+                            <div className="mt-4 pt-4 border-t border-cyan-200">
+                              <div className="flex items-center gap-1 mb-2 justify-center">
+                                <Languages className="w-3 h-3 text-cyan-600" />
+                                <span className="text-xs font-medium text-cyan-600">{translatedLanguageName} 번역</span>
+                              </div>
+                              <p 
+                                className="text-cyan-800 whitespace-pre-wrap break-words leading-relaxed bg-cyan-50/50 p-3 rounded-lg"
+                                style={{ fontSize: `${fontSize * 0.9}rem` }}
+                              >
+                                {translatedText}
+                              </p>
+                            </div>
                           )}
                         </div>
                       );
@@ -2525,6 +2662,22 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                               {renderHighlightedText(bodyText)}
                             </p>
                           )}
+                          
+                          {/* Translation Section - Desktop First Page */}
+                          {showTranslation && translatedText && selectedBook?.category === 'philosophy' && (
+                            <div className="mt-6 pt-4 border-t border-cyan-200">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Languages className="w-4 h-4 text-cyan-600" />
+                                <span className="text-sm font-medium text-cyan-600">{translatedLanguageName} 번역</span>
+                              </div>
+                              <p 
+                                className="text-cyan-800 whitespace-pre-wrap leading-relaxed bg-cyan-50/50 p-4 rounded-lg indent-6"
+                                style={{ fontSize: `${fontSize * 1}rem` }}
+                              >
+                                {translatedText}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
@@ -2583,6 +2736,22 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                             >
                               {renderHighlightedText(bodyText)}
                             </p>
+                          )}
+                          
+                          {/* Translation Section - Desktop */}
+                          {showTranslation && translatedText && selectedBook?.category === 'philosophy' && (
+                            <div className="mt-6 pt-4 border-t border-cyan-200">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Languages className="w-4 h-4 text-cyan-600" />
+                                <span className="text-sm font-medium text-cyan-600">{translatedLanguageName} 번역</span>
+                              </div>
+                              <p 
+                                className="text-cyan-800 whitespace-pre-wrap leading-relaxed bg-cyan-50/50 p-4 rounded-lg indent-6"
+                                style={{ fontSize: `${fontSize * 1}rem` }}
+                              >
+                                {translatedText}
+                              </p>
+                            </div>
                           )}
                         </div>
                       );
