@@ -167,7 +167,7 @@ const Index = () => {
             </Tabs>
 
             {/* 핵심 기능 브리핑 */}
-            <div className="mt-4 sm:mt-6 pt-4 border-t border-gray-200/50">
+            <div className="mt-2 sm:mt-3 pt-2 border-t border-gray-200/50">
               <div className="space-y-1.5 text-xs sm:text-sm text-gray-600">
                 <p className="flex items-start gap-2">
                   <span className="text-blue-500">•</span>
