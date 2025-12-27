@@ -111,33 +111,16 @@ const Index = () => {
                 {schoolName || "스쿨라이프.KR"}
               </h1>
               <p className="text-base sm:text-xl font-semibold">
-                {schoolNameEn ? (
-                  <>
-                    <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
-                      {schoolNameEn.replace(/\s*\.\s*$/, "")}.
-                    </span>
-                    <span 
-                      onClick={() => setShowSystemAdminDialog(true)}
-                      className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent cursor-pointer hover:opacity-70 transition-opacity underline decoration-2"
-                      title="시스템 관리자 로그인"
-                    >
-                      KR
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
-                      SchoolLife.
-                    </span>
-                    <span 
-                      onClick={() => setShowSystemAdminDialog(true)}
-                      className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent cursor-pointer hover:opacity-70 transition-opacity underline decoration-2"
-                      title="시스템 관리자 로그인"
-                    >
-                      KR
-                    </span>
-                  </>
-                )}
+                <span className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
+                  인문과 글로벌 역량을 함께 키우는 학교생활{" "}
+                </span>
+                <span 
+                  onClick={() => setShowSystemAdminDialog(true)}
+                  className="bg-gradient-to-r from-blue-600 via-orange-500 to-green-600 bg-clip-text text-transparent cursor-pointer hover:opacity-70 transition-opacity underline decoration-2"
+                  title="시스템 관리자 로그인"
+                >
+                  플랫폼
+                </span>
               </p>
             </div>
 
