@@ -264,23 +264,16 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
     };
   }, []);
 
-  // Load student nationality code
+  // Load student nationality code - session is already set by parent Dashboard
   useEffect(() => {
     const loadStudentNationality = async () => {
       console.log('[StorybookLibrary] Loading nationality for studentId:', studentId);
       try {
-        // Set student session first for RLS
-        const { error: sessionError } = await supabase.rpc('set_student_session', { student_id_input: studentId });
-        
-        if (sessionError) {
-          console.error('[StorybookLibrary] Session error:', sessionError);
-        }
-        
         const { data, error } = await supabase
           .from('students')
           .select('nationality_code')
           .eq('student_id', studentId)
-          .single();
+          .maybeSingle();
         
         console.log('[StorybookLibrary] Nationality query result:', { data, error });
         
