@@ -268,11 +268,16 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   useEffect(() => {
     const loadStudentNationality = async () => {
       try {
+        // Set student session first for RLS
+        await supabase.rpc('set_student_session', { student_id_input: studentId });
+        
         const { data, error } = await supabase
           .from('students')
           .select('nationality_code')
           .eq('student_id', studentId)
           .single();
+        
+        console.log('[StorybookLibrary] Nationality code loaded:', data?.nationality_code);
         
         if (!error && data?.nationality_code) {
           setStudentNationalityCode(data.nationality_code);
