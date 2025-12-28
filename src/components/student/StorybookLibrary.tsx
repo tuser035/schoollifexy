@@ -2323,25 +2323,34 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
               )}
 
               {/* Translation Button - Only for philosophy category and students with nationality */}
-              {selectedBook?.category === 'philosophy' && studentNationalityCode && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={translateCurrentPage}
-                  disabled={isTranslating || !currentPageData?.text_content}
-                  className={`p-1 md:p-1.5 h-auto rounded-full transition-colors ${
-                    showTranslation 
-                      ? 'text-cyan-300 bg-cyan-500/20 hover:bg-cyan-500/30' 
-                      : 'text-white hover:bg-white/20'
-                  }`}
-                  title={showTranslation ? '번역 숨기기' : '번역하기'}
-                >
-                  {isTranslating ? (
-                    <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                  ) : (
-                    <Languages className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                  )}
-                </Button>
+              {selectedBook?.category === 'philosophy' && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={translateCurrentPage}
+                        disabled={isTranslating || !currentPageData?.text_content || !studentNationalityCode}
+                        className={`p-1 md:p-1.5 h-auto rounded-full transition-colors ${
+                          showTranslation 
+                            ? 'text-cyan-300 bg-cyan-500/20 hover:bg-cyan-500/30' 
+                            : 'text-white hover:bg-white/20'
+                        } ${!studentNationalityCode ? 'opacity-50' : ''}`}
+                        title={showTranslation ? '번역 숨기기' : '번역하기'}
+                      >
+                        {isTranslating ? (
+                          <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                        ) : (
+                          <Languages className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {!studentNationalityCode ? '국적 정보가 없습니다' : (showTranslation ? '번역 숨기기' : '번역하기')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
 
               <div className="w-px h-4 md:h-5 bg-white/30 mx-0" />
