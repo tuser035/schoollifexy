@@ -267,9 +267,14 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   // Load student nationality code
   useEffect(() => {
     const loadStudentNationality = async () => {
+      console.log('[StorybookLibrary] Loading nationality for studentId:', studentId);
       try {
         // Set student session first for RLS
-        await supabase.rpc('set_student_session', { student_id_input: studentId });
+        const { error: sessionError } = await supabase.rpc('set_student_session', { student_id_input: studentId });
+        
+        if (sessionError) {
+          console.error('[StorybookLibrary] Session error:', sessionError);
+        }
         
         const { data, error } = await supabase
           .from('students')
@@ -277,17 +282,22 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
           .eq('student_id', studentId)
           .single();
         
-        console.log('[StorybookLibrary] Nationality code loaded:', data?.nationality_code);
+        console.log('[StorybookLibrary] Nationality query result:', { data, error });
         
         if (!error && data?.nationality_code) {
+          console.log('[StorybookLibrary] Setting nationality code:', data.nationality_code);
           setStudentNationalityCode(data.nationality_code);
+        } else if (error) {
+          console.error('[StorybookLibrary] Nationality query error:', error);
         }
       } catch (error) {
-        console.error('Error loading student nationality:', error);
+        console.error('[StorybookLibrary] Error loading student nationality:', error);
       }
     };
     
-    loadStudentNationality();
+    if (studentId) {
+      loadStudentNationality();
+    }
   }, [studentId]);
 
 
