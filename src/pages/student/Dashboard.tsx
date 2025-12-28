@@ -38,6 +38,7 @@ const StudentDashboard = () => {
   const [isMeritsExpanded, setIsMeritsExpanded] = useState(false);
   const [isDemeritsExpanded, setIsDemeritsExpanded] = useState(false);
   const [isMonthlyExpanded, setIsMonthlyExpanded] = useState(false);
+  const [studentNationalityCode, setStudentNationalityCode] = useState<string | null>(null);
   
   // CSV 다운로드 날짜 필터 상태
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
@@ -50,6 +51,9 @@ const StudentDashboard = () => {
   const fetchStudentData = useCallback(async (studentId: string) => {
     setIsLoading(true);
     try {
+      // Set student session for RLS
+      await supabase.rpc('set_student_session', { student_id_input: studentId });
+      
       const { data: meritsData, error: meritsError } = await supabase.rpc(
         "student_get_merits",
         { student_id_input: studentId }
@@ -70,6 +74,18 @@ const StudentDashboard = () => {
       );
 
       if (monthlyError) throw monthlyError;
+
+      // Load nationality code for translation feature
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('nationality_code')
+        .eq('student_id', studentId)
+        .maybeSingle();
+      
+      if (studentData?.nationality_code) {
+        setStudentNationalityCode(studentData.nationality_code);
+        console.log('[Dashboard] Nationality code loaded:', studentData.nationality_code);
+      }
 
       setMerits(meritsData || []);
       setDemerits(demeritsData || []);
@@ -731,7 +747,7 @@ const StudentDashboard = () => {
             </div>
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
-            <StorybookLibrary studentId={user.studentId} studentName={user.name} />
+            <StorybookLibrary studentId={user.studentId} studentName={user.name} nationalityCode={studentNationalityCode} />
           </CardContent>
         </Card>
 

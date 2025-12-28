@@ -105,9 +105,10 @@ interface RecommendedBook {
 interface StorybookLibraryProps {
   studentId: string;
   studentName: string;
+  nationalityCode?: string | null;
 }
 
-export default function StorybookLibrary({ studentId, studentName }: StorybookLibraryProps) {
+export default function StorybookLibrary({ studentId, studentName, nationalityCode }: StorybookLibraryProps) {
   const [books, setBooks] = useState<Storybook[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBook, setSelectedBook] = useState<Storybook | null>(null);
@@ -243,12 +244,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
   const [showRecommendedBooks, setShowRecommendedBooks] = useState(false);
   const [loadingRecommendedBooks, setLoadingRecommendedBooks] = useState(false);
 
-  // Translation states
-  const [studentNationalityCode, setStudentNationalityCode] = useState<string | null>(null);
+  // Translation states - use prop from Dashboard
   const [translatedText, setTranslatedText] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
   const [translatedLanguageName, setTranslatedLanguageName] = useState<string>('');
+  
   // Load available voices for TTS
   useEffect(() => {
     const loadVoices = () => {
@@ -264,34 +265,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
     };
   }, []);
 
-  // Load student nationality code - session is already set by parent Dashboard
+  // Log nationality code from prop
   useEffect(() => {
-    const loadStudentNationality = async () => {
-      console.log('[StorybookLibrary] Loading nationality for studentId:', studentId);
-      try {
-        const { data, error } = await supabase
-          .from('students')
-          .select('nationality_code')
-          .eq('student_id', studentId)
-          .maybeSingle();
-        
-        console.log('[StorybookLibrary] Nationality query result:', { data, error });
-        
-        if (!error && data?.nationality_code) {
-          console.log('[StorybookLibrary] Setting nationality code:', data.nationality_code);
-          setStudentNationalityCode(data.nationality_code);
-        } else if (error) {
-          console.error('[StorybookLibrary] Nationality query error:', error);
-        }
-      } catch (error) {
-        console.error('[StorybookLibrary] Error loading student nationality:', error);
-      }
-    };
-    
-    if (studentId) {
-      loadStudentNationality();
+    if (nationalityCode) {
+      console.log('[StorybookLibrary] Nationality code from prop:', nationalityCode);
     }
-  }, [studentId]);
+  }, [nationalityCode]);
 
 
   // Get voice based on book number (odd = male, even = female)
@@ -1588,7 +1567,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
 
   // Translation function
   const translateCurrentPage = useCallback(async () => {
-    if (!currentPageData?.text_content || !studentNationalityCode) return;
+    if (!currentPageData?.text_content || !nationalityCode) return;
     
     setIsTranslating(true);
     try {
@@ -1602,7 +1581,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
           },
           body: JSON.stringify({
             content: currentPageData.text_content,
-            targetLanguage: studentNationalityCode,
+            targetLanguage: nationalityCode,
           }),
         }
       );
@@ -1632,7 +1611,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
     } finally {
       setIsTranslating(false);
     }
-  }, [currentPageData?.text_content, studentNationalityCode]);
+  }, [currentPageData?.text_content, nationalityCode]);
 
   // 시리즈별 책 필터링 (카테고리 기반)
   const getSeriesBooks = (series: BookSeries) => 
@@ -2334,12 +2313,12 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                         variant="ghost" 
                         size="sm" 
                         onClick={translateCurrentPage}
-                        disabled={isTranslating || !currentPageData?.text_content || !studentNationalityCode}
+                        disabled={isTranslating || !currentPageData?.text_content || !nationalityCode}
                         className={`p-1 md:p-1.5 h-auto rounded-full transition-colors ${
                           showTranslation 
                             ? 'text-cyan-300 bg-cyan-500/20 hover:bg-cyan-500/30' 
                             : 'text-white hover:bg-white/20'
-                        } ${!studentNationalityCode ? 'opacity-50' : ''}`}
+                        } ${!nationalityCode ? 'opacity-50' : ''}`}
                         title={showTranslation ? '번역 숨기기' : '번역하기'}
                       >
                         {isTranslating ? (
@@ -2350,7 +2329,7 @@ export default function StorybookLibrary({ studentId, studentName }: StorybookLi
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {!studentNationalityCode ? '국적 정보가 없습니다' : (showTranslation ? '번역 숨기기' : '번역하기')}
+                      {!nationalityCode ? '국적 정보가 없습니다' : (showTranslation ? '번역 숨기기' : '번역하기')}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
