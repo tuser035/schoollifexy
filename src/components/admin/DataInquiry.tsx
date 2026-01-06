@@ -2751,9 +2751,9 @@ const DataInquiry = () => {
     <div className="space-y-4">
       <Card className="border-data-inquiry-indigo/30">
         <CardContent className="space-y-4 pt-6">
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-2 -mx-2 px-2 sm:mx-0 sm:px-0 sm:overflow-visible sm:flex-wrap whitespace-nowrap">
             <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); setColumnFilters({}); setSearchDepartment(""); setSearchSubject(""); setSearchHomeroom(""); setSearchDeptName(""); }}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-auto min-w-[100px] shrink-0">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -2798,16 +2798,16 @@ const DataInquiry = () => {
                 }
               }}
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
-              className="w-full sm:max-w-xs"
+              className="min-w-[140px] sm:min-w-[200px] sm:max-w-xs shrink-0"
               maxLength={100}
               type="search"
               inputMode="search"
               enterKeyHint="search"
             />
-            <Button onClick={() => handleQuery()} disabled={isLoading} className="bg-data-inquiry-indigo hover:bg-data-inquiry-indigo-hover">
+            <Button onClick={() => handleQuery()} disabled={isLoading} className="bg-data-inquiry-indigo hover:bg-data-inquiry-indigo-hover shrink-0">
               {isLoading ? "조회 중..." : "검색"}
             </Button>
-            <Button variant="outline" onClick={async () => { 
+            <Button variant="outline" className="shrink-0" onClick={async () => { 
               setSearchTerm(""); 
               setSearchDepartment(""); 
               setSearchSubject(""); 
@@ -2834,7 +2834,7 @@ const DataInquiry = () => {
               <Button 
                 variant="outline" 
                 onClick={() => setColumnFilters({})}
-                className="text-xs"
+                className="text-xs shrink-0"
               >
               필터 초기화 ({Object.keys(columnFilters).length})
             </Button>
