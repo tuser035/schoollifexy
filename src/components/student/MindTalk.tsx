@@ -108,7 +108,7 @@ const isWithinAllowedHours = (): { allowed: boolean; message: string } => {
 };
 
 export default function MindTalk({ studentId, studentName, studentGrade, studentClass, studentNumber }: MindTalkProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
   const initialMessage = getInitialMessage(studentName);
