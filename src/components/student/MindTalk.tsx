@@ -21,6 +21,8 @@ interface MindTalkProps {
   studentGrade: number;
   studentClass: number;
   studentNumber: number;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // 태그 카테고리별 분류
@@ -107,8 +109,16 @@ const isWithinAllowedHours = (): { allowed: boolean; message: string } => {
   return { allowed: true, message: '' };
 };
 
-export default function MindTalk({ studentId, studentName, studentGrade, studentClass, studentNumber }: MindTalkProps) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function MindTalk({ studentId, studentName, studentGrade, studentClass, studentNumber, isOpen: controlledIsOpen, onOpenChange }: MindTalkProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    } else {
+      setInternalIsOpen(open);
+    }
+  };
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
   const initialMessage = getInitialMessage(studentName);

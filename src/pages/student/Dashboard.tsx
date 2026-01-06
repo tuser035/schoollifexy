@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
-import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen, PenLine, ChevronDown, ChevronUp, CalendarIcon } from "lucide-react";
+import { Award, AlertCircle, Star, LogOut, ImageIcon, Download, BookOpen, PenLine, ChevronDown, ChevronUp, CalendarIcon, MessageCircleHeart } from "lucide-react";
 import { logout, type AuthUser } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -39,6 +39,7 @@ const StudentDashboard = () => {
   const [isDemeritsExpanded, setIsDemeritsExpanded] = useState(false);
   const [isMonthlyExpanded, setIsMonthlyExpanded] = useState(false);
   const [studentNationalityCode, setStudentNationalityCode] = useState<string | null>(null);
+  const [isMindTalkOpen, setIsMindTalkOpen] = useState(false);
   
   // CSV 다운로드 날짜 필터 상태
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
@@ -293,6 +294,8 @@ const StudentDashboard = () => {
         studentGrade={user.grade || 1}
         studentClass={user.class || 1}
         studentNumber={1}
+        isOpen={isMindTalkOpen}
+        onOpenChange={setIsMindTalkOpen}
       />
       <header className="border-b bg-card">
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center">
@@ -304,6 +307,15 @@ const StudentDashboard = () => {
             <Button onClick={handleLogout} variant="outline" size="sm" className="h-8 sm:h-9 text-xs sm:text-sm">
               <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
               <span className="hidden sm:inline">로그아웃</span>
+            </Button>
+            <Button 
+              onClick={() => setIsMindTalkOpen(true)} 
+              variant="outline" 
+              size="sm" 
+              className="h-8 sm:h-9 text-xs sm:text-sm text-pink-600 border-pink-300 hover:bg-pink-50"
+            >
+              <MessageCircleHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">마음톡</span>
             </Button>
           </div>
         </div>
