@@ -2756,7 +2756,7 @@ const DataInquiry = () => {
               <SelectTrigger className="w-fit min-w-0 shrink-0">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent side="bottom" align="start" sideOffset={4}>
                 <SelectItem value="students">학생</SelectItem>
                 <SelectItem value="teachers">교사</SelectItem>
                 <SelectItem value="homeroom">담임반</SelectItem>
