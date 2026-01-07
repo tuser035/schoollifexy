@@ -2666,7 +2666,17 @@ const DataInquiry = () => {
         });
 
         if (error) throw error;
-        result = data?.map((row: any) => ({
+        
+        // 검색어가 있으면 학번 또는 이름으로 필터링
+        let filteredData = data;
+        if (trimmedSearch) {
+          filteredData = data?.filter((row: any) => 
+            row.student_id?.includes(trimmedSearch) || 
+            row.student_name?.includes(trimmedSearch)
+          );
+        }
+        
+        result = filteredData?.map((row: any) => ({
           "학생": `${row.student_name} (${row.student_grade}-${row.student_class}-${row.student_number})`,
           "학번": row.student_id,
           "역할": row.role === "user" ? "학생" : "AI",
