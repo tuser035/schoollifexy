@@ -2769,60 +2769,31 @@ const DataInquiry = () => {
                 {userType === "admin" && <SelectItem value="mindtalk_keywords">마음톡 키워드</SelectItem>}
               </SelectContent>
             </Select>
-            <div className="relative shrink-0">
-              <span 
-                className="invisible absolute whitespace-pre px-3 text-sm"
-                aria-hidden="true"
-              >
-                {searchTerm || (
-                  selectedTable === "students" ? "학생명, 학년, 학년반" :
-                  selectedTable === "teachers" ? "교사명, 폰번호, 학년, 학년반" :
-                  selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
-                  selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly" 
-                    ? "학생명, 교사명, 학년반, 학년반번호로 검색" :
-                  selectedTable === "mindtalk_messages" || selectedTable === "mindtalk_alerts"
-                    ? "전체 조회 (검색 없음)" :
-                  selectedTable === "mindtalk_keywords" ? "전체 조회 (검색 없음)" :
-                  "검색"
-                )}
-              </span>
-              <Input
-                placeholder={
-                  selectedTable === "students" ? "학생명, 학년, 학년반" :
-                  selectedTable === "teachers" ? "교사명, 폰번호, 학년, 학년반" :
-                  selectedTable === "homeroom" ? "학년반으로 검색 (예: 38 → 3학년 8반)" :
-                  selectedTable === "merits" || selectedTable === "demerits" || selectedTable === "monthly" 
-                    ? "학생명, 교사명, 학년반, 학년반번호로 검색" :
-                  selectedTable === "mindtalk_messages" || selectedTable === "mindtalk_alerts"
-                    ? "전체 조회 (검색 없음)" :
-                  selectedTable === "mindtalk_keywords" ? "전체 조회 (검색 없음)" :
-                  "검색"
-                }
-                value={searchTerm}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (selectedTable === "teachers") {
-                    const numbers = value.replace(/[^\d]/g, '');
-                    if (numbers.length >= 3 && /^(010|011|016|017|018|019)/.test(numbers)) {
-                      setSearchTerm(formatPhoneNumber(value));
-                    } else {
-                      setSearchTerm(value);
-                    }
+            <Input
+              value={searchTerm}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (selectedTable === "teachers") {
+                  const numbers = value.replace(/[^\d]/g, '');
+                  if (numbers.length >= 3 && /^(010|011|016|017|018|019)/.test(numbers)) {
+                    setSearchTerm(formatPhoneNumber(value));
                   } else {
                     setSearchTerm(value);
                   }
-                }}
-                onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
-                style={{
-                  width: `${Math.max(80, Math.min(300, (searchTerm.length || 6) * 12 + 24))}px`
-                }}
-                className="min-w-[80px] transition-[width] duration-150"
-                maxLength={100}
-                type="search"
-                inputMode="search"
-                enterKeyHint="search"
-              />
-            </div>
+                } else {
+                  setSearchTerm(value);
+                }
+              }}
+              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleQuery()}
+              style={{
+                width: `${Math.max(80, Math.min(300, (searchTerm.length || 6) * 12 + 24))}px`
+              }}
+              className="min-w-[80px] transition-[width] duration-150 shrink-0"
+              maxLength={100}
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
+            />
             <Button onClick={() => handleQuery()} disabled={isLoading} className="bg-data-inquiry-indigo hover:bg-data-inquiry-indigo-hover shrink-0">
               {isLoading ? "조회 중..." : "검색"}
             </Button>
