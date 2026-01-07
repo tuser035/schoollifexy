@@ -2753,7 +2753,7 @@ const DataInquiry = () => {
         <CardContent className="space-y-4 pt-6 overflow-visible">
           <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-2 sm:overflow-visible sm:flex-wrap" style={{ WebkitOverflowScrolling: 'touch' }}>
             <Select value={selectedTable} onValueChange={(value) => { setSelectedTable(value as TableType); setSearchTerm(""); setColumnFilters({}); setSearchDepartment(""); setSearchSubject(""); setSearchHomeroom(""); setSearchDeptName(""); }}>
-              <SelectTrigger className="w-auto min-w-[100px] shrink-0">
+              <SelectTrigger className="w-fit min-w-0 shrink-0">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
