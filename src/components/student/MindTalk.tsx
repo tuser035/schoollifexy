@@ -229,17 +229,13 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
   };
 
   // YouTube 링크 클릭 시 기록 저장
-  const handleYoutubeClick = async (url: string, songTitle: string, artistName: string) => {
-    // 새 탭에서 YouTube 열기
-    window.open(url, '_blank');
-    
-    // 기록 저장
+  const saveYoutubeHistory = async (songTitle: string, artistName: string, youtubeUrl: string) => {
     try {
       await supabase.rpc('student_save_youtube_history', {
         student_id_input: studentId,
         song_title_input: songTitle,
         artist_name_input: artistName,
-        youtube_url_input: url
+        youtube_url_input: youtubeUrl
       });
       
       // 히스토리 새로고침
@@ -273,22 +269,23 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
       const linkText = match[3];
       const youtubeUrl = match[4];
 
-      // YouTube 링크 버튼으로 렌더링
+      // YouTube 링크를 a 태그로 렌더링 (iframe 환경에서도 작동)
       parts.push(
         <div key={match.index} className="my-2 p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg border border-red-100">
           <div className="flex items-center gap-2 mb-2">
             <Youtube className="w-5 h-5 text-red-500" />
             <span className="font-semibold text-gray-800">{songTitle} - {artistName}</span>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-red-600 border-red-200 hover:bg-red-50"
-            onClick={() => handleYoutubeClick(youtubeUrl, songTitle, artistName)}
+          <a
+            href={youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => saveYoutubeHistory(songTitle, artistName, youtubeUrl)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
           >
-            <ExternalLink className="w-4 h-4 mr-1" />
+            <ExternalLink className="w-4 h-4" />
             {linkText}
-          </Button>
+          </a>
         </div>
       );
 
