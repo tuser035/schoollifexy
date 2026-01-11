@@ -4,15 +4,27 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { X, Send, MessageCircleHeart, Loader2, Music } from 'lucide-react';
+import { X, Send, MessageCircleHeart, Loader2, Music, History, ExternalLink, Youtube } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import MindTalkMusicPlayer from './MindTalkMusicPlayer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+
 interface Message {
   id?: string;
   role: 'user' | 'assistant';
   content: string;
   created_at?: string;
+}
+
+interface YouTubeHistory {
+  id: string;
+  song_title: string;
+  artist_name: string;
+  youtube_url: string;
+  listened_at: string;
 }
 
 interface MindTalkProps {
@@ -121,6 +133,8 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
   };
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [isButtonVisible, setIsButtonVisible] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [youtubeHistory, setYoutubeHistory] = useState<YouTubeHistory[]>([]);
   const initialMessage = getInitialMessage(studentName);
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [inputValue, setInputValue] = useState('');
@@ -200,6 +214,98 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
     if (!error && data !== null) {
       setDangerCount(data);
     }
+  };
+
+  // YouTube 청취 기록 불러오기
+  const loadYoutubeHistory = async () => {
+    const { data, error } = await supabase.rpc('student_get_youtube_history', {
+      student_id_input: studentId,
+      limit_count: 50
+    });
+
+    if (!error && data) {
+      setYoutubeHistory(data as YouTubeHistory[]);
+    }
+  };
+
+  // YouTube 링크 클릭 시 기록 저장
+  const handleYoutubeClick = async (url: string, songTitle: string, artistName: string) => {
+    // 새 탭에서 YouTube 열기
+    window.open(url, '_blank');
+    
+    // 기록 저장
+    try {
+      await supabase.rpc('student_save_youtube_history', {
+        student_id_input: studentId,
+        song_title_input: songTitle,
+        artist_name_input: artistName,
+        youtube_url_input: url
+      });
+      
+      // 히스토리 새로고침
+      loadYoutubeHistory();
+      
+      toast({
+        title: '🎵 음악 기록 저장',
+        description: `"${songTitle}" 청취 기록이 저장되었습니다.`,
+      });
+    } catch (error) {
+      console.error('Failed to save youtube history:', error);
+    }
+  };
+
+  // 메시지에서 YouTube 링크 파싱하여 클릭 가능하게 렌더링
+  const renderMessageContent = (content: string) => {
+    // YouTube 링크 패턴: 🎵 **곡명 - 가수명** 형태와 [텍스트](URL) 형태
+    const youtubePattern = /🎵\s*\*\*([^*]+)\s*-\s*([^*]+)\*\*\s*\n?\[([^\]]+)\]\((https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)[^\)]+)\)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = youtubePattern.exec(content)) !== null) {
+      // 매치 전 텍스트 추가
+      if (match.index > lastIndex) {
+        parts.push(content.substring(lastIndex, match.index));
+      }
+
+      const songTitle = match[1].trim();
+      const artistName = match[2].trim();
+      const linkText = match[3];
+      const youtubeUrl = match[4];
+
+      // YouTube 링크 버튼으로 렌더링
+      parts.push(
+        <div key={match.index} className="my-2 p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg border border-red-100">
+          <div className="flex items-center gap-2 mb-2">
+            <Youtube className="w-5 h-5 text-red-500" />
+            <span className="font-semibold text-gray-800">{songTitle} - {artistName}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-red-600 border-red-200 hover:bg-red-50"
+            onClick={() => handleYoutubeClick(youtubeUrl, songTitle, artistName)}
+          >
+            <ExternalLink className="w-4 h-4 mr-1" />
+            {linkText}
+          </Button>
+        </div>
+      );
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // 남은 텍스트 추가
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+
+    // 파싱된 부분이 없으면 원본 텍스트 반환
+    if (parts.length === 0) {
+      return content;
+    }
+
+    return parts;
   };
 
   const checkDangerousWords = (text: string): number => {
@@ -403,6 +509,18 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => {
+                    loadYoutubeHistory();
+                    setIsHistoryOpen(true);
+                  }}
+                  className="text-white hover:bg-white/20"
+                  title="음악 청취 기록"
+                >
+                  <History className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={handleMusicClick}
                   className="text-white hover:bg-white/20"
                   title="힐링 뮤직"
@@ -435,7 +553,7 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
                           : 'bg-white shadow-md border border-purple-100'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <div className="text-sm whitespace-pre-wrap">{renderMessageContent(message.content)}</div>
                     </div>
                   </div>
                 ))}
@@ -500,6 +618,54 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
           </Card>
         </div>
       )}
+
+      {/* YouTube History Dialog */}
+      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Youtube className="w-5 h-5 text-red-500" />
+              음악 청취 기록
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="flex-1 pr-4">
+            {youtubeHistory.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Music className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>아직 청취 기록이 없어요</p>
+                <p className="text-sm mt-1">AI가 추천한 음악을 들어보세요!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {youtubeHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3 bg-gradient-to-r from-gray-50 to-red-50 rounded-lg border border-red-100"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">{item.song_title}</p>
+                        <p className="text-sm text-gray-500">{item.artist_name}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {format(new Date(item.listened_at), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => window.open(item.youtube_url, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

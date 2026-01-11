@@ -597,6 +597,36 @@ export type Database = {
         }
         Relationships: []
       }
+      mindtalk_youtube_history: {
+        Row: {
+          artist_name: string
+          created_at: string
+          id: string
+          listened_at: string
+          song_title: string
+          student_id: string
+          youtube_url: string
+        }
+        Insert: {
+          artist_name: string
+          created_at?: string
+          id?: string
+          listened_at?: string
+          song_title: string
+          student_id: string
+          youtube_url: string
+        }
+        Update: {
+          artist_name?: string
+          created_at?: string
+          id?: string
+          listened_at?: string
+          song_title?: string
+          student_id?: string
+          youtube_url?: string
+        }
+        Relationships: []
+      }
       monthly: {
         Row: {
           category: string | null
@@ -2562,6 +2592,16 @@ export type Database = {
           title: string
         }[]
       }
+      student_get_youtube_history: {
+        Args: { limit_count?: number; student_id_input: string }
+        Returns: {
+          artist_name: string
+          id: string
+          listened_at: string
+          song_title: string
+          youtube_url: string
+        }[]
+      }
       student_login: {
         Args: { password_input: string; student_id_input: string }
         Returns: Json
@@ -2613,6 +2653,15 @@ export type Database = {
           content_input: string
           rating_input: number
           student_id_input: string
+        }
+        Returns: string
+      }
+      student_save_youtube_history: {
+        Args: {
+          artist_name_input: string
+          song_title_input: string
+          student_id_input: string
+          youtube_url_input: string
         }
         Returns: string
       }
