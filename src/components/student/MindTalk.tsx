@@ -647,14 +647,14 @@ export default function MindTalk({ studentId, studentName, studentGrade, student
                           {format(new Date(item.listened_at), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => window.open(item.youtube_url, '_blank')}
+                      <a
+                        href={item.youtube_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                       >
                         <ExternalLink className="w-4 h-4" />
-                      </Button>
+                      </a>
                     </div>
                   </div>
                 ))}
